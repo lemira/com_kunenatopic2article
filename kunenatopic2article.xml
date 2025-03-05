@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="component" version="5.0" method="upgrade">
+    <name>KunenaTopic2Article</name>
+    <author>Your Name</author>
+    <creationDate>2025-03-05</creationDate>
+    <version>1.0.0</version>
+    <description>Component for generating Joomla articles from Kunena topics</description>
+    <files>
+        <folder>admin</folder>
+        <folder>site</folder>
+        <filename>kunenatopic2article.xml</filename>
+    </files>
+    <administration>
+        <menu>Kunena Topic to Article</menu>
+        <files>
+            <filename>kunenatopic2article.php</filename>
+        </files>
+    </administration>
+    <site>
+        <files>
+            <filename>kunenatopic2article.php</filename>
+        </files>
+    </site>
+</extension>
