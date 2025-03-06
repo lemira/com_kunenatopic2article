@@ -1,24 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="component" version="5.0" method="upgrade">
-    <name>KunenaTopic2Article</name>
-    <author>Your Name</author>
-    <creationDate>2025-03-05</creationDate>
+    <name>com_kunenatopic2article</name>
+    <author>Твой Имя</author>
+    <creationDate>March 2025</creationDate>
     <version>1.0.0</version>
-    <description>Component for generating Joomla articles from Kunena topics</description>
-    <files>
-        <folder>admin</folder>
-        <folder>site</folder>
-        <filename>kunenatopic2article.xml</filename>
+    <description>Компонент для создания статей из тем Kunena</description>
+    <files folder="site">
+        <filename>kunenatopic2article.php</filename>
+        <folder>controllers</folder>
+        <folder>models</folder>
+        <folder>views</folder>
     </files>
     <administration>
-        <menu>Kunena Topic to Article</menu>
-        <files>
+        <menu>COM_KUNENATOPIC2ARTICLE</menu>
+        <files folder="admin">
             <filename>kunenatopic2article.php</filename>
+            <folder>controllers</folder>
+            <folder>models</folder>
+            <folder>views</folder>
         </files>
     </administration>
-    <site>
-        <files>
-            <filename>kunenatopic2article.php</filename>
-        </files>
-    </site>
 </extension>
