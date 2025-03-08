@@ -59,6 +59,14 @@ try {
     Factory::getApplication()->enqueueMessage('Ошибка при работе с таблицей: ' . $e->getMessage(), 'error');
 }
 
+// Проверяем, существует ли файл контроллера
+$controllerFile = JPATH_COMPONENT . '/controllers/KunenaTopic2Article.php';
+if (file_exists($controllerFile)) {
+    JFactory::getApplication()->enqueueMessage('Controller file exists: ' . $controllerFile);
+} else {
+    JFactory::getApplication()->enqueueMessage('Controller file NOT found: ' . $controllerFile, 'error');
+}
+
 // Запускаем контроллер
 $controller = JControllerLegacy::getInstance('KunenaTopic2Article');
 $controller->execute(Factory::getApplication()->input->get('task'));
