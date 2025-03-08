@@ -7,7 +7,7 @@ class KunenaTopic2ArticleController extends BaseController
 {
     public function display($cachable = false, $urlparams = [])
     {
-        $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
-        return parent::display($cachable, $urlparams);
+        echo "Controller loaded successfully!";
+        jexit();
     }
 }
