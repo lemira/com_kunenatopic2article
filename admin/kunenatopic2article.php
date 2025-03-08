@@ -60,14 +60,32 @@ try {
 }
 
 // Проверяем, существует ли файл контроллера
-$controllerFile = JPATH_COMPONENT . '/controllers/KunenaTopic2Article.php';
-if (file_exists($controllerFile)) {
-    JFactory::getApplication()->enqueueMessage('Controller file exists: ' . $controllerFile);
+// Проверяем путь к контроллеру
+$controllerPath = JPATH_COMPONENT . '/controllers/KunenaTopic2Article.php';
+if (!file_exists($controllerPath)) {
+    JFactory::getApplication()->enqueueMessage('Controller file NOT found: ' . $controllerPath, 'error');
+    return;
+}
+
+// Проверяем загрузку класса
+if (!class_exists('KunenaTopic2ArticleController')) {
+    require_once $controllerPath;
+}
+if (class_exists('KunenaTopic2ArticleController')) {
+    JFactory::getApplication()->enqueueMessage('Controller class loaded successfully');
 } else {
-    JFactory::getApplication()->enqueueMessage('Controller file NOT found: ' . $controllerFile, 'error');
+    JFactory::getApplication()->enqueueMessage('Controller class NOT loaded', 'error');
+    return;
 }
 
 // Запускаем контроллер
 $controller = JControllerLegacy::getInstance('KunenaTopic2Article');
+if ($controller) {
+    JFactory::getApplication()->enqueueMessage('Controller instance created successfully');
+} else {
+    JFactory::getApplication()->enqueueMessage('Failed to create controller instance', 'error');
+    return;
+}
+
 $controller->execute(Factory::getApplication()->input->get('task'));
 $controller->redirect();
