@@ -1,11 +1,13 @@
 <?php
 defined('_JEXEC') or die;
-use Joomla\CMS\MVC\Controller\AdminController;
-class KunenaTopic2ArticleController extends AdminController
+
+use Joomla\CMS\MVC\Controller\BaseController;
+
+class KunenaTopic2ArticleController extends BaseController
 {
-    protected $default_view = 'topics';
-    public function getModel($name = 'Topic', $prefix = 'KunenaTopic2ArticleModel', $config = array('ignore_request' => true))
+    public function display($cachable = false, $urlparams = [])
     {
-        return parent::getModel($name, $prefix, $config);
+        $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
+        return parent::display($cachable, $urlparams);
     }
 }
