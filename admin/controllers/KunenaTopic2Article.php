@@ -1,15 +1,22 @@
 <?php
-defined('_JEXEC') or die;
+defined('_JEXEC') or die('Restricted access');
 
-use Joomla\CMS\MVC\Controller\BaseController;
+jimport('joomla.application.component.controllerform');
 
-class KunenaTopic2ArticleController extends BaseController
+class KunenaTopic2ArticleControllerKunenaTopic2Article extends JControllerForm
 {
-    public function display($cachable = false, $urlparams = [])
+    public function save($key = null, $urlVar = null)
     {
-        // Устанавливаем вьюху (topics) для отображения
-        $view = $this->input->get('view', 'topics');
-        $this->input->set('view', $view);
-        return parent::display($cachable, $urlparams);
+        $app = JFactory::getApplication();
+        $data = $app->input->get('jform', [], 'array');
+
+        $model = $this->getModel('KunenaTopic2Article');
+        if ($model->save($data)) {
+            $app->enqueueMessage(JText::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_SAVED_SUCCESSFULLY'), 'success');
+        } else {
+            $app->enqueueMessage(JText::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_SAVE_FAILED'), 'error');
+        }
+
+        $this->setRedirect('index.php?option=com_kunenatopic2article');
     }
 }
