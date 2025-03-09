@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+    <fieldset>
+        <field name="topic_id" type="text" label="COM_KUNENATOPIC2ARTICLE_TOPIC_ID" description="COM_KUNENATOPIC2ARTICLE_TOPIC_ID_DESC" required="true" />
+        <field name="title" type="text" label="COM_KUNENATOPIC2ARTICLE_ARTICLE_TITLE" description="COM_KUNENATOPIC2ARTICLE_ARTICLE_TITLE_DESC" required="true" />
+        <field name="content" type="textarea" label="COM_KUNENATOPIC2ARTICLE_ARTICLE_CONTENT" description="COM_KUNENATOPIC2ARTICLE_ARTICLE_CONTENT_DESC" rows="10" cols="50" />
+    </fieldset>
+</form>
