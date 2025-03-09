@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="component" version="5.0" method="upgrade">
     <name>com_kunenatopic2article</name>
-    <author>LR&Grok</author>
+    <author>LR&amp;Grok</author>
     <creationDate>March 2025</creationDate>
     <version>1.0.0</version>
     <description>Kunena Topic to Article Component</description>
     <files folder="site">
         <filename>kunenatopic2article.php</filename>
-        <folder>controllers</folder>
-        <folder>models</folder>
-        <folder>views</folder>
+        <filename>controllers/kunenatopic2article.php</filename>
+        <filename>views/topics/view.html.php</filename>
+        <filename>views/topics/tmpl/default.php</filename>
     </files>
     <administration>
         <menu>COM_KUNENATOPIC2ARTICLE</menu>
         <files folder="admin">
             <filename>kunenatopic2article.php</filename>
-            <files folder="admin">
             <filename>controller.php</filename>
             <filename>views/topics/view.html.php</filename>
             <filename>views/topics/tmpl/default.php</filename>
@@ -26,4 +25,5 @@
             <filename>language/en-GB/en-GB.com_kunenatopic2article.ini</filename>
             <filename>models/forms/kunenatopic2article.xml</filename>
         </files>
+    </administration>
 </extension>
