@@ -18,6 +18,17 @@
             <folder>controllers</folder>
             <folder>models</folder>
             <folder>views</folder>
+            <files folder="admin">
+            <filename>controller.php</filename>
+            <filename>views/topics/view.html.php</filename>
+            <filename>views/topics/tmpl/default.php</filename>
+            <filename>controllers/kunenatopic2article.php</filename>
+            <filename>models/Topic.php</filename>
+            <filename>models/kunenatopic2article.php</filename>
+            <filename>tables/kunenatopic2article.php</filename>
+            <filename>language/en-GB/en-GB.com_kunenatopic2article.ini</filename>
+            <filename>models/forms/kunenatopic2article.xml</filename>
+</files>
         </files>
     </administration>
 </extension>
