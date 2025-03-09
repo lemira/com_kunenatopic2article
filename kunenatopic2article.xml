@@ -19,7 +19,7 @@
             <filename>controller.php</filename>
             <filename>views/topics/view.html.php</filename>
             <filename>views/topics/tmpl/default.php</filename>
-            <filename>controllers/kunenatopic2article.php</filename>
+            <filename>controllers/KunenaTopic2Article.php</filename>
             <filename>models/Topic.php</filename>
             <filename>models/kunenatopic2article.php</filename>
             <filename>tables/kunenatopic2article.php</filename>
