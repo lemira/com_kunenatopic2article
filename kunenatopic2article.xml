@@ -10,6 +10,7 @@
         <filename>controllers/kunenatopic2article.php</filename>
         <filename>views/topics/view.html.php</filename>
         <filename>views/topics/tmpl/default.php</filename>
+        <filename>models/topic.php</filename>
     </files>
     <administration>
         <menu>COM_KUNENATOPIC2ARTICLE</menu>
