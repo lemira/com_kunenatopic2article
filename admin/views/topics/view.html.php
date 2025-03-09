@@ -1,15 +1,15 @@
 <?php
-defined('_JEXEC') or die;
+defined('_JEXEC') or die('Restricted access');
 
-use Joomla\CMS\MVC\View\HtmlView;
+jimport('joomla.application.component.view');
 
-class KunenaTopic2ArticleViewTopics extends HtmlView
+class KunenaTopic2ArticleViewTopics extends JViewLegacy
 {
+    protected $form;
+
     public function display($tpl = null)
     {
-        $this->items = $this->get('Items');
-        $this->pagination = $this->get('Pagination');
-
+        $this->form = $this->get('Form');
         parent::display($tpl);
     }
 }
