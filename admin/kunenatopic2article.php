@@ -1,26 +1,15 @@
 <?php
 defined('_JEXEC') or die('Restricted access');
 
-jimport('joomla.application.component.controllerform');
+jimport('joomla.application.component.controller');
 
 $logFile = JPATH_BASE . '/logs/controller_debug.log';
-$message = "Loading KunenaTopic2ArticleControllerKunenaTopic2Article at " . date('Y-m-d H:i:s') . "\n";
+if (!file_exists(dirname($logFile))) {
+    mkdir(dirname($logFile), 0755, true);
+}
+$message = "Loading component at " . date('Y-m-d H:i:s') . "\n";
 file_put_contents($logFile, $message, FILE_APPEND);
 
-class KunenaTopic2ArticleControllerKunenaTopic2Article extends JControllerForm
-{
-    public function save($key = null, $urlVar = null)
-    {
-        $app = JFactory::getApplication();
-        $data = $app->input->get('jform', [], 'array');
-
-        $model = $this->getModel('KunenaTopic2Article');
-        if ($model->save($data)) {
-            $app->enqueueMessage(JText::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_SAVED_SUCCESSFULLY'), 'success');
-        } else {
-            $app->enqueueMessage(JText::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_SAVE_FAILED'), 'error');
-        }
-
-        $this->setRedirect('index.php?option=com_kunenatopic2article');
-    }
-}
+$controller = JControllerLegacy::getInstance('KunenaTopic2Article');
+$controller->execute(JFactory::getApplication()->input->get('task'));
+$controller->redirect();
