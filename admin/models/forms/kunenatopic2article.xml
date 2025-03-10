@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <form>
     <fieldset>
-        <field name="topic_id" type="text" label="COM_KUNENATOPIC2ARTICLE_TOPIC_ID" description="COM_KUNENATOPIC2ARTICLE_TOPIC_ID_DESC" required="true" />
-        <field name="title" type="text" label="COM_KUNENATOPIC2ARTICLE_ARTICLE_TITLE" description="COM_KUNENATOPIC2ARTICLE_ARTICLE_TITLE_DESC" required="true" />
-        <field name="content" type="textarea" label="COM_KUNENATOPIC2ARTICLE_ARTICLE_CONTENT" description="COM_KUNENATOPIC2ARTICLE_ARTICLE_CONTENT_DESC" rows="10" cols="50" />
+        <field name="topic_id" type="text" label="Topic ID" description="Enter the Topic ID" class="inputbox" />
+        <field name="article_title" type="text" label="Article Title" description="Enter the Article Title" class="inputbox" />
+        <field name="article_content" type="textarea" label="Article Content" description="Enter the Article Content" class="inputbox" rows="10" cols="40" />
     </fieldset>
 </form>
