@@ -1,91 +1,26 @@
 <?php
-defined('_JEXEC') or die;
+defined('_JEXEC') or die('Restricted access');
 
-use Joomla\CMS\Factory;
+jimport('joomla.application.component.controllerform');
 
-// Подключаем зависимости Joomla
-jimport('joomla.application.component.controller');
+$logFile = JPATH_BASE . '/administrator/logs/controller_debug.log';
+$message = "Loading KunenaTopic2ArticleControllerKunenaTopic2Article at " . date('Y-m-d H:i:s') . "\n";
+file_put_contents($logFile, $message, FILE_APPEND);
 
-// Инициализация или обновление таблицы параметров
-$db = Factory::getDbo();
+class KunenaTopic2ArticleControllerKunenaTopic2Article extends JControllerForm
+{
+    public function save($key = null, $urlVar = null)
+    {
+        $app = JFactory::getApplication();
+        $data = $app->input->get('jform', [], 'array');
 
-try {
-    // Проверяем, существует ли таблица
-    $query = "SHOW TABLES LIKE '" . $db->getPrefix() . "kunenatopic2article_params'";
-    $db->setQuery($query);
-    $tableExists = $db->loadResult();
-
-    if (!$tableExists) {
-        // Создаём таблицу, если она не существует
-        $queries = [
-            "CREATE TABLE `#__kunenatopic2article_params` (
-                `id` INT NOT NULL AUTO_INCREMENT,
-                `topic_selection` INT NOT NULL DEFAULT 0,
-                `article_category` INT NOT NULL DEFAULT 0,
-                `post_transfer_scheme` TINYINT(1) NOT NULL DEFAULT 1,
-                `max_article_size` INT NOT NULL DEFAULT 40000,
-                `post_author` TINYINT(1) NOT NULL DEFAULT 1,
-                `post_creation_date` TINYINT(1) NOT NULL DEFAULT 1,
-                `post_creation_time` TINYINT(1) NOT NULL DEFAULT 0,
-                `post_ids` TINYINT(1) NOT NULL DEFAULT 1,
-                `post_title` TINYINT(1) NOT NULL DEFAULT 0,
-                `kunena_post_link` TINYINT(1) NOT NULL DEFAULT 0,
-                `reminder_lines` INT NOT NULL DEFAULT 0,
-                `ignored_authors` TEXT NULL,
-                PRIMARY KEY (`id`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
-            "INSERT INTO `#__kunenatopic2article_params` (
-                `topic_selection`, `article_category`, `post_transfer_scheme`, `max_article_size`,
-                `post_author`, `post_creation_date`, `post_creation_time`, `post_ids`,
-                `post_title`, `kunena_post_link`, `reminder_lines`, `ignored_authors`
-            ) VALUES (
-                0, 0, 1, 40000, 1, 1, 0, 1, 0, 0, 0, NULL
-            )"
-        ];
-
-        foreach ($queries as $query) {
-            $db->setQuery($query);
-            $db->execute();
+        $model = $this->getModel('KunenaTopic2Article');
+        if ($model->save($data)) {
+            $app->enqueueMessage(JText::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_SAVED_SUCCESSFULLY'), 'success');
+        } else {
+            $app->enqueueMessage(JText::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_SAVE_FAILED'), 'error');
         }
-        Factory::getApplication()->enqueueMessage('Таблица параметров создана с настройками по умолчанию.');
-    } else {
-        // Если таблица существует, сбрасываем только topic_selection
-        $query = "UPDATE `#__kunenatopic2article_params` SET `topic_selection` = 0 WHERE `id` = 1";
-        $db->setQuery($query);
-        $db->execute();
-        Factory::getApplication()->enqueueMessage('Параметры загружены, выбор темы сброшен.');
+
+        $this->setRedirect('index.php?option=com_kunenatopic2article');
     }
-} catch (Exception $e) {
-    Factory::getApplication()->enqueueMessage('Ошибка при работе с таблицей: ' . $e->getMessage(), 'error');
 }
-
-// Проверяем, существует ли файл контроллера
-// Проверяем путь к контроллеру
-$controllerPath = JPATH_COMPONENT . '/controllers/KunenaTopic2Article.php';
-if (!file_exists($controllerPath)) {
-    JFactory::getApplication()->enqueueMessage('Controller file NOT found: ' . $controllerPath, 'error');
-    return;
-}
-
-// Проверяем загрузку класса
-if (!class_exists('KunenaTopic2ArticleController')) {
-    require_once $controllerPath;
-}
-if (class_exists('KunenaTopic2ArticleController')) {
-    JFactory::getApplication()->enqueueMessage('Controller class loaded successfully');
-} else {
-    JFactory::getApplication()->enqueueMessage('Controller class NOT loaded', 'error');
-    return;
-}
-
-// Запускаем контроллер
-$controller = JControllerLegacy::getInstance('KunenaTopic2Article');
-if ($controller) {
-    JFactory::getApplication()->enqueueMessage('Controller instance created successfully');
-} else {
-    JFactory::getApplication()->enqueueMessage('Failed to create controller instance', 'error');
-    return;
-}
-
-$controller->execute(Factory::getApplication()->input->get('task'));
-$controller->redirect();
