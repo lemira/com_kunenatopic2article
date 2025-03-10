@@ -3,6 +3,10 @@ defined('_JEXEC') or die('Restricted access');
 
 jimport('joomla.application.component.controller');
 
+$logFile = JPATH_BASE . '/administrator/logs/controller_debug.log';
+$message = "Loading KunenaTopic2ArticleController at " . date('Y-m-d H:i:s') . "\n";
+file_put_contents($logFile, $message, FILE_APPEND);
+
 class KunenaTopic2ArticleController extends JControllerLegacy
 {
     public function display($cachable = false, $urlparams = false)
