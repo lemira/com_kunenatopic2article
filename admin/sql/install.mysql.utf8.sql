@@ -1,0 +1,1 @@
+-- Install script for com_kunenatopic2article
