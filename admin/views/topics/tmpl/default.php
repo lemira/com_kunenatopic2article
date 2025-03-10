@@ -1,42 +1,27 @@
 <?php
 defined('_JEXEC') or die('Restricted access');
 
-JHtml::_('behavior.formvalidation');
-JHtml::_('formbehavior.chosen', 'select');
-?>
-<form action="index.php?option=com_kunenatopic2article&task=kunenatopic2article.save" method="post" id="adminForm" class="form-validate">
-    <div class="row-fluid">
-        <div class="span12">
-            <fieldset class="adminform">
-                <legend><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_FORM'); ?></legend>
-                <div class="control-group">
-                    <div class="control-label">
-                        <?php echo $this->form->getLabel('topic_id'); ?>
-                    </div>
-                    <div class="controls">
-                        <?php echo $this->form->getInput('topic_id'); ?>
-                    </div>
-                </div>
-                <div class="control-group">
-                    <div class="control-label">
-                        <?php echo $this->form->getLabel('title'); ?>
-                    </div>
-                    <div class="controls">
-                        <?php echo $this->form->getInput('title'); ?>
-                    </div>
-                </div>
-                <div class="control-group">
-                    <div class="control-label">
-                        <?php echo $this->form->getLabel('content'); ?>
-                    </div>
-                    <div class="controls">
-                        <?php echo $this->form->getInput('content'); ?>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary"><?php echo JText::_('JSUBMIT'); ?></button>
-                <input type="hidden" name="task" value="kunenatopic2article.save" />
-                <?php echo JHtml::_('form.token'); ?>
-            </fieldset>
-        </div>
+$logFile = JPATH_BASE . '/logs/template_debug.log';
+$message = "Loading default template at " . date('Y-m-d H:i:s') . "\n";
+file_put_contents($logFile, $message, FILE_APPEND);
+
+$form = $this->form;
+if ($form) {
+    ?>
+    <div class="kunenatopic2article-form">
+        <h1>Kunena Topic to Article</h1>
+        <form action="<?php echo JRoute::_('index.php?option=com_kunenatopic2article'); ?>" method="post" name="adminForm" id="adminForm">
+            <div class="form-group">
+                <?php echo $form->renderField('topic_id'); ?>
+                <?php echo $form->renderField('article_title'); ?>
+                <?php echo $form->renderField('article_content'); ?>
+            </div>
+            <button type="submit" class="btn btn-primary">Save</button>
+            <input type="hidden" name="task" value="kunenatopic2article.save" />
+            <?php echo JHtml::_('form.token'); ?>
+        </form>
     </div>
-</form>
+    <?php
+} else {
+    echo "<p>Form is not loaded.</p>";
+}
