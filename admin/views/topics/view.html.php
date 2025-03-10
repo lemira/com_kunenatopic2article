@@ -5,11 +5,15 @@ jimport('joomla.application.component.view');
 
 class KunenaTopic2ArticleViewTopics extends JViewLegacy
 {
-    protected $form;
-
     public function display($tpl = null)
     {
-        $this->form = $this->get('Form');
+        $logFile = JPATH_BASE . '/logs/view_debug.log';
+        $message = "Loading KunenaTopic2ArticleViewTopics at " . date('Y-m-d H:i:s') . "\n";
+        file_put_contents($logFile, $message, FILE_APPEND);
+
+        $model = $this->getModel();
+        $this->form = $model->getForm();
+
         parent::display($tpl);
     }
 }
