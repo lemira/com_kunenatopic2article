@@ -1,26 +1,25 @@
 <?php
-defined('_JEXEC') or die;
+defined('_JEXEC') or die('Restricted access');
 
-use Joomla\CMS\MVC\Model\ListModel;
+jimport('joomla.application.component.modelform');
 
-class KunenaTopic2ArticleModelTopic extends ListModel
+class KunenaTopic2ArticleModelTopics extends JModelForm
 {
-    protected $text_prefix = 'COM_KUNENATOPIC2ARTICLE';
-
-    public function __construct($config = [])
+    public function getForm($data = array(), $loadData = true)
     {
-        if (empty($config['filter_fields'])) {
-            $config['filter_fields'] = ['id', 'topic_selection', 'article_category'];
+        $logFile = JPATH_BASE . '/logs/model_debug.log';
+        $message = "Loading form in KunenaTopic2ArticleModelTopics at " . date('Y-m-d H:i:s') . "\n";
+        file_put_contents($logFile, $message, FILE_APPEND);
+
+        // Указываем путь к XML-форме
+        JForm::addFormPath(JPATH_COMPONENT . '/models/forms');
+        $form = $this->loadForm('com_kunenatopic2article.topics', 'topics', array('control' => 'jform', 'load_data' => $loadData));
+
+        if (empty($form)) {
+            $message = "Form loading failed in KunenaTopic2ArticleModelTopics at " . date('Y-m-d H:i:s') . "\n";
+            file_put_contents($logFile, $message, FILE_APPEND);
         }
-        parent::__construct($config);
-    }
 
-    protected function getListQuery()
-    {
-        $db = $this->getDbo();
-        $query = $db->getQuery(true);
-        $query->select('*')
-              ->from($db->quoteName('#__kunenatopic2article_params'));
-        return $query;
+        return $form;
     }
 }
