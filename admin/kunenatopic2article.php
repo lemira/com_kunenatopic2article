@@ -3,7 +3,7 @@ defined('_JEXEC') or die('Restricted access');
 
 jimport('joomla.application.component.controllerform');
 
-$logFile = JPATH_BASE . '/administrator/logs/controller_debug.log';
+$logFile = JPATH_BASE . '/logs/controller_debug.log';
 $message = "Loading KunenaTopic2ArticleControllerKunenaTopic2Article at " . date('Y-m-d H:i:s') . "\n";
 file_put_contents($logFile, $message, FILE_APPEND);
 
