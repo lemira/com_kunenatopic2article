@@ -29,9 +29,14 @@ class KunenaTopic2ArticleController extends JControllerLegacy
 
         try {
             $view = $this->getView('Topics', 'html');
-            $model = $this->getModel('Topics');
-            $view->setModel($model, true);
-            $view->display();
+            $model = $this->getModel('Topic'); // Изменил с 'Topics' на 'Topic'
+            if ($model) {
+                $view->setModel($model, true);
+                $view->display();
+            } else {
+                $message = "Model 'Topic' not found at " . date('Y-m-d H:i:s') . "\n";
+                file_put_contents($logFile, $message, FILE_APPEND | FILE_IGNORE_NEW_LINES);
+            }
         } catch (Exception $e) {
             $message = "Error in display: " . $e->getMessage() . " at " . date('Y-m-d H:i:s') . "\n";
             file_put_contents($logFile, $message, FILE_APPEND | FILE_IGNORE_NEW_LINES);
