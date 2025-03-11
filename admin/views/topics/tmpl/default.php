@@ -1,27 +1,57 @@
 <?php
 defined('_JEXEC') or die('Restricted access');
 
-$logFile = JPATH_BASE . '/logs/template_debug.log';
-$message = "Loading default template at " . date('Y-m-d H:i:s') . "\n";
-file_put_contents($logFile, $message, FILE_APPEND);
+JHtml::_('bootstrap.tooltip');
+JHtml::_('behavior.multiselect');
+JHtml::_('formbehavior.chosen', 'select');
 
-$form = $this->form;
-if ($form) {
-    ?>
-    <div class="kunenatopic2article-form">
-        <h1>Kunena Topic to Article</h1>
-        <form action="<?php echo JRoute::_('index.php?option=com_kunenatopic2article'); ?>" method="post" name="adminForm" id="adminForm">
-            <div class="form-group">
-                <?php echo $form->renderField('topic_id'); ?>
-                <?php echo $form->renderField('article_title'); ?>
-                <?php echo $form->renderField('article_content'); ?>
-            </div>
-            <button type="submit" class="btn btn-primary">Save</button>
-            <input type="hidden" name="task" value="kunenatopic2article.save" />
-            <?php echo JHtml::_('form.token'); ?>
-        </form>
+$listOrder = $this->escape($this->state->get('list.ordering'));
+$listDirn  = $this->escape($this->state->get('list.direction'));
+?>
+<form action="<?php echo JRoute::_('index.php?option=com_kunenatopic2article&view=topics'); ?>" method="post" name="adminForm" id="adminForm">
+    <div class="row">
+        <div class="col-md-12">
+            <table class="table table-striped" id="topicList">
+                <thead>
+                    <tr>
+                        <th width="1%">
+                            <?php echo JHtml::_('grid.checkall'); ?>
+                        </th>
+                        <th width="20%">
+                            <?php echo JHtml::_('grid.sort', 'COM_KUNENATOPIC2ARTICLE_TOPIC_ID', 'topic_id', $listDirn, $listOrder); ?>
+                        </th>
+                        <?php
+                        // Добавь другие заголовки колонок в зависимости от структуры таблицы
+                        $columns = array('param1', 'param2'); // Замени на реальные имена полей из таблицы
+                        foreach ($columns as $column) {
+                            echo '<th>' . JHtml::_('grid.sort', 'COM_KUNENATOPIC2ARTICLE_' . strtoupper($column), $column, $listDirn, $listOrder) . '</th>';
+                        }
+                        ?>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (!empty($this->items)) : ?>
+                        <?php foreach ($this->items as $i => $item) : ?>
+                            <tr class="row<?php echo $i % 2; ?>">
+                                <td><?php echo JHtml::_('grid.id', $i, $item->id); ?></td>
+                                <td><?php echo $item->topic_id; ?></td>
+                                <?php
+                                foreach ($columns as $column) {
+                                    echo '<td>' . $this->escape($item->$column) . '</td>';
+                                }
+                                ?>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else : ?>
+                        <tr>
+                            <td colspan="3"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_NO_ITEMS'); ?></td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
-    <?php
-} else {
-    echo "<p>Form is not loaded.</p>";
-}
+    <input type="hidden" name="task" value="" />
+    <input type="hidden" name="boxchecked" value="0" />
+    <?php echo JHtml::_('form.token'); ?>
+</form>
