@@ -5,7 +5,7 @@ jimport('joomla.application.component.modeladmin');
 
 class KunenaTopic2ArticleModelTopic extends JModelAdmin
 {
-    public function getTable($type = 'KunenaTopic2Article', $prefix = 'KunenaTopic2ArticleTable', $config = array())
+    public function getTable($type = 'KunenaTopic2Article_params', $prefix = 'KunenaTopic2ArticleTable', $config = array())
     {
         return JTable::getInstance($type, $prefix, $config);
     }
