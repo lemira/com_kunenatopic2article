@@ -5,7 +5,7 @@ jimport('joomla.application.component.modeladmin');
 
 class KunenaTopic2ArticleModelTopic extends JModelAdmin
 {
-    public function getTable($type = 'KunenaTopic2Article_params', $prefix = 'KunenaTopic2ArticleTable', $config = array())
+    public function getTable($type = 'Topic', $prefix = 'KunenaTopic2ArticleTable', $config = array())
     {
         return JTable::getInstance($type, $prefix, $config);
     }
@@ -49,12 +49,13 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
 
         return $form;
     }
-}
 
-class KunenaTopic2ArticleTableKunenaTopic2Article extends JTable
-{
-    public function __construct(&$db)
+    protected function loadFormData()
     {
-        parent::__construct('#__kunenatopic2article_params', 'id', $db);
+        $data = JFactory::getApplication()->getUserState('com_kunenatopic2article.edit.topic.data', array());
+        if (empty($data)) {
+            $data = $this->getItem();
+        }
+        return $data;
     }
 }
