@@ -1,30 +1,36 @@
 <?php
-defined('_JEXEC') or die('Restricted access');
-
-jimport('joomla.application.component.modeladmin');
+defined('_JEXEC') or die;
 
 class KunenaTopic2ArticleModelKunenaTopic2Article extends JModelAdmin
 {
-    public function getForm($data = [], $loadData = true)
+    public function getTable($type = 'KunenaTopic2Article', $prefix = 'KunenaTopic2ArticleTable', $config = array())
     {
-        $form = $this->loadForm('com_kunenatopic2article.kunenatopic2article', 'kunenatopic2article', ['control' => 'jform', 'load_data' => $loadData]);
+        return JTable::getInstance($type, $prefix, $config);
+    }
+
+    public function getForm($data = array(), $loadData = true)
+    {
+        $form = $this->loadForm('com_kunenatopic2article.kunenatopic2article', 'kunenatopic2article', array('control' => 'jform', 'load_data' => $loadData));
         if (empty($form)) {
             return false;
         }
         return $form;
     }
 
-    public function save($data)
+    protected function loadFormData()
     {
-        $table = $this->getTable();
-        $table->topic_id = $data['topic_id'];
-        $table->title = $data['title'];
-        $table->content = $data['content'];
-        return $table->store();
+        $data = $this->getParams();
+        return $data;
     }
 
-    public function getTable($type = 'KunenaTopic2Article', $prefix = 'KunenaTopic2ArticleTable', $config = [])
+    public function getParams()
     {
-        return JTable::getInstance($type, $prefix, $config);
+        $db = JFactory::getDbo();
+        $query = $db->getQuery(true);
+        $query->select('*')
+              ->from($db->quoteName('#__kunenatopic2article_params'))
+              ->where($db->quoteName('id') . ' = 1');
+        $db->setQuery($query);
+        return $db->loadObject();
     }
 }
