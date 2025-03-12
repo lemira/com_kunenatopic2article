@@ -5,6 +5,8 @@ class ComKunenatopic2articleInstallerScript
 {
     public function install($parent)
     {
+        JFactory::getApplication()->enqueueMessage('Installer script started', 'message');
+        
         $db = JFactory::getDbo();
         $sqlfile = JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/sql/install.mysql.utf8.sql';
         
@@ -77,6 +79,8 @@ class ComKunenatopic2articleInstallerScript
         } else {
             JFactory::getApplication()->enqueueMessage('Table #__kunenatopic2article_params does not exist after creation attempt', 'error');
         }
+
+        JFactory::getApplication()->enqueueMessage('Installer script completed', 'message');
     }
 
     public function uninstall($parent)
