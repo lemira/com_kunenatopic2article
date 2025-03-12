@@ -1,22 +1,18 @@
 <?php
-defined('_JEXEC') or die('Restricted access');
-
-jimport('joomla.application.component.controllerform');
+defined('_JEXEC') or die;
 
 class KunenaTopic2ArticleControllerKunenaTopic2Article extends JControllerForm
 {
-    public function save($key = null, $urlVar = null)
+    public function __construct($config = array())
     {
-        $app = JFactory::getApplication();
-        $data = $app->input->get('jform', [], 'array');
+        parent::__construct($config);
+    }
 
-        $model = $this->getModel('KunenaTopic2Article');
-        if ($model->save($data)) {
-            $app->enqueueMessage(JText::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_SAVED_SUCCESSFULLY'), 'success');
-        } else {
-            $app->enqueueMessage(JText::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_SAVE_FAILED'), 'error');
-        }
-
-        $this->setRedirect('index.php?option=com_kunenatopic2article');
+    public function display($cachable = false, $urlparams = false)
+    {
+        $view = $this->getView('kunenatopic2article', 'html');
+        $model = $this->getModel('kunenatopic2article');
+        $view->setModel($model, true);
+        $view->display();
     }
 }
