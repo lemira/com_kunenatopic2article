@@ -1,148 +1,72 @@
 <?php
 defined('_JEXEC') or die;
-
-JFactory::getApplication()->enqueueMessage('Debug: params value: ' . print_r($this->params, true), 'message');
-
-if ($this->params) {
-    JFactory::getApplication()->enqueueMessage('Parameters loaded: ' . htmlspecialchars($this->params->topic_selection), 'message');
-} else {
-    JFactory::getApplication()->enqueueMessage('No parameters available.', 'warning');
-}
-
-// Безопасно получаем порядок и направление сортировки
-$listOrder = $this->state ? $this->escape($this->state->get('list.ordering', 'id')) : 'id';
-$listDirn  = $this->state ? $this->escape($this->state->get('list.direction', 'asc')) : 'asc';
-
-// Временная отладка для проверки
 ?>
-<h3>Debug Info</h3>
-<p>List Order: <?php echo htmlspecialchars($listOrder); ?></p>
-<p>List Direction: <?php echo htmlspecialchars($listDirn); ?></p>
-<?php
 
-// Здесь должна быть остальная логика шаблона, но пока оставим минимум для проверки
-/*
-<?php
-defined('_JEXEC') or die('Restricted access');
-
-JFactory::getApplication()->enqueueMessage('Debug: params value: ' . print_r($this->params, true), 'message');
-
-if ($this->params) {
-    JFactory::getApplication()->enqueueMessage('Parameters loaded: ' . htmlspecialchars($this->params->topic_selection), 'message');
-} else {
-    JFactory::getApplication()->enqueueMessage('No parameters available.', 'warning');
-}
-
-JHtml::_('bootstrap.tooltip');
-JHtml::_('behavior.multiselect');
-JHtml::_('formbehavior.chosen', 'select');
-
-$listOrder = $this->state ? $this->escape($this->state->get('list.ordering', 'id')) : 'id';
-$listDirn  = $this->state ? $this->escape($this->state->get('list.direction', 'asc')) : 'asc';
-?>
-<form action="<?php echo JRoute::_('index.php?option=com_kunenatopic2article&view=topics'); ?>" method="post" name="adminForm" id="adminForm">
-    <div class="row">
-        <div class="col-md-12">
-            <h3><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_APP_PARAMETERS'); ?></h3>
-            <table class="table table-striped" id="topicList">
-                <thead>
-                    <tr>
-                        <th width="1%">
-                            <?php echo JHtml::_('grid.checkall'); ?>
-                        </th>
-                        <th>
-                            <?php echo JHtml::_('grid.sort', 'COM_KUNENATOPIC2ARTICLE_TOPIC_SELECTION', 'topic_id', $listDirn, $listOrder); ?>
-                        </th>
-                        <th>
-                            <?php echo JHtml::_('grid.sort', 'COM_KUNENATOPIC2ARTICLE_ARTICLE_CATEGORY', 'kunena_category_id', $listDirn, $listOrder); ?>
-                        </th>
-                        <th>
-                            <?php echo JHtml::_('grid.sort', 'COM_KUNENATOPIC2ARTICLE_MAX_ARTICLE_SIZE', 'max_article_size', $listDirn, $listOrder); ?>
-                        </th>
-                        <th>
-                            <?php echo JHtml::_('grid.sort', 'COM_KUNENATOPIC2ARTICLE_TRANSFER_SCHEME', 'transfer_scheme', $listDirn, $listOrder); ?>
-                        </th>
-                        <th>
-                            <?php echo JHtml::_('grid.sort', 'COM_KUNENATOPIC2ARTICLE_IGNORED_AUTHORS', 'ignored_authors', $listDirn, $listOrder); ?>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (!empty($this->items)) : ?>
-                        <?php foreach ($this->items as $i => $item) : ?>
-                            <tr class="row<?php echo $i % 2; ?>">
-                                <td><?php echo JHtml::_('grid.id', $i, $item->id); ?></td>
-                                <td><?php echo $this->escape($item->topic_id); ?></td>
-                                <td><?php echo $this->escape($item->kunena_category_id); ?></td>
-                                <td><?php echo $this->escape($item->max_article_size); ?></td>
-                                <td><?php echo $this->escape($item->transfer_scheme); ?></td>
-                                <td><?php echo $this->escape($item->ignored_authors); ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php else : ?>
-                        <tr>
-                            <td colspan="6"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_NO_ITEMS'); ?></td>
-                        </tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-
-            <h3><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_POST_INFO'); ?></h3>
-            <table class="table table-striped" id="postList">
-                <thead>
-                    <tr>
-                        <th width="1%">
-                            <?php echo JHtml::_('grid.checkall'); ?>
-                        </th>
-                        <th>
-                            <?php echo JHtml::_('grid.sort', 'COM_KUNENATOPIC2ARTICLE_POST_AUTHOR', 'post_author', $listDirn, $listOrder); ?>
-                        </th>
-                        <th>
-                            <?php echo JHtml::_('grid.sort', 'COM_KUNENATOPIC2ARTICLE_CREATION_DATE', 'creation_date', $listDirn, $listOrder); ?>
-                        </th>
-                        <th>
-                            <?php echo JHtml::_('grid.sort', 'COM_KUNENATOPIC2ARTICLE_CREATION_TIME', 'creation_time', $listDirn, $listOrder); ?>
-                        </th>
-                        <th>
-                            <?php echo JHtml::_('grid.sort', 'COM_KUNENATOPIC2ARTICLE_POST_ID_LINK', 'post_id_link', $listDirn, $listOrder); ?>
-                        </th>
-                        <th>
-                            <?php echo JHtml::_('grid.sort', 'COM_KUNENATOPIC2ARTICLE_POST_TITLE', 'post_title', $listDirn, $listOrder); ?>
-                        </th>
-                        <th>
-                            <?php echo JHtml::_('grid.sort', 'COM_KUNENATOPIC2ARTICLE_FORUM_POST_LINK', 'forum_post_link', $listDirn, $listOrder); ?>
-                        </th>
-                        <th>
-                            <?php echo JHtml::_('grid.sort', 'COM_KUNENATOPIC2ARTICLE_REMINDER_LINE_COUNT', 'reminder_line_count', $listDirn, $listOrder); ?>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (!empty($this->items)) : ?>
-                        <?php foreach ($this->items as $i => $item) : ?>
-                            <tr class="row<?php echo $i % 2; ?>">
-                                <td><?php echo JHtml::_('grid.id', $i, $item->id); ?></td>
-                                <td><?php echo $this->escape($item->post_author); ?></td>
-                                <td><?php echo $this->escape($item->creation_date); ?></td>
-                                <td><?php echo $this->escape($item->creation_time); ?></td>
-                                <td><?php echo $this->escape($item->post_id_link); ?></td>
-                                <td><?php echo $this->escape($item->post_title); ?></td>
-                                <td><?php echo $this->escape($item->forum_post_link); ?></td>
-                                <td><?php echo $this->escape($item->reminder_line_count); ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php else : ?>
-                        <tr>
-                            <td colspan="8"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_NO_ITEMS'); ?></td>
-                        </tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+<div class="container-fluid">
+    <h1><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_PARAMS_TITLE'); ?></h1>
+    
+    <?php if ($this->params): ?>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_PARAM_NAME'); ?></th>
+                    <th><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_PARAM_VALUE'); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Topic Selection</td>
+                    <td><?php echo htmlspecialchars($this->params->topic_selection); ?></td>
+                </tr>
+                <tr>
+                    <td>Article Category</td>
+                    <td><?php echo htmlspecialchars($this->params->article_category); ?></td>
+                </tr>
+                <tr>
+                    <td>Post Transfer Scheme</td>
+                    <td><?php echo htmlspecialchars($this->params->post_transfer_scheme); ?></td>
+                </tr>
+                <tr>
+                    <td>Max Article Size</td>
+                    <td><?php echo htmlspecialchars($this->params->max_article_size); ?></td>
+                </tr>
+                <tr>
+                    <td>Post Author</td>
+                    <td><?php echo htmlspecialchars($this->params->post_author); ?></td>
+                </tr>
+                <tr>
+                    <td>Post Creation Date</td>
+                    <td><?php echo htmlspecialchars($this->params->post_creation_date); ?></td>
+                </tr>
+                <tr>
+                    <td>Post Creation Time</td>
+                    <td><?php echo htmlspecialchars($this->params->post_creation_time); ?></td>
+                </tr>
+                <tr>
+                    <td>Post IDs</td>
+                    <td><?php echo htmlspecialchars($this->params->post_ids); ?></td>
+                </tr>
+                <tr>
+                    <td>Post Title</td>
+                    <td><?php echo htmlspecialchars($this->params->post_title); ?></td>
+                </tr>
+                <tr>
+                    <td>Kunena Post Link</td>
+                    <td><?php echo htmlspecialchars($this->params->kunena_post_link); ?></td>
+                </tr>
+                <tr>
+                    <td>Reminder Lines</td>
+                    <td><?php echo htmlspecialchars($this->params->reminder_lines); ?></td>
+                </tr>
+                <tr>
+                    <td>Ignored Authors</td>
+                    <td><?php echo htmlspecialchars($this->params->ignored_authors ?: 'None'); ?></td>
+                </tr>
+            </tbody>
+        </table>
+    <?php else: ?>
+        <div class="alert alert-warning">
+            <?php echo JText::_('COM_KUNENATOPIC2ARTICLE_NO_PARAMS_FOUND'); ?>
         </div>
-    </div>
-    <input type="hidden" name="task" value="" />
-    <input type="hidden" name="boxchecked" value="0" />
-    <?php echo JHtml::_('form.token'); ?>
-</form>
-
-*/
+    <?php endif; ?>
+</div>
