@@ -1,4 +1,36 @@
 <?php
+defined('_JEXEC') or die;
+
+JFactory::getApplication()->enqueueMessage('Debug: params value: ' . print_r($this->params, true), 'message');
+
+if ($this->params) {
+    JFactory::getApplication()->enqueueMessage('Parameters loaded: ' . htmlspecialchars($this->params->topic_selection), 'message');
+} else {
+    JFactory::getApplication()->enqueueMessage('No parameters available.', 'warning');
+}
+
+// Временная отладка: выводим параметры напрямую
+if ($this->params) {
+    echo '<h3>Debug Parameters</h3>';
+    echo '<pre>';
+    echo 'topic_selection: ' . htmlspecialchars($this->params->topic_selection) . '<br>';
+    echo 'article_category: ' . htmlspecialchars($this->params->article_category) . '<br>';
+    echo 'post_transfer_scheme: ' . htmlspecialchars($this->params->post_transfer_scheme) . '<br>';
+    echo 'max_article_size: ' . htmlspecialchars($this->params->max_article_size) . '<br>';
+    echo '</pre>';
+} else {
+    echo '<p>No parameters to display.</p>';
+}
+
+// Закомментируем старую логику, чтобы избежать ошибок
+/*
+Оставь здесь старую логику шаблона, начиная с <?php до конца файла
+
+
+
+
+
+<?php
 defined('_JEXEC') or die('Restricted access');
 
 JFactory::getApplication()->enqueueMessage('Debug: params value: ' . print_r($this->params, true), 'message');
@@ -120,3 +152,4 @@ $listDirn  = $this->escape($this->state->get('list.direction'));
     <input type="hidden" name="boxchecked" value="0" />
     <?php echo JHtml::_('form.token'); ?>
 </form>
+*/
