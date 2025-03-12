@@ -3,6 +3,8 @@ defined('_JEXEC') or die;
 
 class KunenaTopic2ArticleModelTopic extends JModelAdmin
 {
+    protected $state;
+
     public function getTable($type = 'Topic', $prefix = 'KunenaTopic2ArticleTable', $config = array())
     {
         return JTable::getInstance($type, $prefix, $config);
@@ -40,5 +42,26 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
             JFactory::getApplication()->enqueueMessage('No params found in database', 'warning');
         }
         return $result;
+    }
+
+    protected function populateState()
+    {
+        $app = JFactory::getApplication();
+
+        // Load state from the request
+        $ordering = $app->input->get('filter_order', 'id');
+        $direction = $app->input->get('filter_order_Dir', 'asc');
+        
+        $this->setState('list.ordering', $ordering);
+        $this->setState('list.direction', $direction);
+    }
+
+    public function getState($property = null)
+    {
+        if (!$this->state) {
+            $this->state = new JObject();
+            $this->populateState();
+        }
+        return parent::getState($property);
     }
 }
