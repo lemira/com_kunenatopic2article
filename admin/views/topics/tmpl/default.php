@@ -9,25 +9,19 @@ if ($this->params) {
     JFactory::getApplication()->enqueueMessage('No parameters available.', 'warning');
 }
 
-// Временная отладка: выводим параметры напрямую
-if ($this->params) {
-    echo '<h3>Debug Parameters</h3>';
-    echo '<pre>';
-    echo 'topic_selection: ' . htmlspecialchars($this->params->topic_selection) . '<br>';
-    echo 'article_category: ' . htmlspecialchars($this->params->article_category) . '<br>';
-    echo 'post_transfer_scheme: ' . htmlspecialchars($this->params->post_transfer_scheme) . '<br>';
-    echo 'max_article_size: ' . htmlspecialchars($this->params->max_article_size) . '<br>';
-    echo '</pre>';
-} else {
-    echo '<p>No parameters to display.</p>';
-}
+// Безопасно получаем порядок и направление сортировки
+$listOrder = $this->state ? $this->escape($this->state->get('list.ordering', 'id')) : 'id';
+$listDirn  = $this->state ? $this->escape($this->state->get('list.direction', 'asc')) : 'asc';
 
-// Закомментируем старую логику, чтобы избежать ошибок
+// Временная отладка для проверки
+?>
+<h3>Debug Info</h3>
+<p>List Order: <?php echo htmlspecialchars($listOrder); ?></p>
+<p>List Direction: <?php echo htmlspecialchars($listDirn); ?></p>
+<?php
+
+// Здесь должна быть остальная логика шаблона, но пока оставим минимум для проверки
 /*
-*/
-
-
-
 <?php
 defined('_JEXEC') or die('Restricted access');
 
@@ -151,3 +145,4 @@ $listDirn  = $this->state ? $this->escape($this->state->get('list.direction', 'a
     <?php echo JHtml::_('form.token'); ?>
 </form>
 
+*/
