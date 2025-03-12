@@ -17,20 +17,12 @@
         <scriptfile>admin/script.php</scriptfile>
     </install>
 
-    <files folder="site">
-        <filename>kunenatopic2article.php</filename>
-        <filename>controller.php</filename>
-        <folder>controllers</folder>
-        <folder>models</folder>
-        <folder>views</folder>
-        <folder>language</folder>
-    </files>
-
     <administration>
         <menu>COM_KUNENATOPIC2ARTICLE</menu>
         <files folder="admin">
             <filename>kunenatopic2article.php</filename>
             <filename>controller.php</filename>
+            <filename>script.php</filename>
             <folder>controllers</folder>
             <folder>models</folder>
             <folder>views</folder>
