@@ -56,12 +56,12 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
         $this->setState('list.direction', $direction);
     }
 
-    public function getState($property = null)
+    public function getState($property = null, $default = null)
     {
         if (!$this->state) {
             $this->state = new JObject();
             $this->populateState();
         }
-        return parent::getState($property);
+        return parent::getState($property, $default);
     }
 }
