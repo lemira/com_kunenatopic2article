@@ -10,7 +10,7 @@ class KunenaTopic2ArticleController extends JControllerForm
 
     public function display($cachable = false, $urlparams = false)
     {
-        $view = $this->getView('kunenatopic2article', 'html');
+        $view = $this->getView('topics', 'html');
         $model = $this->getModel('kunenatopic2article');
         $view->setModel($model, true);
         $view->display();
