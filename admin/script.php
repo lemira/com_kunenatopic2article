@@ -34,6 +34,14 @@ class ComKunenatopic2articleInstallerScript
         if ($db->tableExists('#__kunenatopic2article_params')) {
             JFactory::getApplication()->enqueueMessage('Table #__kunenatopic2article_params exists', 'message');
             
+            // Проверяем, есть ли уже записи
+            $query = $db->getQuery(true);
+            $query->select('COUNT(*)')
+                  ->from($db->quoteName('#__kunenatopic2article_params'));
+            $db->setQuery($query);
+            $count = $db->loadResult();
+            JFactory::getApplication()->enqueueMessage('Records in table before insert: ' . $count, 'message');
+            
             // Добавляем запись с параметрами по умолчанию
             $query = $db->getQuery(true);
             $query->insert($db->quoteName('#__kunenatopic2article_params'))
@@ -59,6 +67,14 @@ class ComKunenatopic2articleInstallerScript
             } catch (Exception $e) {
                 JFactory::getApplication()->enqueueMessage('Error inserting default params: ' . $e->getMessage(), 'error');
             }
+
+            // Проверяем количество записей после вставки
+            $query = $db->getQuery(true);
+            $query->select('COUNT(*)')
+                  ->from($db->quoteName('#__kunenatopic2article_params'));
+            $db->setQuery($query);
+            $countAfter = $db->loadResult();
+            JFactory::getApplication()->enqueueMessage('Records in table after insert: ' . $countAfter, 'message');
         } else {
             JFactory::getApplication()->enqueueMessage('Table #__kunenatopic2article_params does not exist after creation attempt', 'error');
         }
