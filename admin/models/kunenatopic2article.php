@@ -12,6 +12,7 @@ class KunenaTopic2ArticleModelKunenaTopic2Article extends JModelAdmin
     {
         $form = $this->loadForm('com_kunenatopic2article.kunenatopic2article', 'kunenatopic2article', array('control' => 'jform', 'load_data' => $loadData));
         if (empty($form)) {
+            JFactory::getApplication()->enqueueMessage('Form not found', 'error');
             return false;
         }
         return $form;
@@ -20,6 +21,9 @@ class KunenaTopic2ArticleModelKunenaTopic2Article extends JModelAdmin
     protected function loadFormData()
     {
         $data = $this->getParams();
+        if (!$data) {
+            JFactory::getApplication()->enqueueMessage('No params data found', 'warning');
+        }
         return $data;
     }
 
@@ -31,6 +35,10 @@ class KunenaTopic2ArticleModelKunenaTopic2Article extends JModelAdmin
               ->from($db->quoteName('#__kunenatopic2article_params'))
               ->where($db->quoteName('id') . ' = 1');
         $db->setQuery($query);
-        return $db->loadObject();
+        $result = $db->loadObject();
+        if (!$result) {
+            JFactory::getApplication()->enqueueMessage('No params found in database', 'warning');
+        }
+        return $result;
     }
 }
