@@ -42,30 +42,20 @@ class ComKunenatopic2articleInstallerScript
             $count = $db->loadResult();
             JFactory::getApplication()->enqueueMessage('Records in table before insert: ' . $count, 'message');
             
-            // Добавляем запись с параметрами по умолчанию
-            $query = $db->getQuery(true);
-            $query->insert($db->quoteName('#__kunenatopic2article_params'))
-                  ->columns([
-                      $db->quoteName('topic_selection'),
-                      $db->quoteName('article_category'),
-                      $db->quoteName('post_transfer_scheme'),
-                      $db->quoteName('max_article_size'),
-                      $db->quoteName('post_author'),
-                      $db->quoteName('post_creation_date'),
-                      $db->quoteName('post_creation_time'),
-                      $db->quoteName('post_ids'),
-                      $db->quoteName('post_title'),
-                      $db->quoteName('kunena_post_link'),
-                      $db->quoteName('reminder_lines'),
-                      $db->quoteName('ignored_authors')
-                  ])
-                  ->values('0, 0, 1, 40000, 1, 1, 0, 1, 0, 0, 0, NULL');
+            // Пробуем альтернативный способ вставки
+            $query = "INSERT INTO " . $db->quoteName('#__kunenatopic2article_params') . " (
+                topic_selection, article_category, post_transfer_scheme, max_article_size,
+                post_author, post_creation_date, post_creation_time, post_ids,
+                post_title, kunena_post_link, reminder_lines, ignored_authors
+            ) VALUES (
+                0, 0, 1, 40000, 1, 1, 0, 1, 0, 0, 0, NULL
+            )";
             $db->setQuery($query);
             try {
                 $db->execute();
-                JFactory::getApplication()->enqueueMessage('Default params inserted successfully', 'message');
+                JFactory::getApplication()->enqueueMessage('Default params inserted successfully via raw query', 'message');
             } catch (Exception $e) {
-                JFactory::getApplication()->enqueueMessage('Error inserting default params: ' . $e->getMessage(), 'error');
+                JFactory::getApplication()->enqueueMessage('Error inserting default params via raw query: ' . $e->getMessage(), 'error');
             }
 
             // Проверяем количество записей после вставки
