@@ -1,6 +1,14 @@
 <?php
 defined('_JEXEC') or die('Restricted access');
 
+JFactory::getApplication()->enqueueMessage('Debug: params value: ' . print_r($this->params, true), 'message');
+
+if ($this->params) {
+    JFactory::getApplication()->enqueueMessage('Parameters loaded: ' . htmlspecialchars($this->params->topic_selection), 'message');
+} else {
+    JFactory::getApplication()->enqueueMessage('No parameters available.', 'warning');
+}
+
 JHtml::_('bootstrap.tooltip');
 JHtml::_('behavior.multiselect');
 JHtml::_('formbehavior.chosen', 'select');
