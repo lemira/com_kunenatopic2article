@@ -1,7 +1,7 @@
 <?php
 defined('_JEXEC') or die;
 
-class KunenaTopic2ArticleControllerKunenaTopic2Article extends JControllerForm
+class KunenaTopic2ArticleController extends JControllerForm
 {
     public function __construct($config = array())
     {
