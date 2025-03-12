@@ -42,7 +42,7 @@ class ComKunenatopic2articleInstallerScript
             $count = $db->loadResult();
             JFactory::getApplication()->enqueueMessage('Records in table before insert: ' . $count, 'message');
             
-            // Пробуем альтернативный способ вставки
+            // Пробуем прямой SQL-запрос без использования Joomla API
             $query = "INSERT INTO " . $db->quoteName('#__kunenatopic2article_params') . " (
                 topic_selection, article_category, post_transfer_scheme, max_article_size,
                 post_author, post_creation_date, post_creation_time, post_ids,
@@ -55,7 +55,7 @@ class ComKunenatopic2articleInstallerScript
                 $db->execute();
                 JFactory::getApplication()->enqueueMessage('Default params inserted successfully via raw query', 'message');
             } catch (Exception $e) {
-                JFactory::getApplication()->enqueueMessage('Error inserting default params via raw query: ' . $e->getMessage(), 'error');
+                JFactory::getApplication()->enqueueMessage('Error inserting default params: ' . $e->getMessage(), 'error');
             }
 
             // Проверяем количество записей после вставки
@@ -65,6 +65,29 @@ class ComKunenatopic2articleInstallerScript
             $db->setQuery($query);
             $countAfter = $db->loadResult();
             JFactory::getApplication()->enqueueMessage('Records in table after insert: ' . $countAfter, 'message');
+            
+            // Если не вставилось, пробуем вручную через другой способ
+            if ($countAfter == 0) {
+                $query = $db->getQuery(true);
+                $columns = [
+                    'topic_selection', 'article_category', 'post_transfer_scheme', 'max_article_size',
+                    'post_author', 'post_creation_date', 'post_creation_time', 'post_ids',
+                    'post_title', 'kunena_post_link', 'reminder_lines', 'ignored_authors'
+                ];
+                $values = [
+                    0, 0, 1, 40000, 1, 1, 0, 1, 0, 0, 0, $db->quote(NULL)
+                ];
+                $query->insert($db->quoteName('#__kunenatopic2article_params'))
+                      ->columns($columns)
+                      ->values(implode(',', $values));
+                $db->setQuery($query);
+                try {
+                    $db->execute();
+                    JFactory::getApplication()->enqueueMessage('Default params inserted successfully via Joomla API', 'message');
+                } catch (Exception $e) {
+                    JFactory::getApplication()->enqueueMessage('Error inserting default params via Joomla API: ' . $e->getMessage(), 'error');
+                }
+            }
         } else {
             JFactory::getApplication()->enqueueMessage('Table #__kunenatopic2article_params does not exist after creation attempt', 'error');
         }
