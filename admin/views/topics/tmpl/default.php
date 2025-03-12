@@ -24,9 +24,7 @@ if ($this->params) {
 
 // Закомментируем старую логику, чтобы избежать ошибок
 /*
-Оставь здесь старую логику шаблона, начиная с <?php до конца файла
-
-
+*/
 
 
 
@@ -45,8 +43,8 @@ JHtml::_('bootstrap.tooltip');
 JHtml::_('behavior.multiselect');
 JHtml::_('formbehavior.chosen', 'select');
 
-$listOrder = $this->escape($this->state->get('list.ordering'));
-$listDirn  = $this->escape($this->state->get('list.direction'));
+$listOrder = $this->state ? $this->escape($this->state->get('list.ordering', 'id')) : 'id';
+$listDirn  = $this->state ? $this->escape($this->state->get('list.direction', 'asc')) : 'asc';
 ?>
 <form action="<?php echo JRoute::_('index.php?option=com_kunenatopic2article&view=topics'); ?>" method="post" name="adminForm" id="adminForm">
     <div class="row">
@@ -152,4 +150,4 @@ $listDirn  = $this->escape($this->state->get('list.direction'));
     <input type="hidden" name="boxchecked" value="0" />
     <?php echo JHtml::_('form.token'); ?>
 </form>
-*/
+
