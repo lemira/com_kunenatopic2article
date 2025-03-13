@@ -10,8 +10,8 @@ JHtml::_('formbehavior.chosen', 'select');
         <h1><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_PARAMS_TITLE'); ?></h1>
         
         <div class="btn-toolbar mb-3">
-            <button type="submit" class="btn btn-primary mr-2" onclick="Joomla.submitbutton('save')"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_REMEMBER'); ?></button>
-            <a href="<?php echo JRoute::_('index.php?option=com_kunenatopic2article&task=reset'); ?>" class="btn btn-secondary mr-2"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_RESET_PARAMS'); ?></a>
+            <button type="submit" class="btn btn-primary mr-2"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_REMEMBER'); ?></button>
+            <button type="button" class="btn btn-secondary mr-2" onclick="this.form.task.value='reset'; this.form.submit();"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_RESET_PARAMS'); ?></button>
             <a href="<?php echo JRoute::_('index.php?option=com_kunenatopic2article&task=create'); ?>" class="btn btn-success"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_CREATE_ARTICLES'); ?></a>
         </div>
         
@@ -21,20 +21,17 @@ JHtml::_('formbehavior.chosen', 'select');
         <h3><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_POST_INFO'); ?></h3>
         <?php echo $this->form->renderFieldset('post_info'); ?>
         
-        <input type="hidden" name="task" value="save" />
+        <input type="hidden" name="task" value="save" id="task" />
         <?php echo JHtml::_('form.token'); ?>
     </div>
 </form>
 
 <script type="text/javascript">
-    Joomla.submitbutton = function(task) {
-        console.log('Submit button clicked with task: ' + task);
-        if (document.formvalidator.isValid(document.getElementById('adminForm'))) {
-            console.log('Form is valid, submitting...');
-            Joomla.submitform(task, document.getElementById('adminForm'));
-        } else {
-            console.log('Form validation failed');
-            alert('Please check the form fields');
-        }
-    };
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Form loaded');
+        var form = document.getElementById('adminForm');
+        form.addEventListener('submit', function(event) {
+            console.log('Form submitted with task: ' + document.getElementById('task').value);
+        });
+    });
 </script>
