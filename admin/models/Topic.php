@@ -18,7 +18,6 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
             return false;
         }
         
-        // Сбрасываем topic_selection в 0
         if ($loadData) {
             $data = $this->loadFormData();
             $data->topic_selection = 0;
@@ -54,6 +53,8 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
         $db = JFactory::getDbo();
         $query = $db->getQuery(true);
         
+        JFactory::getApplication()->enqueueMessage('Saving data: ' . print_r($data, true), 'message');
+        
         $fields = array(
             $db->quoteName('topic_selection') . ' = ' . (int)$data['topic_selection'],
             $db->quoteName('article_category') . ' = ' . (int)$data['article_category'],
@@ -75,8 +76,11 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
         
         $db->setQuery($query);
         
+        JFactory::getApplication()->enqueueMessage('SQL Query: ' . (string)$query, 'message');
+        
         try {
             $db->execute();
+            JFactory::getApplication()->enqueueMessage('Database updated successfully', 'message');
             return true;
         } catch (Exception $e) {
             JFactory::getApplication()->enqueueMessage('Error saving params: ' . $e->getMessage(), 'error');
@@ -112,6 +116,7 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
         
         try {
             $db->execute();
+            JFactory::getApplication()->enqueueMessage('Database reset successfully', 'message');
             return true;
         } catch (Exception $e) {
             JFactory::getApplication()->enqueueMessage('Error resetting params: ' . $e->getMessage(), 'error');
