@@ -10,7 +10,7 @@ JHtml::_('formbehavior.chosen', 'select');
         <h1><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_PARAMS_TITLE'); ?></h1>
         
         <div class="btn-toolbar mb-3">
-            <button type="submit" class="btn btn-primary mr-2"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_REMEMBER'); ?></button>
+            <button type="submit" class="btn btn-primary mr-2" onclick="Joomla.submitbutton('save')"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_REMEMBER'); ?></button>
             <a href="<?php echo JRoute::_('index.php?option=com_kunenatopic2article&task=reset'); ?>" class="btn btn-secondary mr-2"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_RESET_PARAMS'); ?></a>
             <a href="<?php echo JRoute::_('index.php?option=com_kunenatopic2article&task=create'); ?>" class="btn btn-success"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_CREATE_ARTICLES'); ?></a>
         </div>
@@ -25,3 +25,16 @@ JHtml::_('formbehavior.chosen', 'select');
         <?php echo JHtml::_('form.token'); ?>
     </div>
 </form>
+
+<script type="text/javascript">
+    Joomla.submitbutton = function(task) {
+        console.log('Submit button clicked with task: ' + task);
+        if (document.formvalidator.isValid(document.getElementById('adminForm'))) {
+            console.log('Form is valid, submitting...');
+            Joomla.submitform(task, document.getElementById('adminForm'));
+        } else {
+            console.log('Form validation failed');
+            alert('Please check the form fields');
+        }
+    };
+</script>
