@@ -9,12 +9,6 @@ class KunenaTopic2ArticleController extends JControllerLegacy
         return parent::display($cachable, $urlparams);
     }
 
-    public function edit()
-    {
-        JFactory::getApplication()->enqueueMessage('Redirecting to edit layout', 'message');
-        $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics&layout=edit');
-    }
-
     public function save()
     {
         $app = JFactory::getApplication();
