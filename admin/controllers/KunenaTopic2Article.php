@@ -15,6 +15,9 @@ class KunenaTopic2ArticleController extends JControllerLegacy
         $app = JFactory::getApplication();
         $app->enqueueMessage('Save task triggered', 'message');
         
+        $task = $app->input->get('task', '', 'string');
+        $app->enqueueMessage('Task received: ' . $task, 'message');
+        
         $data = $app->input->get('jform', array(), 'array');
         $app->enqueueMessage('Form data received: ' . print_r($data, true), 'message');
         
@@ -32,6 +35,9 @@ class KunenaTopic2ArticleController extends JControllerLegacy
     {
         $app = JFactory::getApplication();
         $app->enqueueMessage('Reset task triggered', 'message');
+        
+        $task = $app->input->get('task', '', 'string');
+        $app->enqueueMessage('Task received: ' . $task, 'message');
         
         $model = $this->getModel('Topic', 'KunenaTopic2ArticleModel');
         if ($model->reset()) {
