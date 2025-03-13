@@ -5,13 +5,13 @@ JHtml::_('behavior.formvalidator');
 JHtml::_('formbehavior.chosen', 'select');
 ?>
 
-<form action="<?php echo JRoute::_('index.php?option=com_kunenatopic2article'); ?>" method="post" name="adminForm" id="adminForm" class="form-validate">
+<form action="<?php echo JRoute::_('index.php?option=com_kunenatopic2article&task=save'); ?>" method="post" name="adminForm" id="adminForm" class="form-validate">
     <div class="container-fluid">
         <h1><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_PARAMS_TITLE'); ?></h1>
         
         <div class="btn-toolbar mb-3">
             <button type="submit" class="btn btn-primary mr-2"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_REMEMBER'); ?></button>
-            <button type="button" class="btn btn-secondary mr-2" onclick="this.form.task.value='reset'; this.form.submit();"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_RESET_PARAMS'); ?></button>
+            <button type="button" class="btn btn-secondary mr-2" onclick="this.form.action='<?php echo JRoute::_('index.php?option=com_kunenatopic2article&task=reset'); ?>'; this.form.submit();"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_RESET_PARAMS'); ?></button>
             <a href="<?php echo JRoute::_('index.php?option=com_kunenatopic2article&task=create'); ?>" class="btn btn-success"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_CREATE_ARTICLES'); ?></a>
         </div>
         
@@ -32,6 +32,7 @@ JHtml::_('formbehavior.chosen', 'select');
         var form = document.getElementById('adminForm');
         form.addEventListener('submit', function(event) {
             console.log('Form submitted with task: ' + document.getElementById('task').value);
+            console.log('Form action: ' + form.action);
         });
     });
 </script>
