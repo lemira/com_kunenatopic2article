@@ -9,7 +9,10 @@ JHtml::_('formbehavior.chosen', 'select');
     <div class="container-fluid">
         <h1><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_PARAMS_TITLE'); ?></h1>
         
+        <h3><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_PARAMS'); ?></h3>
         <?php echo $this->form->renderFieldset('article_params'); ?>
+        
+        <h3><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_POST_INFO'); ?></h3>
         <?php echo $this->form->renderFieldset('post_info'); ?>
         
         <div class="btn-toolbar mt-3">
