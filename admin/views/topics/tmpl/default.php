@@ -27,6 +27,7 @@ JHtml::_('formbehavior.chosen', 'select');
 </form>
 
 <script type="text/javascript">
+    alert('Script is running!');
     console.log('Script loaded');
     document.addEventListener('DOMContentLoaded', function() {
         console.log('DOM loaded');
