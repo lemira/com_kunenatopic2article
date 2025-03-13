@@ -1,10 +1,11 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+defined('_JEXEC') or die;
 
-defined('_JEXEC') or die('Restricted access');
+if (!JFactory::getUser()->authorise('core.manage', 'com_kunenatopic2article')) {
+    throw new JException(JText::_('JERROR_ALERTNOAUTHOR'), 404);
+}
 
 $controller = JControllerLegacy::getInstance('KunenaTopic2Article');
 $controller->execute(JFactory::getApplication()->input->get('task'));
 $controller->redirect();
+
