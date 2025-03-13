@@ -13,11 +13,12 @@ class KunenaTopic2ArticleController extends JControllerLegacy
     public function save()
     {
         $app = JFactory::getApplication();
-        $model = $this->getModel('Topic', 'KunenaTopic2ArticleModel');
+        $app->enqueueMessage('Save task triggered', 'message');
+        
         $data = $app->input->get('jform', array(), 'array');
+        $app->enqueueMessage('Form data received: ' . print_r($data, true), 'message');
         
-        $app->enqueueMessage('Save task called. Data: ' . print_r($data, true), 'message');
-        
+        $model = $this->getModel('Topic', 'KunenaTopic2ArticleModel');
         if ($model->save($data)) {
             $app->enqueueMessage('Parameters saved successfully', 'success');
         } else {
@@ -30,10 +31,9 @@ class KunenaTopic2ArticleController extends JControllerLegacy
     public function reset()
     {
         $app = JFactory::getApplication();
+        $app->enqueueMessage('Reset task triggered', 'message');
+        
         $model = $this->getModel('Topic', 'KunenaTopic2ArticleModel');
-        
-        $app->enqueueMessage('Reset task called', 'message');
-        
         if ($model->reset()) {
             $app->enqueueMessage('Parameters reset to default values', 'success');
         } else {
