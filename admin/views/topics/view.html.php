@@ -11,14 +11,10 @@ class KunenaTopic2ArticleViewTopics extends JViewLegacy
         $model = $this->getModel();
         $this->params = $model->getParams();
         $this->state = $model->getState();
+        $this->form = $model->getForm();
         
-        // Если layout=edit, подключаем форму
-        $layout = $this->getLayout();
-        if ($layout == 'edit') {
-            $this->form = $model->getForm();
-            if (!$this->form) {
-                JFactory::getApplication()->enqueueMessage('Form failed to load', 'error');
-            }
+        if (!$this->form) {
+            JFactory::getApplication()->enqueueMessage('Form failed to load', 'error');
         }
         
         parent::display($tpl);
