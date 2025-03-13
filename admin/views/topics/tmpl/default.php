@@ -1,12 +1,33 @@
 <?php
 defined('_JEXEC') or die;
+
+JHtml::_('bootstrap.tooltip');
+JHtml::_('behavior.formvalidator');
 ?>
 
 <div class="container-fluid">
     <h1><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_PARAMS_TITLE'); ?></h1>
     
+    <div class="btn-toolbar" role="toolbar">
+        <div class="btn-group mr-2">
+            <a class="btn btn-primary" href="<?php echo JRoute::_('index.php?option=com_kunenatopic2article&task=edit'); ?>">
+                <?php echo JText::_('JTOOLBAR_EDIT'); ?>
+            </a>
+        </div>
+        <div class="btn-group mr-2">
+            <a class="btn btn-secondary" href="<?php echo JRoute::_('index.php?option=com_kunenatopic2article&task=reset'); ?>">
+                <?php echo JText::_('COM_KUNENATOPIC2ARTICLE_RESET_PARAMS'); ?>
+            </a>
+        </div>
+        <div class="btn-group">
+            <a class="btn btn-success" href="<?php echo JRoute::_('index.php?option=com_kunenatopic2article&task=create'); ?>">
+                <?php echo JText::_('COM_KUNENATOPIC2ARTICLE_CREATE_ARTICLES'); ?>
+            </a>
+        </div>
+    </div>
+    
     <?php if ($this->params): ?>
-        <table class="table table-striped">
+        <table class="table table-striped mt-3">
             <thead>
                 <tr>
                     <th><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_PARAM_NAME'); ?></th>
@@ -65,7 +86,7 @@ defined('_JEXEC') or die;
             </tbody>
         </table>
     <?php else: ?>
-        <div class="alert alert-warning">
+        <div class="alert alert-warning mt-3">
             <?php echo JText::_('COM_KUNENATOPIC2ARTICLE_NO_PARAMS_FOUND'); ?>
         </div>
     <?php endif; ?>
