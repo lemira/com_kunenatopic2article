@@ -27,12 +27,18 @@ JHtml::_('formbehavior.chosen', 'select');
 </form>
 
 <script type="text/javascript">
+    console.log('Script loaded');
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('Form loaded');
+        console.log('DOM loaded');
         var form = document.getElementById('adminForm');
-        form.addEventListener('submit', function(event) {
-            console.log('Form submitted with task: ' + document.getElementById('task').value);
-            console.log('Form action: ' + form.action);
-        });
+        if (form) {
+            console.log('Form found');
+            form.addEventListener('submit', function(event) {
+                console.log('Form submitted with task: ' + document.getElementById('task').value);
+                console.log('Form action: ' + form.action);
+            });
+        } else {
+            console.log('Form not found');
+        }
     });
 </script>
