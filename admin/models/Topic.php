@@ -6,8 +6,15 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
     public function getTable($type = 'Topic', $prefix = 'KunenaTopic2ArticleTable', $config = array())
     {
         // Проверяем, загружается ли файл таблицы
+        $tableFile = JPath::clean(JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/tables/topic.php');
+        if (!file_exists($tableFile)) {
+            JFactory::getApplication()->enqueueMessage('Table file ' . $tableFile . ' not found', 'error');
+        } else {
+            JFactory::getApplication()->enqueueMessage('Table file ' . $tableFile . ' found', 'notice');
+        }
+
         if (!class_exists($prefix . $type)) {
-            JFactory::getApplication()->enqueueMessage('Table class ' . $prefix . $type . ' not found. Check file admin/tables/Topic.php', 'error');
+            JFactory::getApplication()->enqueueMessage('Table class ' . $prefix . $type . ' not found', 'error');
             return JTable::getInstance('Content'); // Заглушка
         }
 
