@@ -5,13 +5,13 @@ JHtml::_('behavior.formvalidator');
 JHtml::_('formbehavior.chosen', 'select');
 ?>
 
-<form action="<?php echo JRoute::_('index.php?option=com_kunenatopic2article&task=save'); ?>" method="post" name="adminForm" id="adminForm" class="form-validate">
+<form action="<?php echo JRoute::_('index.php?option=com_kunenatopic2article&view=topics'); ?>" method="post" name="adminForm" id="adminForm" class="form-validate">
     <div class="container-fluid">
         <h1><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_PARAMS_TITLE'); ?></h1>
         
         <div class="btn-toolbar mb-3">
-            <button type="button" class="btn btn-primary mr-2" onclick="submitForm('save')">Remember</button>
-            <button type="button" class="btn btn-secondary mr-2" onclick="submitForm('reset')">Reset Parameters</button>
+            <button type="button" class="btn btn-primary mr-2" onclick="Joomla.submitbutton('topic.save')">Remember</button>
+            <button type="button" class="btn btn-secondary mr-2" onclick="Joomla.submitbutton('topic.reset')">Reset Parameters</button>
             <a href="<?php echo JRoute::_('index.php?option=com_kunenatopic2article&task=create'); ?>" class="btn btn-success">Create Articles</a>
         </div>
         
@@ -31,33 +31,21 @@ JHtml::_('formbehavior.chosen', 'select');
             <?php JFactory::getApplication()->enqueueMessage('Form object is empty', 'error'); ?>
         <?php endif; ?>
         
-        <input type="hidden" name="task" id="task" />
+        <input type="hidden" name="task" value="" />
         <?php echo JHtml::_('form.token'); ?>
     </div>
 </form>
 
 <script type="text/javascript">
-    console.log('Script loaded');
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM loaded');
+    Joomla.submitbutton = function(task) {
+        console.log('Submitting form with task: ' + task);
         var form = document.getElementById('adminForm');
-        if (form) {
-            console.log('Form found');
+        if (document.formvalidator.isValid(form)) {
+            console.log('Form is valid');
+            Joomla.submitform(task, form);
         } else {
-            console.log('Form not found');
+            console.log('Form validation failed');
+            alert('Please check the form fields');
         }
-
-        window.submitForm = function(task) {
-            console.log('Submitting form with task: ' + task);
-            var form = document.getElementById('adminForm');
-            if (document.formvalidator.isValid(form)) {
-                console.log('Form is valid');
-                document.getElementById('task').value = task;
-                form.submit();
-            } else {
-                console.log('Form validation failed');
-                alert('Please check the form fields');
-            }
-        };
-    });
+    };
 </script>
