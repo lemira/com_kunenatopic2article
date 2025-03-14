@@ -41,8 +41,9 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
 
         if (empty($data)) {
             $params = $this->getParams();
-            // Форматируем данные для формы
-            $data = array(
+            $data = array();
+            // Привязываем данные к полям формы
+            $data['jform'] = array(
                 'topic_selection' => isset($params['topic_selection']) ? $params['topic_selection'] : 0,
                 'article_category' => isset($params['article_category']) ? $params['article_category'] : 0,
                 'post_transfer_scheme' => isset($params['post_transfer_scheme']) ? $params['post_transfer_scheme'] : 1,
@@ -56,9 +57,9 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
                 'reminder_lines' => isset($params['reminder_lines']) ? $params['reminder_lines'] : 0,
                 'ignored_authors' => isset($params['ignored_authors']) ? $params['ignored_authors'] : ''
             );
-            JFactory::getApplication()->enqueueMessage('Form data loaded from getParams: ' . json_encode($data), 'notice');
+            JFactory::getApplication()->enqueueMessage('Form data prepared: ' . json_encode($data), 'notice');
         } else {
-            JFactory::getApplication()->enqueueMessage('Form data loaded from user state', 'notice');
+            JFactory::getApplication()->enqueueMessage('Form data loaded from user state: ' . json_encode($data), 'notice');
         }
 
         return $data;
@@ -101,27 +102,31 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
     {
         JFactory::getApplication()->enqueueMessage('Saving form data: ' . json_encode($data), 'notice');
 
-        // Проверяем, передаются ли данные из формы
-        if (empty($data)) {
-            JFactory::getApplication()->enqueueMessage('No data to save', 'error');
+        // Проверяем, передаются ли данные
+        if (empty($data) || !isset($data['jform'])) {
+            JFactory::getApplication()->enqueueMessage('No form data to save', 'error');
             return false;
         }
+
+        // Извлекаем данные из jform
+        $formData = $data['jform'];
+        JFactory::getApplication()->enqueueMessage('Extracted form data: ' . json_encode($formData), 'notice');
 
         $db = JFactory::getDbo();
         $query = $db->getQuery(true);
         $query->update('#__kunenatopic2article_params')
-              ->set('topic_selection = ' . $db->quote($data['topic_selection']))
-              ->set('article_category = ' . $db->quote($data['article_category']))
-              ->set('post_transfer_scheme = ' . $db->quote($data['post_transfer_scheme']))
-              ->set('max_article_size = ' . $db->quote($data['max_article_size']))
-              ->set('post_author = ' . $db->quote($data['post_author']))
-              ->set('post_creation_date = ' . $db->quote($data['post_creation_date']))
-              ->set('post_creation_time = ' . $db->quote($data['post_creation_time']))
-              ->set('post_ids = ' . $db->quote($data['post_ids']))
-              ->set('post_title = ' . $db->quote($data['post_title']))
-              ->set('kunena_post_link = ' . $db->quote($data['kunena_post_link']))
-              ->set('reminder_lines = ' . $db->quote($data['reminder_lines']))
-              ->set('ignored_authors = ' . $db->quote($data['ignored_authors']))
+              ->set('topic_selection = ' . $db->quote($formData['topic_selection']))
+              ->set('article_category = ' . $db->quote($formData['article_category']))
+              ->set('post_transfer_scheme = ' . $db->quote($formData['post_transfer_scheme']))
+              ->set('max_article_size = ' . $db->quote($formData['max_article_size']))
+              ->set('post_author = ' . $db->quote($formData['post_author']))
+              ->set('post_creation_date = ' . $db->quote($formData['post_creation_date']))
+              ->set('post_creation_time = ' . $db->quote($formData['post_creation_time']))
+              ->set('post_ids = ' . $db->quote($formData['post_ids']))
+              ->set('post_title = ' . $db->quote($formData['post_title']))
+              ->set('kunena_post_link = ' . $db->quote($formData['kunena_post_link']))
+              ->set('reminder_lines = ' . $db->quote($formData['reminder_lines']))
+              ->set('ignored_authors = ' . $db->quote($formData['ignored_authors']))
               ->where('id = 1');
         $db->setQuery($query);
 
