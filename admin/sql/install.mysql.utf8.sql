@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS `#__kunenatopic2article_params` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO `#__kunenatopic2article_params` (
+    `id`,
     `topic_selection`,
     `article_category`,
     `post_transfer_scheme`,
@@ -29,6 +30,7 @@ INSERT INTO `#__kunenatopic2article_params` (
     `reminder_lines`,
     `ignored_authors`
 ) VALUES (
+    1,
     0,
     0,
     1,
@@ -41,8 +43,7 @@ INSERT INTO `#__kunenatopic2article_params` (
     0,
     0,
     NULL
-)
-ON DUPLICATE KEY UPDATE
+) ON DUPLICATE KEY UPDATE
     `topic_selection` = 0,
     `article_category` = 0,
     `post_transfer_scheme` = 1,
