@@ -5,26 +5,19 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
 {
     public function getTable($type = 'Topic', $prefix = 'KunenaTopic2ArticleTable', $config = array())
     {
-        $db = JFactory::getDbo();
-        $tableName = '#__kunenatopic2article_params';
-        $query = $db->getQuery(true)
-                    ->select('COUNT(*)')
-                    ->from($db->quoteName($tableName));
-        $db->setQuery($query);
-        $exists = $db->loadResult();
-
-        if (!$exists) {
-            JFactory::getApplication()->enqueueMessage('Table ' . $tableName . ' not found. Please reinstall the component.', 'error');
-            return JTable::getInstance('Content'); // Возвращаем заглушку, чтобы избежать ошибки
+        $table = JTable::getInstance($type, $prefix, $config);
+        if ($table === false) {
+            JFactory::getApplication()->enqueueMessage('Failed to load table ' . $prefix . $type, 'error');
+            return JTable::getInstance('Content'); // Заглушка, чтобы избежать ошибки
         }
-
-        return JTable::getInstance($type, $prefix, $config);
+        return $table;
     }
 
     public function getForm($data = array(), $loadData = true)
     {
         $form = $this->loadForm('com_kunenatopic2article.topic', 'topic', array('control' => 'jform', 'load_data' => $loadData));
         if (empty($form)) {
+            JFactory::getApplication()->enqueueMessage('Failed to load form', 'error');
             return false;
         }
         return $form;
@@ -50,6 +43,7 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
         $row = $db->loadAssoc();
 
         if (empty($row)) {
+            JFactory::getApplication()->enqueueMessage('No params found in database, using defaults', 'warning');
             return [
                 'topic_selection' => 0,
                 'article_category' => 0,
