@@ -1,6 +1,11 @@
 <?php
 defined('_JEXEC') or die;
 
+// Добавляем отладку для проверки загрузки
+if (!defined('JPATH_COMPONENT_ADMINISTRATOR')) {
+    die('JPATH_COMPONENT_ADMINISTRATOR not defined');
+}
+
 class KunenaTopic2ArticleTableTopic extends JTable
 {
     public $id = null;
@@ -19,6 +24,12 @@ class KunenaTopic2ArticleTableTopic extends JTable
 
     public function __construct(&$db)
     {
+        echo 'Constructing KunenaTopic2ArticleTableTopic'; // Отладка
         parent::__construct('#__kunenatopic2article_params', 'id', $db);
+    }
+
+    public function check()
+    {
+        return true; // Добавляем минимальную реализацию check
     }
 }
