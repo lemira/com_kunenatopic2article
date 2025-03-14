@@ -5,7 +5,7 @@ JHtml::_('behavior.formvalidator');
 JHtml::_('formbehavior.chosen', 'select');
 ?>
 
-<form action="<?php echo JRoute::_('index.php?option=com_kunenatopic2article&view=topics'); ?>" method="post" name="adminForm" id="adminForm" class="form-validate">
+<form action="<?php echo JRoute::_('index.php?option=com_kunenatopic2article&view=topics&task=topic.save'); ?>" method="post" name="adminForm" id="adminForm" class="form-validate">
     <div class="container-fluid">
         <h1><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_PARAMS_TITLE'); ?></h1>
         
