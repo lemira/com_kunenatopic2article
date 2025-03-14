@@ -30,6 +30,6 @@
             <folder>language</folder>
             <folder>sql</folder>
         </files>
-        <filename>tables/topic.php</filename> <!-- Явно указываем файл таблицы -->
+        <filename>tables/Topic.php</filename> <!-- Обновили путь к файлу -->
     </administration>
 </extension>
