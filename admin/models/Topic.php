@@ -23,25 +23,40 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
 
     public function getForm($data = array(), $loadData = true)
     {
+        // Отладка: проверяем, загружается ли форма
+        JFactory::getApplication()->enqueueMessage('Trying to load form com_kunenatopic2article.topic', 'notice');
+
         $form = $this->loadForm('com_kunenatopic2article.topic', 'topic', array('control' => 'jform', 'load_data' => $loadData));
         if (empty($form)) {
-            JFactory::getApplication()->enqueueMessage('Failed to load form', 'error');
+            JFactory::getApplication()->enqueueMessage('Failed to load form com_kunenatopic2article.topic', 'error');
             return false;
         }
+
+        JFactory::getApplication()->enqueueMessage('Form com_kunenatopic2article.topic loaded successfully', 'notice');
         return $form;
     }
 
     protected function loadFormData()
     {
+        // Отладка: проверяем, загружаются ли данные формы
+        JFactory::getApplication()->enqueueMessage('Loading form data', 'notice');
+
         $data = JFactory::getApplication()->getUserState('com_kunenatopic2article.edit.topic.data', array());
         if (empty($data)) {
             $data = $this->getParams();
+            JFactory::getApplication()->enqueueMessage('Form data loaded from getParams', 'notice');
+        } else {
+            JFactory::getApplication()->enqueueMessage('Form data loaded from user state', 'notice');
         }
+
         return $data;
     }
 
     public function getParams()
     {
+        // Отладка: проверяем, загружаются ли параметры
+        JFactory::getApplication()->enqueueMessage('Fetching params from database', 'notice');
+
         $db = JFactory::getDbo();
         $query = $db->getQuery(true);
         $query->select('*')
@@ -68,6 +83,7 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
             ];
         }
 
+        JFactory::getApplication()->enqueueMessage('Params loaded from database', 'notice');
         return $row;
     }
 
