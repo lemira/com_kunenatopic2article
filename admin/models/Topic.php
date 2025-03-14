@@ -5,17 +5,11 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
 {
     public function getTable($type = 'Params', $prefix = 'KunenaTopic2ArticleTable', $config = array())
     {
-        // Проверяем наличие файла Params.php
         $tableFile = JPath::clean(JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/tables/Params.php');
         if (!file_exists($tableFile)) {
             JFactory::getApplication()->enqueueMessage('Table file ' . $tableFile . ' not found', 'error');
         } else {
             JFactory::getApplication()->enqueueMessage('Table file ' . $tableFile . ' found', 'notice');
-        }
-
-        if (!class_exists($prefix . $type)) {
-            JFactory::getApplication()->enqueueMessage('Table class ' . $prefix . $type . ' not found', 'error');
-            return JTable::getInstance('Content'); // Заглушка
         }
 
         $table = JTable::getInstance($type, $prefix, $config);
@@ -121,6 +115,3 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
         return $db->execute();
     }
 }
-
-
-
