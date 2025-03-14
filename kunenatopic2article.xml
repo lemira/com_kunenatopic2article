@@ -30,6 +30,6 @@
             <folder>language</folder>
             <folder>sql</folder>
         </files>
-        <filename>tables/Topic.php</filename> <!-- Обновили путь к файлу -->
+       <filename>tables/Params.php</filename>
     </administration>
 </extension>
