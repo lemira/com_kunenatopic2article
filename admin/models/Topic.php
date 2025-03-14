@@ -43,21 +43,21 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
             $params = $this->getParams();
             $data = array(
                 'jform' => array(
-                    'topic_selection' => (string)isset($params['topic_selection']) ? $params['topic_selection'] : '0',
-                    'article_category' => (string)isset($params['article_category']) ? $params['article_category'] : '0',
-                    'post_transfer_scheme' => (string)isset($params['post_transfer_scheme']) ? $params['post_transfer_scheme'] : '1',
-                    'max_article_size' => (string)isset($params['max_article_size']) ? $params['max_article_size'] : '40000',
-                    'post_author' => (string)isset($params['post_author']) ? $params['post_author'] : '1',
-                    'post_creation_date' => (string)isset($params['post_creation_date']) ? $params['post_creation_date'] : date('Y-m-d'),
-                    'post_creation_time' => (string)isset($params['post_creation_time']) ? $params['post_creation_time'] : date('Y-m-d H:i:s'),
-                    'post_ids' => (string)isset($params['post_ids']) ? $params['post_ids'] : '1',
-                    'post_title' => (string)isset($params['post_title']) ? $params['post_title'] : '0',
-                    'kunena_post_link' => (string)isset($params['kunena_post_link']) ? $params['kunena_post_link'] : '0',
-                    'reminder_lines' => (string)isset($params['reminder_lines']) ? $params['reminder_lines'] : '0',
-                    'ignored_authors' => (string)isset($params['ignored_authors']) ? $params['ignored_authors'] : ''
+                    'topic_selection' => (string)$params['topic_selection'],
+                    'article_category' => (string)$params['article_category'],
+                    'post_transfer_scheme' => (string)$params['post_transfer_scheme'],
+                    'max_article_size' => (string)$params['max_article_size'],
+                    'post_author' => (string)$params['post_author'],
+                    'post_creation_date' => (string)$params['post_creation_date'],
+                    'post_creation_time' => (string)$params['post_creation_time'],
+                    'post_ids' => (string)$params['post_ids'],
+                    'post_title' => (string)$params['post_title'],
+                    'kunena_post_link' => (string)$params['kunena_post_link'],
+                    'reminder_lines' => (string)$params['reminder_lines'],
+                    'ignored_authors' => (string)$params['ignored_authors']
                 )
             );
-            JFactory::getApplication()->enqueueMessage('Form data prepared: ' . json_encode($data), 'notice');
+            JFactory::getApplication()->enqueueMessage('Form data prepared from database: ' . json_encode($data), 'notice');
         } else {
             JFactory::getApplication()->enqueueMessage('Form data loaded from user state: ' . json_encode($data), 'notice');
         }
@@ -79,17 +79,17 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
         if (empty($row)) {
             JFactory::getApplication()->enqueueMessage('No params found in database, using defaults', 'warning');
             return array(
-                'topic_selection' => 0,
-                'article_category' => 0,
-                'post_transfer_scheme' => 1,
-                'max_article_size' => 40000,
-                'post_author' => 1,
+                'topic_selection' => '0',
+                'article_category' => '0',
+                'post_transfer_scheme' => '1',
+                'max_article_size' => '40000',
+                'post_author' => '1',
                 'post_creation_date' => date('Y-m-d'),
                 'post_creation_time' => date('Y-m-d H:i:s'),
-                'post_ids' => 1,
-                'post_title' => 0,
-                'kunena_post_link' => 0,
-                'reminder_lines' => 0,
+                'post_ids' => '1',
+                'post_title' => '0',
+                'kunena_post_link' => '0',
+                'reminder_lines' => '0',
                 'ignored_authors' => ''
             );
         }
@@ -102,7 +102,6 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
     {
         JFactory::getApplication()->enqueueMessage('Saving form data received: ' . json_encode($data), 'notice');
 
-        // Проверяем, передаются ли данные
         if (empty($data) || !isset($data['jform'])) {
             JFactory::getApplication()->enqueueMessage('No form data to save in jform', 'error');
             return false;
@@ -132,6 +131,9 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
         try {
             $db->execute();
             JFactory::getApplication()->enqueueMessage('Data saved successfully', 'success');
+            // Обновляем состояние формы после сохранения
+            $app = JFactory::getApplication();
+            $app->setUserState('com_kunenatopic2article.edit.topic.data', $data);
             return true;
         } catch (Exception $e) {
             JFactory::getApplication()->enqueueMessage('Save failed with error: ' . $e->getMessage(), 'error');
