@@ -10,9 +10,9 @@ JHtml::_('formbehavior.chosen', 'select');
         <h1><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_PARAMS_TITLE'); ?></h1>
         
         <div class="btn-toolbar mb-3">
-            <button type="submit" class="btn btn-primary mr-2"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_REMEMBER'); ?></button>
-            <button type="button" class="btn btn-secondary mr-2" onclick="this.form.action='<?php echo JRoute::_('index.php?option=com_kunenatopic2article&task=reset'); ?>'; this.form.submit();"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_RESET_PARAMS'); ?></button>
-            <a href="<?php echo JRoute::_('index.php?option=com_kunenatopic2article&task=create'); ?>" class="btn btn-success"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_CREATE_ARTICLES'); ?></a>
+            <button type="button" class="btn btn-primary mr-2" onclick="submitForm('save')">Remember</button>
+            <button type="button" class="btn btn-secondary mr-2" onclick="submitForm('reset')">Reset Parameters</button>
+            <a href="<?php echo JRoute::_('index.php?option=com_kunenatopic2article&task=create'); ?>" class="btn btn-success">Create Articles</a>
         </div>
         
         <h3><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_PARAMS'); ?></h3>
@@ -21,25 +21,33 @@ JHtml::_('formbehavior.chosen', 'select');
         <h3><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_POST_INFO'); ?></h3>
         <?php echo $this->form->renderFieldset('post_info'); ?>
         
-        <input type="hidden" name="task" value="save" id="task" />
+        <input type="hidden" name="task" id="task" />
         <?php echo JHtml::_('form.token'); ?>
     </div>
 </form>
 
 <script type="text/javascript">
-    alert('Script is running!');
     console.log('Script loaded');
     document.addEventListener('DOMContentLoaded', function() {
         console.log('DOM loaded');
         var form = document.getElementById('adminForm');
         if (form) {
             console.log('Form found');
-            form.addEventListener('submit', function(event) {
-                console.log('Form submitted with task: ' + document.getElementById('task').value);
-                console.log('Form action: ' + form.action);
-            });
         } else {
             console.log('Form not found');
         }
+
+        window.submitForm = function(task) {
+            console.log('Submitting form with task: ' + task);
+            var form = document.getElementById('adminForm');
+            if (document.formvalidator.isValid(form)) {
+                console.log('Form is valid');
+                document.getElementById('task').value = task;
+                form.submit();
+            } else {
+                console.log('Form validation failed');
+                alert('Please check the form fields');
+            }
+        };
     });
 </script>
