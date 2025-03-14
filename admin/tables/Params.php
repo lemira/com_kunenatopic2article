@@ -1,8 +1,8 @@
 <?php
 defined('_JEXEC') or die;
 
-// Отладка: проверяем, загружается ли файл
-JFactory::getApplication()->enqueueMessage('Params.php file loaded', 'notice');
+// Простая отладка
+JFactory::getApplication()->enqueueMessage('Params.php is being loaded', 'notice');
 
 class KunenaTopic2ArticleTableParams extends JTable
 {
