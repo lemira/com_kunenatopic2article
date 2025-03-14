@@ -7,7 +7,7 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
     {
         // Проверяем, загружается ли файл таблицы
         if (!class_exists($prefix . $type)) {
-            JFactory::getApplication()->enqueueMessage('Table class ' . $prefix . $type . ' not found', 'error');
+            JFactory::getApplication()->enqueueMessage('Table class ' . $prefix . $type . ' not found. Check file admin/tables/Topic.php', 'error');
             return JTable::getInstance('Content'); // Заглушка
         }
 
