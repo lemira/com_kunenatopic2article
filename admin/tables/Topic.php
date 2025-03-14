@@ -1,9 +1,9 @@
 <?php
 defined('_JEXEC') or die;
 
-// Добавляем отладку для проверки загрузки
+// Отладка: проверяем загрузку файла
 if (!defined('JPATH_COMPONENT_ADMINISTRATOR')) {
-    die('JPATH_COMPONENT_ADMINISTRATOR not defined');
+    JFactory::getApplication()->enqueueMessage('JPATH_COMPONENT_ADMINISTRATOR not defined', 'error');
 }
 
 class KunenaTopic2ArticleTableTopic extends JTable
@@ -24,12 +24,12 @@ class KunenaTopic2ArticleTableTopic extends JTable
 
     public function __construct(&$db)
     {
-        echo 'Constructing KunenaTopic2ArticleTableTopic'; // Отладка
+        JFactory::getApplication()->enqueueMessage('Constructing KunenaTopic2ArticleTableTopic', 'notice'); // Отладка
         parent::__construct('#__kunenatopic2article_params', 'id', $db);
     }
 
     public function check()
     {
-        return true; // Добавляем минимальную реализацию check
+        return true; // Минимальная реализация check
     }
 }
