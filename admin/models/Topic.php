@@ -3,20 +3,14 @@ defined('_JEXEC') or die;
 
 class KunenaTopic2ArticleModelTopic extends JModelAdmin
 {
-    public function getTable($type = 'Topic', $prefix = 'KunenaTopic2ArticleTable', $config = array())
+    public function getTable($type = 'Params', $prefix = 'KunenaTopic2ArticleTable', $config = array())
     {
-        // Проверяем наличие файла Topic.php
-        $tableFile = JPath::clean(JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/tables/Topic.php');
+        // Проверяем наличие файла Params.php
+        $tableFile = JPath::clean(JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/tables/Params.php');
         if (!file_exists($tableFile)) {
             JFactory::getApplication()->enqueueMessage('Table file ' . $tableFile . ' not found', 'error');
         } else {
             JFactory::getApplication()->enqueueMessage('Table file ' . $tableFile . ' found', 'notice');
-        }
-
-        // Проверяем старое имя topic.php для отладки
-        $oldTableFile = JPath::clean(JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/tables/topic.php');
-        if (file_exists($oldTableFile)) {
-            JFactory::getApplication()->enqueueMessage('Old table file ' . $oldTableFile . ' still exists', 'warning');
         }
 
         if (!class_exists($prefix . $type)) {
@@ -35,7 +29,7 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
 
     public function getForm($data = array(), $loadData = true)
     {
-        $form = $tableFile = $this->loadForm('com_kunenatopic2article.topic', 'topic', array('control' => 'jform', 'load_data' => $loadData));
+        $form = $this->loadForm('com_kunenatopic2article.topic', 'topic', array('control' => 'jform', 'load_data' => $loadData));
         if (empty($form)) {
             JFactory::getApplication()->enqueueMessage('Failed to load form', 'error');
             return false;
@@ -127,3 +121,6 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
         return $db->execute();
     }
 }
+
+
+
