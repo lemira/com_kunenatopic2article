@@ -41,21 +41,21 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
 
         if (empty($data)) {
             $params = $this->getParams();
-            $data = array();
-            // Привязываем данные к полям формы
-            $data['jform'] = array(
-                'topic_selection' => isset($params['topic_selection']) ? $params['topic_selection'] : 0,
-                'article_category' => isset($params['article_category']) ? $params['article_category'] : 0,
-                'post_transfer_scheme' => isset($params['post_transfer_scheme']) ? $params['post_transfer_scheme'] : 1,
-                'max_article_size' => isset($params['max_article_size']) ? $params['max_article_size'] : 40000,
-                'post_author' => isset($params['post_author']) ? $params['post_author'] : 1,
-                'post_creation_date' => isset($params['post_creation_date']) ? $params['post_creation_date'] : date('Y-m-d'),
-                'post_creation_time' => isset($params['post_creation_time']) ? $params['post_creation_time'] : date('Y-m-d H:i:s'),
-                'post_ids' => isset($params['post_ids']) ? $params['post_ids'] : 1,
-                'post_title' => isset($params['post_title']) ? $params['post_title'] : 0,
-                'kunena_post_link' => isset($params['kunena_post_link']) ? $params['kunena_post_link'] : 0,
-                'reminder_lines' => isset($params['reminder_lines']) ? $params['reminder_lines'] : 0,
-                'ignored_authors' => isset($params['ignored_authors']) ? $params['ignored_authors'] : ''
+            $data = array(
+                'jform' => array(
+                    'topic_selection' => (string)isset($params['topic_selection']) ? $params['topic_selection'] : '0',
+                    'article_category' => (string)isset($params['article_category']) ? $params['article_category'] : '0',
+                    'post_transfer_scheme' => (string)isset($params['post_transfer_scheme']) ? $params['post_transfer_scheme'] : '1',
+                    'max_article_size' => (string)isset($params['max_article_size']) ? $params['max_article_size'] : '40000',
+                    'post_author' => (string)isset($params['post_author']) ? $params['post_author'] : '1',
+                    'post_creation_date' => (string)isset($params['post_creation_date']) ? $params['post_creation_date'] : date('Y-m-d'),
+                    'post_creation_time' => (string)isset($params['post_creation_time']) ? $params['post_creation_time'] : date('Y-m-d H:i:s'),
+                    'post_ids' => (string)isset($params['post_ids']) ? $params['post_ids'] : '1',
+                    'post_title' => (string)isset($params['post_title']) ? $params['post_title'] : '0',
+                    'kunena_post_link' => (string)isset($params['kunena_post_link']) ? $params['kunena_post_link'] : '0',
+                    'reminder_lines' => (string)isset($params['reminder_lines']) ? $params['reminder_lines'] : '0',
+                    'ignored_authors' => (string)isset($params['ignored_authors']) ? $params['ignored_authors'] : ''
+                )
             );
             JFactory::getApplication()->enqueueMessage('Form data prepared: ' . json_encode($data), 'notice');
         } else {
@@ -100,15 +100,14 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
 
     public function save($data)
     {
-        JFactory::getApplication()->enqueueMessage('Saving form data: ' . json_encode($data), 'notice');
+        JFactory::getApplication()->enqueueMessage('Saving form data received: ' . json_encode($data), 'notice');
 
         // Проверяем, передаются ли данные
         if (empty($data) || !isset($data['jform'])) {
-            JFactory::getApplication()->enqueueMessage('No form data to save', 'error');
+            JFactory::getApplication()->enqueueMessage('No form data to save in jform', 'error');
             return false;
         }
 
-        // Извлекаем данные из jform
         $formData = $data['jform'];
         JFactory::getApplication()->enqueueMessage('Extracted form data: ' . json_encode($formData), 'notice');
 
@@ -130,11 +129,12 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
               ->where('id = 1');
         $db->setQuery($query);
 
-        if ($db->execute()) {
+        try {
+            $db->execute();
             JFactory::getApplication()->enqueueMessage('Data saved successfully', 'success');
             return true;
-        } else {
-            JFactory::getApplication()->enqueueMessage('Failed to save data', 'error');
+        } catch (Exception $e) {
+            JFactory::getApplication()->enqueueMessage('Save failed with error: ' . $e->getMessage(), 'error');
             return false;
         }
     }
