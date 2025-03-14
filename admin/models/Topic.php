@@ -5,6 +5,20 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
 {
     public function getTable($type = 'Topic', $prefix = 'KunenaTopic2ArticleTable', $config = array())
     {
+        // Проверяем, существует ли таблица
+        $db = JFactory::getDbo();
+        $tableName = '#__kunenatopic2article_params';
+        $query = $db->getQuery(true)
+                    ->select('COUNT(*)')
+                    ->from($db->quoteName($tableName));
+        $db->setQuery($query);
+        $exists = $db->loadResult();
+
+        if (!$exists) {
+            JFactory::getApplication()->enqueueMessage('Table ' . $tableName . ' not found. Please reinstall the component.', 'error');
+            return false;
+        }
+
         return JTable::getInstance($type, $prefix, $config);
     }
 
