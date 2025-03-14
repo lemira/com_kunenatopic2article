@@ -5,11 +5,18 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
 {
     public function getTable($type = 'Topic', $prefix = 'KunenaTopic2ArticleTable', $config = array())
     {
+        // Проверяем, загружается ли файл таблицы
+        if (!class_exists($prefix . $type)) {
+            JFactory::getApplication()->enqueueMessage('Table class ' . $prefix . $type . ' not found', 'error');
+            return JTable::getInstance('Content'); // Заглушка
+        }
+
         $table = JTable::getInstance($type, $prefix, $config);
         if ($table === false) {
             JFactory::getApplication()->enqueueMessage('Failed to load table ' . $prefix . $type, 'error');
-            return JTable::getInstance('Content'); // Заглушка, чтобы избежать ошибки
+            return JTable::getInstance('Content'); // Заглушка
         }
+
         return $table;
     }
 
