@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<extension type="component" version="3.0" method="upgrade">
+<extension type="component" version="3.10" method="upgrade">
     <name>com_kunenatopic2article</name>
     <author>Lemira</author>
     <creationDate>October 2023</creationDate>
     <copyright>(C) 2023 Lemira. All rights reserved.</copyright>
-    <license>GNU/GPL</license>
+    <license>GNU General Public License version 2 or later</license>
     <authorEmail>admin@example.com</authorEmail>
     <authorUrl>www.example.com</authorUrl>
     <version>1.0.0</version>
@@ -14,22 +14,24 @@
         <sql>
             <file driver="mysql" charset="utf8">sql/install.mysql.utf8.sql</file>
         </sql>
-        <scriptfile>admin/script.php</scriptfile>
     </install>
 
+    <uninstall>
+        <sql>
+            <file driver="mysql" charset="utf8">sql/uninstall.mysql.utf8.sql</file>
+        </sql>
+    </uninstall>
+
+    <files folder="admin">
+        <folder>components</folder>
+        <folder>language</folder>
+        <folder>models</folder>
+        <folder>sql</folder>
+        <folder>tables</folder>
+        <folder>views</folder>
+    </files>
+
     <administration>
-        <menu>COM_KUNENATOPIC2ARTICLE</menu>
-        <files folder="admin">
-            <filename>kunenatopic2article.php</filename>
-            <filename>controller.php</filename>
-            <filename>script.php</filename>
-            <folder>controllers</folder>
-            <folder>models</folder>
-            <folder>views</folder>
-            <folder>tables</folder>
-            <folder>language</folder>
-            <folder>sql</folder>
-        </files>
-        <filename>tables/Params.php</filename>
+        <menu link="option=com_kunenatopic2article">COM_KUNENATOPIC2ARTICLE</menu>
     </administration>
 </extension>
