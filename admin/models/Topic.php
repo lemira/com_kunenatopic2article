@@ -75,8 +75,8 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
                 'post_transfer_scheme' => '1',
                 'max_article_size' => '40000',
                 'post_author' => '1',
-                'post_creation_date' => date('Y-m-d'),
-                'post_creation_time' => date('Y-m-d H:i:s'),
+                'post_creation_date' => '1',
+                'post_creation_time' => '1',
                 'post_ids' => '1',
                 'post_title' => '0',
                 'kunena_post_link' => '0',
@@ -93,11 +93,6 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
         if (empty($data)) {
             JFactory::getApplication()->enqueueMessage('No form data to save', 'error');
             return false;
-        }
-
-        // Исправляем значение post_creation_time
-        if (isset($data['post_creation_time']) && $data['post_creation_time'] === 'now') {
-            $data['post_creation_time'] = date('Y-m-d H:i:s');
         }
 
         $db = JFactory::getDbo();
@@ -139,8 +134,8 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
               ->set('post_transfer_scheme = 1')
               ->set('max_article_size = 40000')
               ->set('post_author = 1')
-              ->set('post_creation_date = ' . $db->quote(date('Y-m-d')))
-              ->set('post_creation_time = ' . $db->quote(date('Y-m-d H:i:s')))
+              ->set('post_creation_date = 1')
+              ->set('post_creation_time = 1')
               ->set('post_ids = 1')
               ->set('post_title = 0')
               ->set('kunena_post_link = 0')
