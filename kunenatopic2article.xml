@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<extension type="component" version="3.10" method="upgrade">
+<extension type="component" version="5.0" method="upgrade">
     <name>com_kunenatopic2article</name>
     <author>Lemira</author>
     <creationDate>October 2023</creationDate>
@@ -13,8 +13,8 @@
     <scriptfile>admin/install.php</scriptfile>
 
     <files folder="admin">
-        <filename>controller.php</filename> <!-- Укажем существующий файл верхнего уровня -->
-        <filename>index.html</filename> <!-- Если есть, добавим -->
+        <filename>controller.php</filename>
+        <filename>index.html</filename>
         <filename>install.php</filename>
         <folder>controllers</folder>
         <folder>language</folder>
