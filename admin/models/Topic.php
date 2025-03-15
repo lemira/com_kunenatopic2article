@@ -30,7 +30,7 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
         $app = JFactory::getApplication();
         $data = $app->getUserState('com_kunenatopic2article.edit.topic.data', array());
 
-        // Если данные были успешно сохранены, очищаем состояние
+        // После успешного сохранения или сброса загружаем данные из базы
         if ($app->getUserState('com_kunenatopic2article.save.success', false)) {
             $app->setUserState('com_kunenatopic2article.edit.topic.data', array());
             $app->setUserState('com_kunenatopic2article.save.success', false);
@@ -53,9 +53,6 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
                 'reminder_lines' => (string)$params['reminder_lines'],
                 'ignored_authors' => (string)$params['ignored_authors']
             );
-            JFactory::getApplication()->enqueueMessage('Form data prepared from database: ' . json_encode($data), 'notice');
-        } else {
-            JFactory::getApplication()->enqueueMessage('Form data loaded from user state: ' . json_encode($data), 'notice');
         }
 
         return $data;
@@ -72,7 +69,6 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
         $row = $db->loadAssoc();
 
         if (empty($row)) {
-            JFactory::getApplication()->enqueueMessage('No params found in database, using defaults', 'warning');
             return array(
                 'topic_selection' => '0',
                 'article_category' => '0',
@@ -94,8 +90,6 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
 
     public function save($data)
     {
-        JFactory::getApplication()->enqueueMessage('Saving form data received: ' . json_encode($data), 'notice');
-
         if (empty($data)) {
             JFactory::getApplication()->enqueueMessage('No form data to save', 'error');
             return false;
@@ -126,7 +120,6 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
 
         try {
             $db->execute();
-            JFactory::getApplication()->enqueueMessage('Data saved successfully', 'success');
             $app = JFactory::getApplication();
             $app->setUserState('com_kunenatopic2article.save.success', true);
             return true;
@@ -158,7 +151,6 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
 
         try {
             $db->execute();
-            JFactory::getApplication()->enqueueMessage('Parameters reset successfully', 'success');
             $app = JFactory::getApplication();
             $app->setUserState('com_kunenatopic2article.save.success', true);
             return true;
