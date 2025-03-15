@@ -1,58 +1,23 @@
 CREATE TABLE IF NOT EXISTS `#__kunenatopic2article_params` (
-    `id` INT NOT NULL AUTO_INCREMENT,
-    `topic_selection` INT NOT NULL DEFAULT 0,
-    `article_category` INT NOT NULL DEFAULT 0,
-    `post_transfer_scheme` TINYINT(1) NOT NULL DEFAULT 1,
-    `max_article_size` INT NOT NULL DEFAULT 40000,
-    `post_author` TINYINT(1) NOT NULL DEFAULT 1,
-    `post_creation_date` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `post_creation_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `post_ids` TINYINT(1) NOT NULL DEFAULT 1,
-    `post_title` TINYINT(1) NOT NULL DEFAULT 0,
-    `kunena_post_link` TINYINT(1) NOT NULL DEFAULT 0,
-    `reminder_lines` INT NOT NULL DEFAULT 0,
-    `ignored_authors` TEXT DEFAULT NULL,
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `topic_selection` int(11) NOT NULL DEFAULT '0',
+    `article_category` int(11) NOT NULL DEFAULT '0',
+    `post_transfer_scheme` int(11) NOT NULL DEFAULT '1',
+    `max_article_size` int(11) NOT NULL DEFAULT '40000',
+    `post_author` int(11) NOT NULL DEFAULT '1',
+    `post_creation_date` date NOT NULL DEFAULT CURRENT_DATE,
+    `post_creation_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `post_ids` int(11) NOT NULL DEFAULT '1',
+    `post_title` int(11) NOT NULL DEFAULT '0',
+    `kunena_post_link` int(11) NOT NULL DEFAULT '0',
+    `reminder_lines` int(11) NOT NULL DEFAULT '0',
+    `ignored_authors` text,
     PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `#__kunenatopic2article_params` (
-    `id`,
-    `topic_selection`,
-    `article_category`,
-    `post_transfer_scheme`,
-    `max_article_size`,
-    `post_author`,
-    `post_creation_date`,
-    `post_creation_time`,
-    `post_ids`,
-    `post_title`,
-    `kunena_post_link`,
-    `reminder_lines`,
-    `ignored_authors`
-) VALUES (
-    1,
-    0,
-    0,
-    1,
-    40000,
-    1,
-    CURRENT_TIMESTAMP,
-    CURRENT_TIMESTAMP,
-    1,
-    0,
-    0,
-    0,
-    NULL
-) ON DUPLICATE KEY UPDATE
-    `topic_selection` = 0,
-    `article_category` = 0,
-    `post_transfer_scheme` = 1,
-    `max_article_size` = 40000,
-    `post_author` = 1,
-    `post_creation_date` = CURRENT_TIMESTAMP,
-    `post_creation_time` = CURRENT_TIMESTAMP,
-    `post_ids` = 1,
-    `post_title` = 0,
-    `kunena_post_link` = 0,
-    `reminder_lines` = 0,
-    `ignored_authors` = NULL;
+INSERT INTO `#__kunenatopic2article_params` (`id`, `topic_selection`, `article_category`, `post_transfer_scheme`, `max_article_size`, `post_author`, `post_creation_date`, `post_creation_time`, `post_ids`, `post_title`, `kunena_post_link`, `reminder_lines`, `ignored_authors`)
+SELECT 1, 0, 0, 1, 40000, 1, CURRENT_DATE, CURRENT_TIMESTAMP, 1, 0, 0, 0, ''
+FROM DUAL
+WHERE NOT EXISTS (
+    SELECT 1 FROM `#__kunenatopic2article_params` WHERE `id` = 1
+);
