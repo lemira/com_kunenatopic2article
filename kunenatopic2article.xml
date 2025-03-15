@@ -10,17 +10,7 @@
     <version>1.0.0</version>
     <description>COM_KUNENATOPIC2ARTICLE_DESCRIPTION</description>
 
-    <install>
-        <sql>
-            <file driver="mysql" charset="utf8">sql/install.mysql.utf8.sql</file>
-        </sql>
-    </install>
-
-    <uninstall>
-        <sql>
-            <file driver="mysql" charset="utf8">sql/uninstall.mysql.utf8.sql</file>
-        </sql>
-    </uninstall>
+    <scriptfile>admin/install.php</scriptfile>
 
     <files folder="admin">
         <folder>controllers</folder>
@@ -29,6 +19,7 @@
         <folder>sql</folder>
         <folder>tables</folder>
         <folder>views</folder>
+        <filename>install.php</filename>
     </files>
 
     <administration>
