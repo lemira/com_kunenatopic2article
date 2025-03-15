@@ -13,13 +13,15 @@
     <scriptfile>admin/install.php</scriptfile>
 
     <files folder="admin">
+        <filename>controller.php</filename> <!-- Укажем существующий файл верхнего уровня -->
+        <filename>index.html</filename> <!-- Если есть, добавим -->
+        <filename>install.php</filename>
         <folder>controllers</folder>
         <folder>language</folder>
         <folder>models</folder>
         <folder>sql</folder>
         <folder>tables</folder>
         <folder>views</folder>
-        <filename>install.php</filename>
     </files>
 
     <administration>
