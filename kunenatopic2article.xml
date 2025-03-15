@@ -12,26 +12,17 @@
 
     <install>
         <sql>
-            <file driver="mysql" charset="utf8">sql/install.mysql.utf8.sql</file>
+            <file driver="mysql" charset="utf8">admin/sql/install.mysql.utf8.sql</file>
         </sql>
     </install>
 
     <uninstall>
         <sql>
-            <file driver="mysql" charset="utf8">sql/uninstall.mysql.utf8.sql</file>
+            <file driver="mysql" charset="utf8">admin/sql/uninstall.mysql.utf8.sql</file>
         </sql>
     </uninstall>
 
     <files folder="admin">
         <folder>controllers</folder>
         <folder>language</folder>
-        <folder>models</folder>
-        <folder>sql</folder>
-        <folder>tables</folder>
-        <folder>views</folder>
-    </files>
-
-    <administration>
-        <menu link="option=com_kunenatopic2article">COM_KUNENATOPIC2ARTICLE</menu>
-    </administration>
-</extension>
+        <folder>
