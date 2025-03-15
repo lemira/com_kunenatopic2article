@@ -5,13 +5,6 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
 {
     public function getTable($type = 'Params', $prefix = 'KunenaTopic2ArticleTable', $config = array())
     {
-        $tableFile = JPath::clean(JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/tables/Params.php');
-        if (!file_exists($tableFile)) {
-            JFactory::getApplication()->enqueueMessage('Table file ' . $tableFile . ' not found', 'error');
-        } else {
-            JFactory::getApplication()->enqueueMessage('Table file ' . $tableFile . ' found', 'notice');
-        }
-
         $table = JTable::getInstance($type, $prefix, $config);
         if ($table === false) {
             JFactory::getApplication()->enqueueMessage('Failed to load table ' . $prefix . $type, 'error');
@@ -23,20 +16,17 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
 
     public function getForm($data = array(), $loadData = true)
     {
-        JFactory::getApplication()->enqueueMessage('Trying to load form com_kunenatopic2article.topic', 'notice');
         $form = $this->loadForm('com_kunenatopic2article.topic', 'topic', array('control' => 'jform', 'load_data' => $loadData));
         if (empty($form)) {
             JFactory::getApplication()->enqueueMessage('Failed to load form com_kunenatopic2article.topic', 'error');
             return false;
         }
 
-        JFactory::getApplication()->enqueueMessage('Form com_kunenatopic2article.topic loaded successfully', 'notice');
         return $form;
     }
 
     protected function loadFormData()
     {
-        JFactory::getApplication()->enqueueMessage('Loading form data', 'notice');
         $app = JFactory::getApplication();
         $data = $app->getUserState('com_kunenatopic2article.edit.topic.data', array());
 
@@ -73,7 +63,6 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
 
     public function getParams()
     {
-        JFactory::getApplication()->enqueueMessage('Fetching params from database', 'notice');
         $db = JFactory::getDbo();
         $query = $db->getQuery(true);
         $query->select('*')
@@ -100,7 +89,6 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
             );
         }
 
-        JFactory::getApplication()->enqueueMessage('Params loaded from database: ' . json_encode($row), 'notice');
         return $row;
     }
 
@@ -108,10 +96,14 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
     {
         JFactory::getApplication()->enqueueMessage('Saving form data received: ' . json_encode($data), 'notice');
 
-        // Данные формы уже приходят в нужном формате (без jform)
         if (empty($data)) {
             JFactory::getApplication()->enqueueMessage('No form data to save', 'error');
             return false;
+        }
+
+        // Исправляем значение post_creation_time
+        if (isset($data['post_creation_time']) && $data['post_creation_time'] === 'now') {
+            $data['post_creation_time'] = date('Y-m-d H:i:s');
         }
 
         $db = JFactory::getDbo();
@@ -135,7 +127,6 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
         try {
             $db->execute();
             JFactory::getApplication()->enqueueMessage('Data saved successfully', 'success');
-            // Устанавливаем флаг успешного сохранения
             $app = JFactory::getApplication();
             $app->setUserState('com_kunenatopic2article.save.success', true);
             return true;
@@ -147,8 +138,6 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
 
     public function reset()
     {
-        JFactory::getApplication()->enqueueMessage('Resetting parameters', 'notice');
-
         $db = JFactory::getDbo();
         $query = $db->getQuery(true);
         $query->update('#__kunenatopic2article_params')
@@ -170,7 +159,6 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
         try {
             $db->execute();
             JFactory::getApplication()->enqueueMessage('Parameters reset successfully', 'success');
-            // Устанавливаем флаг успешного сброса
             $app = JFactory::getApplication();
             $app->setUserState('com_kunenatopic2article.save.success', true);
             return true;
