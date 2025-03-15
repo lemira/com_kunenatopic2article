@@ -37,25 +37,31 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
     protected function loadFormData()
     {
         JFactory::getApplication()->enqueueMessage('Loading form data', 'notice');
-        $data = JFactory::getApplication()->getUserState('com_kunenatopic2article.edit.topic.data', array());
+        $app = JFactory::getApplication();
+        $data = $app->getUserState('com_kunenatopic2article.edit.topic.data', array());
+
+        // Если данные были успешно сохранены, очищаем состояние
+        if ($app->getUserState('com_kunenatopic2article.save.success', false)) {
+            $app->setUserState('com_kunenatopic2article.edit.topic.data', array());
+            $app->setUserState('com_kunenatopic2article.save.success', false);
+            $data = array();
+        }
 
         if (empty($data)) {
             $params = $this->getParams();
             $data = array(
-                'jform' => array(
-                    'topic_selection' => (string)$params['topic_selection'],
-                    'article_category' => (string)$params['article_category'],
-                    'post_transfer_scheme' => (string)$params['post_transfer_scheme'],
-                    'max_article_size' => (string)$params['max_article_size'],
-                    'post_author' => (string)$params['post_author'],
-                    'post_creation_date' => (string)$params['post_creation_date'],
-                    'post_creation_time' => (string)$params['post_creation_time'],
-                    'post_ids' => (string)$params['post_ids'],
-                    'post_title' => (string)$params['post_title'],
-                    'kunena_post_link' => (string)$params['kunena_post_link'],
-                    'reminder_lines' => (string)$params['reminder_lines'],
-                    'ignored_authors' => (string)$params['ignored_authors']
-                )
+                'topic_selection' => (string)$params['topic_selection'],
+                'article_category' => (string)$params['article_category'],
+                'post_transfer_scheme' => (string)$params['post_transfer_scheme'],
+                'max_article_size' => (string)$params['max_article_size'],
+                'post_author' => (string)$params['post_author'],
+                'post_creation_date' => (string)$params['post_creation_date'],
+                'post_creation_time' => (string)$params['post_creation_time'],
+                'post_ids' => (string)$params['post_ids'],
+                'post_title' => (string)$params['post_title'],
+                'kunena_post_link' => (string)$params['kunena_post_link'],
+                'reminder_lines' => (string)$params['reminder_lines'],
+                'ignored_authors' => (string)$params['ignored_authors']
             );
             JFactory::getApplication()->enqueueMessage('Form data prepared from database: ' . json_encode($data), 'notice');
         } else {
@@ -102,38 +108,36 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
     {
         JFactory::getApplication()->enqueueMessage('Saving form data received: ' . json_encode($data), 'notice');
 
-        if (empty($data) || !isset($data['jform'])) {
-            JFactory::getApplication()->enqueueMessage('No form data to save in jform', 'error');
+        // Данные формы уже приходят в нужном формате (без jform)
+        if (empty($data)) {
+            JFactory::getApplication()->enqueueMessage('No form data to save', 'error');
             return false;
         }
-
-        $formData = $data['jform'];
-        JFactory::getApplication()->enqueueMessage('Extracted form data: ' . json_encode($formData), 'notice');
 
         $db = JFactory::getDbo();
         $query = $db->getQuery(true);
         $query->update('#__kunenatopic2article_params')
-              ->set('topic_selection = ' . $db->quote($formData['topic_selection']))
-              ->set('article_category = ' . $db->quote($formData['article_category']))
-              ->set('post_transfer_scheme = ' . $db->quote($formData['post_transfer_scheme']))
-              ->set('max_article_size = ' . $db->quote($formData['max_article_size']))
-              ->set('post_author = ' . $db->quote($formData['post_author']))
-              ->set('post_creation_date = ' . $db->quote($formData['post_creation_date']))
-              ->set('post_creation_time = ' . $db->quote($formData['post_creation_time']))
-              ->set('post_ids = ' . $db->quote($formData['post_ids']))
-              ->set('post_title = ' . $db->quote($formData['post_title']))
-              ->set('kunena_post_link = ' . $db->quote($formData['kunena_post_link']))
-              ->set('reminder_lines = ' . $db->quote($formData['reminder_lines']))
-              ->set('ignored_authors = ' . $db->quote($formData['ignored_authors']))
+              ->set('topic_selection = ' . $db->quote($data['topic_selection']))
+              ->set('article_category = ' . $db->quote($data['article_category']))
+              ->set('post_transfer_scheme = ' . $db->quote($data['post_transfer_scheme']))
+              ->set('max_article_size = ' . $db->quote($data['max_article_size']))
+              ->set('post_author = ' . $db->quote($data['post_author']))
+              ->set('post_creation_date = ' . $db->quote($data['post_creation_date']))
+              ->set('post_creation_time = ' . $db->quote($data['post_creation_time']))
+              ->set('post_ids = ' . $db->quote($data['post_ids']))
+              ->set('post_title = ' . $db->quote($data['post_title']))
+              ->set('kunena_post_link = ' . $db->quote($data['kunena_post_link']))
+              ->set('reminder_lines = ' . $db->quote($data['reminder_lines']))
+              ->set('ignored_authors = ' . $db->quote($data['ignored_authors']))
               ->where('id = 1');
         $db->setQuery($query);
 
         try {
             $db->execute();
             JFactory::getApplication()->enqueueMessage('Data saved successfully', 'success');
-            // Обновляем состояние формы после сохранения
+            // Устанавливаем флаг успешного сохранения
             $app = JFactory::getApplication();
-            $app->setUserState('com_kunenatopic2article.edit.topic.data', $data);
+            $app->setUserState('com_kunenatopic2article.save.success', true);
             return true;
         } catch (Exception $e) {
             JFactory::getApplication()->enqueueMessage('Save failed with error: ' . $e->getMessage(), 'error');
@@ -163,11 +167,15 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
               ->where('id = 1');
         $db->setQuery($query);
 
-        if ($db->execute()) {
+        try {
+            $db->execute();
             JFactory::getApplication()->enqueueMessage('Parameters reset successfully', 'success');
+            // Устанавливаем флаг успешного сброса
+            $app = JFactory::getApplication();
+            $app->setUserState('com_kunenatopic2article.save.success', true);
             return true;
-        } else {
-            JFactory::getApplication()->enqueueMessage('Failed to reset parameters', 'error');
+        } catch (Exception $e) {
+            JFactory::getApplication()->enqueueMessage('Failed to reset parameters: ' . $e->getMessage(), 'error');
             return false;
         }
     }
