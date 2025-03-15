@@ -22,13 +22,8 @@
         </sql>
     </uninstall>
 
-    <files folder="admin">
-        <folder>components</folder>
-        <folder>language</folder>
-        <folder>models</folder>
-        <folder>sql</folder>
-        <folder>tables</folder>
-        <folder>views</folder>
+    <files>
+        <folder>admin</folder>
     </files>
 
     <administration>
