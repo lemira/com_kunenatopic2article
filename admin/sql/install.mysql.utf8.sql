@@ -5,8 +5,8 @@ CREATE TABLE IF NOT EXISTS `#__kunenatopic2article_params` (
     `post_transfer_scheme` int(11) NOT NULL DEFAULT '1',
     `max_article_size` int(11) NOT NULL DEFAULT '40000',
     `post_author` int(11) NOT NULL DEFAULT '1',
-    `post_creation_date` date NOT NULL DEFAULT CURRENT_DATE,
-    `post_creation_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `post_creation_date` date NOT NULL DEFAULT '2023-01-01',
+    `post_creation_time` datetime NOT NULL DEFAULT '2023-01-01 00:00:00',
     `post_ids` int(11) NOT NULL DEFAULT '1',
     `post_title` int(11) NOT NULL DEFAULT '0',
     `kunena_post_link` int(11) NOT NULL DEFAULT '0',
@@ -15,9 +15,5 @@ CREATE TABLE IF NOT EXISTS `#__kunenatopic2article_params` (
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `#__kunenatopic2article_params` (`id`, `topic_selection`, `article_category`, `post_transfer_scheme`, `max_article_size`, `post_author`, `post_creation_date`, `post_creation_time`, `post_ids`, `post_title`, `kunena_post_link`, `reminder_lines`, `ignored_authors`)
-SELECT 1, 0, 0, 1, 40000, 1, CURRENT_DATE, CURRENT_TIMESTAMP, 1, 0, 0, 0, ''
-FROM DUAL
-WHERE NOT EXISTS (
-    SELECT 1 FROM `#__kunenatopic2article_params` WHERE `id` = 1
-);
+INSERT IGNORE INTO `#__kunenatopic2article_params` (`id`, `topic_selection`, `article_category`, `post_transfer_scheme`, `max_article_size`, `post_author`, `post_creation_date`, `post_creation_time`, `post_ids`, `post_title`, `kunena_post_link`, `reminder_lines`, `ignored_authors`)
+VALUES (1, 0, 0, 1, 40000, 1, '2023-01-01', '2023-01-01 00:00:00', 1, 0, 0, 0, '');
