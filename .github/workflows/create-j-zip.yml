@@ -16,12 +16,24 @@ jobs:
     - name: Install zip
       run: sudo apt-get install zip
 
+    - name: Clear GitHub Actions cache
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cache
+          ~/.npm
+          ~/.yarn
+        key: ${{ runner.os }}-all-caches
+        restore-keys: |
+          ${{ runner.os }}-all-caches
+
     - name: Create ZIP without root folder
       run: |
         mkdir temp
         cp -r * temp
         cd temp
         zip -r ../archive.zip .
+
     - name: Upload artifact
       uses: actions/upload-artifact@v2.2.4
       with:
