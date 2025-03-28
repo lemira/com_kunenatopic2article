@@ -24,10 +24,7 @@ jobs:
         zip -r ../archive.zip .
 
     - name: Upload artifact
-      run: |
-        mkdir -p ${{ github.workspace }}/artifact
-        mv archive.zip ${{ github.workspace }}/artifact/
-      uses: actions/upload-artifact@v2
+      uses: actions-ecosystem/upload-artifact@v2
       with:
         name: archive
-        path: ${{ github.workspace }}/artifact/archive.zip
+        path: archive.zip
