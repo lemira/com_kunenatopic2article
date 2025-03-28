@@ -1,0 +1,22 @@
+name: Clear Cache
+
+on: 
+  push:
+    branches:
+      - main
+
+jobs:
+  clear-cache:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Clear GitHub Actions cache
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cache
+          ~/.npm
+          ~/.yarn
+        key: ${{ runner.os }}-all-caches
+        restore-keys: |
+          ${{ runner.os }}-all-caches
