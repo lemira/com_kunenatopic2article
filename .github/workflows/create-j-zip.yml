@@ -23,7 +23,7 @@ jobs:
         cd temp
         zip -r ../archive.zip .
     - name: Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v2.2.4
       with:
         name: archive
         path: archive.zip
