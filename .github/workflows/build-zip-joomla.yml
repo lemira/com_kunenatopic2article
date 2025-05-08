@@ -15,7 +15,7 @@ jobs:
       run: |
         zip -r Joomla-Component.zip * -x ".git*" ".github*"
 
-    - name: Upload ZIP artifact
+    - name: Upload Joomla files
       uses: actions/upload-artifact@v4
       with:
         name: Joomla-Component
