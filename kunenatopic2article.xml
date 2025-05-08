@@ -1,1 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="component" version="5.3.0" method="upgrade">
+    <name>com_kunenatopic2article</name>
+    <version>1.0.0</version>
+    <creationDate>2025-05-08</creationDate>
+    <author>lr</author>
+    <authorEmail>lemirat@gmail.com</authorEmail>
+    <authorUrl>https://geschichte-chronologie.de</authorUrl>
+    <copyright>(C) 2025 lr. All rights reserved.</copyright>
+    <license>GNU/GPL</license>
+    <description>COM_KUNENATOPIC2ARTICLE_DESC</description>
 
+    <files folder="admin">
+        <filename>access.xml</filename>
+        <filename>controller.php</filename>
+        <filename>kunenatopic2article.php</filename>
+        <folder>language</folder>
+        <folder>models</folder>
+        <folder>tables</folder>
+        <folder>views</folder>
+        <folder>sql</folder>
+    </files>
+
+    <administration>
+        <menu link="option=com_kunenatopic2article">COM_KUNENATOPIC2ARTICLE</menu>
+        <files folder="admin">
+            <filename>access.xml</filename>
+            <filename>controller.php</filename>
+            <filename>kunenatopic2article.php</filename>
+            <folder>language</folder>
+            <folder>models</folder>
+            <folder>tables</folder>
+            <folder>views</folder>
+            <folder>sql</folder>
+        </files>
+    </administration>
+
+    <install>
+        <sql>
+            <file driver="mysql" charset="utf8">sql/install.mysql.utf8.sql</file>
+        </sql>
+    </install>
+    <uninstall>
+        <sql>
+            <file driver="mysql" charset="utf8">sql/uninstall.mysql.utf8.sql</file>
+        </sql>
+    </uninstall>
+</extension>
