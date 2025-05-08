@@ -13,19 +13,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Create ZIP archive
-      run: |
-        zip -r Joomla-Component.zip * -x ".git*" ".github*"
+      - name: Create ZIP archive
+        run: |
+          zip -r Joomla-Component.zip * -x ".git*" ".github*"
 
-    - name: Extract ZIP archive
-      run: |
-        unzip Joomla-Component.zip -d extracted_files
+      - name: Extract ZIP archive
+        run: |
+          unzip Joomla-Component.zip -d extracted_files
 
-    - name: Upload extracted files
-      uses: actions/upload-artifact@v4
-      with:
-        name: Joomla-Component
-        path: extracted_files/
+      - name: Upload extracted files
+        uses: actions/upload-artifact@v4
+        with:
+          name: Joomla-Component
+          path: extracted_files/
