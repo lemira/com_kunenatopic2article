@@ -1,10 +1,7 @@
 name: Build Joomla Package
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+   workflow_dispatch:
 
 jobs:
   build:
@@ -12,7 +9,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Determine active branch
       run: echo "Working in branch $GITHUB_REF_NAME"
@@ -22,7 +19,7 @@ jobs:
         zip -r joomla_component.zip * -x ".git*" ".github*"
 
     - name: Upload ZIP artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Joomla-Component
         path: joomla_component.zip
