@@ -11,12 +11,16 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Create ZIP archive (без вложенного файла)
+    - name: Create ZIP archive
       run: |
         zip -r Joomla-Component.zip * -x ".git*" ".github*"
 
-    - name: Upload Joomla files
+    - name: Extract ZIP archive
+      run: |
+        unzip Joomla-Component.zip -d extracted_files
+
+    - name: Upload extracted files
       uses: actions/upload-artifact@v4
       with:
         name: Joomla-Component
-        path: Joomla-Component.zip
+        path: extracted_files/
