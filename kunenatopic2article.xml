@@ -11,7 +11,6 @@
     <description>COM_KUNENATOPIC2ARTICLE_DESC</description>
 
     <files folder="admin">
-        <filename>access.xml</filename>
         <filename>controller.php</filename>
         <filename>kunenatopic2article.php</filename>
         <folder>language</folder>
@@ -24,7 +23,6 @@
     <administration>
         <menu link="option=com_kunenatopic2article">COM_KUNENATOPIC2ARTICLE</menu>
         <files folder="admin">
-            <filename>access.xml</filename>
             <filename>controller.php</filename>
             <filename>kunenatopic2article.php</filename>
             <folder>language</folder>
