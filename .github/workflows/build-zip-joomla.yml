@@ -2,11 +2,6 @@ name: Build Joomla Package
 
 on:
   workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Выбор ветки для запуска'
-        required: true
-        default: 'interface'
 
 jobs:
   build:
@@ -16,16 +11,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Create ZIP archive
+      - name: Create ZIP archive with timestamp
         run: |
-          zip -r Joomla-Component.zip * -x ".git*" ".github*"
+          TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+          zip -r Joomla-Component-$TIMESTAMP.zip * -x ".git*" ".github*"
 
       - name: Extract ZIP archive
         run: |
-          unzip Joomla-Component.zip -d extracted_files
+          TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+          unzip Joomla-Component-$TIMESTAMP.zip -d extracted_files
 
       - name: Upload extracted files
         uses: actions/upload-artifact@v4
         with:
-          name: Joomla-Component
+          name: Joomla-Component-${{ github.run_id }}
           path: extracted_files/
