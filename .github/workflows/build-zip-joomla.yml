@@ -11,8 +11,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set timestamp variable
-        run: echo "TIMESTAMP=$(date +"%y%m%d-%H%M")" >> $GITHUB_ENV
+      - name: Set timestamp variable (Берлинское время)
+        run: |
+          TIMESTAMP=$(TZ="Europe/Berlin" date +"%y%m%d-%H%M")
+          echo "Используемый TIMESTAMP: $TIMESTAMP"
+          echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
 
       - name: Create ZIP archive with timestamp
         run: |
