@@ -22,7 +22,6 @@
     </uninstall>
 
     <files folder="admin">
-        <filename>config.xml</filename>
         <filename>controller.php</filename>
         <folder>controllers</folder>
         <folder>language</folder>
