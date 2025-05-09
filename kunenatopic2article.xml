@@ -5,8 +5,8 @@
     <creationDate>January 2025</creationDate>
     <copyright>(C) 2025 lr. All rights reserved.</copyright>
     <license>GNU/GPL</license>
-    <authorEmail>admin@example.com</authorEmail>
-    <authorUrl>www.example.com</authorUrl>
+    <authorEmail>lemirat@gmail.com</authorEmail>
+    <authorUrl>geschichte-chronologie.de</authorUrl>
     <version>1.0.0</version>
     <description>COM_KUNENATOPIC2ARTICLE_DESC</description>
 
@@ -22,7 +22,6 @@
     </uninstall>
 
     <files folder="admin">
-        <filename>access.xml</filename>
         <filename>config.xml</filename>
         <filename>controller.php</filename>
         <folder>controllers</folder>
