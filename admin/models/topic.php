@@ -4,7 +4,7 @@ defined('_JEXEC') or die;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Factory;
 
-class KunenaTopic2ArticleModelTopics extends BaseDatabaseModel
+class KunenaTopic2ArticleModelTopic extends BaseDatabaseModel
 {
     public function getParameters()
     {
