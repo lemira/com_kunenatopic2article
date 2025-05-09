@@ -2,6 +2,7 @@
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Toolbar\ToolbarHelper;
 
 class KunenaTopic2ArticleViewTopics extends JViewLegacy
 {
@@ -14,7 +15,7 @@ class KunenaTopic2ArticleViewTopics extends JViewLegacy
         $this->parameters = $model->getParameters();
 
         // Устанавливаем заголовок страницы
-        JToolbarHelper::title(Text::_('COM_KUNENATOPIC2ARTICLE_VIEW_DEFAULT_TITLE'), 'stack');
+        ToolbarHelper::title(Text::_('COM_KUNENATOPIC2ARTICLE_VIEW_DEFAULT_TITLE'), 'stack');
 
         parent::display($tpl);
     }
