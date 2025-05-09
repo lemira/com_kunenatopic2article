@@ -1,22 +1,21 @@
 <?php
 defined('_JEXEC') or die;
 
+use Joomla\CMS\Language\Text;
+
 class KunenaTopic2ArticleViewTopics extends JViewLegacy
 {
-    protected $state;
-    protected $form;
-
     public function display($tpl = null)
     {
+        // Загружаем модель
         $model = $this->getModel();
-        $this->params = $model->getParams();
-        $this->state = $model->getState();
-        $this->form = $model->getForm();
-        
-        if (!$this->form) {
-            JFactory::getApplication()->enqueueMessage('Form failed to load', 'error');
-        }
-        
+
+        // Получаем параметры из модели
+        $this->parameters = $model->getParameters();
+
+        // Устанавливаем заголовок страницы
+        JToolbarHelper::title(Text::_('COM_KUNENATOPIC2ARTICLE_VIEW_DEFAULT_TITLE'), 'stack');
+
         parent::display($tpl);
     }
 }
