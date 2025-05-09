@@ -20,7 +20,7 @@ $parameters = $model->getParameters();
 
 <div class="container">
     <h1><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_VIEW_DEFAULT_TITLE'); ?></h1>
-    <form action="<?php echo \Joomla\CMS\Router\Route::_('index.php?option=com_kunenatopic2article'); ?>" method="post" name="adminForm" id="adminForm">
+    <form action="<?php echo \Joomla\CMS\Router\Route::_('index.php?option=com_kunenatopic2article&view=topics'); ?>" method="post" name="adminForm" id="adminForm">
         <div class="row">
             <div class="col-md-6">
                 <div class="mb-3">
