@@ -32,13 +32,13 @@ class KunenaTopic2ArticleControllerTopic extends BaseController
 
             if (!$topicExists) {
                 $app->enqueueMessage(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $topicId), 'error');
-                $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=kunenatopic2article', false));
+                $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topics', false));
                 return;
             }
         }
 
         // Загружаем модель
-        $model = $this->getModel('KunenaTopic2Article', 'KunenaTopic2ArticleModel');
+        $model = $this->getModel('Topics', 'KunenaTopic2ArticleModel');
 
         // Сохраняем данные через модель
         if ($model->saveParameters($data)) {
@@ -48,13 +48,13 @@ class KunenaTopic2ArticleControllerTopic extends BaseController
         }
 
         // Перенаправляем обратно на форму
-        $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=kunenatopic2article', false));
+        $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topics', false));
     }
 
     public function reset()
     {
         // Загружаем модель
-        $model = $this->getModel('KunenaTopic2Article', 'KunenaTopic2ArticleModel');
+        $model = $this->getModel('Topics', 'KunenaTopic2ArticleModel');
 
         // Сбрасываем параметры
         if ($model->resetParameters()) {
@@ -64,6 +64,13 @@ class KunenaTopic2ArticleControllerTopic extends BaseController
         }
 
         // Перенаправляем обратно на форму
-        $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=kunenatopic2article', false));
+        $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topics', false));
+    }
+
+    public function createarticles()
+    {
+        // Пока пустой метод, функционал добавим позже
+        Factory::getApplication()->enqueueMessage(Text::_('Functionality not yet implemented'), 'info');
+        $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topics', false));
     }
 }
