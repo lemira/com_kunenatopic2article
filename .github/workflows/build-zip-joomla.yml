@@ -11,18 +11,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Create ZIP archive with formatted timestamp
+      - name: Set timestamp variable
+        run: echo "TIMESTAMP=$(date +"%y%m%d-%H%M")" >> $GITHUB_ENV
+
+      - name: Create ZIP archive with timestamp
         run: |
-          TIMESTAMP=$(date +"%y%m%d-%H%M")
-          zip -r Joomla-Component-$TIMESTAMP.zip * -x ".git*" ".github*"
+          zip -r Joomla-Component-${{ env.TIMESTAMP }}.zip * -x ".git*" ".github*"
 
       - name: Extract ZIP archive
         run: |
-          TIMESTAMP=$(date +"%y%m%d-%H%M")
-          unzip Joomla-Component-$TIMESTAMP.zip -d extracted_files
+          unzip Joomla-Component-${{ env.TIMESTAMP }}.zip -d extracted_files
 
       - name: Upload extracted files
         uses: actions/upload-artifact@v4
         with:
-          name: Joomla-Component-${{ github.run_id }}
+          name: Joomla-Component-${{ env.TIMESTAMP }}
           path: extracted_files/
