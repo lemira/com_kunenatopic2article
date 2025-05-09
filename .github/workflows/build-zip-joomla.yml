@@ -11,14 +11,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Create ZIP archive with timestamp
+      - name: Create ZIP archive with formatted timestamp
         run: |
-          TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+          TIMESTAMP=$(date +"%y%m%d-%H%M")
           zip -r Joomla-Component-$TIMESTAMP.zip * -x ".git*" ".github*"
 
       - name: Extract ZIP archive
         run: |
-          TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+          TIMESTAMP=$(date +"%y%m%d-%H%M")
           unzip Joomla-Component-$TIMESTAMP.zip -d extracted_files
 
       - name: Upload extracted files
