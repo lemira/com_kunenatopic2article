@@ -1,56 +1,111 @@
 <?php
 defined('_JEXEC') or die;
 
-use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\Log\Log;
+use Joomla\CMS\MVC\Model\AdminModel;
+use Joomla\CMS\Table\Table;
 
-class KunenaTopic2ArticleModelTopic extends BaseDatabaseModel
+class KunenaTopic2ArticleModelTopic extends AdminModel
 {
-    public function getParameters()
+    public function getTable($type = 'KunenaArticle', $prefix = 'Table', $config = [])
     {
-        $db = $this->getDbo();
-        $query = $db->getQuery(true)
-            ->select('*')
-            ->from($db->quoteName('#__kunena_article'))
-            ->where($db->quoteName('id') . ' = 1');
-        $db->setQuery($query);
-        return $db->loadObject() ?: new \stdClass();
-    }
-
-    public function saveParameters($data)
-    {
-        $db = $this->getDbo();
-        $params = new \stdClass();
-        $params->id = 1;
-        $params->topic_selection = $data['topic_selection'] ?? 0;
-        $params->article_category = $data['article_category'] ?? '';
-        $params->post_transfer_scheme = $data['post_transfer_scheme'] ?? 'sequential';
-        $params->max_article_size = $data['max_article_size'] ?? 40000;
-        $params->post_author = $data['post_author'] ?? 0;
-        $params->post_creation_date = $data['post_creation_date'] ?? 0;
-        $params->post_creation_time = $data['post_creation_time'] ?? 0;
-        $params->post_ids = $data['post_ids'] ?? 0;
-        $params->post_title = $data['post_title'] ?? 0;
-        $params->kunena_post_link = $data['kunena_post_link'] ?? 0;
-        $params->reminder_lines = $data['reminder_lines'] ?? 0;
-        $params->ignored_authors = $data['ignored_authors'] ?? '';
-
-        try {
-            $db->updateObject('#__kunena_article', $params, 'id') || $db->insertObject('#__kunena_article', $params);
-            return true;
-        } catch (Exception $e) {
-            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+        $table = Table::getInstance($type, $prefix, $config);
+        if (!$table) {
+            Log::add('Failed to load table: ' . $type, Log::ERROR, 'com_kunenatopic2article');
+            $this->setError(Text::_('Failed to load table: ' . $type));
             return false;
         }
+        return $table;
     }
 
-    public function resetParameters()
+    public function getForm($data = [], $loadData = true)
     {
-        $db = $this->getDbo();
+        $form = $this->loadForm('com_kunenatopic2article.topics', 'topics', ['control' => 'jform', 'load_data' => $loadData]);
+
+        if (empty($form)) {
+            Log::add('Failed to load form: com_kunenatopic2article.topics', Log::ERROR, 'com_kunenatopic2article');
+            return false;
+        }
+
+        return $form;
+    }
+
+    protected function loadFormData()
+    {
+        $data = $this->getItem();
+        return $data;
+    }
+
+    public function getItem($pk = null)
+    {
+        $table = $this->getTable();
+        if (!$table) {
+            Log::add('Table is null in getItem', Log::ERROR, 'com_kunenatopic2article');
+            return false;
+        }
+
+        $table->load(1); // Загружаем запись с id=1, если она есть
+
+        $properties = $table->getProperties();
+        if (empty($properties)) {
+            Log::add('Table properties are empty', Log::WARNING, 'com_kunenatopic2article');
+        }
+
+        return $properties;
+    }
+
+    public function save($data)
+    {
+        $table = $this->getTable();
+        if (!$table) {
+            return false;
+        }
+
+        $table->load(1); // Сохраняем всегда в запись с id=1
+
+        // Проверка существования Kunena темы
+        $db = Factory::getDbo();
         $query = $db->getQuery(true)
-            ->delete($db->quoteName('#__kunena_article'))
-            ->where($db->quoteName('id') . ' = 1');
+            ->select('id')
+            ->from('#__kunena_topics')
+            ->where('id = ' . (int) $data['topic_selection']);
         $db->setQuery($query);
-        return $db->execute();
+        $topicExists = $db->loadResult();
+
+        if (!$topicExists) {
+            $this->setError(Text::_('Kunena topic does not exist'));
+            return false;
+        }
+
+        if (!$table->bind($data)) {
+            $this->setError($table->getError());
+            return false;
+        }
+
+        if (!$table->store()) {
+            $this->setError($table->getError());
+            return false;
+        }
+
+        return true;
+    }
+
+    public function reset()
+    {
+        $db = Factory::getDbo();
+        $query = $db->getQuery(true)
+            ->delete('#__kunena_article')
+            ->where('id = 1');
+        $db->setQuery($query);
+
+        try {
+            $db->execute();
+            return true;
+        } catch (Exception $e) {
+            $this->setError($e->getMessage());
+            return false;
+        }
     }
 }
