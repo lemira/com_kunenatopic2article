@@ -44,12 +44,11 @@
             <folder>views</folder>
             <folder>sql</folder>
         </files>
+    <languages folder="language">
+    <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.ini</language>
+    <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.sys.ini</language>
+</languages>
     </administration>
-
-      <languages folder="admin/language">
-        <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.ini</language>
-        <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.sys.ini</language>
-    </languages>
 </extension>
 
  
