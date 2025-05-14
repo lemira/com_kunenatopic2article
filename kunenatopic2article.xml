@@ -5,8 +5,8 @@
     <creationDate>January 2025</creationDate>
     <copyright>(C) 2025 lr. All rights reserved.</copyright>
     <license>GNU/GPL</license>
-    <authorEmail>lemirat@gmail.com</authorEmail>
-    <authorUrl>geschichte-chronologie.de</authorUrl>
+    <authorEmail>admin@example.com</authorEmail>
+    <authorUrl>www.example.com</authorUrl>
     <version>1.0.0</version>
     <description>COM_KUNENATOPIC2ARTICLE_DESC</description>
 
@@ -21,24 +21,24 @@
         </sql>
     </uninstall>
 
-    <administration>
-        <menu link="option=com_kunenatopic2article">COM_KUNENATOPIC2ARTICLE</menu>
-        <files folder="admin">
-            <filename>controller.php</filename>
-            <filename>install.php</filename>
-            <filename>script.php</filename>
-            <filename>kunenatopic2article.php</filename>
-            <folder>controllers</folder>
-            <folder>language</folder>
-            <folder>models</folder>
-            <folder>tables</folder>
-            <folder>views</folder>
-            <folder>sql</folder>
-        </files>
-    </administration>
+    <files folder="admin">
+        <filename>access.xml</filename>
+        <filename>config.xml</filename>
+        <filename>controller.php</filename>
+        <folder>controllers</folder>
+        <folder>language</folder>
+        <folder>models</folder>
+        <folder>sql</folder>
+        <folder>tables</folder>
+        <folder>views</folder>
+    </files>
 
     <languages folder="admin/language">
         <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.ini</language>
         <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.sys.ini</language>
     </languages>
+
+    <administration>
+        <menu>COM_KUNENATOPIC2ARTICLE</menu>
+    </administration>
 </extension>
