@@ -1,24 +1,47 @@
 <?php
-defined('_JEXEC') or die;
+defined('_JEXEC') or die('Restricted access');
 
-use Joomla\CMS\MVC\Controller\BaseController;
+jimport('joomla.application.component.controller');
 
-class KunenaTopic2ArticleController extends BaseController
+$logFile = JPATH_BASE . '/logs/controller_debug.log';
+if (!file_exists(dirname($logFile))) {
+    mkdir(dirname($logFile), 0755, true);
+}
+$message = "Loading KunenaTopic2ArticleController at " . date('Y-m-d H:i:s') . "\n";
+file_put_contents($logFile, $message, FILE_APPEND | FILE_IGNORE_NEW_LINES);
+
+class KunenaTopic2ArticleController extends JControllerLegacy
 {
-    protected $default_view = 'topics';
+    public function __construct($config = array())
+    {
+        parent::__construct($config);
+
+        $logFile = JPATH_BASE . '/logs/controller_debug.log';
+        $message = "Constructing KunenaTopic2ArticleController at " . date('Y-m-d H:i:s') . "\n";
+        file_put_contents($logFile, $message, FILE_APPEND | FILE_IGNORE_NEW_LINES);
+    }
 
     public function display($cachable = false, $urlparams = false)
     {
-        // Проверяем, есть ли параметр view в URL
-        $view = $this->input->get('view');
+        $logFile = JPATH_BASE . '/logs/controller_debug.log';
+        $message = "Displaying view in KunenaTopic2ArticleController at " . date('Y-m-d H:i:s') . "\n";
+        file_put_contents($logFile, $message, FILE_APPEND | FILE_IGNORE_NEW_LINES);
 
-        // Если view отсутствует или не равен 'topics', перенаправляем
-        if (!$view || $view !== 'topics') {
-            $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
-            $this->redirect();
+        try {
+            $view = $this->getView('Topics', 'html');
+            $model = $this->getModel('Topic'); // Изменил с 'Topics' на 'Topic'
+            if ($model) {
+                $view->setModel($model, true);
+                $view->display();
+            } else {
+                $message = "Model 'Topic' not found at " . date('Y-m-d H:i:s') . "\n";
+                file_put_contents($logFile, $message, FILE_APPEND | FILE_IGNORE_NEW_LINES);
+            }
+        } catch (Exception $e) {
+            $message = "Error in display: " . $e->getMessage() . " at " . date('Y-m-d H:i:s') . "\n";
+            file_put_contents($logFile, $message, FILE_APPEND | FILE_IGNORE_NEW_LINES);
         }
 
-        // Если view=topics, отображаем представление
-        return parent::display($cachable, $urlparams);
+        return $this;
     }
 }
