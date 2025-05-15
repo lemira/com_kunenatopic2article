@@ -21,6 +21,7 @@
         </sql>
     </uninstall>
 
+    <!-- Админская часть компонента -->
     <administration>
         <menu link="option=com_kunenatopic2article">COM_KUNENATOPIC2ARTICLE</menu>
         <files folder="admin">
@@ -35,11 +36,9 @@
             <folder>views</folder>
             <folder>sql</folder>
         </files>
-   <languages>
-    <language tag="en-GB">language/en-GB/en-GB.com_kunenatopic2article.ini</language>
-    <language tag="en-GB">language/en-GB/en-GB.com_kunenatopic2article.sys.ini</language>
-   </languages>
+        <languages folder="admin/language">
+            <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.ini</language>
+            <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.sys.ini</language>
+        </languages>
     </administration>
-
-
 </extension>
