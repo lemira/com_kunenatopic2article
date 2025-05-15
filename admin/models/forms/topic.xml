@@ -23,8 +23,8 @@
             description="COM_KUNENATOPIC2ARTICLE_POST_TRANSFER_SCHEME_DESC"
             class="btn-group"
             default="1">
-            <option value="0">COM_KUNENATOPIC2ARTICLE_FIRST_POST_ONLY</option>
-            <option value="1">COM_KUNENATOPIC2ARTICLE_ALL_POSTS</option>
+            <option value="0">COM_KUNENATOPIC2ARTICLE_SEQUENTIAL</option>
+            <option value="1">COM_KUNENATOPIC2ARTICLE_THREADED</option>
         </field>
         <field
             name="max_article_size"
@@ -83,8 +83,8 @@
             description="COM_KUNENATOPIC2ARTICLE_POST_TITLE_DESC"
             class="btn-group"
             default="0">
-            <option value="0">COM_KUNENATOPIC2ARTICLE_USE_TOPIC_TITLE</option>
-            <option value="1">COM_KUNENATOPIC2ARTICLE_USE_CUSTOM_TITLE</option>
+            <option value="0">COM_KUNENATOPIC2ARTICLE_NOT_INCLUDE</option>
+            <option value="1">COM_KUNENATOPIC2ARTICLE_INCLUDE</option>
         </field>
         <field
             name="kunena_post_link"
@@ -93,8 +93,8 @@
             description="COM_KUNENATOPIC2ARTICLE_KUNENA_POST_LINK_DESC"
             class="btn-group"
             default="0">
-            <option value="0">COM_KUNENATOPIC2ARTICLE_NO_LINK</option>
-            <option value="1">COM_KUNENATOPIC2ARTICLE_ADD_LINK</option>
+            <option value="0">COM_KUNENATOPIC2ARTICLE_NOT_INCLUDE</option>
+            <option value="1">COM_KUNENATOPIC2ARTICLE_INCLUDE</option>
         </field>
         <field
             name="reminder_lines"
