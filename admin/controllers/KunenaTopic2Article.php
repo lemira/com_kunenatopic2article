@@ -37,23 +37,26 @@ class KunenaTopic2ArticleController extends JControllerLegacy
         $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
     }
 
-    public function reset()
-    {
-        $app = JFactory::getApplication();
-        $app->enqueueMessage('Reset task triggered', 'message');
-        
-        $task = $app->input->get('task', '', 'string');
-        $app->enqueueMessage('Task received: ' . $task, 'message');
-        
-        $model = $this->getModel('Topic', 'KunenaTopic2ArticleModel');
+   public function reset()
+{
+    $app = JFactory::getApplication();
+    $app->enqueueMessage('Reset task triggered', 'message');
+
+    $model = $this->getModel('Topic', 'KunenaTopic2ArticleModel');
+
+    if ($model && method_exists($model, 'reset')) {
         if ($model->reset()) {
             $app->enqueueMessage('Parameters reset to default values', 'success');
         } else {
             $app->enqueueMessage('Failed to reset parameters', 'error');
         }
-        
-        $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
+    } else {
+        $app->enqueueMessage('Model or reset() method not found', 'error');
     }
+
+    $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
+}
+
 
     public function create()
     {
