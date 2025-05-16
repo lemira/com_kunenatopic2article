@@ -10,9 +10,9 @@ JHtml::_('formbehavior.chosen', 'select');
         <h1><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_PARAMS_TITLE'); ?></h1>
         
         <div class="btn-toolbar mb-3">
-            <button type="button" class="btn btn-primary mr-2" onclick="Joomla.submitbutton('topic.save')">COM_KUNENATOPIC2ARTICLE_BUTTON_REMEMBER</button>
-            <button type="button" class="btn btn-secondary mr-2" onclick="Joomla.submitbutton('topic.reset')">COM_KUNENATOPIC2ARTICLE_BUTTON_RESET</button>
-            <a href="<?php echo JRoute::_('index.php?option=com_kunenatopic2article&task=create'); ?>" class="btn btn-success">COM_KUNENATOPIC2ARTICLE_BUTTON_CREATE</a>
+            <button type="button" class="btn btn-primary mr-2" onclick="Joomla.submitbutton('topic.save')"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_BUTTON_REMEMBER'); ?></button>
+            <button type="button" class="btn btn-secondary mr-2" onclick="Joomla.submitbutton('topic.reset')"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_BUTTON_RESET'); ?></button>
+            <a href="<?php echo JRoute::_('index.php?option=com_kunenatopic2article&task=create'); ?>" class="btn btn-success"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_BUTTON_CREATE'); ?></a>
         </div>
         
         <h3><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_PARAMS'); ?></h3>
