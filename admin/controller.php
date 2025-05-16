@@ -21,6 +21,9 @@ class KunenaTopic2ArticleController extends JControllerLegacy
         file_put_contents($logFile, $message, FILE_APPEND | FILE_IGNORE_NEW_LINES);
     }
 
+    // Регистрируем задачи
+    $this->registerTask('topic.reset', 'reset');
+    
     public function display($cachable = false, $urlparams = false)
     {
         $logFile = JPATH_BASE . '/logs/controller_debug.log';
