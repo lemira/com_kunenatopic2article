@@ -124,34 +124,40 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
         }
     }
 
-    public function reset()
-    {
-        $db = JFactory::getDbo();
-        $query = $db->getQuery(true);
-        $query->update('#__kunenatopic2article_params')
-              ->set('topic_selection = 0')
-              ->set('article_category = 0')
-              ->set('post_transfer_scheme = 1')
-              ->set('max_article_size = 40000')
-              ->set('post_author = 1')
-              ->set('post_creation_date = 1')
-              ->set('post_creation_time = 1')
-              ->set('post_ids = 1')
-              ->set('post_title = 0')
-              ->set('kunena_post_link = 0')
-              ->set('reminder_lines = 0')
-              ->set('ignored_authors = ' . $db->quote(''))
-              ->where('id = 1');
-        $db->setQuery($query);
+  public function reset()
+{
+    $db = JFactory::getDbo();
 
-        try {
-            $db->execute();
-            $app = JFactory::getApplication();
-            $app->setUserState('com_kunenatopic2article.save.success', true);
-            return true;
-        } catch (Exception $e) {
-            JFactory::getApplication()->enqueueMessage('Failed to reset parameters: ' . $e->getMessage(), 'error');
-            return false;
-        }
+    $query = $db->getQuery(true);
+
+    // Сбрасываем значения на те, что были заданы при установке компонента
+    $query
+        ->update($db->quoteName('#__kunenatopic2article_params'))
+        ->set([
+            $db->quoteName('topic_selection') . ' = 0',
+            $db->quoteName('article_category') . ' = 0',
+            $db->quoteName('post_transfer_scheme') . ' = 1',
+            $db->quoteName('max_article_size') . ' = 40000',
+            $db->quoteName('post_author') . ' = 1',
+            $db->quoteName('post_creation_date') . ' = 0',
+            $db->quoteName('post_creation_time') . ' = 0',
+            $db->quoteName('post_ids') . ' = 0',
+            $db->quoteName('post_title') . ' = 0',
+            $db->quoteName('kunena_post_link') . ' = 0',
+            $db->quoteName('reminder_lines') . ' = 0',
+            $db->quoteName('ignored_authors') . " = " . $db->quote('')
+        ])
+        ->where($db->quoteName('id') . ' = 1');
+
+    $db->setQuery($query);
+
+    try {
+        $db->execute();
+        return true;
+    } catch (RuntimeException $e) {
+        JFactory::getApplication()->enqueueMessage('DB Error: ' . $e->getMessage(), 'error');
+        return false;
     }
+}
+
 }
