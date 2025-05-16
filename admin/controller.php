@@ -16,7 +16,7 @@ class KunenaTopic2ArticleController extends JControllerLegacy
         parent::__construct($config);
         
         // Регистрируем задачи - ДОЛЖНО БЫТЬ ВНУТРИ МЕТОДА __construct
-        $this->registerTask('topic.reset', 'reset');
+        $this->registerTask('reset', 'reset');
         
         $logFile = JPATH_BASE . '/logs/controller_debug.log';
         $message = "Constructing KunenaTopic2ArticleController at " . date('Y-m-d H:i:s') . "\n";
@@ -86,7 +86,7 @@ class KunenaTopic2ArticleController extends JControllerLegacy
             $app->enqueueMessage('Error: ' . $e->getMessage(), 'error');
         }
         
-        $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
+       $this->setRedirect(JRoute::_('index.php?option=com_kunenatopic2article&view=topics', false)); 
     }
  
 }
