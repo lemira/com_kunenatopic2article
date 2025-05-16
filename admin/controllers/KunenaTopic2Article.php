@@ -37,6 +37,7 @@ class KunenaTopic2ArticleController extends JControllerLegacy
         $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
     }
 
+    /* метод reset() переехал в основной контроллер admin/controller.php
    public function reset()
 {
     $app = JFactory::getApplication();
@@ -64,7 +65,7 @@ class KunenaTopic2ArticleController extends JControllerLegacy
     
     $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
 }
-
+*/
     public function create()
     {
         JFactory::getApplication()->enqueueMessage('Article creation not implemented yet', 'warning');
