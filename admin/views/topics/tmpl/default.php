@@ -18,16 +18,14 @@ JHtml::_('formbehavior.chosen', 'select');
         <h3><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_PARAMS'); ?></h3>
         <?php if ($this->form): ?>
             <?php echo $this->form->renderFieldset('article_params'); ?>
-            <?php JFactory::getApplication()->enqueueMessage('Rendering article_params fieldset', 'notice'); ?>
-        <?php else: ?>
+           <?php else: ?>
             <?php JFactory::getApplication()->enqueueMessage('Form object is empty', 'error'); ?>
         <?php endif; ?>
         
         <h3><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_POST_INFO'); ?></h3>
         <?php if ($this->form): ?>
             <?php echo $this->form->renderFieldset('post_info'); ?>
-            <?php JFactory::getApplication()->enqueueMessage('Rendering post_info fieldset', 'notice'); ?>
-        <?php else: ?>
+          <?php else: ?>
             <?php JFactory::getApplication()->enqueueMessage('Form object is empty', 'error'); ?>
         <?php endif; ?>
         
