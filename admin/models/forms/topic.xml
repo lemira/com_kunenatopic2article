@@ -52,7 +52,7 @@
             label="COM_KUNENATOPIC2ARTICLE_POST_CREATION_DATE"
             description="COM_KUNENATOPIC2ARTICLE_POST_CREATION_DATE_DESC"
             class="btn-group"
-            default="1">
+            default="0">
             <option value="0">COM_KUNENATOPIC2ARTICLE_INCLUDE</option>
             <option value="1">COM_KUNENATOPIC2ARTICLE_NOT_INCLUDE</option>
         </field>
@@ -62,7 +62,7 @@
             label="COM_KUNENATOPIC2ARTICLE_POST_CREATION_TIME"
             description="COM_KUNENATOPIC2ARTICLE_POST_CREATION_TIME_DESC"
             class="btn-group"
-            default="1">
+            default="0">
             <option value="0">COM_KUNENATOPIC2ARTICLE_INCLUDE</option>
             <option value="1">COM_KUNENATOPIC2ARTICLE_NOT_INCLUDE</option>
         </field>
@@ -72,7 +72,7 @@
             label="COM_KUNENATOPIC2ARTICLE_POST_IDS"
             description="COM_KUNENATOPIC2ARTICLE_POST_IDS_DESC"
             class="btn-group"
-            default="1">
+            default="0">
             <option value="0">COM_KUNENATOPIC2ARTICLE_SHOW_IDS</option>
             <option value="1">COM_KUNENATOPIC2ARTICLE_HIDE_IDS</option>
         </field>
