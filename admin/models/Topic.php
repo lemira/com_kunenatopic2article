@@ -124,44 +124,4 @@ class KunenaTopic2ArticleModelTopic extends JModelAdmin
         }
     }
 
- public function reset()
-{
-    $app = JFactory::getApplication();
-    try {
-        // Подключение к базе данных
-        $db = JFactory::getDbo();
-        
-        // Значения по умолчанию из install.mysql.utf8.sql
-        $query = $db->getQuery(true)
-            ->update($db->quoteName('#__kunenatopic2article_params'))
-            ->set([
-                $db->quoteName('topic_selection') . ' = 0',
-                $db->quoteName('article_category') . ' = 0',
-                $db->quoteName('post_transfer_scheme') . ' = 1',
-                $db->quoteName('max_article_size') . ' = 40000',
-                $db->quoteName('post_author') . ' = 1',
-                $db->quoteName('post_creation_date') . ' = 0',
-                $db->quoteName('post_creation_time') . ' = 0',
-                $db->quoteName('post_ids') . ' = 0',
-                $db->quoteName('post_title') . ' = 0',
-                $db->quoteName('kunena_post_link') . ' = 0',
-                $db->quoteName('reminder_lines') . ' = 0',
-                $db->quoteName('ignored_authors') . ' = ' . $db->quote('')
-            ])
-            ->where($db->quoteName('id') . ' = 1');
-        
-        $db->setQuery($query);
-        $result = $db->execute();
-        
-        if (!$result) {
-            throw new Exception($db->getErrorMsg());
-        }
-        
-        return true;
-    } catch (Exception $e) {
-        $app->enqueueMessage('Error in reset method: ' . $e->getMessage(), 'error');
-        return false;
-    }
-}
-
-}
+ }
