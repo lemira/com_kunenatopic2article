@@ -12,7 +12,7 @@ JHtml::_('formbehavior.chosen', 'select');
         <div class="btn-toolbar mb-3">
             <button type="button" class="btn btn-primary mr-2" onclick="Joomla.submitbutton('save')"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_BUTTON_REMEMBER'); ?></button>
             <button type="button" class="btn btn-secondary mr-2" onclick="Joomla.submitbutton('reset')"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_BUTTON_RESET'); ?></button>
-        <button type="button" class="btn btn-success" onclick="Joomla.submitbutton('create')"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_BUTTON_CREATE'); ?></button> 
+        <button type="button" class="btn btn-success" onclick="Joomla.submitbutton('article.create')"><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_BUTTON_CREATE'); ?></button>
         </div>
         
         <h3><?php echo JText::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_PARAMS'); ?></h3>
