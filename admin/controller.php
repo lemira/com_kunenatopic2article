@@ -47,6 +47,23 @@ class KunenaTopic2ArticleController extends JControllerLegacy
         return $this;
     }
 
+    public function save()
+{
+    $app = JFactory::getApplication();
+    $app->enqueueMessage('Save task triggered', 'message');
+    
+    $data = $app->input->get('jform', array(), 'array');
+    
+    $model = $this->getModel('Topic');
+    if ($model->save($data)) {
+        $app->enqueueMessage('Parameters saved successfully', 'success');
+    } else {
+        $app->enqueueMessage('Failed to save parameters', 'error');
+    }
+    
+    $this->setRedirect(JRoute::_('index.php?option=com_kunenatopic2article&view=topics', false));
+}
+    
      public function reset()
     {
         $app = JFactory::getApplication();
