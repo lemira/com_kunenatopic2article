@@ -6,7 +6,6 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
-use Joomla\Utilities\ArrayHelper;
 
 /**
  * Article Controller
@@ -29,7 +28,8 @@ class KunenaTopic2ArticleControllerArticle extends BaseController
     }
 
     /**
-     * Create an article from selected topic
+     * Create an article from selected topic based on parameters
+     * stored in the database
      *
      * @return void
      */
@@ -38,14 +38,16 @@ class KunenaTopic2ArticleControllerArticle extends BaseController
         // Проверка токена безопасности
         Session::checkToken() or die(Text::_('JINVALID_TOKEN'));
         
-        // Получение выбранных ID тем
         $app = Factory::getApplication();
-        $input = $app->input;
-        $cid = $input->get('cid', array(), 'array');
-        $cid = ArrayHelper::toInteger($cid);
         
-        if (empty($cid)) {
-            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'), 'warning');
+        // Получение модели для доступа к параметрам
+        $model = $this->getModel('Topics');
+        
+        // Получение всех необходимых параметров из таблицы
+        $params = $model->getParameters();
+        
+        if (empty($params) || empty($params->topic_id)) {
+            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_PARAMETERS'), 'warning');
             $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topics', false));
             return;
         }
@@ -53,5 +55,20 @@ class KunenaTopic2ArticleControllerArticle extends BaseController
         // Заглушка для демонстрации работы кнопки
         $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_FEATURE_COMING_SOON'), 'notice');
         $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topics', false));
+        
+        // Когда будет готова полная реализация:
+        /*
+        // Получение модели для создания статей
+        $articleModel = $this->getModel('Article');
+        
+        // Создание статьи на основе параметров
+        $result = $articleModel->createArticleFromParams($params);
+        
+        if ($result) {
+            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_CREATED_SUCCESSFULLY'));
+        } else {
+            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_CREATION_ERROR'), 'error');
+        }
+        */
     }
 }
