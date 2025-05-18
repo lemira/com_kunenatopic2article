@@ -17,6 +17,7 @@ class KunenaTopic2ArticleController extends JControllerLegacy
         
         // Регистрируем задачи - ДОЛЖНО БЫТЬ ВНУТРИ МЕТОДА __construct
         $this->registerTask('reset', 'reset');
+        $this->registerTask('save', 'save');
         
         $logFile = JPATH_BASE . '/logs/controller_debug.log';
         $message = "Constructing KunenaTopic2ArticleController at " . date('Y-m-d H:i:s') . "\n";
