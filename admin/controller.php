@@ -67,7 +67,6 @@ class KunenaTopic2ArticleController extends JControllerLegacy
      public function reset()
     {
         $app = JFactory::getApplication();
-        $app->enqueueMessage('Reset task triggered in main controller', 'message');
         
         try {
             // Получаем модель
