@@ -51,8 +51,7 @@ class KunenaTopic2ArticleController extends JControllerLegacy
     public function save()
 {
     $app = JFactory::getApplication();
-    $app->enqueueMessage('Save task triggered', 'message');
-    
+      
     $data = $app->input->get('jform', array(), 'array');
     
     $model = $this->getModel('Topic');
