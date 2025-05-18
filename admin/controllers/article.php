@@ -1,12 +1,10 @@
 <?php
 defined('_JEXEC') or die;
-
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
-
 /**
  * Article Controller
  *
@@ -26,7 +24,6 @@ class KunenaTopic2ArticleControllerArticle extends BaseController
         // Регистрация задачи create
         $this->registerTask('create', 'create');
     }
-
     /**
      * Create an article from selected topic based on parameters
      * stored in the database
@@ -41,12 +38,18 @@ class KunenaTopic2ArticleControllerArticle extends BaseController
         $app = Factory::getApplication();
         
         // Получение модели для доступа к параметрам
-        $model = $this->getModel('Topics');
+        $model = $this->getModel('Topic', 'KunenaTopic2ArticleModel');
+        
+        if (!$model) {
+            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_MODEL_NOT_FOUND'), 'error');
+            $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topics', false));
+            return;
+        }
         
         // Получение всех необходимых параметров из таблицы
-        $params = $model->getParameters();
+        $params = $model->getParams();
         
-        if (empty($params) || empty($params->topic_id)) {
+        if (empty($params)) {
             $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_PARAMETERS'), 'warning');
             $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topics', false));
             return;
