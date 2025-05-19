@@ -35,22 +35,25 @@ class KunenaTopic2ArticleControllerArticle extends BaseController
         $input = $app->input;
         $model = $this->getModel('Article');
 
-        // Получаем ID темы из параметров запроса
-        $topicId = $input->getInt('topic_id', 0);
+        // Получаем параметры из таблицы kunenatopic2article_params
+        $params = $this->getComponentParams();
         
-        if (!$topicId) {
+        if (empty($params) || empty($params->topic_selection)) {
             $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'), 'error');
             $app->redirect('index.php?option=com_kunenatopic2article');
             return;
         }
 
-        // Получаем настройки из формы или используем настройки по умолчанию
+        // Получаем ID темы из параметров компонента
+        $topicId = (int)$params->topic_selection;
+        
+        // Получаем настройки из параметров компонента
         $settings = [
             'topic_selection' => $topicId,
-            'post_transfer_scheme' => $input->getString('post_transfer_scheme', 'flat'),
-            'article_category' => $input->getInt('article_category', 0),
-            'post_author' => $input->getInt('post_author', 0),
-            'max_article_size' => $input->getInt('max_article_size', 10000),
+            'post_transfer_scheme' => ($params->post_transfer_scheme == 'THREADED') ? 'tree' : 'flat',
+            'article_category' => (int)$params->article_category,
+            'post_author' => (int)$params->post_author,
+            'max_article_size' => (int)$params->max_article_size,
         ];
 
         try {
@@ -72,12 +75,35 @@ class KunenaTopic2ArticleControllerArticle extends BaseController
     }
 
     /**
-     * Отправка ссылок на созданные статьи администратору
+     * Получение параметров компонента из таблицы
      *
-     * @param   array  $articleLinks  Массив ссылок на созданные статьи
-     *
-     * @return  boolean  True в случае успеха
+     * @return  object|null  Объект с параметрами компонента
      */
+    private function getComponentParams()
+    {
+        try {
+            $db = Factory::getDbo();
+            $query = $db->getQuery(true)
+                ->select('*')
+                ->from('#__kunenatopic2article_params')
+                ->where('id = 1'); // Предполагаем, что параметры хранятся в записи с ID=1
+            
+            $params = $db->setQuery($query)->loadObject();
+            
+            if (!$params) {
+                Factory::getApplication()->enqueueMessage(
+                    Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_NOT_FOUND'), 
+                    'error'
+                );
+                return null;
+            }
+            
+            return $params;
+        } catch (Exception $e) {
+            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+            return null;
+        }
+    }
     private function sendLinksToAdministrator($articleLinks)
     {
         // Получаем объект приложения
