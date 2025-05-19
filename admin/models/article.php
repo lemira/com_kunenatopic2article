@@ -199,7 +199,8 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
 
             // Заполняем базовые поля статьи
             $this->currentArticle->title = $title;
-            $this->currentArticle->alias = OutputFilter::stringURLSafe($title);
+            // Добавляем уникальный идентификатор к алиасу, чтобы избежать дубликатов
+            $this->currentArticle->alias = OutputFilter::stringURLSafe($title) . '-' . uniqid();
             $this->currentArticle->introtext = '';
             $this->currentArticle->fulltext = '';
             $this->currentArticle->state = 1; // Опубликовано
