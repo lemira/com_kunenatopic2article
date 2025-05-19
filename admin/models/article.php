@@ -17,6 +17,8 @@ use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Date\Date;
 use Joomla\CMS\Table\Table;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Uri\Uri;
+use Joomla\CMS\Filter\OutputFilter;
 use Joomla\Registry\Registry;
 
 /**
@@ -87,47 +89,83 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
         // Инициализация массива ссылок
         $this->articleLinks = [];
 
-        // Устанавливаем ID первого поста темы
-        $this->postId = $this->getFirstPostId($settings['topic_selection']);
-
-        // Формируем список ID постов в зависимости от схемы обхода
-        if ($settings['post_transfer_scheme'] == 'tree') {
-            $this->postIdList = $this->buildTreePostIdList($settings['topic_selection']);
-        } else {
-            $this->postIdList = $this->buildFlatPostIdList($settings['topic_selection']);
-        }
-
-        // Основной цикл обработки постов
-        while ($this->postId != 0) {
-            // Открываем пост для доступа к его параметрам
-            $this->openPost($this->postId);
-
-            // Если статья не открыта или текущий пост не помещается в статью
-            if ($this->currentArticle === null || 
-                ($this->articleSize + $this->postSize > $settings['max_article_size'] && $this->articleSize > 0)) {
-                
-                // Если статья уже открыта, закрываем её перед открытием новой
-                if ($this->currentArticle !== null) {
-                    $this->closeArticle();
-                }
-                
-                // Открываем новую статью
-                $this->openArticle($settings);
+        try {
+            // Проверяем валидность категории статьи
+            if (!$this->isCategoryValid($settings['article_category'])) {
+                throw new Exception(Text::_('COM_KUNENATOPIC2ARTICLE_INVALID_CATEGORY_ID'));
             }
 
-            // Переносим содержимое поста в статью
-            $this->transferPost();
+            // Устанавливаем ID первого поста темы
+            $this->postId = $this->getFirstPostId($settings['topic_selection']);
 
-            // Переходим к следующему посту
-            $this->nextPost();
+            // Формируем список ID постов в зависимости от схемы обхода
+            if ($settings['post_transfer_scheme'] == 'tree') {
+                $this->postIdList = $this->buildTreePostIdList($settings['topic_selection']);
+            } else {
+                $this->postIdList = $this->buildFlatPostIdList($settings['topic_selection']);
+            }
+
+            // Основной цикл обработки постов
+            while ($this->postId != 0) {
+                // Открываем пост для доступа к его параметрам
+                $this->openPost($this->postId);
+
+                // Если статья не открыта или текущий пост не помещается в статью
+                if ($this->currentArticle === null || 
+                    ($this->articleSize + $this->postSize > $settings['max_article_size'] && $this->articleSize > 0)) {
+                    
+                    // Если статья уже открыта, закрываем её перед открытием новой
+                    if ($this->currentArticle !== null) {
+                        $this->closeArticle();
+                    }
+                    
+                    // Открываем новую статью
+                    $this->openArticle($settings);
+                }
+
+                // Переносим содержимое поста в статью
+                $this->transferPost();
+
+                // Переходим к следующему посту
+                $this->nextPost();
+            }
+
+            // Закрываем последнюю статью
+            if ($this->currentArticle !== null) {
+                $this->closeArticle();
+            }
+
+            return $this->articleLinks;
+        } catch (Exception $e) {
+            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+            return $this->articleLinks;
         }
+    }
 
-        // Закрываем последнюю статью
-        if ($this->currentArticle !== null) {
-            $this->closeArticle();
+    /**
+     * Проверка валидности категории
+     *
+     * @param   int  $categoryId  ID категории
+     *
+     * @return  boolean  True если категория существует
+     */
+    private function isCategoryValid($categoryId)
+    {
+        try {
+            $db = $this->getDbo();
+            $query = $db->getQuery(true)
+                ->select('id')
+                ->from('#__categories')
+                ->where('id = ' . (int)$categoryId)
+                ->where('extension = ' . $db->quote('com_content'));
+            
+            $exists = $db->setQuery($query)->loadResult();
+            
+            return !empty($exists);
+        } catch (Exception $e) {
+            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+            return false;
         }
-
-        return $this->articleLinks;
     }
 
     /**
@@ -139,39 +177,66 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
      */
     private function openArticle($settings)
     {
-        // Получаем заголовок темы для формирования заголовка статьи
-        $topic = $this->getTopicData($settings['topic_selection']);
-        
-        // Формируем базовый заголовок статьи
-        $title = $topic->subject;
-        
-        // Если это не первая статья, добавляем номер части
-        if (!empty($this->articleLinks)) {
-            $partNum = count($this->articleLinks) + 1;
-            $title .= ' - ' . Text::sprintf('COM_KUNENATOPIC2ARTICLE_PART_NUMBER', $partNum);
+        try {
+            // Получаем заголовок темы для формирования заголовка статьи
+            $topic = $this->getTopicData($settings['topic_selection']);
+            
+            // Формируем базовый заголовок статьи
+            $title = $topic->subject;
+            
+            // Если это не первая статья, добавляем номер части
+            if (!empty($this->articleLinks)) {
+                $partNum = count($this->articleLinks) + 1;
+                $title .= ' - ' . Text::sprintf('COM_KUNENATOPIC2ARTICLE_PART_NUMBER', $partNum);
+            }
+
+            // Создаем новую статью
+            $this->currentArticle = Table::getInstance('Content', 'JTable');
+
+            if (!$this->currentArticle) {
+                throw new Exception(Text::_('COM_KUNENATOPIC2ARTICLE_CANNOT_CREATE_ARTICLE_INSTANCE'));
+            }
+
+            // Заполняем базовые поля статьи
+            $this->currentArticle->title = $title;
+            $this->currentArticle->alias = OutputFilter::stringURLSafe($title);
+            $this->currentArticle->introtext = '';
+            $this->currentArticle->fulltext = '';
+            $this->currentArticle->state = 1; // Опубликовано
+            $this->currentArticle->catid = (int)$settings['article_category'];
+            $this->currentArticle->created = (new Date())->toSql();
+            $this->currentArticle->created_by = (int)$settings['post_author'];
+            $this->currentArticle->created_by_alias = '';
+            $this->currentArticle->modified = (new Date())->toSql();
+            $this->currentArticle->modified_by = (int)$settings['post_author'];
+            $this->currentArticle->publish_up = null;
+            $this->currentArticle->publish_down = null;
+            $this->currentArticle->images = '{}';
+            $this->currentArticle->urls = '{}';
+            $this->currentArticle->attribs = '{}';
+            $this->currentArticle->version = 1;
+            $this->currentArticle->ordering = 0;
+            $this->currentArticle->metakey = '';
+            $this->currentArticle->metadesc = '';
+            $this->currentArticle->access = 1; // Публичный доступ
+            $this->currentArticle->hits = 0;
+            $this->currentArticle->metadata = '{}';
+            $this->currentArticle->featured = 0;
+            $this->currentArticle->language = '*'; // Все языки
+            $this->currentArticle->xreference = '';
+
+            // Создаем параметры статьи
+            $articleParams = new Registry();
+            $this->currentArticle->params = $articleParams->toString();
+
+            // Сбрасываем текущий размер статьи
+            $this->articleSize = 0;
+
+            return true;
+        } catch (Exception $e) {
+            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+            return false;
         }
-
-        // Создаем новую статью
-        $this->currentArticle = Table::getInstance('Content', 'JTable');
-
-        // Заполняем базовые поля статьи
-        $this->currentArticle->title = $title;
-        $this->currentArticle->alias = JFilterOutput::stringURLSafe($title);
-        $this->currentArticle->introtext = '';
-        $this->currentArticle->fulltext = '';
-        $this->currentArticle->state = 1; // Опубликовано
-        $this->currentArticle->catid = $settings['article_category'];
-        $this->currentArticle->created = (new Date())->toSql();
-        $this->currentArticle->created_by = $settings['post_author'];
-        $this->currentArticle->access = 1; // Публичный доступ
-        $this->currentArticle->language = '*'; // Все языки
-        $this->currentArticle->metadata = '{}';
-        $this->currentArticle->params = '{}';
-
-        // Сбрасываем текущий размер статьи
-        $this->articleSize = 0;
-
-        return true;
     }
 
     /**
@@ -186,14 +251,22 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
         }
 
         try {
-            // Сохраняем статью в базе данных
+            // Логирование перед сохранением для отладки
+            $app = Factory::getApplication();
+            $app->enqueueMessage('Сохранение статьи: ' . $this->currentArticle->title . ', ID категории: ' . $this->currentArticle->catid, 'notice');
+
+            // Проверяем поля статьи перед сохранением
             if (!$this->currentArticle->check()) {
-                throw new Exception($this->currentArticle->getError());
+                throw new Exception('Ошибка проверки статьи: ' . $this->currentArticle->getError());
             }
 
+            // Сохраняем статью в базе данных
             if (!$this->currentArticle->store()) {
-                throw new Exception($this->currentArticle->getError());
+                throw new Exception('Ошибка сохранения статьи: ' . $this->currentArticle->getError());
             }
+
+            // Логирование после сохранения для отладки
+            $app->enqueueMessage('Статья успешно сохранена с ID: ' . $this->currentArticle->id, 'notice');
 
             // Формируем URL для статьи
             $link = Route::_('index.php?option=com_content&view=article&id=' . $this->currentArticle->id);
@@ -201,7 +274,7 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
             // Добавляем ссылку и заголовок в массив для последующего вывода
             $this->articleLinks[] = [
                 'title' => $this->currentArticle->title,
-                'url' => JUri::root() . ltrim($link, '/'),
+                'url' => Uri::root() . ltrim($link, '/'),
                 'id' => $this->currentArticle->id
             ];
 
