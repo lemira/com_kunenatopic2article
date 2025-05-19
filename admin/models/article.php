@@ -424,7 +424,7 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
 
         // Формируем информационную строку
         $infoString = '<div class="post-info">';
-        $infoString .= Text::sprintf('COM_KUNENATOPIC2ARTICLE_POST_INFO', $userName, $formattedDate);
+        $infoString .= Text::sprintf('COM_KUNENATOPIC2ARTICLE_POST_INFO_FORMAT', $userName, $formattedDate);
         $infoString .= '</div>';
 
         return $infoString;
