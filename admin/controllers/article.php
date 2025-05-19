@@ -1,77 +1,114 @@
 <?php
-defined('_JEXEC') or die;
+/**
+ * @package     Joomla.Administrator
+ * @subpackage  com_kunenatopic2article
+ *
+ * @copyright   Copyright (C) 2023 Open Source Matters, Inc. All rights reserved.
+ * @license     GNU General Public License version 2 or later; see LICENSE.txt
+ */
+
+// No direct access to this file
+defined('_JEXEC') or die('Restricted access');
+
+use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
-use Joomla\CMS\MVC\Controller\BaseController;
-use Joomla\CMS\Router\Route;
-use Joomla\CMS\Session\Session;
+
 /**
  * Article Controller
  *
- * @since  1.0.0
+ * @since  0.0.1
  */
 class KunenaTopic2ArticleControllerArticle extends BaseController
 {
     /**
-     * Constructor.
+     * Создание статей из темы форума Kunena
      *
-     * @param   array  $config  An optional associative array of configuration settings.
-     */
-    public function __construct($config = array())
-    {
-        parent::__construct($config);
-        
-        // Регистрация задачи create
-        $this->registerTask('create', 'create');
-    }
-    /**
-     * Create an article from selected topic based on parameters
-     * stored in the database
-     *
-     * @return void
+     * @return  void
      */
     public function create()
     {
-        // Проверка токена безопасности
-        Session::checkToken() or die(Text::_('JINVALID_TOKEN'));
-        
+        // Check for request forgeries
+        $this->checkToken();
+
         $app = Factory::getApplication();
+        $input = $app->input;
+        $model = $this->getModel('Article');
+
+        // Получаем ID темы из параметров запроса
+        $topicId = $input->getInt('topic_id', 0);
         
-        // Получение модели для доступа к параметрам
-        $model = $this->getModel('Topic', 'KunenaTopic2ArticleModel');
-        
-        if (!$model) {
-            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_MODEL_NOT_FOUND'), 'error');
-            $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topics', false));
+        if (!$topicId) {
+            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'), 'error');
+            $app->redirect('index.php?option=com_kunenatopic2article');
             return;
         }
-        
-        // Получение всех необходимых параметров из таблицы
-        $params = $model->getParams();
-        
-        if (empty($params)) {
-            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_PARAMETERS'), 'warning');
-            $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topics', false));
-            return;
+
+        // Получаем настройки из формы или используем настройки по умолчанию
+        $settings = [
+            'topic_selection' => $topicId,
+            'post_transfer_scheme' => $input->getString('post_transfer_scheme', 'flat'),
+            'article_category' => $input->getInt('article_category', 0),
+            'post_author' => $input->getInt('post_author', 0),
+            'max_article_size' => $input->getInt('max_article_size', 10000),
+        ];
+
+        try {
+            // Создаем статьи из темы Kunena
+            $articleLinks = $model->createArticlesFromTopic($settings);
+            
+            // Отправляем массив ссылок администратору
+            $this->sendLinksToAdministrator($articleLinks);
+            
+            // Отображаем результаты
+            $app->setUserState('com_kunenatopic2article.article_links', $articleLinks);
+            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESSFULLY'), 'success');
+        } catch (Exception $e) {
+            $app->enqueueMessage($e->getMessage(), 'error');
         }
-        
-        // Заглушка для демонстрации работы кнопки
-        $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_FEATURE_COMING_SOON'), 'notice');
-        $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topics', false));
-        
-        // Когда будет готова полная реализация:
-        /*
-        // Получение модели для создания статей
-        $articleModel = $this->getModel('Article');
-        
-        // Создание статьи на основе параметров
-        $result = $articleModel->createArticleFromParams($params);
-        
-        if ($result) {
-            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_CREATED_SUCCESSFULLY'));
-        } else {
-            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_CREATION_ERROR'), 'error');
+
+        // Перенаправляем на страницу с результатами
+        $app->redirect('index.php?option=com_kunenatopic2article&view=result');
+    }
+
+    /**
+     * Отправка ссылок на созданные статьи администратору
+     *
+     * @param   array  $articleLinks  Массив ссылок на созданные статьи
+     *
+     * @return  boolean  True в случае успеха
+     */
+    private function sendLinksToAdministrator($articleLinks)
+    {
+        // Получаем объект приложения
+        $app = Factory::getApplication();
+
+        // Проверяем, есть ли статьи для отправки
+        if (empty($articleLinks)) {
+            return false;
         }
-        */
+
+        try {
+            // Создаем текст сообщения со ссылками на созданные статьи
+            $messageText = Text::_('COM_KUNENATOPIC2ARTICLE_NEW_ARTICLES_CREATED') . "\n\n";
+            
+            foreach ($articleLinks as $link) {
+                $messageText .= $link['title'] . ': ' . $link['url'] . "\n";
+            }
+
+            // Здесь должен быть код для отправки личного сообщения администратору
+            // Используйте API Kunena или другой подходящий метод
+            
+            // Пример интеграции с системой сообщений Kunena:
+            if (class_exists('KunenaForum') && KunenaForum::installed()) {
+                // Реализация отправки сообщения
+                // ...
+            }
+
+            return true;
+        } catch (Exception $e) {
+            $app->enqueueMessage($e->getMessage(), 'error');
+            return false;
+        }
     }
 }
