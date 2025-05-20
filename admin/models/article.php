@@ -90,6 +90,10 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
         $this->articleLinks = [];
 
         try {
+            // Отладка: выводим настройки
+            $app = Factory::getApplication();
+            $app->enqueueMessage('Настройки: ' . print_r($settings, true), 'notice');
+
             // Проверяем валидность категории статьи
             if (!$this->isCategoryValid($settings['article_category'])) {
                 throw new Exception(Text::_('COM_KUNENATOPIC2ARTICLE_INVALID_CATEGORY_ID'));
@@ -161,6 +165,10 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
             
             $exists = $db->setQuery($query)->loadResult();
             
+            // Отладка: выводим результат проверки категории
+            $app = Factory::getApplication();
+            $app->enqueueMessage('Проверка категории ID ' . $categoryId . ': ' . ($exists ? 'Существует' : 'Не существует'), 'notice');
+            
             return !empty($exists);
         } catch (Exception $e) {
             Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
@@ -191,16 +199,19 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
             }
 
             // Создаем новую статью
-            $this->currentArticle = Table::getInstance('Content', 'JTable');
+            $this->currentArticle = Table::getInstance('Content');
 
             if (!$this->currentArticle) {
                 throw new Exception(Text::_('COM_KUNENATOPIC2ARTICLE_CANNOT_CREATE_ARTICLE_INSTANCE'));
             }
 
+            // Формируем уникальный алиас
+            $baseAlias = OutputFilter::stringURLSafe($title);
+            $uniqueAlias = $this->getUniqueAlias($baseAlias);
+
             // Заполняем базовые поля статьи
             $this->currentArticle->title = $title;
-            // Добавляем уникальный идентификатор к алиасу, чтобы избежать дубликатов
-            $this->currentArticle->alias = OutputFilter::stringURLSafe($title) . '-' . uniqid();
+            $this->currentArticle->alias = $uniqueAlias;
             $this->currentArticle->introtext = '';
             $this->currentArticle->fulltext = '';
             $this->currentArticle->state = 1; // Опубликовано
@@ -226,6 +237,9 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
             $this->currentArticle->language = '*'; // Все языки
             $this->currentArticle->xreference = '';
 
+            // Устанавливаем parent_id в 0, чтобы избежать ошибки "Invalid parent ID"
+            $this->currentArticle->parent_id = 0;
+
             // Создаем параметры статьи
             $articleParams = new Registry();
             $this->currentArticle->params = $articleParams->toString();
@@ -233,9 +247,59 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
             // Сбрасываем текущий размер статьи
             $this->articleSize = 0;
 
+            // Отладка
+            $app = Factory::getApplication();
+            $app->enqueueMessage('Статья подготовлена: ' . $title . ', категория: ' . $settings['article_category'] . ', alias: ' . $uniqueAlias, 'notice');
+
             return true;
         } catch (Exception $e) {
-            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+            Factory::getApplication()->enqueueMessage('Ошибка при открытии статьи: ' . $e->getMessage(), 'error');
+            return false;
+        }
+    }
+
+    /**
+     * Генерация уникального алиаса для статьи
+     *
+     * @param   string  $baseAlias  Базовый алиас
+     *
+     * @return  string  Уникальный алиас
+     */
+    private function getUniqueAlias($baseAlias)
+    {
+        $db = $this->getDbo();
+        $uniqueAlias = $baseAlias;
+        $counter = 0;
+        
+        // Проверяем уникальность алиаса
+        while ($this->aliasExists($uniqueAlias)) {
+            $counter++;
+            $uniqueAlias = $baseAlias . '-' . $counter;
+        }
+        
+        return $uniqueAlias;
+    }
+    
+    /**
+     * Проверка существования алиаса
+     *
+     * @param   string  $alias  Алиас для проверки
+     *
+     * @return  boolean  True если алиас существует
+     */
+    private function aliasExists($alias)
+    {
+        try {
+            $db = $this->getDbo();
+            $query = $db->getQuery(true)
+                ->select('COUNT(*)')
+                ->from('#__content')
+                ->where('alias = ' . $db->quote($alias));
+                
+            $count = $db->setQuery($query)->loadResult();
+            
+            return $count > 0;
+        } catch (Exception $e) {
             return false;
         }
     }
@@ -255,6 +319,59 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
             // Логирование перед сохранением для отладки
             $app = Factory::getApplication();
             $app->enqueueMessage('Сохранение статьи: ' . $this->currentArticle->title . ', ID категории: ' . $this->currentArticle->catid, 'notice');
+
+            // Проверяем и настраиваем дополнительные поля
+            if (!isset($this->currentArticle->parent_id) || $this->currentArticle->parent_id === null) {
+                $this->currentArticle->parent_id = 0;
+            }
+            
+            if (empty($this->currentArticle->asset_id)) {
+                $this->currentArticle->asset_id = 0;
+            }
+            
+            if (empty($this->currentArticle->fulltext)) {
+                $this->currentArticle->fulltext = '';
+            }
+            
+            if (empty($this->currentArticle->introtext) && !empty($this->currentArticle->fulltext)) {
+                // Если introtext пуст, но есть fulltext, переместим часть контента
+                $maxIntroLength = 500; // Максимальная длина введения
+                if (strlen($this->currentArticle->fulltext) > $maxIntroLength) {
+                    $this->currentArticle->introtext = substr($this->currentArticle->fulltext, 0, $maxIntroLength) . '...';
+                } else {
+                    $this->currentArticle->introtext = $this->currentArticle->fulltext;
+                }
+            }
+
+            // Проверка всех необходимых полей
+            $requiredFields = ['title', 'alias', 'introtext', 'catid', 'state', 'access', 'language'];
+            foreach ($requiredFields as $field) {
+                if (empty($this->currentArticle->$field)) {
+                    $app->enqueueMessage("Отсутствует обязательное поле: {$field}", 'warning');
+                    
+                    // Устанавливаем значения по умолчанию
+                    switch ($field) {
+                        case 'alias':
+                            $this->currentArticle->alias = OutputFilter::stringURLSafe($this->currentArticle->title) . '-' . uniqid();
+                            break;
+                        case 'state':
+                            $this->currentArticle->state = 1;
+                            break;
+                        case 'access':
+                            $this->currentArticle->access = 1;
+                            break;
+                        case 'language':
+                            $this->currentArticle->language = '*';
+                            break;
+                        case 'introtext':
+                            $this->currentArticle->introtext = '...';
+                            break;
+                    }
+                }
+            }
+            
+            // Отладка: вывод всех полей статьи перед сохранением
+            $app->enqueueMessage('Содержимое статьи перед сохранением: ' . print_r($this->currentArticle->getProperties(), true), 'notice');
 
             // Проверяем поля статьи перед сохранением
             if (!$this->currentArticle->check()) {
@@ -284,7 +401,7 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
 
             return true;
         } catch (Exception $e) {
-            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+            Factory::getApplication()->enqueueMessage('Ошибка сохранения статьи: ' . $e->getMessage(), 'error');
             return false;
         }
     }
