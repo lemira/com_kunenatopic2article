@@ -48,19 +48,42 @@ class KunenaTopic2ArticleController extends JControllerLegacy
         return $this;
     }
 
-    public function save()
+public function save() 
 {
     $app = JFactory::getApplication();
-      
-    $data = $app->input->get('jform', array(), 'array');
+    $input = $app->input;
+    $data = $input->get('jform', array(), 'array');
     
+    $topicId = isset($data['topic_id']) ? (int) $data['topic_id'] : 0;
+
+    // Проверка существования темы
+    $db = JFactory::getDbo();
+    $query = $db->getQuery(true)
+        ->select($db->qn(['id', 'subject']))
+        ->from($db->qn('#__kunena_topics'))
+        ->where($db->qn('first_post_id') . ' = ' . $db->q($topicId));
+    $db->setQuery($query);
+    $topic = $db->loadObject();
+
+    if (!$topic) {
+        // Ошибка — неверный Topic ID
+        $app->enqueueMessage(JText::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $topicId), 'error');
+        // Не сохраняем параметры
+        $this->setRedirect(JRoute::_('index.php?option=com_kunenatopic2article&view=topics', false));
+        return;
+    }
+
+    // Успешно — показать название темы
+    $app->enqueueMessage('Тема: ' . $topic->subject, 'message');
+
+    // Сохранение параметров
     $model = $this->getModel('Topic');
     if ($model->save($data)) {
         $app->enqueueMessage('Parameters saved successfully', 'success');
     } else {
         $app->enqueueMessage('Failed to save parameters', 'error');
     }
-    
+
     $this->setRedirect(JRoute::_('index.php?option=com_kunenatopic2article&view=topics', false));
 }
     
