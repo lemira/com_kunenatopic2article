@@ -54,7 +54,8 @@ public function save()
     $input = $app->input;
     $data = $input->get('jform', array(), 'array');
     
-    $topicId = isset($data['topic_id']) ? (int) $data['topic_id'] : 0;
+   $topicId = isset($data['topic_selection']) ? (int) $data['topic_selection'] : 0;
+
 
     // Проверка существования темы
     $db = JFactory::getDbo();
