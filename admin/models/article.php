@@ -31,7 +31,7 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
     /**
      * Текущая статья
      *
-     * @var    object
+     * @var    array
      */
     private $currentArticle = null;
 
@@ -120,7 +120,7 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
                     
                     // Если статья уже открыта, закрываем её перед открытием новой
                     if ($this->currentArticle !== null) {
-                        $this->closeArticle();
+                        $this->closeArticle($settings);
                     }
                     
                     // Открываем новую статью
@@ -136,7 +136,7 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
 
             // Закрываем последнюю статью
             if ($this->currentArticle !== null) {
-                $this->closeArticle();
+                $this->closeArticle($settings);
             }
 
             return $this->articleLinks;
@@ -198,51 +198,19 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
                 $title .= ' - ' . Text::sprintf('COM_KUNENATOPIC2ARTICLE_PART_NUMBER', $partNum);
             }
 
-            // Создаем новую статью
-            $this->currentArticle = Table::getInstance('Content');
-
-            if (!$this->currentArticle) {
-                throw new Exception(Text::_('COM_KUNENATOPIC2ARTICLE_CANNOT_CREATE_ARTICLE_INSTANCE'));
-            }
-
             // Формируем уникальный алиас
             $baseAlias = OutputFilter::stringURLSafe($title);
             $uniqueAlias = $this->getUniqueAlias($baseAlias);
 
-            // Заполняем базовые поля статьи
-            $this->currentArticle->title = $title;
-            $this->currentArticle->alias = $uniqueAlias;
-            $this->currentArticle->introtext = '';
-            $this->currentArticle->fulltext = '';
-            $this->currentArticle->state = 1; // Опубликовано
-            $this->currentArticle->catid = (int)$settings['article_category'];
-            $this->currentArticle->created = (new Date())->toSql();
-            $this->currentArticle->created_by = (int)$settings['post_author'];
-            $this->currentArticle->created_by_alias = '';
-            $this->currentArticle->modified = (new Date())->toSql();
-            $this->currentArticle->modified_by = (int)$settings['post_author'];
-            $this->currentArticle->publish_up = null;
-            $this->currentArticle->publish_down = null;
-            $this->currentArticle->images = '{}';
-            $this->currentArticle->urls = '{}';
-            $this->currentArticle->attribs = '{}';
-            $this->currentArticle->version = 1;
-            $this->currentArticle->ordering = 0;
-            $this->currentArticle->metakey = '';
-            $this->currentArticle->metadesc = '';
-            $this->currentArticle->access = 1; // Публичный доступ
-            $this->currentArticle->hits = 0;
-            $this->currentArticle->metadata = '{}';
-            $this->currentArticle->featured = 0;
-            $this->currentArticle->language = '*'; // Все языки
-            $this->currentArticle->xreference = '';
-
-            // Устанавливаем parent_id в 0, чтобы избежать ошибки "Invalid parent ID"
-            $this->currentArticle->parent_id = 0;
-
-            // Создаем параметры статьи
-            $articleParams = new Registry();
-            $this->currentArticle->params = $articleParams->toString();
+            // Создаем новую статью как ассоциативный массив (вместо использования Table)
+            $this->currentArticle = [
+                'title' => $title,
+                'alias' => $uniqueAlias,
+                'introtext' => '',
+                'fulltext' => '',
+                'catid' => (int)$settings['article_category'],
+                'created_by' => (int)$settings['post_author']
+            ];
 
             // Сбрасываем текущий размер статьи
             $this->articleSize = 0;
@@ -305,96 +273,51 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
     }
 
     /**
-     * Закрытие и сохранение статьи
+     * Закрытие и сохранение статьи с использованием упрощенного метода
      *
+     * @param   array  $settings  Настройки для создания статьи
+     * 
      * @return  boolean  True в случае успеха
      */
-    private function closeArticle()
+    private function closeArticle($settings)
     {
         if ($this->currentArticle === null) {
             return false;
         }
 
         try {
-            // Логирование перед сохранением для отладки
             $app = Factory::getApplication();
-            $app->enqueueMessage('Сохранение статьи: ' . $this->currentArticle->title . ', ID категории: ' . $this->currentArticle->catid, 'notice');
+            $app->enqueueMessage('Сохранение статьи: ' . $this->currentArticle['title'], 'notice');
 
-            // Проверяем и настраиваем дополнительные поля
-            if (!isset($this->currentArticle->parent_id) || $this->currentArticle->parent_id === null) {
-                $this->currentArticle->parent_id = 0;
-            }
-            
-            if (empty($this->currentArticle->asset_id)) {
-                $this->currentArticle->asset_id = 0;
-            }
-            
-            if (empty($this->currentArticle->fulltext)) {
-                $this->currentArticle->fulltext = '';
-            }
-            
-            if (empty($this->currentArticle->introtext) && !empty($this->currentArticle->fulltext)) {
-                // Если introtext пуст, но есть fulltext, переместим часть контента
+            // Обработка introtext, если он пустой
+            if (empty($this->currentArticle['introtext']) && !empty($this->currentArticle['fulltext'])) {
                 $maxIntroLength = 500; // Максимальная длина введения
-                if (strlen($this->currentArticle->fulltext) > $maxIntroLength) {
-                    $this->currentArticle->introtext = substr($this->currentArticle->fulltext, 0, $maxIntroLength) . '...';
+                if (strlen($this->currentArticle['fulltext']) > $maxIntroLength) {
+                    $this->currentArticle['introtext'] = substr($this->currentArticle['fulltext'], 0, $maxIntroLength) . '...';
                 } else {
-                    $this->currentArticle->introtext = $this->currentArticle->fulltext;
+                    $this->currentArticle['introtext'] = $this->currentArticle['fulltext'];
                 }
             }
 
-            // Проверка всех необходимых полей
-            $requiredFields = ['title', 'alias', 'introtext', 'catid', 'state', 'access', 'language'];
-            foreach ($requiredFields as $field) {
-                if (empty($this->currentArticle->$field)) {
-                    $app->enqueueMessage("Отсутствует обязательное поле: {$field}", 'warning');
-                    
-                    // Устанавливаем значения по умолчанию
-                    switch ($field) {
-                        case 'alias':
-                            $this->currentArticle->alias = OutputFilter::stringURLSafe($this->currentArticle->title) . '-' . uniqid();
-                            break;
-                        case 'state':
-                            $this->currentArticle->state = 1;
-                            break;
-                        case 'access':
-                            $this->currentArticle->access = 1;
-                            break;
-                        case 'language':
-                            $this->currentArticle->language = '*';
-                            break;
-                        case 'introtext':
-                            $this->currentArticle->introtext = '...';
-                            break;
-                    }
-                }
-            }
+            // Вызываем упрощенный метод создания статьи
+            $articleId = $this->createSimpleArticle($this->currentArticle, $settings);
             
-            // Отладка: вывод всех полей статьи перед сохранением
-            $app->enqueueMessage('Содержимое статьи перед сохранением: ' . print_r($this->currentArticle->getProperties(), true), 'notice');
-
-            // Проверяем поля статьи перед сохранением
-            if (!$this->currentArticle->check()) {
-                throw new Exception('Ошибка проверки статьи: ' . $this->currentArticle->getError());
+            if (!$articleId) {
+                throw new Exception('Ошибка сохранения статьи через упрощенный метод.');
             }
-
-            // Сохраняем статью в базе данных
-            if (!$this->currentArticle->store()) {
-                throw new Exception('Ошибка сохранения статьи: ' . $this->currentArticle->getError());
-            }
-
-            // Логирование после сохранения для отладки
-            $app->enqueueMessage('Статья успешно сохранена с ID: ' . $this->currentArticle->id, 'notice');
 
             // Формируем URL для статьи
-            $link = Route::_('index.php?option=com_content&view=article&id=' . $this->currentArticle->id);
+            $link = Route::_('index.php?option=com_content&view=article&id=' . $articleId);
             
             // Добавляем ссылку и заголовок в массив для последующего вывода
             $this->articleLinks[] = [
-                'title' => $this->currentArticle->title,
+                'title' => $this->currentArticle['title'],
                 'url' => Uri::root() . ltrim($link, '/'),
-                'id' => $this->currentArticle->id
+                'id' => $articleId
             ];
+
+            // Отладка
+            $app->enqueueMessage('Статья успешно сохранена с ID: ' . $articleId, 'notice');
 
             // Сбрасываем текущую статью
             $this->currentArticle = null;
@@ -402,6 +325,60 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
             return true;
         } catch (Exception $e) {
             Factory::getApplication()->enqueueMessage('Ошибка сохранения статьи: ' . $e->getMessage(), 'error');
+            return false;
+        }
+    }
+
+    /**
+     * Упрощенный метод создания статьи в Joomla
+     *
+     * @param   array  $article   Основные данные статьи
+     * @param   array  $params    Параметры компонента
+     *
+     * @return  boolean|int  False в случае неудачи, ID статьи в случае успеха
+     */
+    protected function createSimpleArticle($article, $params)
+    {
+        try {
+            // Получаем модель контента
+            $contentModel = BaseDatabaseModel::getInstance('Article', 'ContentModel');
+            if (!$contentModel) {
+                Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_ERROR_CONTENT_MODEL_NOT_FOUND'), 'error');
+                return false;
+            }
+
+            // Создаем минимальные данные статьи
+            $articleData = [
+                'title' => $article['title'],
+                'catid' => (int) $params['article_category'],
+                'introtext' => $article['introtext'],
+                'fulltext' => $article['fulltext'] ?? '',
+                'created_by' => (int) $params['post_author'],
+                'state' => 1, // Published (или 0, если нужно сохранять как черновик)
+                'language' => '*',
+                'access' => 1
+            ];
+
+            // Если есть alias, добавляем его
+            if (!empty($article['alias'])) {
+                $articleData['alias'] = $article['alias'];
+            }
+
+            // Сохраняем статью с упрощенным подходом
+            if (!$contentModel->save($articleData)) {
+                Factory::getApplication()->enqueueMessage(
+                    Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_SAVING_ARTICLE', $contentModel->getError()),
+                    'error'
+                );
+                return false;
+            }
+
+            return $contentModel->getState('article.id');
+        } catch (Exception $e) {
+            Factory::getApplication()->enqueueMessage(
+                Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_SAVING_ARTICLE', $e->getMessage()),
+                'error'
+            );
             return false;
         }
     }
@@ -455,17 +432,20 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
             
             // Добавляем информационную строку в статью, если она не пуста
             if (!empty($infoString)) {
-                $this->currentArticle->fulltext .= $infoString;
+                if (!isset($this->currentArticle['fulltext'])) {
+                    $this->currentArticle['fulltext'] = '';
+                }
+                $this->currentArticle['fulltext'] .= $infoString;
             }
 
             // Преобразуем BBCode в HTML
             $htmlContent = $this->convertBBCodeToHtml($this->currentPost->message);
             
             // Добавляем преобразованный текст в статью
-            $this->currentArticle->fulltext .= $htmlContent;
+            $this->currentArticle['fulltext'] .= $htmlContent;
             
             // Обновляем размер статьи
-            $this->articleSize += strlen($this->currentArticle->fulltext);
+            $this->articleSize += strlen($this->currentArticle['fulltext']);
 
             return true;
         } catch (Exception $e) {
