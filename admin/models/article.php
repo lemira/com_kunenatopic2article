@@ -24,59 +24,45 @@ use Joomla\Registry\Registry;
  */
 class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
 {
-    /**
-     * Текущая статья
-     * @var    array
-     */
-    private $currentArticle = null;
-
-    /**
+   /**
      * Текущий размер статьи
-     *
      * @var    int
      */
     private $articleSize = 0;
 
     /**
      * Массив ссылок на созданные статьи
-     *
      * @var    array
      */
     private $articleLinks = [];
 
     /**
      * Текущий ID поста
-     *
      * @var    int
      */
     private $postId = 0;
 
     /**
      * Размер текущего поста
-     *
      * @var    int
      */
     private $postSize = 0;
 
     /**
      * Список ID постов для обработки
-     *
-     * @var    array
+    * @var    array
      */
     private $postIdList = [];
 
     /**
      * Текущий пост
-     *
      * @var    object
      */
     private $currentPost = null;
 
     /**
      * Создание статей из темы форума Kunena
-     *
-     * @param   array  $settings  Настройки для создания статей
-     *
+    * @param   array  $settings  Настройки для создания статей
      * @return  array  Массив ссылок на созданные статьи
      */
     public function createArticlesFromTopic($settings)
