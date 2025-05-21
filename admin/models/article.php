@@ -341,13 +341,14 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
     private function openPost($postId)
     {
         try {
-            // Получаем данные поста из базы данных Kunena, фильтрация промодерированных постов
-           $query = $this->getDbo()->getQuery(true)
+         $db = Factory::getDbo();
+           // Получаем данные поста из базы данных Kunena, фильтрация промодерированных постов
+           $query = $db->getQuery(true)
         ->select('*')
         ->from('#__kunena_messages')
         ->where('id = ' . (int)$postId . ' AND hold = 0'); // hold = 0 не очень нужен, так как модерированные посты уже исключены в списке
 
-            $this->currentPost = $this->getDbo()->setQuery($query)->loadObject();
+            $this->currentPost = $db->setQuery($query)->loadObject();
 
        //  Не проверяем существования, рассчитываем на целостность БД 
        //     if (!$this->currentPost) {
@@ -434,12 +435,13 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
     private function getTopicData($topicId)
     {
         try {
-            $query = $this->getDbo()->getQuery(true)
+           $db = Factory::getDbo();
+            $query = $db->getQuery(true)
                 ->select('*')
                 ->from('#__kunena_topics')
                 ->where('id = ' . (int)$topicId);
 
-            $topic = $this->getDbo()->setQuery($query)->loadObject();
+            $topic = $db->setQuery($query)->loadObject();
             
             if (!$topic) {
                 throw new Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_TOPIC_NOT_FOUND', $topicId));
@@ -462,13 +464,14 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
     private function buildFlatPostIdList($topicId)
     {
         try {
+           $db = Factory::getDbo();
            $query->select($db->quoteName('id'))
       ->from($db->quoteName('#__kunena_messages'))
       ->where($db->quoteName('thread') . ' = ' . (int)$topicId) // из указанной темы thread
       ->andWhere($db->quoteName('hold') . ' = 0') // являются одобренными и видимыми для обычных пользователей 
       ->order($db->quoteName('time') . ' ASC');
 
-            $postIds = $this->getDbo()->setQuery($query)->loadColumn();
+            $postIds = $db->setQuery($query)->loadColumn();
             
             if (empty($postIds)) {
                 throw new Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_NO_POSTS_IN_TOPIC', $topicId));
@@ -532,12 +535,13 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
     private function getUserName($userId)
     {
         try {
-            $query = $this->getDbo()->getQuery(true)
+           $db = Factory::getDbo();
+            $query = $db->getQuery(true)
                 ->select('name')
                 ->from('#__users')
                 ->where('id = ' . (int)$userId);
 
-            $userName = $this->getDbo()->setQuery($query)->loadResult();
+            $userName = $db->setQuery($query)->loadResult();
             
             return $userName ? $userName : Text::_('COM_KUNENATOPIC2ARTICLE_UNKNOWN_USER');
         } catch (Exception $e) {
