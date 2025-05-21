@@ -125,36 +125,6 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
     }
 
     /**
-     * Проверка валидности категории
-     *
-     * @param   int  $categoryId  ID категории
-     *
-     * @return  boolean  True если категория существует
-     */
-    private function isCategoryValid($categoryId)
-    {
-        try {
-            $db = $this->getDbo();
-            $query = $db->getQuery(true)
-                ->select('id')
-                ->from('#__categories')
-                ->where('id = ' . (int)$categoryId)
-                ->where('extension = ' . $db->quote('com_content'));
-            
-            $exists = $db->setQuery($query)->loadResult();
-            
-            // Отладка: выводим результат проверки категории
-            $app = Factory::getApplication();
-            $app->enqueueMessage('Проверка категории ID ' . $categoryId . ': ' . ($exists ? 'Существует' : 'Не существует'), 'notice');
-            
-            return !empty($exists);
-        } catch (Exception $e) {
-            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
-            return false;
-        }
-    }
-
-    /**
      * Открытие статьи для её заполнения
      *
      * @param   array  $settings  Настройки для создания статьи
@@ -375,7 +345,7 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
            $query = $this->getDbo()->getQuery(true)
         ->select('*')
         ->from('#__kunena_messages')
-        ->where('id = ' . (int)$postId . ' AND moderation = 0');
+        ->where('id = ' . (int)$postId . ' AND hold = 0'); // hold = 0 не очень нужен, так как модерированные посты уже исключены в списке
 
             $this->currentPost = $this->getDbo()->setQuery($query)->loadObject();
 
@@ -492,11 +462,11 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
     private function buildFlatPostIdList($topicId)
     {
         try {
-            $query = $this->getDbo()->getQuery(true)
-                ->select('id')
-                ->from('#__kunena_messages')
-                ->where('thread = ' . (int)$topicId)
-                ->order('time ASC');
+           $query->select($db->quoteName('id'))
+      ->from($db->quoteName('#__kunena_messages'))
+      ->where($db->quoteName('thread') . ' = ' . (int)$topicId) // из указанной темы thread
+      ->andWhere($db->quoteName('hold') . ' = 0') // являются одобренными и видимыми для обычных пользователей 
+      ->order($db->quoteName('time') . ' ASC');
 
             $postIds = $this->getDbo()->setQuery($query)->loadColumn();
             
