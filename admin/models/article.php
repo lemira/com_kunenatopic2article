@@ -88,19 +88,13 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
     {
         // Инициализация массива ссылок
         $this->articleLinks = [];
+        // На случай, если юзер не сделал save и проверки Topic ID
+            $this->save();
+
 
         try {
-            // Отладка: выводим настройки
-            $app = Factory::getApplication();
-            $app->enqueueMessage('Настройки: ' . print_r($settings, true), 'notice');
-
-            // Проверяем валидность категории статьи
-            if (!$this->isCategoryValid($settings['article_category'])) {
-                throw new Exception(Text::_('COM_KUNENATOPIC2ARTICLE_INVALID_CATEGORY_ID'));
-            }
-
-            // Устанавливаем ID первого поста темы
-            $this->postId = $this->getFirstPostId($settings['topic_selection']);
+           // Устанавливаем ID первого поста темы
+            $this->postId = (int) $settings['topic_selection'];
 
             // Формируем список ID постов в зависимости от схемы обхода
             if ($settings['post_transfer_scheme'] == 'tree') {
@@ -393,17 +387,18 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
     private function openPost($postId)
     {
         try {
-            // Получаем данные поста из базы данных Kunena
-            $query = $this->getDbo()->getQuery(true)
-                ->select('*')
-                ->from('#__kunena_messages')
-                ->where('id = ' . (int)$postId);
+            // Получаем данные поста из базы данных Kunena, фильтрация промодерированных постов
+           $query = $this->getDbo()->getQuery(true)
+        ->select('*')
+        ->from('#__kunena_messages')
+        ->where('id = ' . (int)$postId . ' AND moderation = 0');
 
             $this->currentPost = $this->getDbo()->setQuery($query)->loadObject();
 
-            if (!$this->currentPost) {
-                throw new Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_POST_NOT_FOUND', $postId));
-            }
+       //  Не проверяем существования, рассчитываем на целостность БД 
+       //     if (!$this->currentPost) {
+       //         throw new Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_POST_NOT_FOUND', $postId));
+       //     }
 
             // Рассчитываем размер поста
             $this->postSize = strlen($this->currentPost->message);
@@ -475,35 +470,7 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
         return $this->postId;
     }
 
-    /**
-     * Получение ID первого поста темы
-     *
-     * @param   int  $topicId  ID темы
-     *
-     * @return  int  ID первого поста
-     */
-    private function getFirstPostId($topicId)
-    {
-        try {
-            $query = $this->getDbo()->getQuery(true)
-                ->select('first_post_id')
-                ->from('#__kunena_topics')
-                ->where('id = ' . (int)$topicId);
-
-            $firstPostId = $this->getDbo()->setQuery($query)->loadResult();
-            
-            if (!$firstPostId) {
-                throw new Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_TOPIC_NOT_FOUND', $topicId));
-            }
-
-            return $firstPostId;
-        } catch (Exception $e) {
-            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
-            return 0;
-        }
-    }
-
-    /**
+   /**
      * Получение данных темы
      *
      * @param   int  $topicId  ID темы
