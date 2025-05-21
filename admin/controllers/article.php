@@ -28,6 +28,9 @@ class KunenaTopic2ArticleControllerArticle extends BaseController
      */
     public function create()
     {
+     // На случай, если юзер не сделал save и для проверки Topic ID
+            $this->save();
+        
         // Check for request forgeries
         $this->checkToken();
 
