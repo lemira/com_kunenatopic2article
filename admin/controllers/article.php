@@ -28,8 +28,11 @@ class KunenaTopic2ArticleControllerArticle extends BaseController
      */
     public function create()
     {
-     // На случай, если юзер не сделал save и для проверки Topic ID
-            $this->save();
+     // На случай, если юзер не сделал save и для проверки Topic ID Сохраняем параметры и проверяем тему
+    if (!$this->saveFromCreate()) {
+        $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
+        return;
+    }
         
         // Check for request forgeries
         $this->checkToken();
@@ -107,6 +110,45 @@ class KunenaTopic2ArticleControllerArticle extends BaseController
             return null;
         }
     }
+
+    public function saveFromCreate()
+{
+    $app = \JFactory::getApplication();
+    $input = $app->input;
+    $data = $input->get('jform', array(), 'array');
+
+    $topicId = isset($data['topic_selection']) ? (int) $data['topic_selection'] : 0;
+
+    // Проверка существования темы
+    $db = \JFactory::getDbo();
+    $query = $db->getQuery(true)
+        ->select($db->qn(['id', 'subject']))
+        ->from($db->qn('#__kunena_topics'))
+        ->where($db->qn('first_post_id') . ' = ' . $db->q($topicId));
+    $db->setQuery($query);
+    $topic = $db->loadObject();
+
+    if (!$topic) {
+        // Ошибка — неверный Topic ID
+        $app->enqueueMessage(\JText::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $topicId), 'error');
+        return false;
+    }
+
+    // Показать заголовок темы
+    $app->enqueueMessage('Тема: ' . $topic->subject, 'message');
+
+    // Сохранение параметров
+    $model = $this->getModel('Topic');
+    if ($model->save($data)) {
+        $app->enqueueMessage('Parameters saved successfully', 'success');
+        return true;
+    } else {
+        $app->enqueueMessage('Failed to save parameters', 'error');
+        return false;
+    }
+}
+
+    
     private function sendLinksToAdministrator($articleLinks)
     {
         // Получаем объект приложения
