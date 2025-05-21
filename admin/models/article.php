@@ -26,7 +26,6 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
 {
     /**
      * Текущая статья
-     *
      * @var    array
      */
     private $currentArticle = null;
@@ -84,11 +83,12 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
     {
         // Инициализация массива ссылок
         $this->articleLinks = [];
-        // На случай, если юзер не сделал save и проверки Topic ID
-            $this->save();
-
-
+       
         try {
+            $app = Factory::getApplication(); // ? нужно здесь?
+             // На случай, если юзер не сделал save и для проверки Topic ID
+            $this->save();
+            
            // Устанавливаем ID первого поста темы
             $this->postId = (int) $settings['topic_selection'];
 
