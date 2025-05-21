@@ -71,10 +71,8 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
         $this->articleLinks = [];
        
         try {
-            $app = Factory::getApplication(); // ? нужно здесь?
-             // На случай, если юзер не сделал save и для проверки Topic ID
-            $this->save();
-            
+            $app = Factory::getApplication(); // 
+                    
            // Устанавливаем ID первого поста темы
             $this->postId = (int) $settings['topic_selection'];
 
