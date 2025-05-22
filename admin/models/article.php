@@ -27,7 +27,8 @@ use Joomla\CMS\Filter\OutputFilter;
  */
 class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
 {
-protected $db;
+protected \JDatabaseDriver $db;
+    
 public function __construct($config = array())
 {
     parent::__construct($config);
