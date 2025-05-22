@@ -1,121 +1,204 @@
 <?php
+/**
+ * @package     Joomla.Administrator
+ * @subpackage  com_kunenatopic2article
+ *
+ * @copyright   Copyright (C) 2023 Open Source Matters, Inc. All rights reserved.
+ * @license     GNU General Public License version 2 or later; see LICENSE.txt
+ */
+
+// No direct access to this file
 defined('_JEXEC') or die('Restricted access');
-jimport('joomla.application.component.controller');
 
-$logFile = JPATH_BASE . '/logs/controller_debug.log';
-if (!file_exists(dirname($logFile))) {
-    mkdir(dirname($logFile), 0755, true);
-}
-$message = "Loading KunenaTopic2ArticleController at " . date('Y-m-d H:i:s') . "\n";
-file_put_contents($logFile, $message, FILE_APPEND | FILE_IGNORE_NEW_LINES);
+use Joomla\CMS\MVC\Controller\BaseController;
+use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Text;
 
-class KunenaTopic2ArticleController extends JControllerLegacy
+/**
+ * Article Controller
+ *
+ * @since  0.0.1
+ */
+class KunenaTopic2ArticleControllerArticle extends BaseController
 {
-    public function __construct($config = array())
+    /**
+     * Создание статей из темы форума Kunena
+     *
+     * @return  void
+     */
+    public function create()
     {
-        parent::__construct($config);
-        
-        // Регистрируем задачи - ДОЛЖНО БЫТЬ ВНУТРИ МЕТОДА __construct
-        $this->registerTask('reset', 'reset');
-        $this->registerTask('save', 'save');
-        
-        $logFile = JPATH_BASE . '/logs/controller_debug.log';
-        $message = "Constructing KunenaTopic2ArticleController at " . date('Y-m-d H:i:s') . "\n";
-        file_put_contents($logFile, $message, FILE_APPEND | FILE_IGNORE_NEW_LINES);
-    }
-    
-    public function display($cachable = false, $urlparams = false)
-    {
-        $logFile = JPATH_BASE . '/logs/controller_debug.log';
-        $message = "Displaying view in KunenaTopic2ArticleController at " . date('Y-m-d H:i:s') . "\n";
-        file_put_contents($logFile, $message, FILE_APPEND | FILE_IGNORE_NEW_LINES);
-
-        try {
-            $view = $this->getView('Topics', 'html');
-            $model = $this->getModel('Topic'); // Изменил с 'Topics' на 'Topic'
-            if ($model) {
-                $view->setModel($model, true);
-                $view->display();
-            } else {
-                $message = "Model 'Topic' not found at " . date('Y-m-d H:i:s') . "\n";
-                file_put_contents($logFile, $message, FILE_APPEND | FILE_IGNORE_NEW_LINES);
-            }
-        } catch (Exception $e) {
-            $message = "Error in display: " . $e->getMessage() . " at " . date('Y-m-d H:i:s') . "\n";
-            file_put_contents($logFile, $message, FILE_APPEND | FILE_IGNORE_NEW_LINES);
-        }
-
-        return $this;
-    }
-
-public function save() 
-{
-    $app = JFactory::getApplication();
-    $input = $app->input;
-    $data = $input->get('jform', array(), 'array');
-    
-   $topicId = isset($data['topic_selection']) ? (int) $data['topic_selection'] : 0;
-
-
-    // Проверка существования темы
-    $db = JFactory::getDbo();
-    $query = $db->getQuery(true)
-        ->select($db->qn(['id', 'subject']))
-        ->from($db->qn('#__kunena_topics'))
-        ->where($db->qn('first_post_id') . ' = ' . $db->q($topicId));
-    $db->setQuery($query);
-    $topic = $db->loadObject();
-
-    if (!$topic) {
-        // Ошибка — неверный Topic ID
-        $app->enqueueMessage(JText::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $topicId), 'error');
-        // Не сохраняем параметры
-        $this->setRedirect(JRoute::_('index.php?option=com_kunenatopic2article&view=topics', false));
-        return;
-    }
-
-    // Успешно — показать название темы
-    $app->enqueueMessage('Тема: ' . $topic->subject, 'message');
-
-    // Сохранение параметров
-    $model = $this->getModel('Topic');
-    if ($model->save($data)) {
-        $app->enqueueMessage('Parameters saved successfully', 'success');
-    } else {
-        $app->enqueueMessage('Failed to save parameters', 'error');
-    }
-
-    $this->setRedirect(JRoute::_('index.php?option=com_kunenatopic2article&view=topics', false));
-}
-    
-     public function reset()
-    {
-        $app = JFactory::getApplication();
-        
-        try {
-            // Получаем модель
-            $model = $this->getModel('Topic');
-            
-            if (!$model) {
-                throw new Exception('Unable to get Topic model');
-            }
-            
-            if (method_exists($model, 'reset')) {
-                if ($model->reset()) {
-                    $app->enqueueMessage('Parameters reset to default values', 'success');
-                } else {
-                    $app->enqueueMessage('Failed to reset parameters', 'error');
-                }
-            } else {
-                throw new Exception('Reset method not found in model');
-            }
-        } catch (Exception $e) {
-            $message = "Error in reset: " . $e->getMessage() . " at " . date('Y-m-d H:i:s') . "\n";
-            file_put_contents($logFile, $message, FILE_APPEND | FILE_IGNORE_NEW_LINES);
-            $app->enqueueMessage('Error: ' . $e->getMessage(), 'error');
+        // Проверяем и сохраняем параметры
+        if (!$this->saveFromCreate()) {
+            $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
+            return;
         }
         
-       $this->setRedirect(JRoute::_('index.php?option=com_kunenatopic2article&view=topics', false)); 
+        // Check for request forgeries
+        $this->checkToken();
+
+        $app = Factory::getApplication();
+        $input = $app->input;
+        $model = $this->getModel('Article');
+
+        // Получаем параметры из таблицы kunenatopic2article_params
+        $params = $this->getComponentParams();
+        
+        if (empty($params) || empty($params->topic_selection)) {
+            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'), 'error');
+            $app->redirect('index.php?option=com_kunenatopic2article');
+            return;
+        }
+
+        // Получаем ID первого поста из параметров
+        $firstPostId = (int)$params->topic_selection;
+
+        // Получаем настройки из параметров компонента
+        $settings = [
+            'topic_selection' => $firstPostId, // 3232, ID первого поста
+            'post_transfer_scheme' => ($params->post_transfer_scheme == 'THREADED') ? 'tree' : 'flat',
+            'article_category' => (int)$params->article_category,
+            'post_author' => (int)$params->post_author,
+            'max_article_size' => (int)$params->max_article_size,
+        ];
+
+        try {
+            // Создаем статьи из темы Kunena
+            $articleLinks = $model->createArticlesFromTopic($settings);
+            
+            // Отправляем массив ссылок администратору
+            $this->sendLinksToAdministrator($articleLinks);
+            
+            // Отображаем результаты
+            $app->setUserState('com_kunenatopic2article.article_links', $articleLinks);
+            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESSFULLY'), 'success');
+        } catch (Exception $e) {
+            $app->enqueueMessage($e->getMessage(), 'error');
+        }
+
+        // Перенаправляем на страницу с результатами
+        $app->redirect('index.php?option=com_kunenatopic2article&view=result');
     }
- 
+
+    /**
+     * Получение параметров компонента из таблицы
+     *
+     * @return  object|null  Объект с параметрами компонента
+     */
+    private function getComponentParams()
+    {
+        try {
+            $db = Factory::getDbo();
+            $query = $db->getQuery(true)
+                ->select('*')
+                ->from($db->quoteName('#__kunenatopic2article_params'))
+                ->where($db->quoteName('id') . ' = 1');
+            
+            $params = $db->setQuery($query)->loadObject();
+            
+            if (!$params) {
+                Factory::getApplication()->enqueueMessage(
+                    Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_NOT_FOUND'), 
+                    'error'
+                );
+                return null;
+            }
+            
+            return $params;
+        } catch (Exception $e) {
+            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+            return null;
+        }
+    }
+
+    /**
+     * Сохранение параметров и проверка темы перед созданием статей
+     *
+     * @return  boolean  True в случае успеха, False в случае ошибки
+     */
+    public function saveFromCreate()
+    {
+        $app = Factory::getApplication();
+        $input = $app->input;
+        $data = $input->get('jform', [], 'array');
+
+        $firstPostId = isset($data['topic_selection']) ? (int) $data['topic_selection'] : 0;
+
+        if (!$firstPostId) {
+            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'), 'error');
+            return false;
+        }
+
+        // Проверка существования темы по first_post_id
+        $db = Factory::getDbo();
+        $query = $db->getQuery(true)
+            ->select($db->quoteName(['id', 'subject']))
+            ->from($db->quoteName('#__kunena_topics'))
+            ->where($db->quoteName('first_post_id') . ' = ' . $db->quote($firstPostId));
+        $topic = $db->setQuery($query)->loadObject();
+
+        if (!$topic) {
+            $app->enqueueMessage(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $firstPostId), 'error');
+            return false;
+        }
+
+        // Проверка существования первого поста
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('id'))
+            ->from($db->quoteName('#__kunena_messages'))
+            ->where($db->quoteName('id') . ' = ' . $db->quote($firstPostId))
+            ->where($db->quoteName('hold') . ' = 0');
+        $firstPost = $db->setQuery($query)->loadResult();
+
+        if (!$firstPost) {
+            $app->enqueueMessage(Text::sprintf('COM_KUNENATOPIC2ARTICLE_NO_FIRST_POST', $firstPostId), 'error');
+            return false;
+        }
+
+        // Показать заголовок темы
+        $app->enqueueMessage('Тема: ' . $topic->subject, 'message');
+
+        // Сохранение параметров
+        $model = $this->getModel('Topic');
+        if ($model->save($data)) {
+            $app->enqueueMessage('Parameters saved successfully', 'success');
+            return true;
+        } else {
+            $app->enqueueMessage('Failed to save parameters', 'error');
+            return false;
+        }
+    }
+
+    /**
+     * Отправка ссылок на созданные статьи администратору
+     *
+     * @param   array  $articleLinks  Массив ссылок на статьи
+     * @return  boolean  True в случае успеха, False в случае ошибки
+     */
+    private function sendLinksToAdministrator($articleLinks)
+    {
+        $app = Factory::getApplication();
+
+        if (empty($articleLinks)) {
+            return false;
+        }
+
+        try {
+            $messageText = Text::_('COM_KUNENATOPIC2ARTICLE_NEW_ARTICLES_CREATED') . "\n\n";
+            
+            foreach ($articleLinks as $link) {
+                $messageText .= $link['title'] . ': ' . $link['url'] . "\n";
+            }
+
+            if (class_exists('KunenaForum') && KunenaForum::installed()) {
+                // Реализация отправки сообщения
+                // ...
+            }
+
+            return true;
+        } catch (Exception $e) {
+            $app->enqueueMessage($e->getMessage(), 'error');
+            return false;
+        }
+    }
 }
