@@ -28,7 +28,7 @@ use Joomla\Database\DatabaseDriver;
  */
 class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
 {
-protected DatabaseDriver $db;
+protected \Joomla\Database\DatabaseDriver $db;
     
 public function __construct($config = array())
 {
