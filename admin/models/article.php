@@ -23,11 +23,17 @@ use Joomla\CMS\Filter\OutputFilter;
 
 /**
  * Article Model
- *
  * @since  0.0.1
  */
 class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
 {
+protected $db;
+public function __construct($config = array())
+{
+    parent::__construct($config);
+    $this->db = Factory::getDbo();
+}
+
    /**
      * Текущий размер статьи
      * @var    int
@@ -75,9 +81,7 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
         $this->articleLinks = [];
        
         try {
-           $db = Factory::getDbo();
-
-            $app = Factory::getApplication(); // 
+           $app = Factory::getApplication(); // 
                     
            // Устанавливаем ID первого поста темы
             $this->postId = (int) $settings['topic_selection'];
@@ -128,17 +132,13 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
 
     /**
      * Открытие статьи для её заполнения
-     *
      * @param   array  $settings  Настройки для создания статьи
-     *
      * @return  boolean  True в случае успеха
      */
     private function openArticle($settings)
     {
         try {
-           $db = Factory::getDbo();
-
-            // Получаем заголовок темы для формирования заголовка статьи
+           // Получаем заголовок темы для формирования заголовка статьи
             $topic = $this->getTopicData($settings['topic_selection']);
             
             // Формируем базовый заголовок статьи
@@ -180,15 +180,11 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
 
     /**
      * Генерация уникального алиаса для статьи
-     *
      * @param   string  $baseAlias  Базовый алиас
-     *
      * @return  string  Уникальный алиас
      */
     private function getUniqueAlias($baseAlias)
     {
-       $db = Factory::getDbo();
-
         $uniqueAlias = $baseAlias;
         $counter = 0;
         
@@ -203,17 +199,13 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
     
     /**
      * Проверка существования алиаса
-     *
      * @param   string  $alias  Алиас для проверки
-     *
      * @return  boolean  True если алиас существует
      */
     private function aliasExists($alias)
     {
         try {
-           $db = Factory::getDbo();
-
-            $query = $db->getQuery(true)
+           $query = $db->getQuery(true)
                 ->select('COUNT(*)')
                 ->from('#__content')
                 ->where('alias = ' . $db->quote($alias));
@@ -228,9 +220,7 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
 
     /**
      * Закрытие и сохранение статьи с использованием упрощенного метода
-     *
      * @param   array  $settings  Настройки для создания статьи
-     * 
      * @return  boolean  True в случае успеха
      */
     private function closeArticle($settings)
@@ -240,7 +230,6 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
         }
 
         try {
-           $db = Factory::getDbo();
             $app = Factory::getApplication();
             $app->enqueueMessage('Сохранение статьи: ' . $this->currentArticle['title'], 'notice');
 
@@ -286,7 +275,6 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
 
     /**
      * Упрощенный метод создания статьи в Joomla
-     *
      * @param   array  $article   Основные данные статьи
      * @param   array  $params    Параметры компонента
      *
@@ -295,8 +283,7 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
     protected function createSimpleArticle($article, $params)
     {
         try {
-            $db = Factory::getDbo();
-            // Получаем модель контента
+          // Получаем модель контента
             $contentModel = BaseDatabaseModel::getInstance('Article', 'ContentModel');
             if (!$contentModel) {
                 Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_ERROR_CONTENT_MODEL_NOT_FOUND'), 'error');
@@ -341,16 +328,13 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
 
     /**
      * Открытие поста для доступа к его параметрам
-     *
      * @param   int  $postId  ID поста
-     *
      * @return  boolean  True в случае успеха
      */
     private function openPost($postId)
     {
         try {
-         $db = Factory::getDbo();
-           // Получаем данные поста из базы данных Kunena, фильтрация промодерированных постов
+        // Получаем данные поста из базы данных Kunena, фильтрация промодерированных постов
            $query = $db->getQuery(true)
         ->select('*')
         ->from('#__kunena_messages')
@@ -375,7 +359,6 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
 
     /**
      * Перенос поста в статью
-     *
      * @return  boolean  True в случае успеха
      */
     private function transferPost()
@@ -385,8 +368,7 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
         }
 
         try {
-           $db = Factory::getDbo();
-            // Формируем информационную строку о посте
+       // Формируем информационную строку о посте
             $infoString = $this->formatPostInfo();
             
             // Добавляем информационную строку в статью, если она не пуста
@@ -415,8 +397,7 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
 
     /**
      * Переход к следующему посту
-     *
-     * @return  int  ID следующего поста или 0, если больше нет постов
+      * @return  int  ID следующего поста или 0, если больше нет постов
      */
     private function nextPost()
     {
@@ -436,16 +417,13 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
 
    /**
      * Получение данных темы
-     *
-     * @param   int  $topicId  ID темы
-     *
-     * @return  object  Объект с данными темы
+    * @param   int  $topicId  ID темы
+    * @return  object  Объект с данными темы
      */
     private function getTopicData($topicId)
     {
         try {
-           $db = Factory::getDbo();
-            $query = $db->getQuery(true)
+       $query = $db->getQuery(true)
                 ->select('*')
                 ->from('#__kunena_topics')
                 ->where('id = ' . (int)$topicId);
@@ -465,16 +443,13 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
 
     /**
      * Построение списка ID постов для плоской схемы обхода (по времени создания)
-     *
      * @param   int  $topicId  ID темы
-     *
      * @return  array  Список ID постов
      */
     private function buildFlatPostIdList($topicId)
     {
         try {
-           $db = Factory::getDbo();
-           $query->select($db->quoteName('id'))
+     $query->select($db->quoteName('id'))
       ->from($db->quoteName('#__kunena_messages'))
       ->where($db->quoteName('thread') . ' = ' . (int)$topicId) // из указанной темы thread
       ->andWhere($db->quoteName('hold') . ' = 0') // являются одобренными и видимыми для обычных пользователей 
@@ -495,23 +470,18 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
 
     /**
      * Построение списка ID постов для древовидной схемы обхода
-     *
-     * @param   int  $topicId  ID темы
-     *
+    * @param   int  $topicId  ID темы
      * @return  array  Список ID постов
      */
     private function buildTreePostIdList($topicId)
     {
-       $db = Factory::getDbo();
-
-        // Заглушка: в реальной реализации здесь должен быть алгоритм обхода дерева
+   // Заглушка: в реальной реализации здесь должен быть алгоритм обхода дерева
         // На данный момент возвращаем плоский список как временное решение
         return $this->buildFlatPostIdList($topicId);
     }
 
     /**
      * Формирование информационной строки о посте
-     *
      * @return  string  Информационная строка
      */
     private function formatPostInfo()
@@ -538,16 +508,13 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
 
     /**
      * Получение имени пользователя по ID
-     *
      * @param   int  $userId  ID пользователя
-     *
      * @return  string  Имя пользователя
      */
     private function getUserName($userId)
     {
         try {
-           $db = Factory::getDbo();
-            $query = $db->getQuery(true)
+        $query = $db->getQuery(true)
                 ->select('name')
                 ->from('#__users')
                 ->where('id = ' . (int)$userId);
@@ -562,9 +529,7 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
 
     /**
      * Преобразование BBCode в HTML
-     *
      * @param   string  $text  Текст с BBCode
-     *
      * @return  string  HTML-текст
      */
     private function convertBBCodeToHtml($text)
