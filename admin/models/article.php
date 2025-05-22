@@ -75,6 +75,8 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
         $this->articleLinks = [];
        
         try {
+           $db = Factory::getDbo();
+
             $app = Factory::getApplication(); // 
                     
            // Устанавливаем ID первого поста темы
@@ -134,6 +136,8 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
     private function openArticle($settings)
     {
         try {
+           $db = Factory::getDbo();
+
             // Получаем заголовок темы для формирования заголовка статьи
             $topic = $this->getTopicData($settings['topic_selection']);
             
@@ -183,7 +187,8 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
      */
     private function getUniqueAlias($baseAlias)
     {
-        $db = $this->getDbo();
+       $db = Factory::getDbo();
+
         $uniqueAlias = $baseAlias;
         $counter = 0;
         
@@ -206,7 +211,8 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
     private function aliasExists($alias)
     {
         try {
-            $db = $this->getDbo();
+           $db = Factory::getDbo();
+
             $query = $db->getQuery(true)
                 ->select('COUNT(*)')
                 ->from('#__content')
@@ -234,6 +240,7 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
         }
 
         try {
+           $db = Factory::getDbo();
             $app = Factory::getApplication();
             $app->enqueueMessage('Сохранение статьи: ' . $this->currentArticle['title'], 'notice');
 
@@ -288,6 +295,7 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
     protected function createSimpleArticle($article, $params)
     {
         try {
+            $db = Factory::getDbo();
             // Получаем модель контента
             $contentModel = BaseDatabaseModel::getInstance('Article', 'ContentModel');
             if (!$contentModel) {
@@ -377,6 +385,7 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
         }
 
         try {
+           $db = Factory::getDbo();
             // Формируем информационную строку о посте
             $infoString = $this->formatPostInfo();
             
@@ -493,6 +502,8 @@ class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
      */
     private function buildTreePostIdList($topicId)
     {
+       $db = Factory::getDbo();
+
         // Заглушка: в реальной реализации здесь должен быть алгоритм обхода дерева
         // На данный момент возвращаем плоский список как временное решение
         return $this->buildFlatPostIdList($topicId);
