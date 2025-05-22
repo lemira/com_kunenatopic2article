@@ -206,20 +206,20 @@ public function __construct($config = array())
      * @return  boolean  True если алиас существует
      */
     private function aliasExists($alias)
-    {
-        try {
-           $query = $db->getQuery(true)
-                ->select('COUNT(*)')
-                ->from('#__content')
-                ->where('alias = ' . $db->quote($alias));
+{
+    try {
+        $query = $this->db->getQuery(true)
+            ->select('COUNT(*)')
+            ->from($this->db->quoteName('#__content'))
+            ->where($this->db->quoteName('alias') . ' = ' . $this->db->quote($alias));
                 
-            $count = $db->setQuery($query)->loadResult();
+        $count = $this->db->setQuery($query)->loadResult();
             
-            return $count > 0;
-        } catch (Exception $e) {
-            return false;
-        }
+        return $count > 0;
+    } catch (Exception $e) {
+        return false;
     }
+}
 
     /**
      * Закрытие и сохранение статьи с использованием упрощенного метода
@@ -334,32 +334,28 @@ public function __construct($config = array())
      * @param   int  $postId  ID поста
      * @return  boolean  True в случае успеха
      */
+   
     private function openPost($postId)
-    {
-        try {
+{
+    try {
         // Получаем данные поста из базы данных Kunena, фильтрация промодерированных постов
-           $query = $db->getQuery(true)
-        ->select('*')
-        ->from('#__kunena_messages')
-        ->where('id = ' . (int)$postId . ' AND hold = 0'); // hold = 0 не очень нужен, так как модерированные посты уже исключены в списке
+         //  Не проверяем существования, рассчитываем на целостность БД 
+        $query = $this->db->getQuery(true)
+            ->select('*')
+            ->from($this->db->quoteName('#__kunena_messages'))
+            ->where($this->db->quoteName('id') . ' = ' . (int)$postId . ' AND ' . $this->db->quoteName('hold') . ' = 0');
 
-            $this->currentPost = $db->setQuery($query)->loadObject();
+        $this->currentPost = $this->db->setQuery($query)->loadObject();
 
-       //  Не проверяем существования, рассчитываем на целостность БД 
-       //     if (!$this->currentPost) {
-       //         throw new Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_POST_NOT_FOUND', $postId));
-       //     }
+        $this->postSize = strlen($this->currentPost->message); // Рассчитываем размер поста
 
-            // Рассчитываем размер поста
-            $this->postSize = strlen($this->currentPost->message);
-
-            return true;
-        } catch (Exception $e) {
-            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
-            return false;
-        }
+        return true;
+    } catch (Exception $e) {
+        Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+        return false;
     }
-
+}
+    
     /**
      * Перенос поста в статью
      * @return  boolean  True в случае успеха
@@ -424,52 +420,53 @@ public function __construct($config = array())
     * @return  object  Объект с данными темы
      */
     private function getTopicData($topicId)
-    {
-        try {
-       $query = $db->getQuery(true)
-                ->select('*')
-                ->from('#__kunena_topics')
-                ->where('id = ' . (int)$topicId);
+{
+    try {
+        $query = $this->db->getQuery(true)
+            ->select('*')
+            ->from($this->db->quoteName('#__kunena_topics'))
+            ->where($this->db->quoteName('id') . ' = ' . (int)$topicId);
 
-            $topic = $db->setQuery($query)->loadObject();
+        $topic = $this->db->setQuery($query)->loadObject();
             
-            if (!$topic) {
-                throw new Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_TOPIC_NOT_FOUND', $topicId));
-            }
-
-            return $topic;
-        } catch (Exception $e) {
-            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
-            return new stdClass();
+        if (!$topic) {
+            throw new Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_TOPIC_NOT_FOUND', $topicId));
         }
+
+        return $topic;
+    } catch (Exception $e) {
+        Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+        return new stdClass();
     }
+}
 
     /**
      * Построение списка ID постов для плоской схемы обхода (по времени создания)
      * @param   int  $topicId  ID темы
      * @return  array  Список ID постов
      */
-    private function buildFlatPostIdList($topicId)
-    {
-        try {
-     $query->select($db->quoteName('id'))
-      ->from($db->quoteName('#__kunena_messages'))
-      ->where($db->quoteName('thread') . ' = ' . (int)$topicId) // из указанной темы thread
-      ->andWhere($db->quoteName('hold') . ' = 0') // являются одобренными и видимыми для обычных пользователей 
-      ->order($db->quoteName('time') . ' ASC');
+   private function buildFlatPostIdList($topicId)
+{
+    try {
+        $query = $this->db->getQuery(true)
+            ->select($this->db->quoteName('id'))
+            ->from($this->db->quoteName('#__kunena_messages'))
+            ->where($this->db->quoteName('thread') . ' = ' . (int)$topicId)
+            ->andWhere($this->db->quoteName('hold') . ' = 0')
+            ->order($this->db->quoteName('time') . ' ASC');
 
-            $postIds = $db->setQuery($query)->loadColumn();
+        $postIds = $this->db->setQuery($query)->loadColumn();
             
-            if (empty($postIds)) {
-                throw new Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_NO_POSTS_IN_TOPIC', $topicId));
-            }
-
-            return $postIds;
-        } catch (Exception $e) {
-            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
-            return [];
+        if (empty($postIds)) {
+            throw new Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_NO_POSTS_IN_TOPIC', $topicId));
         }
+
+        return $postIds;
+    } catch (Exception $e) {
+        Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+        return [];
     }
+}
 
     /**
      * Построение списка ID постов для древовидной схемы обхода
@@ -515,20 +512,20 @@ public function __construct($config = array())
      * @return  string  Имя пользователя
      */
     private function getUserName($userId)
-    {
-        try {
-        $query = $db->getQuery(true)
-                ->select('name')
-                ->from('#__users')
-                ->where('id = ' . (int)$userId);
+{
+    try {
+        $query = $this->db->getQuery(true)
+            ->select($this->db->quoteName('name'))
+            ->from($this->db->quoteName('#__users'))
+            ->where($this->db->quoteName('id') . ' = ' . (int)$userId);
 
-            $userName = $db->setQuery($query)->loadResult();
+        $userName = $this->db->setQuery($query)->loadResult();
             
-            return $userName ? $userName : Text::_('COM_KUNENATOPIC2ARTICLE_UNKNOWN_USER');
-        } catch (Exception $e) {
-            return Text::_('COM_KUNENATOPIC2ARTICLE_UNKNOWN_USER');
-        }
+        return $userName ? $userName : Text::_('COM_KUNENATOPIC2ARTICLE_UNKNOWN_USER');
+    } catch (Exception $e) {
+        return Text::_('COM_KUNENATOPIC2ARTICLE_UNKNOWN_USER');
     }
+}
 
     /**
      * Преобразование BBCode в HTML
