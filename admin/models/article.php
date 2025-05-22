@@ -20,6 +20,7 @@ use Joomla\Registry\Registry;
 // use Joomla\CMS\Router\Route;
 // use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\Filter\OutputFilter;
+use Joomla\Database\DatabaseDriver;
 
 /**
  * Article Model
@@ -27,7 +28,7 @@ use Joomla\CMS\Filter\OutputFilter;
  */
 class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
 {
-protected \JDatabaseDriver $db;
+protected DatabaseDriver $db;
     
 public function __construct($config = array())
 {
