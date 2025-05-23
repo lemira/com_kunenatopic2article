@@ -187,4 +187,18 @@ class KunenaTopic2ArticleControllerArticle extends BaseController
             return false;
         }
     }
+/**
+ * Метод по умолчанию для отображения
+ *
+ * @param bool $cachable Кэшируемый ли запрос
+ * @param array $urlparams Параметры URL
+ * @return $this
+ */
+public function display($cachable = false, $urlparams = [])
+{
+    Factory::getApplication()->enqueueMessage('Display method called in KunenaTopic2ArticleControllerArticle', 'notice');
+    $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
+    return $this;
+}
+    
 }
