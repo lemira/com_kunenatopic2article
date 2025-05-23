@@ -51,11 +51,11 @@ class KunenaTopic2ArticleControllerArticle extends BaseController
         }
 
         // Получаем ID темы из параметров компонента
-             $firstPostId = (int)$params->topic_selection;
+             $topicId = (int)$params->topic_selection;
 
         // Получаем настройки из параметров компонента
         $settings = [
-            'topic_selection' => $firstPostId, // 3232, ID первого поста
+            'topic_selection' => $topicId, // 3232, ID первого поста
             'post_transfer_scheme' => ($params->post_transfer_scheme == 'THREADED') ? 'tree' : 'flat',
             'article_category' => (int)$params->article_category,
             'post_author' => (int)$params->post_author,
@@ -116,9 +116,9 @@ class KunenaTopic2ArticleControllerArticle extends BaseController
         $input = $app->input;
         $data = $input->get('jform', [], 'array');
 
-    $firstPostId = isset($data['topic_selection']) ? (int) $data['topic_selection'] : 0;
+    $topicId = isset($data['topic_selection']) ? (int) $data['topic_selection'] : 0;
 
-        if (!$firstPostId) {
+        if (!$topicId) {
             $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'), 'error');
             return false;
         }
@@ -128,11 +128,11 @@ class KunenaTopic2ArticleControllerArticle extends BaseController
         $query = $db->getQuery(true)
             ->select($db->quoteName(['id', 'subject']))
             ->from($db->quoteName('#__kunena_topics'))
-            ->where($db->quoteName('first_post_id') . ' = ' . $db->quote($firstPostId));
+            ->where($db->quoteName('first_post_id') . ' = ' . $db->quote($topicId));
         $topic = $db->setQuery($query)->loadObject();
 
          if (!$topic) {
-            $app->enqueueMessage(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $firstPostId), 'error');
+            $app->enqueueMessage(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $topicId), 'error');
      return false;
     }
 
