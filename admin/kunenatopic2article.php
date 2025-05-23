@@ -1,11 +1,17 @@
 <?php
 defined('_JEXEC') or die;
 
-if (!JFactory::getUser()->authorise('core.manage', 'com_kunenatopic2article')) {
-    throw new JException(JText::_('JERROR_ALERTNOAUTHOR'), 404);
+use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\MVC\Controller\BaseController;
+
+// Проверка прав доступа (обновлено для Joomla 5)
+$user = Factory::getUser();
+if (!$user->authorise('core.manage', 'com_kunenatopic2article')) {
+    throw new \Exception(Text::_('JERROR_ALERTNOAUTHOR'), 403);
 }
 
-$controller = JControllerLegacy::getInstance('KunenaTopic2Article');
-$controller->execute(JFactory::getApplication()->input->get('task'));
+// Создание контроллера (обновлено для Joomla 5)
+$controller = BaseController::getInstance('KunenaTopic2Article');
+$controller->execute(Factory::getApplication()->input->get('task'));
 $controller->redirect();
-
