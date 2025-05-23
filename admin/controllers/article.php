@@ -133,20 +133,7 @@ class KunenaTopic2ArticleControllerArticle extends BaseController
 
          if (!$topic) {
             $app->enqueueMessage(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $firstPostId), 'error');
-            return false;
-        }
-
-        // Проверка существования первого поста
-        $query = $db->getQuery(true)
-            ->select($db->quoteName('id'))
-            ->from($db->quoteName('#__kunena_messages'))
-            ->where($db->quoteName('id') . ' = ' . $db->quote($firstPostId))
-            ->where($db->quoteName('hold') . ' = 0');
-        $firstPost = $db->setQuery($query)->loadResult();
-
-        if (!$firstPost) {
-            $app->enqueueMessage(Text::sprintf('COM_KUNENATOPIC2ARTICLE_NO_FIRST_POST', $firstPostId), 'error');
-       return false;
+     return false;
     }
 
     // Показать заголовок темы
