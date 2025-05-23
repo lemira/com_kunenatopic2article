@@ -11,13 +11,27 @@ if (!$user->authorise('core.manage', 'com_kunenatopic2article')) {
     throw new \Exception(Text::_('JERROR_ALERTNOAUTHOR'), 403);
 }
 
-// Отладка для проверки вызова
+// Отладка
 $app = Factory::getApplication();
-$app->enqueueMessage('Controller: ' . $app->input->get('controller', 'none'), 'notice');
-$app->enqueueMessage('Task: ' . $app->input->get('task', 'none'), 'notice');
-$app->enqueueMessage('View: ' . $app->input->get('view', 'none'), 'notice');
+$input = $app->input;
+$app->enqueueMessage('Request URL: ' . $app->get('uri.request'), 'notice');
+$app->enqueueMessage('Controller: ' . $input->get('controller', 'none'), 'notice');
+$app->enqueueMessage('Task: ' . $input->get('task', 'none'), 'notice');
+$app->enqueueMessage('View: ' . $input->get('view', 'none'), 'notice');
+$app->enqueueMessage('Format: ' . $input->get('format', 'none'), 'notice');
 
-// Создание контроллера (загружаем KunenaTopic2ArticleControllerArticle)
+// Создание контроллера
 $controller = BaseController::getInstance('KunenaTopic2Article', ['controller' => 'Article']);
-$controller->execute($app->input->get('task'));
+
+// Проверяем задачу и представление
+$task = $input->get('task', '');
+$view = $input->get('view', '');
+if (empty($task) && empty($view)) {
+    $app->enqueueMessage('No task or view provided, redirecting to default view', 'notice');
+    $controller->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
+    $controller->redirect();
+    return;
+}
+
+$controller->execute($task);
 $controller->redirect();
