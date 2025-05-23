@@ -1,7 +1,11 @@
 <?php
 defined('_JEXEC') or die;
 
-class KunenaTopic2ArticleViewTopics extends JViewLegacy
+use Joomla\CMS\MVC\View\HtmlView;
+use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Text;
+
+class KunenaTopic2ArticleViewTopics extends HtmlView
 {
     protected $state;
     protected $form;
@@ -14,7 +18,7 @@ class KunenaTopic2ArticleViewTopics extends JViewLegacy
         $this->form = $model->getForm();
         
         if (!$this->form) {
-            JFactory::getApplication()->enqueueMessage('Form failed to load', 'error');
+            Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_FORM_FAILED_TO_LOAD'), 'error');
         }
         
         parent::display($tpl);
