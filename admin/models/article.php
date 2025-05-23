@@ -28,16 +28,16 @@ use Joomla\Database\DatabaseDriver;
  */
 class KunenaTopic2ArticleModelArticle extends BaseDatabaseModel
 {
-/** @var \Joomla\Database\DatabaseDriver */
-protected $db;
+    /** @var \Joomla\Database\DatabaseDriver */
+    protected $db;
     
-public function __construct($config = array())
-{
-    parent::__construct($config);
-    $this->db = Factory::getDbo();
-}
+    public function __construct($config = array())
+    {
+        parent::__construct($config);
+        $this->db = Factory::getDbo();
+    }
 
-   /**
+    /**
      * Текущий размер статьи
      * @var    int
      */
@@ -63,7 +63,7 @@ public function __construct($config = array())
 
     /**
      * Список ID постов для обработки
-    * @var    array
+     * @var    array
      */
     private $postIdList = [];
 
@@ -75,7 +75,7 @@ public function __construct($config = array())
 
     /**
      * Создание статей из темы форума Kunena
-    * @param   array  $settings  Настройки для создания статей
+     * @param   array  $settings  Настройки для создания статей
      * @return  array  Массив ссылок на созданные статьи
      */
     public function createArticlesFromTopic($settings)
@@ -84,16 +84,22 @@ public function __construct($config = array())
         $this->articleLinks = [];
        
         try {
-           $app = Factory::getApplication(); // 
+            $app = Factory::getApplication(); // 
                     
-           // Устанавливаем ID первого поста темы
-            $this->postId = (int) $settings['topic_selection'];
+            // Получаем ID первого поста
+            $firstPostId = (int) $settings['topic_selection']; // 3232
+           
+            // Получаем ID темы по first_post_id
+            $topicId = $this->getTopicIdByFirstPostId($firstPostId);
+           
+            // Устанавливаем ID первого поста
+            $this->postId = $firstPostId;
 
             // Формируем список ID постов в зависимости от схемы обхода
             if ($settings['post_transfer_scheme'] == 'tree') {
-                $this->postIdList = $this->buildTreePostIdList($settings['topic_selection']);
+                $this->postIdList = $this->buildTreePostIdList($topicId);
             } else {
-                $this->postIdList = $this->buildFlatPostIdList($settings['topic_selection']);
+                $this->postIdList = $this->buildFlatPostIdList($firstPostId);
             }
 
             // Основной цикл обработки постов
@@ -104,12 +110,12 @@ public function __construct($config = array())
                 // Если статья не открыта или текущий пост не помещается в статью
                 if ($this->currentArticle === null || 
                     ($this->articleSize + $this->postSize > $settings['max_article_size'] && $this->articleSize > 0)) {
-                    
+                   
                     // Если статья уже открыта, закрываем её перед открытием новой
                     if ($this->currentArticle !== null) {
                         $this->closeArticle($settings);
                     }
-                    
+                   
                     // Открываем новую статью
                     $this->openArticle($settings);
                 }
@@ -141,12 +147,16 @@ public function __construct($config = array())
     private function openArticle($settings)
     {
         try {
-           // Получаем заголовок темы для формирования заголовка статьи
-            $topic = $this->getTopicData($settings['topic_selection']);
-            
+            // Получаем ID темы по first_post_id
+            $firstPostId = (int) $settings['topic_selection'];
+            $topicId = $this->getTopicIdByFirstPostId($firstPostId);
+
+            // Получаем заголовок темы для формирования заголовка статьи
+            $topic = $this->getTopicData($topicId);
+           
             // Формируем базовый заголовок статьи
             $title = $topic->subject;
-            
+           
             // Если это не первая статья, добавляем номер части
             if (!empty($this->articleLinks)) {
                 $partNum = count($this->articleLinks) + 1;
@@ -206,20 +216,20 @@ public function __construct($config = array())
      * @return  boolean  True если алиас существует
      */
     private function aliasExists($alias)
-{
-    try {
-        $query = $this->db->getQuery(true)
-            ->select('COUNT(*)')
-            ->from($this->db->quoteName('#__content'))
-            ->where($this->db->quoteName('alias') . ' = ' . $this->db->quote($alias));
+    {
+        try {
+            $query = $this->db->getQuery(true)
+                ->select('COUNT(*)')
+                ->from($this->db->quoteName('#__content'))
+                ->where($this->db->quoteName('alias') . ' = ' . $this->db->quote($alias));
                 
-        $count = $this->db->setQuery($query)->loadResult();
-            
-        return $count > 0;
-    } catch (Exception $e) {
-        return false;
+            $count = $this->db->setQuery($query)->loadResult();
+                
+            return $count > 0;
+        } catch (Exception $e) {
+            return false;
+        }
     }
-}
 
     /**
      * Закрытие и сохранение статьи с использованием упрощенного метода
@@ -286,7 +296,7 @@ public function __construct($config = array())
     protected function createSimpleArticle($article, $params)
     {
         try {
-          // Получаем модель контента
+            // Получаем модель контента
             $contentModel = BaseDatabaseModel::getInstance('Article', 'ContentModel');
             if (!$contentModel) {
                 Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_ERROR_CONTENT_MODEL_NOT_FOUND'), 'error');
@@ -336,25 +346,25 @@ public function __construct($config = array())
      */
    
     private function openPost($postId)
-{
-    try {
-        // Получаем данные поста из базы данных Kunena, фильтрация промодерированных постов
-         //  Не проверяем существования, рассчитываем на целостность БД 
-        $query = $this->db->getQuery(true)
-            ->select('*')
-            ->from($this->db->quoteName('#__kunena_messages'))
-            ->where($this->db->quoteName('id') . ' = ' . (int)$postId . ' AND ' . $this->db->quoteName('hold') . ' = 0');
+    {
+        try {
+            // Получаем данные поста из базы данных Kunena, фильтрация промодерированных постов
+            //  Не проверяем существования, рассчитываем на целостность БД 
+            $query = $this->db->getQuery(true)
+                ->select('*')
+                ->from($this->db->quoteName('#__kunena_messages'))
+                ->where($this->db->quoteName('id') . ' = ' . (int)$postId . ' AND ' . $this->db->quoteName('hold') . ' = 0');
 
-        $this->currentPost = $this->db->setQuery($query)->loadObject();
+            $this->currentPost = $this->db->setQuery($query)->loadObject();
 
-        $this->postSize = strlen($this->currentPost->message); // Рассчитываем размер поста
+            $this->postSize = strlen($this->currentPost->message); // Рассчитываем размер поста
 
-        return true;
-    } catch (Exception $e) {
-        Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
-        return false;
+            return true;
+        } catch (Exception $e) {
+            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+            return false;
+        }
     }
-}
     
     /**
      * Перенос поста в статью
@@ -367,7 +377,7 @@ public function __construct($config = array())
         }
 
         try {
-       // Формируем информационную строку о посте
+            // Формируем информационную строку о посте
             $infoString = $this->formatPostInfo();
             
             // Добавляем информационную строку в статью, если она не пуста
@@ -396,7 +406,7 @@ public function __construct($config = array())
 
     /**
      * Переход к следующему посту
-      * @return  int  ID следующего поста или 0, если больше нет постов
+     * @return  int  ID следующего поста или 0, если больше нет постов
      */
     private function nextPost()
     {
@@ -414,68 +424,93 @@ public function __construct($config = array())
         return $this->postId;
     }
 
-   /**
+    /**
      * Получение данных темы
-    * @param   int  $topicId  ID темы
-    * @return  object  Объект с данными темы
+     * @param   int  $topicId  ID темы
+     * @return  object  Объект с данными темы
      */
     private function getTopicData($topicId)
-{
-    try {
-        $query = $this->db->getQuery(true)
-            ->select('*')
-            ->from($this->db->quoteName('#__kunena_topics'))
-            ->where($this->db->quoteName('id') . ' = ' . (int)$topicId);
+    {
+        try {
+            $query = $this->db->getQuery(true)
+                ->select('*')
+                ->from($this->db->quoteName('#__kunena_topics'))
+                ->where($this->db->quoteName('id') . ' = ' . (int)$topicId);
 
-        $topic = $this->db->setQuery($query)->loadObject();
-            
-        if (!$topic) {
-            throw new Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_TOPIC_NOT_FOUND', $topicId));
+            $topic = $this->db->setQuery($query)->loadObject();
+                
+            if (!$topic) {
+                throw new Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_TOPIC_NOT_FOUND', $topicId));
+            }
+
+            return $topic;
+        } catch (Exception $e) {
+            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+            return new stdClass();
         }
-
-        return $topic;
-    } catch (Exception $e) {
-        Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
-        return new stdClass();
     }
-}
+
+    /**
+     * Получение ID темы по ID первого поста
+     * @param   int  $firstPostId  ID первого поста
+     * @return  int  ID темы
+     * @throws  Exception  Если тема не найдена
+     */
+    private function getTopicIdByFirstPostId($firstPostId)
+    {
+        $query = $this->db->getQuery(true)
+            ->select($this->db->quoteName('id'))
+            ->from($this->db->quoteName('#__kunena_topics'))
+            ->where($this->db->quoteName('first_post_id') . ' = ' . $this->db->quote($firstPostId));
+        $topicId = $this->db->setQuery($query)->loadResult();
+        
+        if (!$topicId) {
+            throw new Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_TOPIC_NOT_FOUND', $firstPostId));
+        }
+        
+        return (int) $topicId;
+    }
 
     /**
      * Построение списка ID постов для плоской схемы обхода (по времени создания)
-     * @param   int  $topicId  ID темы
+     * @param   int  $firstPostId  ID первого поста темы
      * @return  array  Список ID постов
      */
-   private function buildFlatPostIdList($topicId)
-{
-    try {
-        $query = $this->db->getQuery(true)
-            ->select($this->db->quoteName('id'))
-            ->from($this->db->quoteName('#__kunena_messages'))
-            ->where($this->db->quoteName('thread') . ' = ' . (int)$topicId)
-            ->andWhere($this->db->quoteName('hold') . ' = 0')
-            ->order($this->db->quoteName('time') . ' ASC');
+    private function buildFlatPostIdList($firstPostId)
+    {
+        try {
+            // Получаем ID темы по first_post_id
+            $topicId = $this->getTopicIdByFirstPostId($firstPostId);
 
-        $postIds = $this->db->setQuery($query)->loadColumn();
-            
-        if (empty($postIds)) {
-            throw new Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_NO_POSTS_IN_TOPIC', $topicId));
+            // Получаем все посты темы
+            $query = $this->db->getQuery(true)
+                ->select($this->db->quoteName('id'))
+                ->from($this->db->quoteName('#__kunena_messages'))
+                ->where($this->db->quoteName('thread') . ' = ' . (int)$topicId)
+                ->where($this->db->quoteName('hold') . ' = 0')
+                ->order($this->db->quoteName('time') . ' ASC');
+
+            $postIds = $this->db->setQuery($query)->loadColumn();
+                
+            if (empty($postIds)) {
+                throw new Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_NO_POSTS_IN_TOPIC', $firstPostId));
+            }
+
+            return $postIds;
+        } catch (Exception $e) {
+            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+            return [];
         }
-
-        return $postIds;
-    } catch (Exception $e) {
-        Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
-        return [];
     }
-}
 
     /**
      * Построение списка ID постов для древовидной схемы обхода
-    * @param   int  $topicId  ID темы
+     * @param   int  $topicId  ID темы
      * @return  array  Список ID постов
      */
     private function buildTreePostIdList($topicId)
     {
-   // Заглушка: в реальной реализации здесь должен быть алгоритм обхода дерева
+        // Заглушка: в реальной реализации здесь должен быть алгоритм обхода дерева
         // На данный момент возвращаем плоский список как временное решение
         return $this->buildFlatPostIdList($topicId);
     }
@@ -512,20 +547,20 @@ public function __construct($config = array())
      * @return  string  Имя пользователя
      */
     private function getUserName($userId)
-{
-    try {
-        $query = $this->db->getQuery(true)
-            ->select($this->db->quoteName('name'))
-            ->from($this->db->quoteName('#__users'))
-            ->where($this->db->quoteName('id') . ' = ' . (int)$userId);
+    {
+        try {
+            $query = $this->db->getQuery(true)
+                ->select($this->db->quoteName('name'))
+                ->from($this->db->quoteName('#__users'))
+                ->where($this->db->quoteName('id') . ' = ' . (int)$userId);
 
-        $userName = $this->db->setQuery($query)->loadResult();
-            
-        return $userName ? $userName : Text::_('COM_KUNENATOPIC2ARTICLE_UNKNOWN_USER');
-    } catch (Exception $e) {
-        return Text::_('COM_KUNENATOPIC2ARTICLE_UNKNOWN_USER');
+            $userName = $this->db->setQuery($query)->loadResult();
+                
+            return $userName ? $userName : Text::_('COM_KUNENATOPIC2ARTICLE_UNKNOWN_USER');
+        } catch (Exception $e) {
+            return Text::_('COM_KUNENATOPIC2ARTICLE_UNKNOWN_USER');
+        }
     }
-}
 
     /**
      * Преобразование BBCode в HTML
@@ -552,9 +587,7 @@ public function __construct($config = array())
 
     /**
      * Простое преобразование BBCode в HTML
-     *
-     * @param   string  $text  Текст с BBCode
-     *
+     * @param   string  $text  Текст с BBCod
      * @return  string  HTML-текст
      */
     private function simpleBBCodeToHtml($text)
