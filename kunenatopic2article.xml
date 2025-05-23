@@ -25,7 +25,6 @@
     <administration>
         <menu link="option=com_kunenatopic2article">COM_KUNENATOPIC2ARTICLE</menu>
         <files folder="admin">
-             <filename>install.php</filename>
             <filename>script.php</filename>
             <filename>kunenatopic2article.php</filename>
             <folder>controllers</folder>
