@@ -26,6 +26,15 @@ $controller = BaseController::getInstance('KunenaTopic2Article', ['controller' =
 // Проверяем задачу и представление
 $task = $input->get('task', '');
 $view = $input->get('view', '');
+
+// Если указан view=topics без задачи, вызываем display()
+if (empty($task) && $view === 'topics') {
+    $app->enqueueMessage('Loading topics view via display()', 'notice');
+    $controller->display();
+    return;
+}
+
+// Если нет задачи и представления, перенаправляем на view=topics
 if (empty($task) && empty($view)) {
     $app->enqueueMessage('No task or view provided, redirecting to default view', 'notice');
     $controller->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
@@ -33,5 +42,6 @@ if (empty($task) && empty($view)) {
     return;
 }
 
+// Выполняем задачу
 $controller->execute($task);
 $controller->redirect();
