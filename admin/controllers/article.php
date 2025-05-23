@@ -197,8 +197,15 @@ class KunenaTopic2ArticleControllerArticle extends BaseController
 public function display($cachable = false, $urlparams = [])
 {
     Factory::getApplication()->enqueueMessage('Display method called in KunenaTopic2ArticleControllerArticle', 'notice');
-    $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
+    $view = Factory::getApplication()->input->get('view', 'topics');
+    $viewObject = Factory::getApplication()->getMVCFactory()->createView(
+        ucfirst($view),
+        'Html',
+        ['base_path' => JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article']
+    );
+    $model = Factory::getApplication()->getMVCFactory()->createModel('Topic', 'Administrator', ['base_path' => JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article']);
+    $viewObject->setModel($model, true);
+    $viewObject->display();
     return $this;
-}
-    
+}    
 }
