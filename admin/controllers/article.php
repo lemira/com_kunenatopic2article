@@ -51,11 +51,11 @@ class KunenaTopic2ArticleControllerArticle extends BaseController
         }
 
         // Получаем ID темы из параметров компонента
-        $topicId = (int)$params->topic_selection;
-        
+             $firstPostId = (int)$params->topic_selection;
+
         // Получаем настройки из параметров компонента
         $settings = [
-            'topic_selection' => $topicId,
+            'topic_selection' => $firstPostId, // 3232, ID первого поста
             'post_transfer_scheme' => ($params->post_transfer_scheme == 'THREADED') ? 'tree' : 'flat',
             'article_category' => (int)$params->article_category,
             'post_author' => (int)$params->post_author,
@@ -91,8 +91,8 @@ class KunenaTopic2ArticleControllerArticle extends BaseController
             $db = Factory::getDbo();
             $query = $db->getQuery(true)
                 ->select('*')
-                ->from('#__kunenatopic2article_params')
-                ->where('id = 1'); // Предполагаем, что параметры хранятся в записи с ID=1
+                ->from($db->quoteName('#__kunenatopic2article_params'))
+                ->where($db->quoteName('id') . ' = 1');
             
             $params = $db->setQuery($query)->loadObject();
             
@@ -113,25 +113,41 @@ class KunenaTopic2ArticleControllerArticle extends BaseController
 
     public function saveFromCreate()
 {
-    $app = \JFactory::getApplication();
-    $input = $app->input;
-    $data = $input->get('jform', array(), 'array');
+         $app = Factory::getApplication();
+        $input = $app->input;
+        $data = $input->get('jform', [], 'array');
 
-    $topicId = isset($data['topic_selection']) ? (int) $data['topic_selection'] : 0;
+    $firstPostId = isset($data['topic_selection']) ? (int) $data['topic_selection'] : 0;
 
-    // Проверка существования темы
-    $db = \JFactory::getDbo();
-    $query = $db->getQuery(true)
-        ->select($db->qn(['id', 'subject']))
-        ->from($db->qn('#__kunena_topics'))
-        ->where($db->qn('first_post_id') . ' = ' . $db->q($topicId));
-    $db->setQuery($query);
-    $topic = $db->loadObject();
+        if (!$firstPostId) {
+            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'), 'error');
+            return false;
+        }
 
-    if (!$topic) {
-        // Ошибка — неверный Topic ID
-        $app->enqueueMessage(\JText::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $topicId), 'error');
-        return false;
+         // Проверка существования темы по first_post_id
+        $db = Factory::getDbo();
+        $query = $db->getQuery(true)
+            ->select($db->quoteName(['id', 'subject']))
+            ->from($db->quoteName('#__kunena_topics'))
+            ->where($db->quoteName('first_post_id') . ' = ' . $db->quote($firstPostId));
+        $topic = $db->setQuery($query)->loadObject();
+
+         if (!$topic) {
+            $app->enqueueMessage(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $firstPostId), 'error');
+            return false;
+        }
+
+        // Проверка существования первого поста
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('id'))
+            ->from($db->quoteName('#__kunena_messages'))
+            ->where($db->quoteName('id') . ' = ' . $db->quote($firstPostId))
+            ->where($db->quoteName('hold') . ' = 0');
+        $firstPost = $db->setQuery($query)->loadResult();
+
+        if (!$firstPost) {
+            $app->enqueueMessage(Text::sprintf('COM_KUNENATOPIC2ARTICLE_NO_FIRST_POST', $firstPostId), 'error');
+       return false;
     }
 
     // Показать заголовок темы
@@ -147,9 +163,13 @@ class KunenaTopic2ArticleControllerArticle extends BaseController
         return false;
     }
 }
-
-    
-    private function sendLinksToAdministrator($articleLinks)
+        /**
+     * Отправка ссылок на созданные статьи администратору
+     *
+     * @param   array  $articleLinks  Массив ссылок на статьи
+     * @return  boolean  True в случае успеха, False в случае ошибки
+     */
+     private function sendLinksToAdministrator($articleLinks)
     {
         // Получаем объект приложения
         $app = Factory::getApplication();
