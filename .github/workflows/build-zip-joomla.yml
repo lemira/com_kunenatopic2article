@@ -21,9 +21,51 @@ jobs:
           echo "Используемый TIMESTAMP: $TIMESTAMP"
           echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
           
+      - name: Prepare component files
+        run: |
+          # Создаем временную директорию для подготовки файлов
+          mkdir -p build_temp
+          
+          # Показываем текущую структуру репозитория
+          echo "=== Структура репозитория ==="
+          find . -maxdepth 3 -type f -not -path './.git*' -not -path './.github*' | sort
+          echo "=========================="
+          
+          # Копируем все файлы кроме служебных
+          rsync -av --exclude='.git*' --exclude='.github*' --exclude='build_temp*' --exclude='*.zip' . build_temp/
+          
+          # Показываем структуру для отладки
+          echo "=== Структура файлов в build_temp ==="
+          find build_temp -type f | sort
+          echo "=== Всего файлов: $(find build_temp -type f | wc -l) ==="
+          
+          # Проверяем наличие ключевых файлов компонента
+          echo "=== Проверка ключевых файлов ==="
+          if [ -f "build_temp/kunenatopic2article.php" ]; then
+            echo "✅ kunenatopic2article.php найден"
+            ls -la build_temp/kunenatopic2article.php
+          else
+            echo "❌ kunenatopic2article.php НЕ найден"
+          fi
+          
+          if [ -f "build_temp/kunenatopic2article.xml" ]; then
+            echo "✅ kunenatopic2article.xml найден"
+            ls -la build_temp/kunenatopic2article.xml
+          else
+            echo "❌ kunenatopic2article.xml НЕ найден"
+          fi
+          
       - name: Create ZIP archive with timestamp
         run: |
-          zip -r Joomla-Component-${{ env.TIMESTAMP }}.zip * -x ".git*" ".github*"
+          cd build_temp
+          zip -r ../Joomla-Component-${{ env.TIMESTAMP }}.zip . -x ".*"
+          cd ..
+          
+          # Проверяем размер и содержимое ZIP
+          echo "=== Информация о созданном ZIP ==="
+          ls -lh Joomla-Component-${{ env.TIMESTAMP }}.zip
+          echo "=== Содержимое ZIP (первые 20 файлов) ==="
+          unzip -l Joomla-Component-${{ env.TIMESTAMP }}.zip | head -25
           
       - name: Upload ZIP as artifact
         uses: actions/upload-artifact@v4
