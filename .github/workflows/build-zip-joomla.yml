@@ -1,32 +1,110 @@
 name: Build Joomla Package
-
 on:
   workflow_dispatch:
+    inputs:
+      auto_download:
+        description: 'Автоматически скачать файл после сборки'
+        required: false
+        default: 'true'
+        type: boolean
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
+        
       - name: Set timestamp variable (Берлинское время)
         run: |
           TIMESTAMP=$(TZ="Europe/Berlin" date +"%y%m%d-%H%M")
           echo "Используемый TIMESTAMP: $TIMESTAMP"
           echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
-
+          
       - name: Create ZIP archive with timestamp
         run: |
           zip -r Joomla-Component-${{ env.TIMESTAMP }}.zip * -x ".git*" ".github*"
-
-      - name: Extract ZIP archive
-        run: |
-          unzip Joomla-Component-${{ env.TIMESTAMP }}.zip -d extracted_files
-
-      - name: Upload extracted files
+          
+      - name: Upload ZIP as artifact
         uses: actions/upload-artifact@v4
         with:
           name: Joomla-Component-${{ env.TIMESTAMP }}
-          path: extracted_files/
+          path: Joomla-Component-${{ env.TIMESTAMP }}.zip
+          retention-days: 30
+          
+      # Автоматическое создание временного релиза для быстрого скачивания
+      - name: Create temporary release for download
+        if: inputs.auto_download == true || inputs.auto_download == ''
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: temp-build-${{ env.TIMESTAMP }}
+          name: "🔧 Temp Build ${{ env.TIMESTAMP }}"
+          body: |
+            **Временная сборка для скачивания**
+            
+            Этот релиз будет автоматически удален через 24 часа.
+            
+            ⏰ Время сборки: ${{ env.TIMESTAMP }}
+            🔗 Коммит: ${{ github.sha }}
+            
+            📥 **Скачать файл можно прямо отсюда ↓**
+          files: Joomla-Component-${{ env.TIMESTAMP }}.zip
+          prerelease: true
+          draft: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      # Показать прямую ссылку для скачивания
+      - name: Generate download link
+        if: success()
+        run: |
+          echo "## 📥 Прямая ссылка для скачивания:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **[Скачать Joomla-Component-${{ env.TIMESTAMP }}.zip](${{ github.server_url }}/${{ github.repository }}/releases/download/temp-build-${{ env.TIMESTAMP }}/Joomla-Component-${{ env.TIMESTAMP }}.zip)**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Или перейдите в [Releases](${{ github.server_url }}/${{ github.repository }}/releases) и найдите релиз **Temp Build ${{ env.TIMESTAMP }}**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⚡ Файл также доступен в [Artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+        
+  # Job для автоматической очистки временных релизов
+  cleanup:
+    needs: build
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Cleanup old temporary releases
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: releases } = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            
+            const now = new Date();
+            const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            
+            for (const release of releases) {
+              if (release.tag_name.startsWith('temp-build-') && 
+                  new Date(release.created_at) < oneDayAgo) {
+                console.log(`Удаляем старый временный релиз: ${release.tag_name}`);
+                
+                // Удаляем релиз
+                await github.rest.repos.deleteRelease({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: release.id,
+                });
+                
+                // Удаляем тег
+                try {
+                  await github.rest.git.deleteRef({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    ref: `tags/${release.tag_name}`,
+                  });
+                } catch (error) {
+                  console.log(`Не удалось удалить тег ${release.tag_name}: ${error.message}`);
+                }
+              }
+            }
