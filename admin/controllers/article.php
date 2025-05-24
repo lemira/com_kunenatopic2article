@@ -19,7 +19,7 @@ use Joomla\CMS\Language\Text;
  *
  * @since  0.0.1
  */
-class KunenaTopic2ArticleControllerArticle extends BaseController
+class KunenaTopic2ArticleControllerArticle extends AdminController
 {
     /**
      * Создание статей из темы форума Kunena
@@ -207,5 +207,45 @@ public function display($cachable = false, $urlparams = [])
     $viewObject->setModel($model, true);
     $viewObject->display();
     return $this;
+}   
+
+/**
+ * Save the topic parameters
+ *
+ * @return void
+ * @throws Exception
+ */
+public function save()
+{
+    $model = $this->getModel('Topic', 'Administrator');
+    $data = Factory::getApplication()->input->get('jform', [], 'array');
+    
+    if ($model->save($data)) {
+        Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_SUCCESS'), 'success');
+    } else {
+        Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED'), 'error');
+    }
+    
+    $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
+}
+
+/**
+ * Reset the topic parameters to default
+ *
+ * @return void
+ * @throws Exception
+ */
+public function reset()
+{
+    $model = $this->getModel('Topic', 'Administrator');
+    
+    if ($model->reset()) {
+        Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_RESET_SUCCESS'), 'success');
+    } else {
+        Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_RESET_FAILED'), 'error');
+    }
+    
+    $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
 }    
+    
 }
