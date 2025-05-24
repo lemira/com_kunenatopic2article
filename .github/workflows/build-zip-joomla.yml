@@ -35,7 +35,7 @@ jobs:
       # Автоматическое создание временного релиза для быстрого скачивания
       - name: Create temporary release for download
         if: inputs.auto_download == true || inputs.auto_download == ''
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: temp-build-${{ env.TIMESTAMP }}
           name: "🔧 Temp Build ${{ env.TIMESTAMP }}"
@@ -51,60 +51,90 @@ jobs:
           files: Joomla-Component-${{ env.TIMESTAMP }}.zip
           prerelease: true
           draft: false
+          fail_on_unmatched_files: false
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
           
       # Показать прямую ссылку для скачивания
       - name: Generate download link
         if: success()
         run: |
-          echo "## 📥 Прямая ссылка для скачивания:" >> $GITHUB_STEP_SUMMARY
+          echo "## 📥 Файл готов к скачиванию!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "🔗 **[Скачать Joomla-Component-${{ env.TIMESTAMP }}.zip](${{ github.server_url }}/${{ github.repository }}/releases/download/temp-build-${{ env.TIMESTAMP }}/Joomla-Component-${{ env.TIMESTAMP }}.zip)**" >> $GITHUB_STEP_SUMMARY
+          echo "### Способы скачивания:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Или перейдите в [Releases](${{ github.server_url }}/${{ github.repository }}/releases) и найдите релиз **Temp Build ${{ env.TIMESTAMP }}**" >> $GITHUB_STEP_SUMMARY
+          echo "1. **[📦 Скачать из Artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "⚡ Файл также доступен в [Artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+          echo "2. **[🔗 Проверить Releases](${{ github.server_url }}/${{ github.repository }}/releases)** (если создание релиза прошло успешно)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📄 **Имя файла:** \`Joomla-Component-${{ env.TIMESTAMP }}.zip\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🕐 **Время сборки:** ${{ env.TIMESTAMP }}" >> $GITHUB_STEP_SUMMARY
         
-  # Job для автоматической очистки временных релизов
+  # Job для автоматической очистки временных релизов (упрощенная версия)
   cleanup:
     needs: build
     runs-on: ubuntu-latest
-    if: always()
+    if: success()
     steps:
       - name: Cleanup old temporary releases
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
+        continue-on-error: true
         with:
+          retries: 3
+          retry-exempt-status-codes: 400,401,403,404
           script: |
-            const { data: releases } = await github.rest.repos.listReleases({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-            });
-            
-            const now = new Date();
-            const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-            
-            for (const release of releases) {
-              if (release.tag_name.startsWith('temp-build-') && 
-                  new Date(release.created_at) < oneDayAgo) {
-                console.log(`Удаляем старый временный релиз: ${release.tag_name}`);
-                
-                // Удаляем релиз
-                await github.rest.repos.deleteRelease({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  release_id: release.id,
-                });
-                
-                // Удаляем тег
-                try {
-                  await github.rest.git.deleteRef({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    ref: `tags/${release.tag_name}`,
-                  });
-                } catch (error) {
-                  console.log(`Не удалось удалить тег ${release.tag_name}: ${error.message}`);
+            try {
+              const { data: releases } = await github.rest.repos.listReleases({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 50
+              });
+              
+              const now = new Date();
+              const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+              
+              let deletedCount = 0;
+              
+              for (const release of releases) {
+                if (release.tag_name.startsWith('temp-build-') && 
+                    new Date(release.created_at) < oneDayAgo) {
+                  
+                  try {
+                    console.log(`Удаляем старый временный релиз: ${release.tag_name}`);
+                    
+                    // Удаляем релиз
+                    await github.rest.repos.deleteRelease({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      release_id: release.id,
+                    });
+                    
+                    // Пауза между запросами
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    // Удаляем тег
+                    await github.rest.git.deleteRef({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      ref: `tags/${release.tag_name}`,
+                    });
+                    
+                    deletedCount++;
+                    
+                    // Ограничиваем количество удалений за раз
+                    if (deletedCount >= 5) break;
+                    
+                  } catch (error) {
+                    console.log(`Ошибка при удалении ${release.tag_name}: ${error.message}`);
+                  }
                 }
               }
+              
+              console.log(`Удалено временных релизов: ${deletedCount}`);
+              
+            } catch (error) {
+              console.log(`Общая ошибка при очистке: ${error.message}`);
             }
