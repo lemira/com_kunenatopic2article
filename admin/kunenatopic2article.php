@@ -22,8 +22,17 @@ if (!Factory::getUser()->authorise('core.manage', 'com_kunenatopic2article')) {
 $app = Factory::getApplication();
 $input = $app->input;
 
+// Отладочная информация
+$app->enqueueMessage('Main entry point loaded', 'notice');
+
 // Get an instance of the controller prefixed by KunenaTopic2Article
-$controller = BaseController::getInstance('KunenaTopic2Article');
+try {
+    $controller = BaseController::getInstance('KunenaTopic2Article');
+    $app->enqueueMessage('Controller instance created successfully', 'success');
+} catch (Exception $e) {
+    $app->enqueueMessage('Error creating controller: ' . $e->getMessage(), 'error');
+    throw $e;
+}
 
 // Perform the Request task
 $task = $input->getCmd('task');
