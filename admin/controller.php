@@ -29,17 +29,14 @@ class KunenaTopic2ArticleController extends BaseController
      */
     protected $default_view = 'topics';
 
-    /**
+    /** Если display() не делает ничего особенного, можно его удалить, и Joomla будет использовать display() из BaseController.
      * Method to display a view.
-     *
      * @param   boolean  $cachable   If true, the view output will be cached
      * @param   array    $urlparams  An array of safe URL parameters and their variable types
-     *
      * @return  BaseController  This object to support chaining.
-     *
      * @since   0.0.1
-     */
-    public function getModel($name = '', $prefix = 'KunenaTopic2ArticleModel', $config = [])
+  
+    public function display($cachable = false, $urlparams = [])
 
     {
         $app = Factory::getApplication();
@@ -73,6 +70,7 @@ class KunenaTopic2ArticleController extends BaseController
 
         return $this;
     }
+       */
 
     /**
      * Method to get a model object, loading it if required.
@@ -85,7 +83,7 @@ class KunenaTopic2ArticleController extends BaseController
      *
      * @since   0.0.1
      */
-    public function getModel($name = '', $prefix = '', $config = [])
+    public function getModel($name = '', $prefix = 'KunenaTopic2ArticleModel', $config = [])
     {
         if (empty($name)) {
             $name = $this->default_view;
