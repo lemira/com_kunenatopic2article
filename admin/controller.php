@@ -39,7 +39,8 @@ class KunenaTopic2ArticleController extends BaseController
      *
      * @since   0.0.1
      */
-    public function display($cachable = false, $urlparams = [])
+    public function getModel($name = '', $prefix = 'KunenaTopic2ArticleModel', $config = [])
+
     {
         $app = Factory::getApplication();
         $input = $app->input;
