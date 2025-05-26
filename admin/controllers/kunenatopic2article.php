@@ -33,7 +33,7 @@ class KunenaTopic2ArticleController extends BaseController
      * Method to display a view.
      *
      * @param   boolean  $cachable   If true, the view output will be cached
-     * @param   array    $urlparams  An array of safe URL parameters and their variable types, for valid values see {@link \JFilterInput::clean()}.
+     * @param   array    $urlparams  An array of safe URL parameters and their variable types
      *
      * @return  BaseController  This object to support chaining.
      *
@@ -51,7 +51,6 @@ class KunenaTopic2ArticleController extends BaseController
         $vName = $input->get('view', $this->default_view);
         $vFormat = $document->getType();
         $lName = $input->get('layout', 'default');
-        $id = $input->getInt('id');
 
         // Get and render the view.
         if ($view = $this->getView($vName, $vFormat)) {
@@ -92,9 +91,13 @@ class KunenaTopic2ArticleController extends BaseController
         }
 
         if (empty($prefix)) {
-            $prefix = $this->getName() . 'Model';
+            $prefix = 'KunenaTopic2ArticleModel';
         }
 
-        return parent::getModel($name, $prefix, $config);
+        if ($model = parent::getModel($name, $prefix, $config)) {
+            return $model;
+        }
+
+        return false;
     }
 }
