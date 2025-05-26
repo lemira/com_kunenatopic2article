@@ -10,7 +10,7 @@
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
 
-use Joomla\CMS\MVC\Controller\BaseController;
+use Joomla\CMS\MVC\Controller\AdminController;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 
@@ -28,11 +28,11 @@ class KunenaTopic2ArticleControllerArticle extends AdminController
      */
     public function create()
     {
-     // На случай, если юзер не сделал save и для проверки Topic ID Сохраняем параметры и проверяем тему
-    if (!$this->saveFromCreate()) {
-        $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
-        return;
-    }
+        // На случай, если юзер не сделал save и для проверки Topic ID Сохраняем параметры и проверяем тему
+        if (!$this->saveFromCreate()) {
+            $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
+            return;
+        }
         
         // Check for request forgeries
         $this->checkToken();
@@ -51,7 +51,7 @@ class KunenaTopic2ArticleControllerArticle extends AdminController
         }
 
         // Получаем ID темы из параметров компонента
-             $topicId = (int)$params->topic_selection;
+        $topicId = (int)$params->topic_selection;
 
         // Получаем настройки из параметров компонента
         $settings = [
@@ -110,20 +110,24 @@ class KunenaTopic2ArticleControllerArticle extends AdminController
         }
     }
 
+    /**
+     * Сохранение параметров из формы создания и проверка существования темы
+     * @return  boolean  True в случае успеха, False в случае ошибки
+     */
     public function saveFromCreate()
-{
-         $app = Factory::getApplication();
+    {
+        $app = Factory::getApplication();
         $input = $app->input;
         $data = $input->get('jform', [], 'array');
 
-    $topicId = isset($data['topic_selection']) ? (int) $data['topic_selection'] : 0;
+        $topicId = isset($data['topic_selection']) ? (int) $data['topic_selection'] : 0;
 
         if (!$topicId) {
             $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'), 'error');
             return false;
         }
 
-         // Проверка существования темы по first_post_id
+        // Проверка существования темы по first_post_id
         $db = Factory::getDbo();
         $query = $db->getQuery(true)
             ->select($db->quoteName(['id', 'subject']))
@@ -131,30 +135,31 @@ class KunenaTopic2ArticleControllerArticle extends AdminController
             ->where($db->quoteName('first_post_id') . ' = ' . $db->quote($topicId));
         $topic = $db->setQuery($query)->loadObject();
 
-         if (!$topic) {
+        if (!$topic) {
             $app->enqueueMessage(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $topicId), 'error');
-     return false;
+            return false;
+        }
+
+        // Показать заголовок темы
+        $app->enqueueMessage('Тема: ' . $topic->subject, 'message');
+
+        // Сохранение параметров
+        $model = $this->getModel('Topic');
+        if ($model->save($data)) {
+            $app->enqueueMessage('Parameters saved successfully', 'success');
+            return true;
+        } else {
+            $app->enqueueMessage('Failed to save parameters', 'error');
+            return false;
+        }
     }
 
-    // Показать заголовок темы
-    $app->enqueueMessage('Тема: ' . $topic->subject, 'message');
-
-    // Сохранение параметров
-    $model = $this->getModel('Topic');
-    if ($model->save($data)) {
-        $app->enqueueMessage('Parameters saved successfully', 'success');
-        return true;
-    } else {
-        $app->enqueueMessage('Failed to save parameters', 'error');
-        return false;
-    }
-}
-        /**
+    /**
      * Отправка ссылок на созданные статьи администратору
      * @param   array  $articleLinks  Массив ссылок на статьи
      * @return  boolean  True в случае успеха, False в случае ошибки
      */
-     private function sendLinksToAdministrator($articleLinks)
+    private function sendLinksToAdministrator($articleLinks)
     {
         // Получаем объект приложения
         $app = Factory::getApplication();
@@ -187,65 +192,65 @@ class KunenaTopic2ArticleControllerArticle extends AdminController
             return false;
         }
     }
-/**
- * Метод по умолчанию для отображения
- *
- * @param bool $cachable Кэшируемый ли запрос
- * @param array $urlparams Параметры URL
- * @return $this
- */
-public function display($cachable = false, $urlparams = [])
-{
-    Factory::getApplication()->enqueueMessage('Display method called in KunenaTopic2ArticleControllerArticle', 'notice');
-    $view = Factory::getApplication()->input->get('view', 'topics');
-    $viewObject = Factory::getApplication()->getMVCFactory()->createView(
-        ucfirst($view),
-        'Html',
-        ['base_path' => JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article']
-    );
-    $model = Factory::getApplication()->getMVCFactory()->createModel('Topic', 'Administrator', ['base_path' => JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article']);
-    $viewObject->setModel($model, true);
-    $viewObject->display();
-    return $this;
-}   
 
-/**
- * Save the topic parameters
- *
- * @return void
- * @throws Exception
- */
-public function save()
-{
-    $model = $this->getModel('Topic', 'Administrator');
-    $data = Factory::getApplication()->input->get('jform', [], 'array');
-    
-    if ($model->save($data)) {
-        Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_SUCCESS'), 'success');
-    } else {
-        Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED'), 'error');
-    }
-    
-    $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
-}
+    /**
+     * Метод по умолчанию для отображения
+     *
+     * @param bool $cachable Кэшируемый ли запрос
+     * @param array $urlparams Параметры URL
+     * @return $this
+     */
+    public function display($cachable = false, $urlparams = [])
+    {
+        Factory::getApplication()->enqueueMessage('Display method called in KunenaTopic2ArticleControllerArticle', 'notice');
+        $view = Factory::getApplication()->input->get('view', 'topics');
+        $viewObject = Factory::getApplication()->getMVCFactory()->createView(
+            ucfirst($view),
+            'Html',
+            ['base_path' => JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article']
+        );
+        $model = Factory::getApplication()->getMVCFactory()->createModel('Topic', 'Administrator', ['base_path' => JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article']);
+        $viewObject->setModel($model, true);
+        $viewObject->display();
+        return $this;
+    }   
 
-/**
- * Reset the topic parameters to default
- *
- * @return void
- * @throws Exception
- */
-public function reset()
-{
-    $model = $this->getModel('Topic', 'Administrator');
-    
-    if ($model->reset()) {
-        Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_RESET_SUCCESS'), 'success');
-    } else {
-        Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_RESET_FAILED'), 'error');
+    /**
+     * Сохранение параметров темы
+     *
+     * @return void
+     * @throws Exception
+     */
+    public function save()
+    {
+        $model = $this->getModel('Topic', 'Administrator');
+        $data = Factory::getApplication()->input->get('jform', [], 'array');
+        
+        if ($model->save($data)) {
+            Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_SUCCESS'), 'success');
+        } else {
+            Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED'), 'error');
+        }
+        
+        $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
     }
-    
-    $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
-}    
-    
+
+    /**
+     * Сброс параметров темы к значениям по умолчанию
+     *
+     * @return void
+     * @throws Exception
+     */
+    public function reset()
+    {
+        $model = $this->getModel('Topic', 'Administrator');
+        
+        if ($model->reset()) {
+            Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_RESET_SUCCESS'), 'success');
+        } else {
+            Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_RESET_FAILED'), 'error');
+        }
+        
+        $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
+    }    
 }
