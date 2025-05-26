@@ -193,29 +193,7 @@ class KunenaTopic2ArticleControllerArticle extends AdminController
         }
     }
 
-    /**
-     * Метод по умолчанию для отображения
-     *
-     * @param bool $cachable Кэшируемый ли запрос
-     * @param array $urlparams Параметры URL
-     * @return $this
-     */
-    public function display($cachable = false, $urlparams = [])
-    {
-        Factory::getApplication()->enqueueMessage('Display method called in KunenaTopic2ArticleControllerArticle', 'notice');
-        $view = Factory::getApplication()->input->get('view', 'topics');
-        $viewObject = Factory::getApplication()->getMVCFactory()->createView(
-            ucfirst($view),
-            'Html',
-            ['base_path' => JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article']
-        );
-        $model = Factory::getApplication()->getMVCFactory()->createModel('Topic', 'Administrator', ['base_path' => JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article']);
-        $viewObject->setModel($model, true);
-        $viewObject->display();
-        return $this;
-    }   
-
-    /**
+     /**
      * Сохранение параметров темы
      *
      * @return void
@@ -253,4 +231,28 @@ class KunenaTopic2ArticleControllerArticle extends AdminController
         
         $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
     }    
+
+   /** Если display() не делает ничего особенного, удалим его, и Joomla будет использовать display() из BaseController.
+     * Метод по умолчанию для отображения
+     *
+     * @param bool $cachable Кэшируемый ли запрос
+     * @param array $urlparams Параметры URL
+     * @return $this
+  
+    public function display($cachable = false, $urlparams = [])
+    {
+        Factory::getApplication()->enqueueMessage('Display method called in KunenaTopic2ArticleControllerArticle', 'notice');
+        $view = Factory::getApplication()->input->get('view', 'topics');
+        $viewObject = Factory::getApplication()->getMVCFactory()->createView(
+            ucfirst($view),
+            'Html',
+            ['base_path' => JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article']
+        );
+        $model = Factory::getApplication()->getMVCFactory()->createModel('Topic', 'Administrator', ['base_path' => JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article']);
+        $viewObject->setModel($model, true);
+        $viewObject->display();
+        return $this;
+    }   
+   */
+    
 }
