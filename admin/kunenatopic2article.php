@@ -1,4 +1,11 @@
 <?php
+/**
+ * @package     com_kunenatopic2article
+ * @subpackage  com_kunenatopic2article
+ * @author      lemira
+ * @license     GNU General Public License version 2 or later
+ */
+
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
@@ -6,7 +13,9 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 
 // Проверка прав доступа
-$user = Factory::getUser();
+$app = Factory::getApplication();
+$user = $app->getIdentity();
+
 if (!$user->authorise('core.manage', 'com_kunenatopic2article')) {
     throw new \Exception(Text::_('JERROR_ALERTNOAUTHOR'), 403);
 }
