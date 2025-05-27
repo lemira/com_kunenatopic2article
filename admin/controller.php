@@ -27,7 +27,7 @@ class KunenaTopic2ArticleController extends BaseController
      * @var    string
      * @since  0.0.1
      */
-    protected $default_view = 'topics';
+    protected $default_view = 'topic';
 
     /** Если display() не делает ничего особенного, можно его удалить, и Joomla будет использовать display() из BaseController.
      * Method to display a view.
