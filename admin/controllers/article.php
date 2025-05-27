@@ -189,7 +189,7 @@ class KunenaTopic2ArticleControllerArticle extends AdminController
             Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED'), 'error');
         }
         
-        $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
+        $this->setRedirect('index.php?option=com_kunenatopic2article&view=topic');
     }
 
     /**
@@ -209,7 +209,7 @@ class KunenaTopic2ArticleControllerArticle extends AdminController
             Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_RESET_FAILED'), 'error');
         }
         
-        $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
+        $this->setRedirect('index.php?option=com_kunenatopic2article&view=topic');
     }    
 
    /** Если display() не делает ничего особенного, удалим его, и Joomla будет использовать display() из BaseController.
@@ -222,7 +222,7 @@ class KunenaTopic2ArticleControllerArticle extends AdminController
     public function display($cachable = false, $urlparams = [])
     {
         Factory::getApplication()->enqueueMessage('Display method called in KunenaTopic2ArticleControllerArticle', 'notice');
-        $view = Factory::getApplication()->input->get('view', 'topics');
+        $view = Factory::getApplication()->input->get('view', 'topic');
         $viewObject = Factory::getApplication()->getMVCFactory()->createView(
             ucfirst($view),
             'Html',
