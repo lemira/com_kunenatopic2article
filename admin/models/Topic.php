@@ -1,14 +1,14 @@
-<?php
+<?php 
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\AdminModel;
-use Joomla\CMS\Table\Table;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Application\CMSApplication;
 use Joomla\Database\DatabaseDriver;
 use Joomla\Component\KunenaTopic2Article\Administrator\Table\ParamsTable;
+use Joomla\Database\DatabaseInterface;
 
 class KunenaTopic2ArticleModelTopic extends AdminModel
 {
@@ -22,58 +22,44 @@ class KunenaTopic2ArticleModelTopic extends AdminModel
         $this->db = Factory::getDbo();
     }
 
-    
-    public function getTable($type = 'Params', $prefix = 'Joomla\\Component\\KunenaTopic2Article\\Administrator\\Table\\', $config = [])
-{
-    $table = Table::getInstance($type, $prefix, $config);
-    if ($table === null) {
-        Factory::getApplication()->enqueueMessage('Failed to load table: ' . $type . ', prefix: ' . $prefix, 'error');
+    public function getForm($data = [], $loadData = true): ?Form
+    {
+        $form = $this->loadForm(
+            'com_kunenatopic2article.topic',
+            'topic',
+            ['control' => 'jform', 'load_data' => $loadData]
+        );
+
+        if (!$form) {
+            $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_FORM_LOAD_ERROR'), 'error');
+            return null;
+        }
+
+        return $form;
     }
-    return $table;
-}
-
-   public function getForm($data = [], $loadData = true): ?Form
-{
-    // Пытаемся загрузить форму из XML topic.xml
-    $form = $this->loadForm(
-        'com_kunenatopic2article.topic', // имя формы
-        'topic',                         // файл формы: forms/topic.xml
-        ['control' => 'jform', 'load_data' => $loadData]
-    );
-
-    if (!$form) {
-        $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_FORM_LOAD_ERROR'), 'error');
-        return null;
-    }
-
-    return $form;
-}
 
     protected function loadFormData(): array
-{
-    // Пробуем получить данные, которые пользователь вводил ранее
-    $data = $this->app->getUserState('com_kunenatopic2article.edit.topic.data', []);
+    {
+        $data = $this->app->getUserState('com_kunenatopic2article.edit.topic.data', []);
 
-    // Если успешно сохранили — очищаем предыдущее состояние
-    if ($this->app->getUserState('com_kunenatopic2article.save.success', false)) {
-        $this->app->setUserState('com_kunenatopic2article.edit.topic.data', []);
-        $this->app->setUserState('com_kunenatopic2article.save.success', false);
-        $data = [];
+        if ($this->app->getUserState('com_kunenatopic2article.save.success', false)) {
+            $this->app->setUserState('com_kunenatopic2article.edit.topic.data', []);
+            $this->app->setUserState('com_kunenatopic2article.save.success', false);
+            $data = [];
+        }
+
+        if (empty($data)) {
+            $params = $this->getParams();
+            $data = $params ? $params->getProperties() : [];
+        }
+
+        return $data;
     }
-
-    // Если ничего нет — берём данные из таблицы
-    if (empty($data)) {
-        $params = $this->getParams();
-        $data = $params ? $params->getProperties() : [];
-    }
-
-    return $data;
-}
 
     public function getParams(): ?ParamsTable
     {
-        /** @var ParamsTable $table */
-        $table = $this->getTable();
+        $db = Factory::getContainer()->get(DatabaseInterface::class);
+        $table = new ParamsTable($db);
 
         if (!$table->load(1)) {
             return null;
@@ -89,8 +75,8 @@ class KunenaTopic2ArticleModelTopic extends AdminModel
             return false;
         }
 
-        /** @var ParamsTable $table */
-        $table = $this->getTable();
+        $db = Factory::getContainer()->get(DatabaseInterface::class);
+        $table = new ParamsTable($db);
 
         if (!$table->load(1)) {
             $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED') . ': ' . Text::_('JLIB_DATABASE_ERROR_LOAD_FAILED'), 'error');
@@ -110,8 +96,8 @@ class KunenaTopic2ArticleModelTopic extends AdminModel
 
     public function reset()
     {
-        /** @var ParamsTable $table */
-        $table = $this->getTable();
+        $db = Factory::getContainer()->get(DatabaseInterface::class);
+        $table = new ParamsTable($db);
 
         if (!$table->load(1)) {
             $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_RESET_FAILED') . ': ' . Text::_('JLIB_DATABASE_ERROR_LOAD_FAILED'), 'error');
