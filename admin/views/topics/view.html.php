@@ -16,6 +16,8 @@ class KunenaTopic2ArticleViewTopics extends HtmlView
         if ($model === null) {
             Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_MODEL_FAILED_TO_LOAD'), 'error');
             $this->params = null;
+            $this->state = null;
+            $this->form = null;
         } else {
             $this->params = $model->getParams();
             $this->state = $model->getState();
