@@ -28,13 +28,7 @@ class KunenaTopic2ArticleControllerArticle extends AdminController
      */
     public function create()
     {
-        // На случай, если юзер не сделал save и для проверки Topic ID Сохраняем параметры и проверяем тему
-        if (!$this->saveFromCreate()) {
-            $this->setRedirect('index.php?option=com_kunenatopic2article&view=topics');
-            return;
-        }
-        
-        // Check for request forgeries
+       // Check for request forgeries
         $this->checkToken();
 
         $app = Factory::getApplication();
@@ -72,10 +66,11 @@ class KunenaTopic2ArticleControllerArticle extends AdminController
             // Отображаем результаты
             $app->setUserState('com_kunenatopic2article.article_links', $articleLinks);
             $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESSFULLY'), 'success');
+            Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', false); // управление флагом can_create
         } catch (Exception $e) {
             $app->enqueueMessage($e->getMessage(), 'error');
         }
-
+        
         // Перенаправляем на страницу с результатами
         $app->redirect('index.php?option=com_kunenatopic2article&view=result');
     }
@@ -109,23 +104,6 @@ class KunenaTopic2ArticleControllerArticle extends AdminController
             return null;
         }
     }
-
-    /**
-     * Сохранение параметров из формы создания и проверка существования темы
-     * @return  boolean  True в случае успеха, False в случае ошибки
-     */
-    public function saveFromCreate()
-    {
-        $app = Factory::getApplication();
-        $input = $app->input;
-        $data = $input->get('jform', [], 'array');
-
-        $topicId = isset($data['topic_selection']) ? (int) $data['topic_selection'] : 0;
-
-        if (!$topicId) {
-            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'), 'error');
-            return false;
-        }
 
         // Проверка существования темы по first_post_id
         $db = Factory::getDbo();
@@ -206,6 +184,7 @@ class KunenaTopic2ArticleControllerArticle extends AdminController
         
         if ($model->save($data)) {
             Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_SUCCESS'), 'success');
+            Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', true);  // управление флагом can_create
         } else {
             Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED'), 'error');
         }
@@ -225,6 +204,7 @@ class KunenaTopic2ArticleControllerArticle extends AdminController
         
         if ($model->reset()) {
             Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_RESET_SUCCESS'), 'success');
+            Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', false); // управление флагом can_create
         } else {
             Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_RESET_FAILED'), 'error');
         }
