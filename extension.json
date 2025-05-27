@@ -1,0 +1,17 @@
+{
+    "name": "com_kunenatopic2article",
+    "type": "component",
+    "namespace": "Joomla\\Component\\KunenaTopic2Article",
+    "element": "com_kunenatopic2article",
+    "version": "1.0.0",
+    "description": "Kunena Topic into Article",
+    "administration": {
+        "menu": "COM_KUNENATOPIC2ARTICLE_MENU",
+        "files": [
+            "src"
+        ]
+    },
+    "namespaces": {
+        "Joomla\\Component\\KunenaTopic2Article\\Administrator": "src"
+    }
+}
