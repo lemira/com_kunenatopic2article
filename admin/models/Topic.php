@@ -24,9 +24,13 @@ class KunenaTopic2ArticleModelTopic extends AdminModel
 
     
     public function getTable($type = 'Params', $prefix = 'Joomla\\Component\\KunenaTopic2Article\\Administrator\\Table\\', $config = [])
-    {
-        return Table::getInstance($type, $prefix, $config);
+{
+    $table = Table::getInstance($type, $prefix, $config);
+    if ($table === null) {
+        Factory::getApplication()->enqueueMessage('Failed to load table: ' . $type . ', prefix: ' . $prefix, 'error');
     }
+    return $table;
+}
 
     public function getForm($data = [], $loadData = true)
     {
