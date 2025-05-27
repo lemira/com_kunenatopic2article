@@ -5,7 +5,7 @@ use Joomla\CMS\MVC\View\HtmlView;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 
-class KunenaTopic2ArticleViewTopics extends HtmlView
+class KunenaTopic2ArticleViewTopic extends HtmlView
 {
     protected $state;
     protected $form;
