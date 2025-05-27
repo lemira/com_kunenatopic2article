@@ -32,35 +32,43 @@ class KunenaTopic2ArticleModelTopic extends AdminModel
     return $table;
 }
 
-    public function getForm($data = [], $loadData = true)
-    {
-        $form = $this->loadForm('com_kunenatopic2article.topic', 'topic', ['control' => 'jform', 'load_data' => $loadData]);
+   public function getForm($data = [], $loadData = true): ?Form
+{
+    // Пытаемся загрузить форму из XML topic.xml
+    $form = $this->loadForm(
+        'com_kunenatopic2article.topic', // имя формы
+        'topic',                         // файл формы: forms/topic.xml
+        ['control' => 'jform', 'load_data' => $loadData]
+    );
 
-        if (empty($form)) {
-            $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_FORM_LOAD_ERROR'), 'error');
-            return false;
-        }
-
-        return $form;
+    if (!$form) {
+        $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_FORM_LOAD_ERROR'), 'error');
+        return null;
     }
 
-    protected function loadFormData()
-    {
-        $data = $this->app->getUserState('com_kunenatopic2article.edit.topic.data', []);
+    return $form;
+}
 
-        if ($this->app->getUserState('com_kunenatopic2article.save.success', false)) {
-            $this->app->setUserState('com_kunenatopic2article.edit.topic.data', []);
-            $this->app->setUserState('com_kunenatopic2article.save.success', false);
-            $data = [];
-        }
+    protected function loadFormData(): array
+{
+    // Пробуем получить данные, которые пользователь вводил ранее
+    $data = $this->app->getUserState('com_kunenatopic2article.edit.topic.data', []);
 
-        if (empty($data)) {
-            $params = $this->getParams();
-            $data = $params ? $params->getProperties() : [];
-        }
-
-        return $data;
+    // Если успешно сохранили — очищаем предыдущее состояние
+    if ($this->app->getUserState('com_kunenatopic2article.save.success', false)) {
+        $this->app->setUserState('com_kunenatopic2article.edit.topic.data', []);
+        $this->app->setUserState('com_kunenatopic2article.save.success', false);
+        $data = [];
     }
+
+    // Если ничего нет — берём данные из таблицы
+    if (empty($data)) {
+        $params = $this->getParams();
+        $data = $params ? $params->getProperties() : [];
+    }
+
+    return $data;
+}
 
     public function getParams(): ?ParamsTable
     {
