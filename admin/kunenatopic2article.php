@@ -1,18 +1,9 @@
-<?php
-/**
- * @package     Joomla.Administrator
- * @subpackage  com_kunenatopic2article
- *
- * @copyright   Copyright (C) 2023 Open Source Matters, Inc. All rights reserved.
- * @license     GNU General Public License version 2 or later; see LICENSE.txt
- */
-
-// No direct access to this file
-defined('_JEXEC') or die('Restricted access');
+// Файл: admin/kunenatopic2article.php  
+\defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
-use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\MVC\Controller\BaseController;
 
 // Access check.
 if (!Factory::getUser()->authorise('core.manage', 'com_kunenatopic2article')) {
@@ -25,10 +16,18 @@ $input = $app->input;
 // Отладочная информация
 $app->enqueueMessage('Main entry point loaded', 'notice');
 
-// Get an instance of the controller prefixed by KunenaTopic2Article
+// Создаем контроллер для Joomla 5
+$controllerClass = '\\Joomla\\Component\\KunenaTopic2Article\\Administrator\\Controller\\DisplayController';
+
 try {
-    $controller = BaseController::getInstance('KunenaTopic2Article');
-    $app->enqueueMessage('Controller instance created successfully', 'success');
+    if (class_exists($controllerClass)) {
+        $controller = new $controllerClass();
+        $app->enqueueMessage('Controller instance created successfully', 'success');
+    } else {
+        // Fallback на старый способ
+        $controller = BaseController::getInstance('KunenaTopic2Article');
+        $app->enqueueMessage('Using fallback controller creation', 'warning');
+    }
 } catch (Exception $e) {
     $app->enqueueMessage('Error creating controller: ' . $e->getMessage(), 'error');
     throw $e;
@@ -36,7 +35,6 @@ try {
 
 // Perform the Request task
 $task = $input->getCmd('task');
-
 try {
     $controller->execute($task);
 } catch (Exception $e) {
