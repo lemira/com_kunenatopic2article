@@ -12,44 +12,41 @@ defined('_JEXEC') or die('Restricted access');
 
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Factory;
-use Joomla\CMS\Language\Text;
 
 /**
- * KunenaTopic2Article Controller
+ * Main Controller for KunenaTopic2Article component
  *
  * @since  0.0.1
  */
 class KunenaTopic2ArticleController extends BaseController
 {
     /**
-     * The default view for the display method.
+     * The default view for the display method
      *
      * @var    string
      * @since  0.0.1
      */
     protected $default_view = 'topic';
 
-    /** Если display() не делает ничего особенного, можно его удалить, и Joomla будет использовать display() из BaseController.
-     * Method to display a view.
+    /**
+     * Method to display a view
+     *
      * @param   boolean  $cachable   If true, the view output will be cached
-     * @param   array    $urlparams  An array of safe URL parameters and their variable types
-     * @return  BaseController  This object to support chaining.
+     * @param   array    $urlparams  An array of safe url parameters and their variable types
+     *
+     * @return  static  This object to support chaining
+     *
      * @since   0.0.1
-  
+     */
     public function display($cachable = false, $urlparams = [])
-
     {
-        $app = Factory::getApplication();
-        $input = $app->input;
-        
-        // Get the document object.
-        $document = Factory::getDocument();
-        
-        // Set the default view name and format from the Request.
+        $document = Factory::getApplication()->getDocument();
+        $input = Factory::getApplication()->input;
+
         $vName = $input->get('view', $this->default_view);
         $vFormat = $document->getType();
         $lName = $input->get('layout', 'default');
-
+        
         // Get and render the view.
         if ($view = $this->getView($vName, $vFormat)) {
             // Get the model for the view.
@@ -59,21 +56,16 @@ class KunenaTopic2ArticleController extends BaseController
             if ($model) {
                 $view->setModel($model, true);
             }
-
             $view->setLayout($lName);
-
             // Push document object into the view.
             $view->document = $document;
-
             $view->display();
         }
-
         return $this;
     }
-       */
 
     /**
-     * Method to get a model object, loading it if required.
+     * Method to get a model object, loading it if required
      *
      * @param   string  $name    The model name. Optional.
      * @param   string  $prefix  The class prefix. Optional.
@@ -86,17 +78,9 @@ class KunenaTopic2ArticleController extends BaseController
     public function getModel($name = '', $prefix = 'KunenaTopic2ArticleModel', $config = [])
     {
         if (empty($name)) {
-            $name = $this->default_view;
+            $name = $this->input->get('view', $this->default_view);
         }
 
-        if (empty($prefix)) {
-            $prefix = 'KunenaTopic2ArticleModel';
-        }
-
-        if ($model = parent::getModel($name, $prefix, $config)) {
-            return $model;
-        }
-
-        return false;
+        return parent::getModel($name, $prefix, $config);
     }
 }
