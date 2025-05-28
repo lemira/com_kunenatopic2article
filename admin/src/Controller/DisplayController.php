@@ -7,7 +7,7 @@ use Joomla\CMS\MVC\Controller\BaseController;
 
 class DisplayController extends BaseController
 {
-    protected $default_view = 'kunenatopic2articles';
+    protected $default_view = 'Topic';
 
     public function display($cachable = false, $urlparams = [])
     {
