@@ -24,22 +24,19 @@
         </sql>
     </uninstall>
 
-    <!-- Админская часть компонента -->
-    <administration>
+   <administration>
         <menu link="option=com_kunenatopic2article">COM_KUNENATOPIC2ARTICLE</menu>
         <files folder="admin">
             <filename>controller.php</filename>
-             <filename>script.php</filename>
+            <filename>script.php</filename>
             <filename>kunenatopic2article.php</filename>
-            <folder>controllers</folder>
-            <folder>language</folder>
-            <folder>models</folder>
-            <folder>views</folder>
-            <folder>sql</folder>
+            <folder>src</folder>
+           <folder>language</folder>
+           <folder>sql</folder>
         </files>
         <languages folder="admin/language">
             <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.ini</language>
-            <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.sys.ini</language>
+       <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.sys.ini</language>
         </languages>
     </administration>
 </extension>
