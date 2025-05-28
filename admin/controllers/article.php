@@ -76,7 +76,8 @@ class KunenaTopic2ArticleControllerArticle extends AdminController
         }
         
         // Перенаправляем на страницу с результатами
-        $app->redirect('index.php?option=com_kunenatopic2article&view=result');
+        $this->setRedirect('index.php?option=com_kunenatopic2article&view=result');
+        return true;
     }
 
     /**
