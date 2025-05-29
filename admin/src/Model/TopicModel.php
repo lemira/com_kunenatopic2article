@@ -22,6 +22,15 @@ class TopicModel extends AdminModel
         $this->db  = Factory::getContainer()->get(DatabaseInterface::class);
     }
 
+        /**
+     * Метод для получения таблицы
+     */
+    public function getTable($name = '', $prefix = '', $options = []): Table
+    {
+        // Всегда возвращаем ParamsTable, независимо от переданного имени
+        return new ParamsTable($this->db);
+    }
+    
     public function getForm($data = [], $loadData = true): ?Form
     {
         $form = $this->loadForm(
