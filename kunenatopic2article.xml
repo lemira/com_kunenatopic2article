@@ -30,6 +30,7 @@
             <filename>controller.php</filename>
             <filename>script.php</filename>
             <filename>kunenatopic2article.php</filename>
+            <folder>forms</folder>
             <folder>src</folder>
             <folder>tmpl</folder>
             <folder>services</folder>
