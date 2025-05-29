@@ -9,6 +9,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\AdminModel;
 use Joomla\Component\KunenaTopic2Article\Administrator\Table\ParamsTable;
 use Joomla\Database\DatabaseInterface;
+use Joomla\CMS\Table\Table;
 
 class TopicModel extends AdminModel
 {
