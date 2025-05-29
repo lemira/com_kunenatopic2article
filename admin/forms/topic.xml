@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+    <fieldset name="article_params">
+        <field
+            name="topic_selection"
+            type="text"
+            label="COM_KUNENATOPIC2ARTICLE_TOPIC_SELECTION"
+            description="COM_KUNENATOPIC2ARTICLE_TOPIC_SELECTION_DESC"
+            default="0"
+        />
+        <field
+            name="article_category"
+            type="category"
+            extension="com_content"
+            label="COM_KUNENATOPIC2ARTICLE_ARTICLE_CATEGORY"
+            description="COM_KUNENATOPIC2ARTICLE_ARTICLE_CATEGORY_DESC"
+            default="0"
+        />
+        <field
+            name="post_transfer_scheme"
+            type="radio"
+            label="COM_KUNENATOPIC2ARTICLE_POST_TRANSFER_SCHEME"
+            description="COM_KUNENATOPIC2ARTICLE_POST_TRANSFER_SCHEME_DESC"
+            class="btn-group"
+            default="1">
+            <option value="0">COM_KUNENATOPIC2ARTICLE_SEQUENTIAL</option>
+            <option value="1">COM_KUNENATOPIC2ARTICLE_THREADED</option>
+        </field>
+        <field
+            name="max_article_size"
+            type="text"
+            label="COM_KUNENATOPIC2ARTICLE_MAX_ARTICLE_SIZE"
+            description="COM_KUNENATOPIC2ARTICLE_MAX_ARTICLE_SIZE_DESC"
+            default="40000"
+        />
+    </fieldset>
+
+    <fieldset name="post_info">
+        <field
+            name="post_author"
+            type="radio"
+            label="COM_KUNENATOPIC2ARTICLE_POST_AUTHOR"
+            description="COM_KUNENATOPIC2ARTICLE_POST_AUTHOR_DESC"
+            class="btn-group"
+            default="1">
+            <option value="0">COM_KUNENATOPIC2ARTICLE_NOT_INCLUDE</option>
+            <option value="1">COM_KUNENATOPIC2ARTICLE_ORIGINAL_AUTHOR</option>
+        </field>
+       <field
+    name="post_creation_date"
+    type="radio"
+    label="COM_KUNENATOPIC2ARTICLE_POST_CREATION_DATE"
+    description="COM_KUNENATOPIC2ARTICLE_POST_CREATION_DATE_DESC"
+    class="btn-group"
+    default="0">
+    <option value="0">COM_KUNENATOPIC2ARTICLE_NOT_INCLUDE</option>
+    <option value="1">COM_KUNENATOPIC2ARTICLE_INCLUDE</option>
+</field>
+
+<field
+    name="post_creation_time"
+    type="radio"
+    label="COM_KUNENATOPIC2ARTICLE_POST_CREATION_TIME"
+    description="COM_KUNENATOPIC2ARTICLE_POST_CREATION_TIME_DESC"
+    class="btn-group"
+    default="0">
+    <option value="0">COM_KUNENATOPIC2ARTICLE_NOT_INCLUDE</option>
+    <option value="1">COM_KUNENATOPIC2ARTICLE_INCLUDE</option>
+</field>
+
+<field
+    name="post_ids"
+    type="radio"
+    label="COM_KUNENATOPIC2ARTICLE_POST_IDS"
+    description="COM_KUNENATOPIC2ARTICLE_POST_IDS_DESC"
+    class="btn-group"
+    default="0">
+    <option value="0">COM_KUNENATOPIC2ARTICLE_HIDE_IDS</option>
+    <option value="1">COM_KUNENATOPIC2ARTICLE_SHOW_IDS</option>
+</field>    
+
+<field
+            name="post_title"
+            type="radio"
+            label="COM_KUNENATOPIC2ARTICLE_POST_TITLE"
+            description="COM_KUNENATOPIC2ARTICLE_POST_TITLE_DESC"
+            class="btn-group"
+            default="0">
+            <option value="0">COM_KUNENATOPIC2ARTICLE_NOT_INCLUDE</option>
+            <option value="1">COM_KUNENATOPIC2ARTICLE_INCLUDE</option>
+        </field>
+        <field
+            name="kunena_post_link"
+            type="radio"
+            label="COM_KUNENATOPIC2ARTICLE_KUNENA_POST_LINK"
+            description="COM_KUNENATOPIC2ARTICLE_KUNENA_POST_LINK_DESC"
+            class="btn-group"
+            default="0">
+            <option value="0">COM_KUNENATOPIC2ARTICLE_NOT_INCLUDE</option>
+            <option value="1">COM_KUNENATOPIC2ARTICLE_INCLUDE</option>
+        </field>
+        <field
+            name="reminder_lines"
+            type="text"
+            label="COM_KUNENATOPIC2ARTICLE_REMINDER_LINES"
+            description="COM_KUNENATOPIC2ARTICLE_REMINDER_LINES_DESC"
+            default="0"
+        />
+        <field
+            name="ignored_authors"
+            type="textarea"
+            label="COM_KUNENATOPIC2ARTICLE_IGNORED_AUTHORS"
+            description="COM_KUNENATOPIC2ARTICLE_IGNORED_AUTHORS_DESC"
+            rows="5"
+            cols="40"
+        />
+    </fieldset>
+</form>
