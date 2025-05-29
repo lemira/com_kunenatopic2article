@@ -32,6 +32,9 @@ class ArticleModel extends BaseDatabaseModel
     /** @var \Joomla\Database\DatabaseInterface */
     protected $db;
     
+    /** @var \Joomla\CMS\Application\CMSApplication */
+    protected $app;
+
     /**
      * Текущий размер статьи
      * @var    int
@@ -71,6 +74,7 @@ class ArticleModel extends BaseDatabaseModel
     public function __construct($config = [])
     {
         parent::__construct($config);
+        $this->app = Factory::getApplication();
         $this->db = Factory::getContainer()->get(DatabaseInterface::class);
     }
 
@@ -85,8 +89,6 @@ class ArticleModel extends BaseDatabaseModel
         $this->articleLinks = [];
        
         try {
-            $app = Factory::getApplication(); // 
-                    
             // Получаем ID первого поста
             $firstPostId = (int) $settings['topic_selection']; // 3232
            
@@ -135,7 +137,7 @@ class ArticleModel extends BaseDatabaseModel
 
             return $this->articleLinks;
         } catch (\Exception $e) {
-            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+            $this->app->enqueueMessage($e->getMessage(), 'error');
             return $this->articleLinks;
         }
     }
@@ -182,12 +184,11 @@ class ArticleModel extends BaseDatabaseModel
             $this->articleSize = 0;
 
             // Отладка
-            $app = Factory::getApplication();
-            $app->enqueueMessage('Статья подготовлена: ' . $title . ', категория: ' . $settings['article_category'] . ', alias: ' . $uniqueAlias, 'notice');
+            $this->app->enqueueMessage('Статья подготовлена: ' . $title . ', категория: ' . $settings['article_category'] . ', alias: ' . $uniqueAlias, 'notice');
 
             return true;
         } catch (\Exception $e) {
-            Factory::getApplication()->enqueueMessage('Ошибка при открытии статьи: ' . $e->getMessage(), 'error');
+            $this->app->enqueueMessage('Ошибка при открытии статьи: ' . $e->getMessage(), 'error');
             return false;
         }
     }
@@ -244,8 +245,7 @@ class ArticleModel extends BaseDatabaseModel
         }
 
         try {
-            $app = Factory::getApplication();
-            $app->enqueueMessage('Сохранение статьи: ' . $this->currentArticle['title'], 'notice');
+            $this->app->enqueueMessage('Сохранение статьи: ' . $this->currentArticle['title'], 'notice');
 
             // Обработка introtext, если он пустой
             if (empty($this->currentArticle['introtext']) && !empty($this->currentArticle['fulltext'])) {
@@ -275,14 +275,14 @@ class ArticleModel extends BaseDatabaseModel
             ];
 
             // Отладка
-            $app->enqueueMessage('Статья успешно сохранена с ID: ' . $articleId, 'notice');
+            $this->app->enqueueMessage('Статья успешно сохранена с ID: ' . $articleId, 'notice');
 
             // Сбрасываем текущую статью
             $this->currentArticle = null;
 
             return true;
         } catch (\Exception $e) {
-            Factory::getApplication()->enqueueMessage('Ошибка сохранения статьи: ' . $e->getMessage(), 'error');
+            $this->app->enqueueMessage('Ошибка сохранения статьи: ' . $e->getMessage(), 'error');
             return false;
         }
     }
@@ -300,7 +300,7 @@ class ArticleModel extends BaseDatabaseModel
             // Получаем модель контента
             $contentModel = BaseDatabaseModel::getInstance('Article', 'ContentModel');
             if (!$contentModel) {
-                Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_ERROR_CONTENT_MODEL_NOT_FOUND'), 'error');
+                $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_ERROR_CONTENT_MODEL_NOT_FOUND'), 'error');
                 return false;
             }
 
@@ -323,7 +323,7 @@ class ArticleModel extends BaseDatabaseModel
 
             // Сохраняем статью с упрощенным подходом
             if (!$contentModel->save($articleData)) {
-                Factory::getApplication()->enqueueMessage(
+                $this->app->enqueueMessage(
                     Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_SAVING_ARTICLE', $contentModel->getError()),
                     'error'
                 );
@@ -332,7 +332,7 @@ class ArticleModel extends BaseDatabaseModel
 
             return $contentModel->getState('article.id');
         } catch (\Exception $e) {
-            Factory::getApplication()->enqueueMessage(
+            $this->app->enqueueMessage(
                 Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_SAVING_ARTICLE', $e->getMessage()),
                 'error'
             );
@@ -362,7 +362,7 @@ class ArticleModel extends BaseDatabaseModel
 
             return true;
         } catch (\Exception $e) {
-            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+            $this->app->enqueueMessage($e->getMessage(), 'error');
             return false;
         }
     }
@@ -400,7 +400,7 @@ class ArticleModel extends BaseDatabaseModel
 
             return true;
         } catch (\Exception $e) {
-            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+            $this->app->enqueueMessage($e->getMessage(), 'error');
             return false;
         }
     }
@@ -446,7 +446,7 @@ class ArticleModel extends BaseDatabaseModel
 
             return $topic;
         } catch (\Exception $e) {
-            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+            $this->app->enqueueMessage($e->getMessage(), 'error');
             return new \stdClass();
         }
     }
@@ -499,7 +499,7 @@ class ArticleModel extends BaseDatabaseModel
 
             return $postIds;
         } catch (\Exception $e) {
-            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+            $this->app->enqueueMessage($e->getMessage(), 'error');
             return [];
         }
     }
