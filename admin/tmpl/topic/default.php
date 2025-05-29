@@ -21,10 +21,10 @@ HTMLHelper::_('behavior.formvalidator');
     <!-- Заголовок с синей полосой как на изображении -->
     <div class="card mb-4">
         <div class="card-header bg-primary text-white">
-            <h4 class="mb-0"><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_RENDERING_POST_INFO_FIELDSET'); ?></h4>
+            <h4 class="mb-0"><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_POST_INFO'); ?></h4>
         </div>
         <div class="card-body">
-            <h2><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_TOPIC_TO_ARTICLE_PARAMS'); ?></h2>
+            <h2><?php echo Text::_('COM_KUNENATOPIC2ARTICLE'); ?></h2>
             
             <form action="<?php echo Route::_('index.php?option=com_kunenatopic2article'); ?>" method="post" name="adminForm" id="adminForm" class="form-validate">
                 
@@ -42,7 +42,7 @@ HTMLHelper::_('behavior.formvalidator');
                     </button>
                 </div>
 
-                <h3><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_PARAMETERS'); ?></h3>
+                <h3><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_PARAMS'); ?></h3>
                 
                 <!-- Article Parameters Section -->
                 <div class="row mb-4">
@@ -52,12 +52,12 @@ HTMLHelper::_('behavior.formvalidator');
                             <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_TOPIC_SELECTION'); ?>
                         </label>
                         <select name="jform[topic_selection]" id="topic_selection" class="form-select">
-                            <option value="COM_KUNENATOPIC2ARTICLE_ALL_TOPICS" <?php echo ($this->params->topic_selection ?? '') === 'COM_KUNENATOPIC2ARTICLE_ALL_TOPICS' ? 'selected' : ''; ?>>
-                                <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_ALL_TOPICS'); ?>
+                            <option value="">
+                                <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_TOPIC_SELECTION'); ?>
                             </option>
                         </select>
                         <small class="form-text text-muted">
-                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_SELECT_TOPIC_TO_PROCESS'); ?>
+                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_TOPIC_SELECTION_DESC'); ?>
                         </small>
                     </div>
 
@@ -72,7 +72,7 @@ HTMLHelper::_('behavior.formvalidator');
                             </option>
                         </select>
                         <small class="form-text text-muted">
-                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_CATEGORY_ID_FOR_CREATED_ARTICLES'); ?>
+                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_CATEGORY_DESC'); ?>
                         </small>
                     </div>
                 </div>
@@ -84,12 +84,15 @@ HTMLHelper::_('behavior.formvalidator');
                             <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_POST_TRANSFER_SCHEME'); ?>
                         </label>
                         <select name="jform[post_transfer_scheme]" id="post_transfer_scheme" class="form-select">
-                            <option value="COM_KUNENATOPIC2ARTICLE_ALL_POSTS" <?php echo ($this->params->post_transfer_scheme ?? '') === 'COM_KUNENATOPIC2ARTICLE_ALL_POSTS' ? 'selected' : ''; ?>>
-                                <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_ALL_POSTS'); ?>
+                            <option value="sequential" <?php echo ($this->params->post_transfer_scheme ?? '') === 'sequential' ? 'selected' : ''; ?>>
+                                <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_SEQUENTIAL'); ?>
+                            </option>
+                            <option value="threaded" <?php echo ($this->params->post_transfer_scheme ?? '') === 'threaded' ? 'selected' : ''; ?>>
+                                <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_THREADED'); ?>
                             </option>
                         </select>
                         <small class="form-text text-muted">
-                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_ENABLE_OR_DISABLE_POST_TRANSFER_SCHEME'); ?>
+                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_POST_TRANSFER_SCHEME_DESC'); ?>
                         </small>
                     </div>
 
@@ -102,12 +105,12 @@ HTMLHelper::_('behavior.formvalidator');
                                class="form-control" value="<?php echo $this->params->max_article_size ?? '40000'; ?>" 
                                min="1000" max="100000">
                         <small class="form-text text-muted">
-                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_MAXIMUM_SIZE_OF_ARTICLE_IN_CHARACTERS'); ?>
+                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_MAX_ARTICLE_SIZE_DESC'); ?>
                         </small>
                     </div>
                 </div>
 
-                <h3><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_POST_INFORMATION'); ?></h3>
+                <h3><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_POST_INFO'); ?></h3>
                 
                 <!-- Post Information Section -->
                 <div class="row mb-4">
@@ -117,12 +120,15 @@ HTMLHelper::_('behavior.formvalidator');
                             <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_POST_AUTHOR'); ?>
                         </label>
                         <select name="jform[post_author]" id="post_author" class="form-select">
-                            <option value="COM_KUNENATOPIC2ARTICLE_CURRENT_USER" <?php echo ($this->params->post_author ?? '') === 'COM_KUNENATOPIC2ARTICLE_CURRENT_USER' ? 'selected' : ''; ?>>
-                                <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_CURRENT_USER'); ?>
+                            <option value="show" <?php echo ($this->params->post_author ?? '') === 'show' ? 'selected' : ''; ?>>
+                                <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_INCLUDE'); ?>
+                            </option>
+                            <option value="hide" <?php echo ($this->params->post_author ?? '') === 'hide' ? 'selected' : ''; ?>>
+                                <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_NOT_INCLUDE'); ?>
                             </option>
                         </select>
                         <small class="form-text text-muted">
-                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_INCLUDE_POST_AUTHOR_IN_ARTICLE'); ?>
+                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_POST_AUTHOR_DESC'); ?>
                         </small>
                     </div>
 
@@ -134,7 +140,7 @@ HTMLHelper::_('behavior.formvalidator');
                         <input type="date" name="jform[post_creation_date]" id="post_creation_date" 
                                class="form-control" value="<?php echo $this->params->post_creation_date ?? '2025-03-14'; ?>">
                         <small class="form-text text-muted">
-                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_DATE_OF_POST_CREATION'); ?>
+                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_POST_CREATION_DATE_DESC'); ?>
                         </small>
                     </div>
                 </div>
@@ -148,7 +154,7 @@ HTMLHelper::_('behavior.formvalidator');
                         <input type="datetime-local" name="jform[post_creation_time]" id="post_creation_time" 
                                class="form-control" value="<?php echo $this->params->post_creation_time ?? '2025-03-14T21:51:29'; ?>">
                         <small class="form-text text-muted">
-                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_TIME_OF_POST_CREATION'); ?>
+                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_POST_CREATION_TIME_DESC'); ?>
                         </small>
                     </div>
 
@@ -158,57 +164,98 @@ HTMLHelper::_('behavior.formvalidator');
                             <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_POST_IDS'); ?>
                         </label>
                         <select name="jform[post_ids]" id="post_ids" class="form-select">
-                            <option value="COM_KUNENATOPIC2ARTICLE_SHOW_IDS" <?php echo ($this->params->post_ids ?? '') === 'COM_KUNENATOPIC2ARTICLE_SHOW_IDS' ? 'selected' : ''; ?>>
+                            <option value="show" <?php echo ($this->params->post_ids ?? '') === 'show' ? 'selected' : ''; ?>>
                                 <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_SHOW_IDS'); ?>
                             </option>
+                            <option value="hide" <?php echo ($this->params->post_ids ?? '') === 'hide' ? 'selected' : ''; ?>>
+                                <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_HIDE_IDS'); ?>
+                            </option>
                         </select>
+                        <small class="form-text text-muted">
+                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_POST_IDS_DESC'); ?>
+                        </small>
                     </div>
                 </div>
 
-                <!-- Дополнительные поля из второго изображения -->
+                <!-- Дополнительные поля из языкового файла -->
                 <div class="row mb-4">
                     <!-- Post Title -->
-                    <div class="col-12 mb-3">
+                    <div class="col-md-6 mb-3">
                         <label for="post_title" class="form-label">
-                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_TITLE'); ?>
+                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_POST_TITLE'); ?>
                         </label>
-                        <input type="text" name="jform[post_title]" id="post_title" 
-                               class="form-control" value="<?php echo $this->params->post_title ?? ''; ?>">
+                        <select name="jform[post_title]" id="post_title" class="form-select">
+                            <option value="show" <?php echo ($this->params->post_title ?? '') === 'show' ? 'selected' : ''; ?>>
+                                <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_POST_TITLE_SHOW'); ?>
+                            </option>
+                            <option value="hide" <?php echo ($this->params->post_title ?? '') === 'hide' ? 'selected' : ''; ?>>
+                                <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_POST_TITLE_HIDE'); ?>
+                            </option>
+                        </select>
+                        <small class="form-text text-muted">
+                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_POST_TITLE_DESC'); ?>
+                        </small>
                     </div>
 
-                    <!-- Topic ID -->
+                    <!-- Kunena Post Link -->
+                    <div class="col-md-6 mb-3">
+                        <label for="kunena_post_link" class="form-label">
+                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_KUNENA_POST_LINK'); ?>
+                        </label>
+                        <select name="jform[kunena_post_link]" id="kunena_post_link" class="form-select">
+                            <option value="show" <?php echo ($this->params->kunena_post_link ?? '') === 'show' ? 'selected' : ''; ?>>
+                                <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_KUNENA_POST_LINK_ADD'); ?>
+                            </option>
+                            <option value="hide" <?php echo ($this->params->kunena_post_link ?? '') === 'hide' ? 'selected' : ''; ?>>
+                                <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_KUNENA_POST_LINK_NO'); ?>
+                            </option>
+                        </select>
+                        <small class="form-text text-muted">
+                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_KUNENA_POST_LINK_DESC'); ?>
+                        </small>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <!-- Topic ID - изменяем на числовое поле -->
                     <div class="col-md-6 mb-3">
                         <label for="topic_id" class="form-label">
-                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_FIELD_TOPIC_ID'); ?>
+                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_TOPIC_SELECTION'); ?>
                         </label>
-                        <input type="text" name="jform[topic_id]" id="topic_id" 
-                               class="form-control" value="<?php echo $this->params->topic_id ?? ''; ?>">
+                        <input type="number" name="jform[topic_id]" id="topic_id" 
+                               class="form-control" value="<?php echo $this->params->topic_id ?? ''; ?>" 
+                               min="1" placeholder="<?php echo Text::_('COM_KUNENATOPIC2ARTICLE_TOPIC_SELECTION'); ?>">
+                        <small class="form-text text-muted">
+                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_TOPIC_SELECTION_DESC'); ?>
+                        </small>
                     </div>
 
                     <!-- Ignored Authors -->
                     <div class="col-md-6 mb-3">
                         <label for="ignored_authors" class="form-label">
-                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_FIELD_IGNORED_AUTHORS'); ?>
+                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_IGNORED_AUTHORS'); ?>
                         </label>
                         <input type="text" name="jform[ignored_authors]" id="ignored_authors" 
-                               class="form-control" value="<?php echo $this->params->ignored_authors ?? ''; ?>">
+                               class="form-control" value="<?php echo $this->params->ignored_authors ?? ''; ?>"
+                               placeholder="username1, username2, username3">
+                        <small class="form-text text-muted">
+                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_IGNORED_AUTHORS_DESC'); ?>
+                        </small>
                     </div>
                 </div>
 
-                <!-- Mode Selection -->
+                <!-- Reminder Lines -->
                 <div class="row mb-4">
                     <div class="col-md-6 mb-3">
-                        <label for="mode" class="form-label">
-                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_FIELD_MODE'); ?>
+                        <label for="reminder_lines" class="form-label">
+                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_REMINDER_LINES'); ?>
                         </label>
-                        <select name="jform[mode]" id="mode" class="form-select">
-                            <option value="COM_KUNENATOPIC2ARTICLE_OPTION_FLAT" <?php echo ($this->params->mode ?? '') === 'COM_KUNENATOPIC2ARTICLE_OPTION_FLAT' ? 'selected' : ''; ?>>
-                                <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_OPTION_FLAT'); ?>
-                            </option>
-                            <option value="tree" <?php echo ($this->params->mode ?? '') === 'tree' ? 'selected' : ''; ?>>
-                                <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_OPTION_TREE'); ?>
-                            </option>
-                        </select>
+                        <input type="number" name="jform[reminder_lines]" id="reminder_lines" 
+                               class="form-control" value="<?php echo $this->params->reminder_lines ?? '50'; ?>" 
+                               min="0" max="300">
+                        <small class="form-text text-muted">
+                            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_REMINDER_LINES_DESC'); ?>
+                        </small>
                     </div>
                 </div>
 
