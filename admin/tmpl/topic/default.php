@@ -1,71 +1,63 @@
 <?php
+
 \defined('_JEXEC') or die;
 
-use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
-use Joomla\CMS\Router\Route;
 use Joomla\CMS\HTML\HTMLHelper;
+use Joomla\CMS\Router\Route;
+use Joomla\CMS\Session\Session;
 
-// Получение приложения и флага для активации кнопки "Create Articles"
-$app = Factory::getApplication();
-$canCreate = $app->getUserState('com_kunenatopic2article.can_create', false);
+HTMLHelper::_('behavior.formvalidator');
+HTMLHelper::_('formbehavior.chosen', 'select');
 
-// Подключение необходимых скриптов (если не через шаблон)
-HTMLHelper::_('bootstrap.framework');
-HTMLHelper::_('behavior.keepalive');
+// Извлечение данных из $displayData
+$form = $displayData->get('form');
 ?>
 
-<form action="<?php echo Route::_('index.php?option=com_kunenatopic2article'); ?>" method="post" name="adminForm" id="adminForm">
-    <div class="container mt-4">
-        <h2><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_TITLE'); ?></h2>
+<form action="<?= Route::_('index.php?option=com_kunenatopic2article&task=topic.save'); ?>" method="post" name="adminForm" id="adminForm" class="form-validate">
+    <div class="container-fluid">
+        <h1><?= Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_TITLE'); ?></h1>
 
-        <!-- Поле: ID темы -->
-        <div class="mb-3">
-            <label for="topic_id" class="form-label"><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_FIELD_TOPIC_ID'); ?></label>
-            <input type="text" name="jform[topic_id]" id="topic_id" class="form-control" value="<?php echo $this->params->topic_id ?? ''; ?>">
-        </div>
-
-        <!-- Поле: Игнорируемые авторы -->
-        <div class="mb-3">
-            <label for="ignored_authors" class="form-label"><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_FIELD_IGNORED_AUTHORS'); ?></label>
-            <input type="text" name="jform[ignored_authors]" id="ignored_authors" class="form-control" value="<?php echo $this->params->ignored_authors ?? ''; ?>">
-        </div>
-
-        <!-- Поле: Режим переноса -->
-        <div class="mb-3">
-            <label for="mode" class="form-label"><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_FIELD_MODE'); ?></label>
-            <select name="jform[mode]" id="mode" class="form-select">
-                <option value="flat" <?php echo ($this->params->mode ?? '') === 'flat' ? 'selected' : ''; ?>>
-                    <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_OPTION_FLAT'); ?>
-                </option>
-                <option value="tree" <?php echo ($this->params->mode ?? '') === 'tree' ? 'selected' : ''; ?>>
-                    <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_OPTION_TREE'); ?>
-                </option>
-            </select>
-        </div>
-
-        <!-- Кнопки управления -->
-        <div class="mt-4">
-            <!-- Кнопка сохранить параметры -->
-            <button type="submit" name="task" value="article.save" class="btn btn-primary">
-                <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_REMEMBER'); ?>
+        <div class="btn-toolbar mb-3">
+            <button type="button" class="btn btn-primary me-2" onclick="Joomla.submitbutton('save')">
+                <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_REMEMBER'); ?>
             </button>
-
-            <!-- Кнопка сброса -->
-            <button type="submit" name="task" value="article.reset" class="btn btn-warning ms-2">
-                <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_RESET'); ?>
+            <button type="button" class="btn btn-secondary me-2" onclick="Joomla.submitbutton('reset')">
+                <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_RESET'); ?>
             </button>
-
-            <!-- Кнопка создания статей -->
-            <button type="submit" name="task" value="article.create" class="btn btn-success ms-2"
-                <?php echo !$canCreate ? 'disabled' : ''; ?>>
-                <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_CREATE'); ?>
+            <button type="button" class="btn btn-success" onclick="Joomla.submitbutton('create')">
+                <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_CREATE'); ?>
             </button>
         </div>
 
-        <!-- Скрытые поля -->
-        <input type="hidden" name="option" value="com_kunenatopic2article">
-        <input type="hidden" name="controller" value="article">
-        <?php echo HTMLHelper::_('form.token'); ?>
+        <h3><?= Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_PARAMS'); ?></h3>
+        <?php if ($form): ?>
+            <?= $form->renderFieldset('article_params'); ?>
+        <?php else: ?>
+            <div class="alert alert-danger"><?= Text::_('COM_KUNENATOPIC2ARTICLE_FORM_IS_EMPTY'); ?></div>
+        <?php endif; ?>
+
+        <h3><?= Text::_('COM_KUNENATOPIC2ARTICLE_POST_INFO'); ?></h3>
+        <?php if ($form): ?>
+            <?= $form->renderFieldset('post_info'); ?>
+        <?php else: ?>
+            <div class="alert alert-danger"><?= Text::_('COM_KUNENATOPIC2ARTICLE_FORM_IS_EMPTY'); ?></div>
+        <?php endif; ?>
+
+        <input type="hidden" name="task" value="" />
+        <?= HTMLHelper::_('form.token'); ?>
     </div>
 </form>
+
+<script>
+    Joomla.submitbutton = function(task) {
+        const form = document.getElementById('adminForm');
+        if (form && form.classList.contains('form-validate')) {
+            if (window.Joomla && Joomla.isValid(form)) {
+                Joomla.submitform(task, form);
+            } else {
+                alert('<?= Text::_('JGLOBAL_VALIDATION_FORM_FAILED'); ?>');
+            }
+        }
+    };
+</script>
