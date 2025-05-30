@@ -1,19 +1,62 @@
 <?php
+/**
+ * @package     KunenaTopic2Article
+ * @subpackage  com_kunenatopic2article
+ * @author      Your Name
+ * @copyright   Copyright (C) 2024 Your Name. All rights reserved.
+ * @license     GNU General Public License version 2 or later
+ */
+
 namespace Joomla\Component\KunenaTopic2Article\Administrator\Extension;
 
-\defined('_JEXEC') or die;
+defined('_JEXEC') or die;
 
 use Joomla\CMS\Extension\BootableExtensionInterface;
 use Joomla\CMS\Extension\MVCComponent;
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\HTML\HTMLRegistryAwareTrait;
 use Psr\Container\ContainerInterface;
 
+/**
+ * Component class for KunenaTopic2Article
+ *
+ * @since  1.0.0
+ */
 class KunenaTopic2ArticleComponent extends MVCComponent implements BootableExtensionInterface
 {
     use HTMLRegistryAwareTrait;
-    
-    public function boot(ContainerInterface $container): void
+
+    /**
+     * Booting the extension. This is the function to set up the environment of the extension like
+     * registering new class loaders, etc.
+     *
+     * If required, some initial set up can be done from services of the container, eg.
+     * registering HTML services.
+     *
+     * @param   ContainerInterface  $container  The container
+     *
+     * @return  void
+     *
+     * @since   1.0.0
+     */
+    public function boot(ContainerInterface $container)
     {
-        // Инициализация при необходимости
+        // Регистрируем HTML хелперы если нужно
+        $this->getRegistry()->register('kunenatopic2article', new \Joomla\CMS\HTML\Service\Renderer());
+    }
+
+    /**
+     * Get the component's router
+     *
+     * @param   \Joomla\CMS\Application\CMSApplicationInterface  $application  The application object
+     * @param   \Joomla\CMS\Menu\AbstractMenu                   $menu         The menu object to work with
+     *
+     * @return  \Joomla\CMS\Component\Router\RouterInterface
+     *
+     * @since   1.0.0
+     */
+    public function getRouter($application, $menu = null)
+    {
+        return new \Joomla\Component\KunenaTopic2Article\Site\Service\Router($application, $menu);
     }
 }
