@@ -32,8 +32,7 @@
             <folder>forms</folder>
             <folder>src</folder>
             <folder>tmpl</folder>
-            <folder>services</folder>
-           <folder>language</folder>
+            <folder>language</folder>
            <folder>sql</folder>
         </files>
         <languages folder="admin/language">
