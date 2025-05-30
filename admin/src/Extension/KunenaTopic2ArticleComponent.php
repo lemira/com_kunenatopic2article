@@ -19,6 +19,10 @@ use Psr\Container\ContainerInterface;
 
 /**
  * Component class for KunenaTopic2Article
+ * Поддерживает структуру:
+ * - admin/ вместо administrator/
+ * - ArticleController, Result/Topic views
+ * - ParamsTable
  *
  * @since  1.0.0
  */
