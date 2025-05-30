@@ -45,18 +45,5 @@ class KunenaTopic2ArticleComponent extends MVCComponent implements BootableExten
         $this->getRegistry()->register('kunenatopic2article', new \Joomla\CMS\HTML\Service\Renderer());
     }
 
-    /**
-     * Get the component's router
-     *
-     * @param   \Joomla\CMS\Application\CMSApplicationInterface  $application  The application object
-     * @param   \Joomla\CMS\Menu\AbstractMenu                   $menu         The menu object to work with
-     *
-     * @return  \Joomla\CMS\Component\Router\RouterInterface
-     *
-     * @since   1.0.0
-     */
-    public function getRouter($application, $menu = null)
-    {
-        return new \Joomla\Component\KunenaTopic2Article\Site\Service\Router($application, $menu);
-    }
+
 }
