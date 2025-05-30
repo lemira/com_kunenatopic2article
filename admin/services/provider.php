@@ -21,6 +21,10 @@ use Joomla\DI\ServiceProviderInterface;
 
 /**
  * The KunenaTopic2Article service provider.
+ * Регистрирует сервисы для компонента с реальной структурой:
+ * - ArticleController вместо TopicsController
+ * - Result и Topic views
+ * - ArticleModel и TopicsModel
  *
  * @since  1.0.0
  */
