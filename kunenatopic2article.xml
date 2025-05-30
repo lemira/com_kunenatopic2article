@@ -10,7 +10,7 @@
     <version>1.0.0</version>
     <description>COM_KUNENATOPIC2ARTICLE_DESC</description>
 
-     <!-- Регистрация пространства имён было <namespace path="src">Joomla\Component\KunenaTopic2Article</namespace> -->
+     <!-- Регистрация пространства имён было namespace path="src">Joomla\Component\KunenaTopic2Article</namespace> -->
     <namespace path="src">Joomla\Component\KunenaTopic2Article\Administrator</namespace>
 
     <install>
