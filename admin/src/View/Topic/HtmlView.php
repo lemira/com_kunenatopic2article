@@ -31,6 +31,9 @@ class HtmlView extends BaseHtmlView
         if (!$this->form) {
             Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_FORM_FAILED_TO_LOAD'), 'error');
         }
+$this->set('form', $this->form);
+$this->set('state', $this->state);
+$this->set('params', $this->params);
 
         parent::display($tpl);
     }
