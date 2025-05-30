@@ -4,15 +4,14 @@ namespace Joomla\Component\KunenaTopic2Article\Administrator\Service\Provider;
 
 \defined('_JEXEC') or die;
 
-use Joomla\CMS\Extension\Service\ProviderInterface;
-use Joomla\CMS\DI\Container;
-use Joomla\CMS\Extension\MVCComponent;
+use Joomla\DI\Container;
+use Joomla\DI\ServiceProviderInterface;
 use Joomla\Component\KunenaTopic2Article\Administrator\Extension\KunenaTopic2ArticleComponent;
 use Joomla\DI\ContainerAwareInterface;
 
 class KunenaTopic2ArticleServiceProvider implements ServiceProviderInterface
 {
-    public function register(Container $container)
+    public function register(Container $container): void
     {
         $container->set(
             KunenaTopic2ArticleComponent::class,
