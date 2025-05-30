@@ -1,143 +1,147 @@
 <?php
+/**
+ * @package     KunenaTopic2Article
+ * @subpackage  com_kunenatopic2article
+ * @author      Your Name
+ * @copyright   Copyright (C) 2024 Your Name. All rights reserved.
+ * @license     GNU General Public License version 2 or later
+ */
+
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\Installer\InstallerAdapter;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Log\Log;
 
-class com_kunenatopic2articleInstallerScript
+/**
+ * Installation class to perform additional changes during install/uninstall/update
+ *
+ * @since  1.0.0
+ */
+class Com_KunenaTopic2ArticleInstallerScript
 {
     /**
-     * Выполняется перед установкой, обновлением или деинсталляцией
+     * Extension name
      *
-     * @param string $type Тип действия (install, update, uninstall)
-     * @param object $parent Объект установщика
-     * @return bool
+     * @var    string
+     * @since  1.0.0
      */
-    public function preflight($type, $parent)
+    protected $extension = 'com_kunenatopic2article';
+
+    /**
+     * Minimum Joomla version
+     *
+     * @var    string
+     * @since  1.0.0
+     */
+    protected $minimumJoomla = '5.0';
+
+    /**
+     * Minimum PHP version
+     *
+     * @var    string
+     * @since  1.0.0
+     */
+    protected $minimumPhp = '8.1';
+
+    /**
+     * Called before any type of action
+     *
+     * @param   string  $route  Which action is happening (install|uninstall|discover_install|update)
+     * @param   InstallerAdapter  $adapter  The object responsible for running this script
+     *
+     * @return  boolean  True on success
+     */
+    public function preflight($route, InstallerAdapter $adapter)
     {
-        // Можно добавить проверки перед установкой, если нужно
+        // Check minimum Joomla version
+        if (version_compare(JVERSION, $this->minimumJoomla, 'lt')) {
+            Factory::getApplication()->enqueueMessage(
+                Text::sprintf('JLIB_INSTALLER_MINIMUM_JOOMLA', $this->minimumJoomla),
+                'error'
+            );
+            return false;
+        }
+
+        // Check minimum PHP version
+        if (version_compare(PHP_VERSION, $this->minimumPhp, 'lt')) {
+            Factory::getApplication()->enqueueMessage(
+                Text::sprintf('JLIB_INSTALLER_MINIMUM_PHP', $this->minimumPhp),
+                'error'
+            );
+            return false;
+        }
+
+        // Временная регистрация namespace для Joomla 5
+        if ($route === 'install' || $route === 'update') {
+            $extensionPath = $adapter->getParent()->getPath('extension_administrator');
+            if (is_dir($extensionPath . '/src')) {
+                // В Joomla 5 используем современный автозагрузчик
+                $loader = require JPATH_LIBRARIES . '/vendor/autoload.php';
+                $loader->addPsr4(
+                    'Joomla\\Component\\KunenaTopic2Article\\Administrator\\',
+                    $extensionPath . '/src/'
+                );
+            }
+        }
+
         return true;
     }
 
     /**
-     * Выполняется при установке компонента
+     * Called after any type of action
      *
-     * @param object $parent Объект установщика
-     * @return bool
+     * @param   string  $route  Which action is happening (install|uninstall|discover_install|update)
+     * @param   InstallerAdapter  $adapter  The object responsible for running this script
+     *
+     * @return  boolean  True on success
      */
-    public function install($parent)
+    public function postflight($route, InstallerAdapter $adapter)
     {
-        try {
-            $db = Factory::getDatabase();
-
-            // Читаем SQL-файл
-            $sqlFile = JPATH_COMPONENT_ADMINISTRATOR . '/sql/install.mysql.utf8.sql';
-            if (!file_exists($sqlFile)) {
-                Factory::getApplication()->enqueueMessage(
-                    Text::sprintf('COM_KUNENATOPIC2ARTICLE_SQL_FILE_NOT_FOUND', $sqlFile),
-                    'error'
-                );
-                return false;
-            }
-
-            $sql = file_get_contents($sqlFile);
-            if ($sql === false) {
-                Factory::getApplication()->enqueueMessage(
-                    Text::sprintf('COM_KUNENATOPIC2ARTICLE_SQL_FILE_READ_FAILED', $sqlFile),
-                    'error'
-                );
-                return false;
-            }
-
-            // Разбиваем SQL на отдельные запросы
-            $queries = $db->splitSql($sql);
-            foreach ($queries as $query) {
-                $query = trim($query);
-                if (!empty($query)) {
-                    $db->setQuery($query);
-                    $db->execute();
-                }
-            }
-
+        if ($route === 'install') {
             Factory::getApplication()->enqueueMessage(
                 Text::_('COM_KUNENATOPIC2ARTICLE_INSTALL_SUCCESS'),
-                'success'
+                'message'
             );
-            return true;
-        } catch (\Exception $e) {
-            Factory::getApplication()->enqueueMessage(
-                Text::sprintf('COM_KUNENATOPIC2ARTICLE_SQL_ERROR', $e->getMessage()),
-                'error'
-            );
-            return false;
         }
+
+        return true;
     }
 
     /**
-     * Выполняется после установки или обновления
+     * Method to install the extension
      *
-     * @param string $type Тип действия (install, update)
-     * @param object $parent Объект установщика
-     * @return void
+     * @param   InstallerAdapter  $adapter  The object responsible for running this script
+     *
+     * @return  boolean  True on success
      */
-    public function postflight($type, $parent)
+    public function install(InstallerAdapter $adapter)
     {
-        // Можно добавить действия после установки, если нужно
+        return true;
     }
 
     /**
-     * Выполняется при деинсталляции компонента
+     * Method to uninstall the extension
      *
-     * @param object $parent Объект установщика
-     * @return bool
+     * @param   InstallerAdapter  $adapter  The object responsible for running this script
+     *
+     * @return  boolean  True on success
      */
-    public function uninstall($parent)
+    public function uninstall(InstallerAdapter $adapter)
     {
-        try {
-            $db = Factory::getDatabase();
+        return true;
+    }
 
-            // Читаем SQL-файл для удаления
-            $sqlFile = JPATH_COMPONENT_ADMINISTRATOR . '/sql/uninstall.mysql.utf8.sql';
-            if (!file_exists($sqlFile)) {
-                Factory::getApplication()->enqueueMessage(
-                    Text::sprintf('COM_KUNENATOPIC2ARTICLE_UNINSTALL_SQL_FILE_NOT_FOUND', $sqlFile),
-                    'warning'
-                );
-                // Продолжаем деинсталляцию, так как отсутствие файла не критично
-            } else {
-                $sql = file_get_contents($sqlFile);
-                if ($sql === false) {
-                    Factory::getApplication()->enqueueMessage(
-                        Text::sprintf('COM_KUNENATOPIC2ARTICLE_UNINSTALL_SQL_FILE_READ_FAILED', $sqlFile),
-                        'warning'
-                    );
-                } else {
-                    $queries = $db->splitSql($sql);
-                    foreach ($queries as $query) {
-                        $query = trim($query);
-                        if (!empty($query)) {
-                            $db->setQuery($query);
-                            $db->execute();
-                        }
-                    }
-                }
-            }
-
-            // Дополнительно удаляем таблицу параметров (для надёжности)
-            $db->setQuery('DROP TABLE IF EXISTS `#__kunenatopic2article_params`');
-            $db->execute();
-
-            Factory::getApplication()->enqueueMessage(
-                Text::_('COM_KUNENATOPIC2ARTICLE_UNINSTALL_SUCCESS'),
-                'success'
-            );
-            return true;
-        } catch (\Exception $e) {
-            Factory::getApplication()->enqueueMessage(
-                Text::sprintf('COM_KUNENATOPIC2ARTICLE_UNINSTALL_ERROR', $e->getMessage()),
-                'error'
-            );
-            return false;
-        }
+    /**
+     * Method to update the extension
+     *
+     * @param   InstallerAdapter  $adapter  The object responsible for running this script
+     *
+     * @return  boolean  True on success
+     */
+    public function update(InstallerAdapter $adapter)
+    {
+        return true;
     }
 }
