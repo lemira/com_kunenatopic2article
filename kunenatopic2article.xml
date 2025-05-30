@@ -27,9 +27,9 @@
    <administration>
         <menu link="option=com_kunenatopic2article">COM_KUNENATOPIC2ARTICLE</menu>
         <files folder="admin">
-             <filename>script.php</filename>
-            <filename>kunenatopic2article.php</filename>
+            <filename>script.php</filename>
             <folder>forms</folder>
+            <folder>services</folder>
             <folder>src</folder>
             <folder>tmpl</folder>
             <folder>language</folder>
