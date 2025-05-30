@@ -73,16 +73,27 @@ class Com_KunenaTopic2ArticleInstallerScript
             return false;
         }
 
-        // Временная регистрация namespace для Joomla 5
+        // Отладка и регистрация namespace для Joomla 5
         if ($route === 'install' || $route === 'update') {
             $extensionPath = $adapter->getParent()->getPath('extension_administrator');
+            
+            // Отладочная информация
+            $app = Factory::getApplication();
+            $app->enqueueMessage("Extension path: " . $extensionPath, 'notice');
+            $app->enqueueMessage("Src dir exists: " . (is_dir($extensionPath . '/src') ? 'YES' : 'NO'), 'notice');
+            $app->enqueueMessage("Component file exists: " . (file_exists($extensionPath . '/src/Extension/KunenaTopic2ArticleComponent.php') ? 'YES' : 'NO'), 'notice');
+            
             if (is_dir($extensionPath . '/src')) {
-                // В Joomla 5 используем современный автозагрузчик
-                $loader = require JPATH_LIBRARIES . '/vendor/autoload.php';
-                $loader->addPsr4(
-                    'Joomla\\Component\\KunenaTopic2Article\\Administrator\\',
-                    $extensionPath . '/src/'
+                // Принудительная регистрация namespace
+                \JLoader::registerNamespace(
+                    'Joomla\\Component\\KunenaTopic2Article\\Administrator',
+                    $extensionPath . '/src',
+                    false,
+                    false,
+                    'psr4'
                 );
+                
+                $app->enqueueMessage("Namespace registered manually", 'notice');
             }
         }
 
