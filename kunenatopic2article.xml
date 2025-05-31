@@ -10,8 +10,9 @@
     <version>1.0.0</version>
     <description>COM_KUNENATOPIC2ARTICLE_DESC</description>
 
-     <!-- Регистрация пространства имён было namespace path="src">Joomla\Component\KunenaTopic2Article</namespace> -->
-   <namespace path="admin/src">Joomla\Component\KunenaTopic2Article\Administrator</namespace>
+     <!-- Регистрация пространства имён -->
+   <namespace path="src">Joomla\Component\KunenaTopic2Article\Administrator</namespace>
+
     <install>
         <sql>
             <file driver="mysql" charset="utf8">sql/install.mysql.utf8.sql</file>
@@ -27,6 +28,7 @@
         <menu link="option=com_kunenatopic2article">COM_KUNENATOPIC2ARTICLE</menu>
         <files folder="admin">
             <filename>script.php</filename>
+            <filename>services/provider.php</filename>
             <folder>forms</folder>
             <folder>services</folder>
             <folder>src</folder>
