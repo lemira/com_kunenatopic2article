@@ -10,10 +10,6 @@ JLoader::registerNamespace(
     'psr4'
 );
 
-// Проверка регистрации класса
-var_dump(class_exists('Joomla\Component\KunenaTopic2Article\Administrator\Extension\KunenaTopic2ArticleComponent'));
-exit;
-
 return new class implements ServiceProviderInterface
 {
     public function register(Container $container)
