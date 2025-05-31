@@ -1,11 +1,51 @@
+use Joomla\CMS\Factory;
+use Joomla\CMS\Installer\InstallerAdapter;
+use Joomla\CMS\Language\Text;
+use Joomla\DI\Container;
+use Joomla\Component\KunenaTopic2Article\Administrator\Extension\KunenaTopic2ArticleComponent;
+
+class Com_KunenaTopic2ArticleInstallerScript
+{
+    public function preflight($route, InstallerAdapter $adapter)
+    {
+        $container = Factory::getContainer(); // Получаем DI-контейнер Joomla
+
+        if (!$container->has(ComponentInterface::class)) {
+            Factory::getApplication()->enqueueMessage(
+                'Ошибка: Компонент KunenaTopic2Article не зарегистрирован в контейнере.',
+                'error'
+            );
+            return false;
+        }
+
+        $component = $container->get(ComponentInterface::class);
+
+        if (!$component instanceof KunenaTopic2ArticleComponent) {
+            Factory::getApplication()->enqueueMessage(
+                'Ошибка: KunenaTopic2ArticleComponent загружен неверно.',
+                'error'
+            );
+            return false;
+        }
+
+        Factory::getApplication()->enqueueMessage('KunenaTopic2ArticleComponent загружен успешно!', 'notice');
+
+        return true;
+    }
+}
+
+
+
+
+
+/** версия от кл врем? заменена на верс от коп 
 <?php
-/**
- * @package     KunenaTopic2Article
- * @subpackage  com_kunenatopic2article
- * @author      Your Name
- * @copyright   Copyright (C) 2024 Your Name. All rights reserved.
- * @license     GNU General Public License version 2 or later
- */
+//  * @package     KunenaTopic2Article
+// * @subpackage  com_kunenatopic2article
+//  * @author      Your Name
+//  * @copyright   Copyright (C) 2024 Your Name. All rights reserved.
+//  * @license     GNU General Public License version 2 or later
+
 
 defined('_JEXEC') or die;
 
@@ -14,45 +54,18 @@ use Joomla\CMS\Installer\InstallerAdapter;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Log\Log;
 
-/**
- * Installation class to perform additional changes during install/uninstall/update
- *
- * @since  1.0.0
- */
-class Com_KunenaTopic2ArticleInstallerScript
+// Installation class to perform additional changes during install/uninstall/update
+ class Com_KunenaTopic2ArticleInstallerScript
 {
-    /**
-     * Extension name
-     *
-     * @var    string
-     * @since  1.0.0
-     */
-    protected $extension = 'com_kunenatopic2article';
+    // Extension name
+     protected $extension = 'com_kunenatopic2article';
 
-    /**
-     * Minimum Joomla version
-     *
-     * @var    string
-     * @since  1.0.0
-     */
+    // Minimum Joomla version
     protected $minimumJoomla = '5.0';
 
-    /**
-     * Minimum PHP version
-     *
-     * @var    string
-     * @since  1.0.0
-     */
-    protected $minimumPhp = '8.1';
+    // Minimum PHP version
+     protected $minimumPhp = '8.1';
 
-    /**
-     * Called before any type of action
-     *
-     * @param   string  $route  Which action is happening (install|uninstall|discover_install|update)
-     * @param   InstallerAdapter  $adapter  The object responsible for running this script
-     *
-     * @return  boolean  True on success
-     */
     public function preflight($route, InstallerAdapter $adapter)
     {
         // Check minimum Joomla version
@@ -100,15 +113,9 @@ class Com_KunenaTopic2ArticleInstallerScript
         return true;
     }
 
-    /**
-     * Called after any type of action
-     *
-     * @param   string  $route  Which action is happening (install|uninstall|discover_install|update)
+    // * @param   string  $route  Which action is happening (install|uninstall|discover_install|update)
      * @param   InstallerAdapter  $adapter  The object responsible for running this script
-     *
-     * @return  boolean  True on success
-     */
-    public function postflight($route, InstallerAdapter $adapter)
+     public function postflight($route, InstallerAdapter $adapter)
     {
         if ($route === 'install') {
             Factory::getApplication()->enqueueMessage(
@@ -120,39 +127,26 @@ class Com_KunenaTopic2ArticleInstallerScript
         return true;
     }
 
-    /**
-     * Method to install the extension
-     *
-     * @param   InstallerAdapter  $adapter  The object responsible for running this script
-     *
-     * @return  boolean  True on success
-     */
-    public function install(InstallerAdapter $adapter)
+    // Method to install the extension
+     public function install(InstallerAdapter $adapter)
     {
         return true;
     }
 
-    /**
-     * Method to uninstall the extension
-     *
+    // Method to uninstall the extension
      * @param   InstallerAdapter  $adapter  The object responsible for running this script
-     *
      * @return  boolean  True on success
-     */
     public function uninstall(InstallerAdapter $adapter)
     {
         return true;
     }
 
-    /**
-     * Method to update the extension
-     *
+    / Method to update the extension
      * @param   InstallerAdapter  $adapter  The object responsible for running this script
-     *
      * @return  boolean  True on success
-     */
-    public function update(InstallerAdapter $adapter)
+     public function update(InstallerAdapter $adapter)
     {
         return true;
     }
 }
+ */
