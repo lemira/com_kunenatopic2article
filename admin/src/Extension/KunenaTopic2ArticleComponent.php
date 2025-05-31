@@ -48,5 +48,4 @@ class KunenaTopic2ArticleComponent extends MVCComponent implements BootableExten
         // Регистрируем HTML хелперы если нужно
         
     }
-
 }
