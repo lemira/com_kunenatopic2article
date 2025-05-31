@@ -6,6 +6,10 @@
 
 defined('_JEXEC') or die;
 
+// Проверка загрузки файла коп
+var_dump("provider.php загружен!");
+exit;
+
 use Joomla\CMS\Dispatcher\ComponentDispatcherFactoryInterface;
 use Joomla\CMS\Extension\ComponentInterface;
 use Joomla\CMS\Extension\Service\Provider\ComponentDispatcherFactory;
