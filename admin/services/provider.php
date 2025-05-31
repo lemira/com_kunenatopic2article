@@ -1,7 +1,7 @@
 <?php
 defined('_JEXEC') or die;
 
-// Принудительная регистрация namespace для Joomla 5
+// Принудительная регистрация пространства имен
 JLoader::registerNamespace(
     'Joomla\\Component\\KunenaTopic2Article\\Administrator',
     JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/src',
@@ -10,6 +10,19 @@ JLoader::registerNamespace(
     'psr4'
 );
 
+use Joomla\CMS\Dispatcher\ComponentDispatcherFactoryInterface;
+use Joomla\CMS\Extension\ComponentInterface;
+use Joomla\CMS\Extension\Service\Provider\ComponentDispatcherFactory;
+use Joomla\CMS\Extension\Service\Provider\MVCFactory;
+use Joomla\CMS\HTML\Registry;
+use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
+use Joomla\Component\KunenaTopic2Article\Administrator\Extension\KunenaTopic2ArticleComponent;
+use Joomla\DI\Container;
+use Joomla\DI\ServiceProviderInterface;
+
+/**
+ * Service provider for KunenaTopic2Article component
+ */
 return new class implements ServiceProviderInterface
 {
     public function register(Container $container)
