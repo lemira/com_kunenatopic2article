@@ -46,8 +46,7 @@ class KunenaTopic2ArticleComponent extends MVCComponent implements BootableExten
     public function boot(ContainerInterface $container)
     {
         // Регистрируем HTML хелперы если нужно
-        $this->getRegistry()->register('kunenatopic2article', new \Joomla\CMS\HTML\Service\Renderer());
+        
     }
-
 
 }
