@@ -45,6 +45,13 @@ class KunenaTopic2ArticleComponent extends MVCComponent implements BootableExten
      */
     public function boot(ContainerInterface $container)
     {
+        public function boot(ContainerInterface $container)
+        {
+    // Регистрируем контроллер вручную
+    $controller = new \Joomla\Component\KunenaTopic2Article\Administrator\Controller\DisplayController();
+    $controller->execute();
+        }
+
         // Регистрируем HTML хелперы если нужно
         
     }
