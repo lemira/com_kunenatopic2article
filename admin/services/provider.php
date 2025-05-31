@@ -6,8 +6,7 @@
 
 defined('_JEXEC') or die;
 
-// Проверка загрузки файла коп
-var_dump("provider.php загружен!");
+var_dump(class_exists('Joomla\Component\KunenaTopic2Article\Administrator\Extension\KunenaTopic2ArticleComponent'));
 exit;
 
 use Joomla\CMS\Dispatcher\ComponentDispatcherFactoryInterface;
