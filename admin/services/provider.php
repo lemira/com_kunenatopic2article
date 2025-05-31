@@ -10,6 +10,14 @@ JLoader::registerNamespace(
     'psr4'
 );
 
+JLoader::registerNamespace(
+    'Joomla\\Component\\KunenaTopic2Article\\Administrator\\Controller',
+    JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/src/Controller',
+    false,
+    false,
+    'psr4'
+);
+
 use Joomla\CMS\Dispatcher\ComponentDispatcherFactoryInterface;
 use Joomla\CMS\Extension\ComponentInterface;
 use Joomla\CMS\Extension\Service\Provider\ComponentDispatcherFactory;
