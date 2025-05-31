@@ -6,32 +6,39 @@ use Joomla\Component\KunenaTopic2Article\Administrator\Extension\KunenaTopic2Art
 
 class Com_KunenaTopic2ArticleInstallerScript
 {
-    public function preflight($route, InstallerAdapter $adapter)
-    {
-        $container = Factory::getContainer(); // Получаем DI-контейнер Joomla
 
-        if (!$container->has(ComponentInterface::class)) {
-            Factory::getApplication()->enqueueMessage(
-                'Ошибка: Компонент KunenaTopic2Article не зарегистрирован в контейнере.',
-                'error'
-            );
-            return false;
-        }
+  public function preflight($route, InstallerAdapter $adapter)
+{
+    $container = Factory::getContainer(); // Получаем DI-контейнер Joomla
 
-        $component = $container->get(ComponentInterface::class);
+    $app = Factory::getApplication();
+    $app->enqueueMessage("Пробую загрузить компонент...", 'notice');
 
-        if (!$component instanceof KunenaTopic2ArticleComponent) {
-            Factory::getApplication()->enqueueMessage(
-                'Ошибка: KunenaTopic2ArticleComponent загружен неверно.',
-                'error'
-            );
-            return false;
-        }
-
-        Factory::getApplication()->enqueueMessage('KunenaTopic2ArticleComponent загружен успешно!', 'notice');
-
-        return true;
+    if (!$container->has(ComponentInterface::class)) {
+        $app->enqueueMessage(
+            'Ошибка: Компонент KunenaTopic2Article не зарегистрирован в контейнере.',
+            'error'
+        );
+        return false;
     }
+
+    $component = $container->get(ComponentInterface::class);
+
+    var_dump($component); // Отладочный вывод
+
+    if (!$component instanceof KunenaTopic2ArticleComponent) {
+        $app->enqueueMessage(
+            'Ошибка: KunenaTopic2ArticleComponent загружен неверно.',
+            'error'
+        );
+        return false;
+    }
+
+    $app->enqueueMessage('KunenaTopic2ArticleComponent загружен успешно!', 'notice');
+
+    return true;
+}
+ 
 }
 
 
