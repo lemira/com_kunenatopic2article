@@ -2,8 +2,10 @@
 defined('_JEXEC') or die;
 
 // Отладка коп
-var_dump(file_exists(JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/src/Controller/DisplayController.php'));
+var_dump(is_dir(JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/src/Controller'));
 exit;
+// var_dump(file_exists(JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/src/Controller/DisplayController.php'));
+// exit;
 // var_dump(class_exists('Joomla\Component\KunenaTopic2Article\Administrator\Controller\DisplayController'));
 // exit;
 
