@@ -16,6 +16,7 @@ use Joomla\CMS\Extension\MVCComponent;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\HTML\HTMLRegistryAwareTrait;
 use Psr\Container\ContainerInterface;
+use Joomla\CMS\Factory;
 
 /**
  * Component class for KunenaTopic2Article
