@@ -46,10 +46,7 @@ class KunenaTopic2ArticleComponent extends MVCComponent implements BootableExten
      */
     public function boot(ContainerInterface $container)
     {
-
-    // Регистрируем контроллер вручную
-    $controller = new \Joomla\Component\KunenaTopic2Article\Administrator\Controller\DisplayController();
-    
+  
 $task = Factory::getApplication()->input->get('task', '', 'cmd');
 // Проверяем, есть ли task, иначе не вызываем execute()
 if (!empty($task)) {
