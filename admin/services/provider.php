@@ -1,6 +1,10 @@
 <?php
 defined('_JEXEC') or die;
 
+// Отладка коп
+var_dump(class_exists('Joomla\Component\KunenaTopic2Article\Administrator\Controller\DisplayController'));
+exit;
+
 // Принудительная регистрация пространства имен
 JLoader::registerNamespace(
     'Joomla\\Component\\KunenaTopic2Article\\Administrator',
