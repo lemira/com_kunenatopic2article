@@ -21,10 +21,6 @@ class Com_KunenaTopic2ArticleInstallerScript
     protected $extension = 'com_kunenatopic2article';
     protected $minimumJoomla = '5.0';
     protected $minimumPhp = '8.1';
-// отладка - поиск место ошибки syntax error, unexpected token "public"
-    error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
     
     public function preflight($route, InstallerAdapter $adapter)
     {
