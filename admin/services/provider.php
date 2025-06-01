@@ -16,7 +16,7 @@ JLoader::registerNamespace(
 
 JLoader::registerNamespace(
     'Joomla\\Component\\KunenaTopic2Article\\Administrator\\Controller',
-    JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/src/Controller',
+    JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/admin/src/Controller',
     false,
     false,
     'psr4'
