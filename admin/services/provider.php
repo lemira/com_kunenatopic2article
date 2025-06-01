@@ -2,8 +2,8 @@
 defined('_JEXEC') or die;
 
 // Отладка коп
-var_dump(is_dir(JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/src/Controller'));
-exit;
+//var_dump(is_dir(JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/src/Controller'));
+// exit;
 // var_dump(file_exists(JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/src/Controller/DisplayController.php'));
 // exit;
 // var_dump(class_exists('Joomla\Component\KunenaTopic2Article\Administrator\Controller\DisplayController'));
@@ -20,7 +20,7 @@ JLoader::registerNamespace(
 
 JLoader::registerNamespace(
     'Joomla\\Component\\KunenaTopic2Article\\Administrator\\Controller',
-    JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/admin/src/Controller',
+    JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/src/Controller',
     false,
     false,
     'psr4'
