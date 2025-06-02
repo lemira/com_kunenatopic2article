@@ -10,21 +10,28 @@
     <version>1.0.0</version>
     <description>COM_KUNENATOPIC2ARTICLE_DESC</description>
 
-     <!-- Регистрация пространства имён -->
-  <namespace path="src">Joomla\Component\KunenaTopic2Article</namespace>
+  <!-- Важно: path указывает относительно папки admin/ -->
+    <namespace path="admin/src">Joomla\Component\KunenaTopic2Article</namespace>
 
-   <scriptfile>admin/script.php</scriptfile>
+    <scriptfile>admin/script.php</scriptfile>
     
-   <administration>
+    <administration>
         <menu link="option=com_kunenatopic2article">COM_KUNENATOPIC2ARTICLE</menu>
-            <files folder="admin">
+        <files folder="admin">
             <filename>autoload.php</filename>
+            <filename>script.php</filename>
             <folder>forms</folder>
             <folder>services</folder>
             <folder>src</folder>
             <folder>tmpl</folder>
             <folder>language</folder>
-           <folder>sql</folder>
+            <folder>sql</folder>
         </files>
-        </administration>
+        
+        <!-- Языковые файлы обязательны -->
+        <languages folder="admin/language">
+            <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.ini</language>
+            <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.sys.ini</language>
+        </languages>
+    </administration>
 </extension>
