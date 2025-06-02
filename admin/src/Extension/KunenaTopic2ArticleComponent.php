@@ -34,25 +34,25 @@ class KunenaTopic2ArticleComponent extends MVCComponent implements BootableExten
     /**
      * Booting the extension. This is the function to set up the environment of the extension like
      * registering new class loaders, etc.
-     *
      * If required, some initial set up can be done from services of the container, eg.
      * registering HTML services.
-     *
      * @param   ContainerInterface  $container  The container
-     *
      * @return  void
-     *
      * @since   1.0.0
      */
-    public function boot(ContainerInterface $container)
-    {
-  
-$task = Factory::getApplication()->input->get('task', '', 'cmd');
-// Проверяем, есть ли task, иначе не вызываем execute()
-if (!empty($task)) {
-    $controller->execute($task);
-}
-             // Регистрируем HTML хелперы если нужно
+  public function boot(ContainerInterface $container)
+{
+    $task = Factory::getApplication()->input->get('task', '', 'cmd');
+
+    // Создаём экземпляр контроллера
+    $controller = new \Joomla\Component\KunenaTopic2Article\Administrator\Controller\DisplayController();
+
+    // Проверяем, есть ли task, иначе не вызываем execute()
+    if (!empty($task)) {
+        $controller->execute($task);
     }
+
+    // Регистрируем HTML хелперы если нужно
+}
         
   }
