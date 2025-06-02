@@ -26,8 +26,9 @@
 
    <administration>
         <menu link="option=com_kunenatopic2article">COM_KUNENATOPIC2ARTICLE</menu>
-        <files folder="admin">
-            <filename>script.php</filename>
+       <scriptfile>script.php</scriptfile> 
+       <files folder="admin">
+            <filename>autoload.php</filename>
             <filename>services/provider.php</filename>
             <folder>forms</folder>
             <folder>services</folder>
