@@ -13,18 +13,16 @@ return new class implements ServiceProviderInterface
 {
     public function register(Container $container)
     {
-        $container->registerServiceProvider(new ComponentDispatcherFactory('\\Joomla\\Component\\KunenaTopic2Article'));
-        $container->registerServiceProvider(new MVCFactory('\\Joomla\\Component\\KunenaTopic2Article'));
-        
+        // Регистрация namespace PSR-4
         $container->set(
             ComponentInterface::class,
             function (Container $container) {
                 $component = new KunenaTopic2ArticleComponent(
                     $container->get(ComponentDispatcherFactoryInterface::class)
                 );
-                
+
                 $component->setMVCFactory($container->get(MVCFactoryInterface::class));
-                
+
                 return $component;
             }
         );
