@@ -11,7 +11,7 @@
     <description>COM_KUNENATOPIC2ARTICLE_DESC</description>
 
      <!-- Регистрация пространства имён -->
-   <namespace path="src">Joomla\Component\KunenaTopic2Article\Administrator</namespace>
+  <namespace path="src">Joomla\Component\KunenaTopic2Article</namespace>
 
     <install>
         <sql>
