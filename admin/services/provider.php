@@ -13,12 +13,10 @@ return new class implements ServiceProviderInterface
 {
     public function register(Container $container)
     {
-        // Явная регистрация пути (важно для admin/ структуры)
+        // Явная регистрация компонента
         $container->set(
             ComponentInterface::class,
             function (Container $container) {
-                require_once JPATH_ADMINISTRATOR.'/components/com_kunenatopic2article/admin/src/Extension/KunenaTopic2ArticleComponent.php';
-                
                 $component = new KunenaTopic2ArticleComponent(
                     $container->get(ComponentDispatcherFactoryInterface::class)
                 );
