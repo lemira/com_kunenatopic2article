@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<extension type="component" version="4.0" method="upgrade">
+<extension type="component" version="5.0" method="upgrade">
     <name>com_kunenatopic2article</name>
     <author>lr</author>
     <creationDate>January 2025</creationDate>
@@ -13,23 +13,12 @@
      <!-- Регистрация пространства имён -->
   <namespace path="src">Joomla\Component\KunenaTopic2Article</namespace>
 
-    <install>
-        <sql>
-            <file driver="mysql" charset="utf8">sql/install.mysql.utf8.sql</file>
-        </sql>
-    </install>
-    <uninstall>
-        <sql>
-            <file driver="mysql" charset="utf8">sql/uninstall.mysql.utf8.sql</file>
-        </sql>
-    </uninstall>
-
+   <scriptfile>admin/script.php</scriptfile>
+    
    <administration>
         <menu link="option=com_kunenatopic2article">COM_KUNENATOPIC2ARTICLE</menu>
-       <scriptfile>script.php</scriptfile> 
-       <files folder="admin">
+            <files folder="admin">
             <filename>autoload.php</filename>
-            <filename>services/provider.php</filename>
             <folder>forms</folder>
             <folder>services</folder>
             <folder>src</folder>
@@ -37,9 +26,5 @@
             <folder>language</folder>
            <folder>sql</folder>
         </files>
-        <languages folder="admin/language">
-            <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.ini</language>
-       <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.sys.ini</language>
-        </languages>
-    </administration>
+        </administration>
 </extension>
