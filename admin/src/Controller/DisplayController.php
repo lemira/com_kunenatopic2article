@@ -1,4 +1,11 @@
 <?php
+
+// ВРЕМЕННАЯ ОТЛАДКА
+jimport('joomla.filesystem.file');
+if (!JFile::exists(JPATH_ADMINISTRATOR.'/components/com_kunenatopic2article/admin/src/Controller/DisplayController.php')) {
+    die('File not found: '.JPATH_ADMINISTRATOR.'/components/com_kunenatopic2article/admin/src/Controller/DisplayController.php');
+}
+
 namespace Joomla\Component\KunenaTopic2Article\Administrator\Controller;
 
 \defined('_JEXEC') or die;
