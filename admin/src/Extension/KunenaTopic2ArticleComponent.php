@@ -44,12 +44,15 @@ public function boot(ContainerInterface $container)
 {
     $task = Factory::getApplication()->input->get('task', '', 'cmd');
 
-    // Вместо создания контроллера попробуем вызвать его через диспетчер
-    $dispatcher = ComponentHelper::bootComponent('com_kunenatopic2article');
+    // Создаём экземпляр контроллера
+    $controller = new \Joomla\Component\KunenaTopic2Article\Administrator\Controller\DisplayController();
 
+    // Проверяем, есть ли task, иначе не вызываем execute()
     if (!empty($task)) {
-        $dispatcher->dispatch();
+        $controller->execute($task);
     }
+
+    // Регистрируем HTML хелперы если нужно
 }
     
     }
