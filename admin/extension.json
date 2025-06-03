@@ -1,7 +1,7 @@
 {
   "name": "com_kunenatopic2article",
   "type": "component",
-  "namespace": "Joomla\\\\Component\\\\KunenaTopic2Article",
+  "namespace": "Joomla\\Component\\KunenaTopic2Article\\Administrator",
   "version": "1.0.0",
   "description": "Kunena Topic to Article",
   "minimumJoomla": "5.0.0",
