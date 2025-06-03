@@ -1,17 +1,76 @@
 {
-  "name": "com_kunenatopic2article",
-  "type": "component",
-  "namespace": "Joomla\\Component\\KunenaTopic2Article\\Administrator",
-  "version": "1.0.0",
-  "description": "Kunena Topic to Article",
-  "minimumJoomla": "5.0.0",
-  "minimumPhp": "8.1.0",
-  "autoload": {
-    "psr-4": {
-      "Joomla\\\\Component\\\\KunenaTopic2Article\\\\Administrator\\\\": "src/"
+    "name": "com_kunenatopic2article",
+    "type": "component",
+    "version": "1.0.0",
+    "description": "COM_KUNENATOPIC2ARTICLE_DESC",
+    "creationDate": "January 2025",
+    "author": "lr",
+    "authorEmail": "lemirat@gmail.com",
+    "authorUrl": "https://geschichte-chronologie.de",
+    "copyright": "(C) 2025 lr. All rights reserved.",
+    "license": "GNU/GPL",
+    "minimumJoomla": "5.0.0",
+    "minimumPhp": "8.1.0",
+    "namespace": "Joomla\\Component\\KunenaTopic2Article\\Administrator",
+    "autoload": {
+        "psr-4": {
+            "Joomla\\Component\\KunenaTopic2Article\\Administrator\\": "src/"
+        }
+    },
+    "services": {
+        "administrator": "Joomla\\Component\\KunenaTopic2Article\\Administrator\\Extension\\KunenaTopic2ArticleServiceProvider"
+    },
+    "install": {
+        "sql": {
+            "folder": "sql",
+            "schemes": {
+                "mysql": "install.mysql.utf8.sql"
+            }
+        }
+    },
+    "administration": {
+        "menu": {
+            "Topic2Article": {
+                "text": "COM_KUNENATOPIC2ARTICLE",
+                "route": "option=com_kunenatopic2article"
+            }
+        },
+        "files": [
+            {
+                "folder": "forms",
+                "target": "forms"
+            },
+            {
+                "folder": "src",
+                "target": "src"
+            },
+            {
+                "folder": "tmpl",
+                "target": "tmpl"
+            },
+            {
+                "folder": "language",
+                "target": "language"
+            },
+            {
+                "folder": "sql",
+                "target": "sql"
+            }
+        ],
+        "languages": [
+            {
+                "folder": "language",
+                "files": {
+                    "en-GB": [
+                        "en-GB/en-GB.com_kunenatopic2article.ini",
+                        "en-GB/en-GB.com_kunenatopic2article.sys.ini"
+                    ],
+                    "ru-RU": [
+                        "ru-RU/ru-RU.com_kunenatopic2article.ini",
+                        "ru-RU/ru-RU.com_kunenatopic2article.sys.ini"
+                    ]
+                }
+            }
+        ]
     }
-  },
-  "services": {
-   "administrator": "Joomla\\Component\\KunenaTopic2Article\\Administrator\\Extension\\KunenaTopic2ArticleServiceProvider"
-  }
 }
