@@ -1,1 +1,17 @@
-admin/extension.json
+{
+  "name": "com_kunenatopic2article",
+  "type": "component",
+  "namespace": "Joomla\\\\Component\\\\KunenaTopic2Article",
+  "version": "1.0.0",
+  "description": "Kunena Topic to Article",
+  "minimumJoomla": "5.0.0",
+  "minimumPhp": "8.1.0",
+  "autoload": {
+    "psr-4": {
+      "Joomla\\\\Component\\\\KunenaTopic2Article\\\\Administrator\\\\": "src/"
+    }
+  },
+  "services": {
+    "administrator": "Extension\\KunenaTopic2ArticleServiceProvider"
+  }
+}
