@@ -12,6 +12,6 @@
     }
   },
   "services": {
-    "administrator": "Extension\\KunenaTopic2ArticleServiceProvider"
+   "administrator": "Joomla\\Component\\KunenaTopic2Article\\Administrator\\Extension\\KunenaTopic2ArticleServiceProvider"
   }
 }
