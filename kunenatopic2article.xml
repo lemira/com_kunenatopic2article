@@ -16,7 +16,6 @@
         <menu link="option=com_kunenatopic2article">COM_KUNENATOPIC2ARTICLE</menu>
         <files folder="admin">
             <folder>forms</folder>
-            <folder>services</folder>
             <folder>src</folder>
             <folder>tmpl</folder>
             <folder>language</folder>
