@@ -10,9 +10,9 @@
     <version>1.0.0</version>
     <description>COM_KUNENATOPIC2ARTICLE_DESC</description>
     
-    <!-- Namespace обяз для Joomla 5)// path="src"?? \Administrator не н.? -->
-    <namespace path="src">Joomla\Component\KunenaTopic2Article</namespace>
-
+    <!-- Namespace обяз для Joomla 5)// path="src"?? -->
+    <namespace path="admin/src">Joomla\Component\KunenaTopic2Article</namespace>
+    
     <!-- Регистрация сервисов (обязательно для Joomla 5) -->
     <services>
         <provider>Joomla\Component\KunenaTopic2Article\Administrator\Extension\KunenaTopic2ArticleServiceProvider</provider>
