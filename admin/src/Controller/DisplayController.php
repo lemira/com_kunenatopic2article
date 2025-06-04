@@ -1,86 +1,105 @@
 <?php
-
-// ВРЕМЕННАЯ ОТЛАДКА
-jimport('joomla.filesystem.file');
-if (!JFile::exists(JPATH_ADMINISTRATOR.'/components/com_kunenatopic2article/admin/src/Controller/DisplayController.php')) {
-    die('File not found: '.JPATH_ADMINISTRATOR.'/components/com_kunenatopic2article/admin/src/Controller/DisplayController.php');
-}
+/**
+ * @package     KunenaTopic2Article
+ * @subpackage  Administrator
+ */
 
 namespace Joomla\Component\KunenaTopic2Article\Administrator\Controller;
 
-\defined('_JEXEC') or die;
-
-use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Factory;
+use Joomla\CMS\MVC\Controller\BaseController;
+use Joomla\CMS\Language\Text;
 
-/**
- * Main Controller for KunenaTopic2Article component
- *
- * @since  0.0.1
- */
+// Убедитесь, что класс корректно наследует BaseController
 class DisplayController extends BaseController
 {
     /**
-     * The default view for the display method
+     * The default view for the display method.
      *
      * @var    string
-     * @since  0.0.1
+     * @since  1.0.0
      */
-    protected $default_view = 'Topic';
+    protected $default_view = 'kunenatopic2articles';
 
     /**
-     * Method to display a view
+     * Method to display a view.
      *
      * @param   boolean  $cachable   If true, the view output will be cached
-     * @param   array    $urlparams  An array of safe url parameters and their variable types
+     * @param   array    $urlparams  An associative array of URL parameters
      *
-     * @return  static  This object to support chaining
+     * @return  \Joomla\CMS\MVC\Controller\BaseController|boolean
      *
-     * @since   0.0.1
+     * @since   1.0.0
      */
     public function display($cachable = false, $urlparams = [])
     {
-        $document = Factory::getApplication()->getDocument();
-        $input = Factory::getApplication()->input;
-        $vName = $input->get('view', $this->default_view);
-        $vFormat = $document->getType();
-        $lName = $input->get('layout', 'default');
+      // Отладка в начале метода display():
+$app = Factory::getApplication();
+$app->enqueueMessage('Component loaded successfully!', 'message');
+$app->enqueueMessage('View name: ' . $vName, 'message');
+$app->enqueueMessage('Format: ' . $vFormat, 'message');
         
-        // Get and render the view.
-        if ($view = $this->getView($vName, $vFormat)) {
-            // Get the model for the view.
+        // Получаем приложение и документ
+        $app = Factory::getApplication();
+        $document = $app->getDocument();
+        $input = $app->input;
+        
+        // Получаем параметры view и layout
+        $vName = $input->getCmd('view', $this->default_view);
+        $vFormat = $document->getType();
+        $lName = $input->getCmd('layout', 'default');
+
+        try {
+            // Получаем view
+            $view = $this->getView($vName, $vFormat);
+            
+            if (!$view) {
+                throw new \Exception(Text::sprintf('JLIB_APPLICATION_ERROR_VIEW_NOT_FOUND', $vName, $vFormat));
+            }
+
+            // Получаем модель
             $model = $this->getModel($vName);
             
-            // Push the model into the view (as default).
             if ($model) {
                 $view->setModel($model, true);
             }
+
+            // Устанавливаем layout и document
             $view->setLayout($lName);
-            // Push document object into the view.
             $view->document = $document;
+
+            // Отображаем view
             $view->display();
+            
+        } catch (\Exception $e) {
+            // Логируем ошибку
+            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+            
+            // Возвращаемся к базовому отображению
+            return parent::display($cachable, $urlparams);
         }
+
         return $this;
     }
 
     /**
-     * Method to get a model object, loading it if required
+     * Method to get a model object, loading it if required.
      *
      * @param   string  $name    The model name. Optional.
      * @param   string  $prefix  The class prefix. Optional.
      * @param   array   $config  Configuration array for model. Optional.
      *
-     * @return  \Joomla\CMS\MVC\Model\BaseDatabaseModel|boolean  Model object on success; otherwise false on failure.
+     * @return  \Joomla\CMS\MVC\Model\BaseDatabaseModel|boolean
      *
-     * @since   0.0.1
+     * @since   1.0.0
      */
     public function getModel($name = '', $prefix = '', $config = [])
     {
         if (empty($name)) {
             $name = $this->input->get('view', $this->default_view);
         }
-        
-        // В Joomla 5 префикс не нужен, модели загружаются по namespace
-        return parent::getModel($name, $prefix, $config);
+
+        // В Joomla 5 используем parent::getModel без префикса
+        return parent::getModel($name, '', $config);
     }
 }
