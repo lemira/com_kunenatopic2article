@@ -11,7 +11,7 @@
     <description>COM_KUNENATOPIC2ARTICLE_DESC</description>
     
     <!-- Namespace обяз для Joomla 5)// path="src"?? \Administrator не н.? -->
-    <namespace path="admin/src">Joomla\Component\KunenaTopic2Article\Administrator</namespace>
+    <namespace path="src">Joomla\Component\KunenaTopic2Article</namespace>
     
     <!-- Административная часть -->
     <administration>
