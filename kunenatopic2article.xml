@@ -11,7 +11,7 @@
     <description>COM_KUNENATOPIC2ARTICLE_DESC</description>
     
     <!-- Namespace обяз для Joomla 5)// path="src"?? -->
-    <namespace path="admin/src">Joomla\Component\KunenaTopic2Article</namespace>
+    <namespace path="src">Joomla\Component\KunenaTopic2Article</namespace>
     
     <!-- Регистрация сервисов (обязательно для Joomla 5) -->
     <services>
@@ -28,6 +28,7 @@
             <folder>src</folder>
             <folder>tmpl</folder>
             <folder>sql</folder>
+             <filename>kunenatopic2article.xml</filename>
         </files>
         
         <!-- Языковые файлы админки -->
