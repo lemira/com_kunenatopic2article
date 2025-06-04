@@ -12,6 +12,11 @@
     
     <!-- Namespace обяз для Joomla 5)// path="src"?? \Administrator не н.? -->
     <namespace path="src">Joomla\Component\KunenaTopic2Article</namespace>
+
+    <!-- Регистрация сервисов (обязательно для Joomla 5) -->
+    <services>
+        <provider>Joomla\Component\KunenaTopic2Article\Administrator\Extension\KunenaTopic2ArticleServiceProvider</provider>
+    </services>
     
     <!-- Административная часть -->
     <administration>
