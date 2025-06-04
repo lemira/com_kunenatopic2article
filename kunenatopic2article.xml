@@ -28,8 +28,7 @@
             <folder>src</folder>
             <folder>tmpl</folder>
             <folder>sql</folder>
-             <filename>kunenatopic2article.xml</filename>
-        </files>
+              </files>
         
         <!-- Языковые файлы админки -->
         <languages folder="admin/language">
