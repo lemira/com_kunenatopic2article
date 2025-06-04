@@ -24,9 +24,7 @@ class KunenaTopic2ArticleServiceProvider implements ServiceProviderInterface
                 $component = new KunenaTopic2ArticleComponent(
                     $container->get(ComponentDispatcherFactoryInterface::class)
                 );
-
                 $component->setMVCFactory($container->get(MVCFactoryInterface::class));
-
                 return $component;
             }
         );
