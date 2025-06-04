@@ -14,9 +14,9 @@ class KunenaTopic2ArticleServiceProvider implements ServiceProviderInterface
     public function register(Container $container): void
     {
         // Подключаем фабрики MVC и Dispatcher
-        $container->registerServiceProvider(new ComponentDispatcherFactory(__NAMESPACE__));
-        $container->registerServiceProvider(new MVCFactory(__NAMESPACE__));
-
+        $container->registerServiceProvider(new ComponentDispatcherFactory('\\Joomla\\Component\\KunenaTopic2Article'));
+        $container->registerServiceProvider(new MVCFactory('\\Joomla\\Component\\KunenaTopic2Article'));
+        
         // Регистрируем сам компонент
         $container->set(
             ComponentInterface::class,
