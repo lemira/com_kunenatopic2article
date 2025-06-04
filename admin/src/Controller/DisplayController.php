@@ -19,7 +19,7 @@ class DisplayController extends BaseController
      * @var    string
      * @since  1.0.0
      */
-    protected $default_view = 'kunenatopic2articles';
+   protected $default_view = 'topic';
 
     /**
      * Method to display a view.
@@ -50,12 +50,18 @@ $app->enqueueMessage('Format: ' . $vFormat, 'message');
         $lName = $input->getCmd('layout', 'default');
 
         try {
+              // Диагностическая информация
+            $app->enqueueMessage('Component loaded successfully! View: ' . $vName . ', Format: ' . $vFormat, 'info');
+            
             // Получаем view
             $view = $this->getView($vName, $vFormat);
             
             if (!$view) {
+                $app->enqueueMessage('View not found: ' . $vName . ' with format: ' . $vFormat, 'error');
                 throw new \Exception(Text::sprintf('JLIB_APPLICATION_ERROR_VIEW_NOT_FOUND', $vName, $vFormat));
             }
+            
+            $app->enqueueMessage('View loaded successfully: ' . get_class($view), 'success');
 
             // Получаем модель
             $model = $this->getModel($vName);
