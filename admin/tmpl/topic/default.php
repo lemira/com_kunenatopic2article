@@ -11,7 +11,7 @@ HTMLHelper::_('behavior.formvalidator');
 HTMLHelper::_('formbehavior.chosen', 'select');
 
 // Извлечение данных из $displayData
-$form = $this->get('form');
+$form = $this->form;        // вместо $form = $this->get('form');
 ?>
 
 <form action="<?= Route::_('index.php?option=com_kunenatopic2article&task=topic.save'); ?>" method="post" name="adminForm" id="adminForm" class="form-validate">
