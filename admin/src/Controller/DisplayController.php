@@ -7,7 +7,7 @@
  * @license     GNU General Public License version 2 or later
  */
 
-namespace Lr\Component\Kunenatopic2article\Administrator\Controller;
+namespace Joomla\Component\Kunenatopic2article\Administrator\Controller;
 
 defined('_JEXEC') or die;
 
