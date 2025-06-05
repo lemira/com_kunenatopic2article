@@ -1,213 +1,146 @@
 <?php
-namespace Joomla\Component\KunenaTopic2Article\Administrator\Controller;
+/**
+ * @package     Kunena Topic to Article
+ * @subpackage  com_kunenatopic2article
+ * @version     1.0.0
+ * @copyright   Copyright (C) 2025 lr. All rights reserved.
+ * @license     GNU General Public License version 2 or later
+ */
 
-\defined('_JEXEC') or die;
+namespace Lr\Component\Kunenatopic2article\Administrator\Controller;
 
-use Joomla\CMS\MVC\Controller\BaseController;
+defined('_JEXEC') or die;
+
+use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
-use Joomla\CMS\Session\Session;
+use Joomla\CMS\MVC\Controller\BaseController;
+use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
+use Joomla\CMS\Router\Route;
 
 /**
- * Main Controller for KunenaTopic2Article component
+ * Kunena Topic to Article Display Controller
  *
- * @since  0.0.1
+ * @since  1.0.0
  */
 class DisplayController extends BaseController
 {
     /**
-     * The default view for the display method
+     * The default view for the display method.
      *
      * @var    string
-     * @since  0.0.1
+     * @since  1.0.0
      */
-    protected $default_view = 'Topic';
+    protected $default_view = 'topic';
 
     /**
-     * Method to display a view
+     * Constructor.
+     *
+     * @param   array                $config   An optional associative array of configuration settings.
+     * @param   MVCFactoryInterface  $factory  The factory.
+     * @param   CMSApplication       $app      The Application for the dispatcher
+     * @param   \JInput              $input    Input
+     *
+     * @since   1.0.0
+     */
+    public function __construct($config = array(), MVCFactoryInterface $factory = null, $app = null, $input = null)
+    {
+        parent::__construct($config, $factory, $app, $input);
+    }
+
+    /**
+     * Method to display a view.
      *
      * @param   boolean  $cachable   If true, the view output will be cached
-     * @param   array    $urlparams  An array of safe url parameters and their variable types
+     * @param   array    $urlparams  An array of safe URL parameters and their variable types.
      *
-     * @return  static  This object to support chaining
+     * @return  static  This object to support chaining.
      *
-     * @since   0.0.1
+     * @since   1.0.0
      */
-    public function display($cachable = false, $urlparams = [])
+    public function display($cachable = false, $urlparams = array())
     {
-        $document = Factory::getApplication()->getDocument();
-        $input = Factory::getApplication()->input;
-        $vName = $input->get('view', $this->default_view);
-        $vFormat = $document->getType();
-        $lName = $input->get('layout', 'default');
-        
-        // Get and render the view.
-        if ($view = $this->getView($vName, $vFormat)) {
-            // Get the model for the view.
-            $model = $this->getModel($vName);
-            
-            // Push the model into the view (as default).
-            if ($model) {
-                $view->setModel($model, true);
-            }
-            $view->setLayout($lName);
-            // Push document object into the view.
-            $view->document = $document;
-            $view->display();
-        }
-        return $this;
+        $view = $this->input->get('view', 'topic');
+        $layout = $this->input->get('layout', 'default');
+        $id = $this->input->getInt('id');
+
+        return parent::display($cachable, $urlparams);
     }
 
     /**
-     * Method to get a model object, loading it if required
-     *
-     * @param   string  $name    The model name. Optional.
-     * @param   string  $prefix  The class prefix. Optional.
-     * @param   array   $config  Configuration array for model. Optional.
-     *
-     * @return  \Joomla\CMS\MVC\Model\BaseDatabaseModel|boolean  Model object on success; otherwise false on failure.
-     *
-     * @since   0.0.1
-     */
-    public function getModel($name = '', $prefix = '', $config = [])
-    {
-        if (empty($name)) {
-            $name = $this->input->get('view', $this->default_view);
-        }
-        
-        // В Joomla 5 префикс не нужен, модели загружаются по namespace
-        return parent::getModel($name, $prefix, $config);
-    }
-
-    /**
-     * Save/Remember parameters (обработка кнопки Remember)
+     * Method to handle the remember button action.
      *
      * @return  void
-     * @since   0.0.1
+     *
+     * @since   1.0.0
      */
-    public function save()
+    public function remember()
     {
-        // Проверяем токен безопасности
-        Session::checkToken() or jexit(Text::_('JINVALID_TOKEN'));
-        
+        // Check for request forgeries
+        $this->checkToken();
+
         $app = Factory::getApplication();
-        $input = $app->input;
+        $data = $this->input->post->get('jform', array(), 'array');
+
+        $model = $this->getModel('Topic');
         
-        try {
-            // Получаем модель
-            $model = $this->getModel('Topic');
-            
-            // Получаем данные формы
-            $data = $input->post->get('jform', [], 'array');
-            
-            // Сохраняем параметры
-            $result = $model->save($data);
-            
-            if ($result) {
-                // Устанавливаем флаг, что параметры сохранены
-                $app->setUserState('com_kunenatopic2article.params.remembered', true);
-                
-                $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_SAVED_SUCCESS'), 'success');
-                
-                // Редирект обратно на форму с флагом успеха
-                $this->setRedirect(
-                    'index.php?option=com_kunenatopic2article&view=topic&params_saved=1'
-                );
-            } else {
-                $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_SAVE_ERROR'), 'error');
-                $this->setRedirect('index.php?option=com_kunenatopic2article&view=topic');
-            }
-            
-        } catch (Exception $e) {
-            $app->enqueueMessage($e->getMessage(), 'error');
-            $this->setRedirect('index.php?option=com_kunenatopic2article&view=topic');
+        if ($model->remember($data)) {
+            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SUCCESS_PARAMETERS_SAVED'), 'message');
+        } else {
+            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED'), 'error');
         }
+
+        // Redirect back to the form
+        $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topic', false));
     }
-    
+
     /**
-     * Reset parameters (обработка кнопки Reset Parameters)
+     * Method to handle the reset button action.
      *
      * @return  void
-     * @since   0.0.1
+     *
+     * @since   1.0.0
      */
     public function reset()
     {
-        // Проверяем токен безопасности
-        Session::checkToken() or jexit(Text::_('JINVALID_TOKEN'));
-        
+        // Check for request forgeries
+        $this->checkToken();
+
         $app = Factory::getApplication();
+        $model = $this->getModel('Topic');
         
-        try {
-            // Получаем модель
-            $model = $this->getModel('Topic');
-            
-            // Сбрасываем параметры
-            $result = $model->reset();
-            
-            if ($result) {
-                // Убираем флаг сохраненных параметров
-                $app->setUserState('com_kunenatopic2article.params.remembered', false);
-                
-                $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_RESET_SUCCESS'), 'warning');
-            } else {
-                $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_RESET_ERROR'), 'error');
-            }
-            
-        } catch (Exception $e) {
-            $app->enqueueMessage($e->getMessage(), 'error');
+        if ($model->reset()) {
+            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_RESET_SUCCESS'), 'message');
+        } else {
+            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_RESET_FAILED'), 'error');
         }
-        
-        // Редирект обратно на форму
-        $this->setRedirect('index.php?option=com_kunenatopic2article&view=topic');
+
+        // Redirect back to the form
+        $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topic', false));
     }
-    
+
     /**
-     * Create articles from topics (обработка кнопки Create Articles)
+     * Method to handle the create articles button action.
      *
      * @return  void
-     * @since   0.0.1
+     *
+     * @since   1.0.0
      */
-    public function create()
+    public function createArticles()
     {
-        // Проверяем токен безопасности
-        Session::checkToken() or jexit(Text::_('JINVALID_TOKEN'));
-        
+        // Check for request forgeries
+        $this->checkToken();
+
         $app = Factory::getApplication();
+        $model = $this->getModel('Topic');
         
-        // Проверяем, сохранены ли параметры
-        $paramsRemembered = $app->getUserState('com_kunenatopic2article.params.remembered', false);
-        
-        if (!$paramsRemembered) {
-            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_PLEASE_REMEMBER_FIRST'), 'warning');
-            $this->setRedirect('index.php?option=com_kunenatopic2article&view=topic');
-            return;
+        if ($model->createArticles()) {
+            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_FEATURE_COMING_SOON'), 'message');
+        } else {
+            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_CREATION_ERROR'), 'error');
         }
-        
-        try {
-            // Получаем модель
-            $model = $this->getModel('Topic');
-            
-            // Создаем статьи (этот метод нужно добавить в модель)
-            $result = $model->createArticles();
-            
-            if ($result && isset($result['success']) && $result['success']) {
-                $count = $result['count'] ?? 0;
-                $message = Text::sprintf('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESS', $count);
-                $app->enqueueMessage($message, 'success');
-                
-                // После создания статей деактивируем кнопку Create Articles
-                $app->setUserState('com_kunenatopic2article.params.remembered', false);
-                
-            } else {
-                $error = $result['error'] ?? Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATE_ERROR');
-                $app->enqueueMessage($error, 'error');
-            }
-            
-        } catch (Exception $e) {
-            $app->enqueueMessage($e->getMessage(), 'error');
-        }
-        
-        // Редирект обратно на форму
-        $this->setRedirect('index.php?option=com_kunenatopic2article&view=topic');
+
+        // Redirect back to the form
+        $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topic', false));
     }
 }
