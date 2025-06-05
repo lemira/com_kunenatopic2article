@@ -16,24 +16,26 @@ class HtmlView extends BaseHtmlView
 
     public function display($tpl = null)
     {
-        $model = $this->getModel('Topic');
-        if ($model === null) {
-            Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_MODEL_FAILED_TO_LOAD'), 'error');
-            $this->params = null;
-            $this->state = null;
-            $this->form = null;
-        } else {
+        // Получаем данные из модели
+        $this->form = $this->get('Form');
+        $this->state = $this->get('State');
+        
+        // Получаем модель для дополнительных данных
+        $model = $this->getModel();
+        if ($model) {
             $this->params = $model->getParams();
-            $this->state = $model->getState();
-            $this->form = $model->getForm();
         }
 
+        // Проверяем на ошибки
+        if (count($errors = $this->get('Errors'))) {
+            Factory::getApplication()->enqueueMessage(implode("\n", $errors), 'error');
+            return false;
+        }
+
+        // Проверяем форму
         if (!$this->form) {
             Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_FORM_FAILED_TO_LOAD'), 'error');
         }
-$this->set('form', $this->form);
-$this->set('state', $this->state);
-$this->set('params', $this->params);
 
         parent::display($tpl);
     }
