@@ -3,7 +3,6 @@
  * @package     KunenaTopic2Article
  * @subpackage  Administrator
  */
-
 namespace Joomla\Component\KunenaTopic2Article\Administrator\Controller;
 
 use Joomla\CMS\Factory;
@@ -72,103 +71,6 @@ class DisplayController extends BaseController
     }
 
     /**
-     * Сохранение параметров (Remember)
-     */
-    public function save()
-    {
-        // Получаем приложение
-        $app = Factory::getApplication();
-        
-        // Получаем данные из формы
-        $data = $this->input->post->get('jform', [], 'array');
-
-        // Получаем модель
-        $model = $this->getModel('Topic');
-
-        if (!$model) {
-            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_MODEL_NOT_FOUND'), 'error');
-            $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topic', false));
-            return false;
-        }
-
-        // Пытаемся сохранить данные
-        if ($model->save($data)) {
-            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_REMEMBERED'), 'success');
-        } else {
-            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED'), 'error');
-        }
-
-        // Редирект обратно на форму
-        $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topic', false));
-        return true;
-    }
-
-    /**
-     * Сброс параметров к значениям по умолчанию (Reset)
-     */
-    public function reset()
-    {
-        // Получаем приложение
-        $app = Factory::getApplication();
-        
-        // Получаем модель
-        $model = $this->getModel('Topic');
-
-        if (!$model) {
-            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_MODEL_NOT_FOUND'), 'error');
-            $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topic', false));
-            return false;
-        }
-
-        // Пытаемся сбросить параметры
-        if ($model->reset()) {
-            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_RESET'), 'success');
-        } else {
-            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_RESET_FAILED'), 'error');
-        }
-
-        // Редирект обратно на форму
-        $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topic', false));
-        return true;
-    }
-
-    /**
-     * Создание статей (Create Articles)
-     */
-    public function create()
-    {
-        // Получаем приложение
-        $app = Factory::getApplication();
-        
-        // Получаем модель
-        $model = $this->getModel('Topic');
-
-        if (!$model) {
-            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_MODEL_NOT_FOUND'), 'error');
-            $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topic', false));
-            return false;
-        }
-
-        // Проверяем, что параметры были запомнены
-        if (!$model->getParamsRemembered()) {
-            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_PLEASE_REMEMBER_PARAMS_FIRST'), 'warning');
-            $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topic', false));
-            return false;
-        }
-
-        // Выполняем создание статей
-        if ($model->createArticles()) {
-            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED'), 'success');
-        } else {
-            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_CREATE_FAILED'), 'error');
-        }
-
-        // Редирект обратно на форму
-        $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topic', false));
-        return true;
-    }
-
-    /**
      * Method to get a model object, loading it if required.
      * @param   string  $name    The model name. Optional.
      * @param   string  $prefix  The class prefix. Optional.
@@ -184,5 +86,53 @@ class DisplayController extends BaseController
         
         // В Joomla 5 используем parent::getModel без префикса
         return parent::getModel($name, '', $config);
+    }
+
+    /**
+     * Метод для сохранения параметров (Remember)
+     * @since 1.0.0
+     */
+    public function save()
+    {
+        // Получаем модель
+        $model = $this->getModel('Topic');
+        $data = $this->input->get('jform', [], 'array');
+
+        if ($model->save($data)) {
+            $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topic'), Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_SAVED'), 'success');
+        } else {
+            $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topic'), Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED'), 'error');
+        }
+    }
+
+    /**
+     * Метод для сброса параметров (Reset)
+     * @since 1.0.0
+     */
+    public function reset()
+    {
+        // Получаем модель
+        $model = $this->getModel('Topic');
+        if ($model->reset()) {
+            $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topic'), Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_RESET'), 'success');
+        } else {
+            $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topic'), Text::_('COM_KUNENATOPIC2ARTICLE_RESET_FAILED'), 'error');
+        }
+    }
+
+    /**
+     * Метод для создания статей (Create Articles)
+     * @since 1.0.0
+     */
+    public function create()
+    {
+        // Получаем модель
+        $model = $this->getModel('Topic');
+        if ($model->create()) {
+            // В будущем управление будет передано в ArticleController.php
+            $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topic'));
+        } else {
+            $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topic'), Text::_('COM_KUNENATOPIC2ARTICLE_CREATE_FAILED'), 'error');
+        }
     }
 }
