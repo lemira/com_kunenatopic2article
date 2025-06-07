@@ -1,20 +1,21 @@
 <?php
-
+/**
+ * @package     KunenaTopic2Article
+ * @subpackage  Administrator
+ */
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Router\Route;
-use Joomla\CMS\Session\Session;
 
 HTMLHelper::_('behavior.formvalidator');
-HTMLHelper::_('formbehavior.chosen', 'select');
 
-// Извлечение данных из $displayData
-$form = $this->form;        // вместо $form = $this->get('form');
+$form = $this->form;
+$paramsRemembered = $this->paramsRemembered ?? false; // Состояние кнопки Create Articles
 ?>
 
-<form action="<?= Route::_('index.php?option=com_kunenatopic2article&task=topic.save'); ?>" method="post" name="adminForm" id="adminForm" class="form-validate">
+<form action="<?= Route::_('index.php?option=com_kunenatopic2article&task=save'); ?>" method="post" name="adminForm" id="adminForm" class="form-validate">
     <div class="container-fluid">
         <h1><?= Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_TITLE'); ?></h1>
 
@@ -25,7 +26,7 @@ $form = $this->form;        // вместо $form = $this->get('form');
             <button type="button" class="btn btn-secondary me-2" onclick="Joomla.submitbutton('reset')">
                 <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_RESET'); ?>
             </button>
-            <button type="button" class="btn btn-success" onclick="Joomla.submitbutton('create')">
+            <button type="button" id="btn_create" class="btn btn-success" onclick="Joomla.submitbutton('create')" <?= $paramsRemembered ? '' : 'disabled'; ?>>
                 <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_CREATE'); ?>
             </button>
         </div>
@@ -52,12 +53,14 @@ $form = $this->form;        // вместо $form = $this->get('form');
 <script>
     Joomla.submitbutton = function(task) {
         const form = document.getElementById('adminForm');
-        if (form && form.classList.contains('form-validate')) {
-            if (window.Joomla && Joomla.isValid(form)) {
+        if (task === 'save' && form.classList.contains('form-validate')) {
+            if (form.reportValidity()) {
                 Joomla.submitform(task, form);
             } else {
-                alert('<?= Text::_('JGLOBAL_VALIDATION_FORM_FAILED'); ?>');
+                alert('<?= Text::_('JGLOBAL_VALIDATION_FAILED'); ?>');
             }
+        } else {
+            Joomla.submitform(task, form);
         }
     };
 </script>
