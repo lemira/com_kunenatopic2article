@@ -25,7 +25,8 @@ class HtmlView extends BaseHtmlView
         $model = $this->getModel();
         if ($model) {
             $this->params = $model->getParams();
-            $this->paramsRemembered = $model->getParamsRemembered();
+            // Извлекаем состояние paramsRemembered из UserState
+            $this->paramsRemembered = Factory::getApplication()->getUserState('com_kunenatopic2article.save.success', false);
         }
 
         // Проверяем на ошибки
