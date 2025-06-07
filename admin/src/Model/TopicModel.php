@@ -19,7 +19,7 @@ class TopicModel extends AdminModel
     {
         parent::__construct($config);
         $this->app = Factory::getApplication();
-        $this->db = Factory::getDbo(); // Используем getDbo() для получения базы данных
+        $this->db = Factory::getDbo();
     }
 
     /**
@@ -110,10 +110,73 @@ class TopicModel extends AdminModel
         // Проверка Topic ID
         $topicId = !empty($data['topic_selection']) && is_numeric($data['topic_selection']) ? (int)$data['topic_selection'] : 0;
         if ($topicId === 0 || !$this->getTopicData($topicId)) {
-            $this->app->setUserState('com_kunenatopic2article.topic_id', 0); // Сбрасываем topic_id при ошибке
+            $this->app->setUserState('com_kunenatopic2article.topic_id', 0);
             $this->app->enqueueMessage(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $topicId ?: 'пустое'), 'error');
             return false;
         }
 
         // Сохраняем topic_id для отображения заголовка
-        $this->app->setUserState
+        $this->app->setUserState('com_kunenatopic2article.topic_id', $topicId);
+
+        // Сохраняем все данные, включая topic_selection как число
+        $table = new ParamsTable($this->db);
+
+        if (!$table->load(1)) {
+            $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED') . ': ' . Text::_('JLIB_DATABASE_ERROR_LOAD_FAILED'), 'error');
+            return false;
+        }
+
+        $table->bind($data);
+
+        if (!$table->check() || !$table->store()) {
+            $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED') . ': ' . $table->getError(), 'error');
+            return false;
+        }
+
+        $this->app->setUserState('com_kunenatopic2article.save.success', true);
+        return true;
+    }
+
+    public function reset()
+    {
+        $table = new ParamsTable($this->db);
+
+        if (!$table->load(1)) {
+            $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_RESET_FAILED') . ': ' . Text::_('JLIB_DATABASE_ERROR_LOAD_FAILED'), 'error');
+            return false;
+        }
+
+        $defaults = [
+            'topic_selection' => '0',
+            'article_category' => '0',
+            'post_transfer_scheme' => '1',
+            'max_article_size' => '40000',
+            'post_author' => '1',
+            'post_creation_date' => '0',
+            'post_creation_time' => '0',
+            'post_ids' => '0',
+            'post_title' => '0',
+            'kunena_post_link' => '0',
+            'reminder_lines' => '0',
+            'ignored_authors' => ''
+        ];
+
+        $table->bind($defaults);
+
+        if (!$table->check() || !$table->store()) {
+            $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_RESET_FAILED') . ': ' . $table->getError(), 'error');
+            return false;
+        }
+
+        $this->app->setUserState('com_kunenatopic2article.save.success', false);
+        $this->app->setUserState('com_kunenatopic2article.topic_id', 0);
+        return true;
+    }
+
+    public function create()
+    {
+        $this->app->setUserState('com_kunenatopic2article.save.success', false);
+        $this->app->setUserState('com_kunenatopic2article.topic_id', 0);
+        return true;
+    }
+}
