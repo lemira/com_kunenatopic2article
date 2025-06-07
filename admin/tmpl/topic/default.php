@@ -54,7 +54,8 @@ $paramsRemembered = $this->paramsRemembered ?? false; // Состояние кн
     Joomla.submitbutton = function(task) {
         const form = document.getElementById('adminForm');
         if (task === 'save' && form.classList.contains('form-validate')) {
-            if (window.Joomla && Joomla.formValidator.isValid(form)) {
+            // Используем стандартную HTML5-валидацию
+            if (form.reportValidity()) {
                 Joomla.submitform(task, form);
             } else {
                 alert('<?= Text::_('JGLOBAL_VALIDATION_FORM_FAILED'); ?>');
