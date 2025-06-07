@@ -9,7 +9,6 @@ use Joomla\CMS\MVC\Model\AdminModel;
 use Joomla\Component\KunenaTopic2Article\Administrator\Table\ParamsTable;
 use Joomla\Database\DatabaseInterface;
 use Joomla\CMS\Table\Table;
-use Joomla\CMS\Log\Log;
 
 class TopicModel extends AdminModel
 {
@@ -20,9 +19,7 @@ class TopicModel extends AdminModel
     {
         parent::__construct($config);
         $this->app = Factory::getApplication();
-        $this->db = Factory::getContainer()->get('DatabaseInterface');
-        // Инициализация лога для отладки
-        Log::addLogger(['text_file' => 'com_kunenatopic2article.errors.php'], Log::ALL, ['com_kunenatopic2article']);
+        $this->db = Factory::getDbo(); // Используем getDbo() для получения базы данных
     }
 
     /**
@@ -90,13 +87,7 @@ class TopicModel extends AdminModel
                 ->from($this->db->quoteName('#__kunena_topics'))
                 ->where($this->db->quoteName('id') . ' = ' . (int)$topicId);
 
-            // Логируем SQL-запрос для отладки
-            Log::add('SQL Query: ' . $query->dump(), Log::DEBUG, 'com_kunenatopic2article');
-
             $topic = $this->db->setQuery($query)->loadObject();
-
-            // Логируем результат
-            Log::add('Topic Result: ' . print_r($topic, true), Log::DEBUG, 'com_kunenatopic2article');
 
             if (!$topic) {
                 throw new \Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $topicId));
@@ -105,7 +96,6 @@ class TopicModel extends AdminModel
             return $topic;
         } catch (\Exception $e) {
             $this->app->enqueueMessage($e->getMessage(), 'error');
-            Log::add('Error: ' . $e->getMessage(), Log::ERROR, 'com_kunenatopic2article');
             return null;
         }
     }
@@ -126,67 +116,4 @@ class TopicModel extends AdminModel
         }
 
         // Сохраняем topic_id для отображения заголовка
-        $this->app->setUserState('com_kunenatopic2article.topic_id', $topicId);
-
-        // Сохраняем все данные, включая topic_selection как число
-        $table = new ParamsTable($this->db);
-
-        if (!$table->load(1)) {
-            $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED') . ': ' . Text::_('JLIB_DATABASE_ERROR_LOAD_FAILED'), 'error');
-            return false;
-        }
-
-        $table->bind($data);
-
-        if (!$table->check() || !$table->store()) {
-            $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED') . ': ' . $table->getError(), 'error');
-            return false;
-        }
-
-        $this->app->setUserState('com_kunenatopic2article.save.success', true);
-        return true;
-    }
-
-    public function reset()
-    {
-        $table = new ParamsTable($this->db);
-
-        if (!$table->load(1)) {
-            $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_RESET_FAILED') . ': ' . Text::_('JLIB_DATABASE_ERROR_LOAD_FAILED'), 'error');
-            return false;
-        }
-
-        $defaults = [
-            'topic_selection' => '0',
-            'article_category' => '0',
-            'post_transfer_scheme' => '1',
-            'max_article_size' => '40000',
-            'post_author' => '1',
-            'post_creation_date' => '0',
-            'post_creation_time' => '0',
-            'post_ids' => '0',
-            'post_title' => '0',
-            'kunena_post_link' => '0',
-            'reminder_lines' => '0',
-            'ignored_authors' => ''
-        ];
-
-        $table->bind($defaults);
-
-        if (!$table->check() || !$table->store()) {
-            $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_RESET_FAILED') . ': ' . $table->getError(), 'error');
-            return false;
-        }
-
-        $this->app->setUserState('com_kunenatopic2article.save.success', false);
-        $this->app->setUserState('com_kunenatopic2article.topic_id', 0);
-        return true;
-    }
-
-    public function create()
-    {
-        $this->app->setUserState('com_kunenatopic2article.save.success', false);
-        $this->app->setUserState('com_kunenatopic2article.topic_id', 0);
-        return true;
-    }
-}
+        $this->app->setUserState
