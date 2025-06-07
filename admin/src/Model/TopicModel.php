@@ -1,5 +1,4 @@
 <?php
-
 namespace Joomla\Component\KunenaTopic2Article\Administrator\Model;
 
 use Joomla\CMS\Application\CMSApplication;
@@ -77,22 +76,6 @@ class TopicModel extends AdminModel
         return $table;
     }
 
-    /**
-     * Получить состояние флага paramsRemembered
-     */
-    public function getParamsRemembered(): bool
-    {
-        return $this->app->getUserState('com_kunenatopic2article.params.remembered', false);
-    }
-
-    /**
-     * Установить состояние флага paramsRemembered
-     */
-    public function setParamsRemembered(bool $remembered): void
-    {
-        $this->app->setUserState('com_kunenatopic2article.params.remembered', $remembered);
-    }
-
     public function save($data)
     {
         if (empty($data)) {
@@ -114,9 +97,6 @@ class TopicModel extends AdminModel
             return false;
         }
 
-        // Устанавливаем флаг paramsRemembered = true после успешного сохранения
-        $this->setParamsRemembered(true);
-        
         $this->app->setUserState('com_kunenatopic2article.save.success', true);
         return true;
     }
@@ -130,7 +110,6 @@ class TopicModel extends AdminModel
             return false;
         }
 
-        // Значения по умолчанию из admin/sql/install.mysql.utf8.sql
         $defaults = [
             'topic_selection' => '0',
             'article_category' => '0',
@@ -153,23 +132,14 @@ class TopicModel extends AdminModel
             return false;
         }
 
-        // Сбрасываем флаг paramsRemembered = false
-        $this->setParamsRemembered(false);
-
+        $this->app->setUserState('com_kunenatopic2article.save.success', false);
         return true;
     }
 
-    /**
-     * Создание статей (пока временная заглушка)
-     */
-    public function createArticles()
+    public function create()
     {
-        // Сбрасываем флаг paramsRemembered = false
-        $this->setParamsRemembered(false);
-        
-        // TODO: Здесь будет делегирование управления ArticleController.php
-        // Пока что просто заглушка
-        
+        // В будущем управление будет передано ArticleController.php
+        $this->app->setUserState('com_kunenatopic2article.save.success', false);
         return true;
     }
 }
