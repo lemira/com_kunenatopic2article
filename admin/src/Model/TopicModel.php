@@ -51,12 +51,7 @@ class TopicModel extends AdminModel
     {
         $data = $this->app->getUserState('com_kunenatopic2article.edit.topic.data', []);
 
-        if ($this->app->getUserState('com_kunenatopic2article.save.success', false)) {
-            $this->app->setUserState('com_kunenatopic2article.edit.topic.data', []);
-            $this->app->setUserState('com_kunenatopic2article.save.success', false);
-            $data = [];
-        }
-
+        // Загружаем данные из таблицы, если UserState пуст
         if (empty($data)) {
             $params = $this->getParams();
             $data = $params ? $params->getProperties() : [];
