@@ -55,6 +55,14 @@ class TopicModel extends AdminModel
         if (empty($data)) {
             $params = $this->getParams();
             $data = $params ? $params->getProperties() : [];
+            // Если есть topic_id, загружаем заголовок темы
+            $topicId = $this->app->getUserState('com_kunenatopic2article.topic_id', 0);
+            if ($topicId) {
+                $topic = $this->getTopicData($topicId);
+                if ($topic) {
+                    $data['topic_selection'] = $topic->subject;
+                }
+            }
         }
 
         return $data;
@@ -71,6 +79,31 @@ class TopicModel extends AdminModel
         return $table;
     }
 
+    /**
+     * Проверка существования темы и получение ее данных
+     */
+    protected function getTopicData($topicId)
+    {
+        try {
+            $query = $this->db->getQuery(true)
+                ->select(['t.id', 't.subject', 't.first_post_id'])
+                ->from($this->db->quoteName('#__kunena_topics', 't'))
+                ->innerJoin($this->db->quoteName('#__kunena_messages', 'm') . ' ON ' . $this->db->quoteName('m.id') . ' = ' . $this->db->quoteName('t.first_post_id'))
+                ->where($this->db->quoteName('t.id') . ' = ' . (int)$topicId);
+
+            $topic = $this->db->setQuery($query)->loadObject();
+
+            if (!$topic) {
+                throw new \Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $topicId));
+            }
+
+            return $topic;
+        } catch (\Exception $e) {
+            $this->app->enqueueMessage($e->getMessage(), 'error');
+            return null;
+        }
+    }
+
     public function save($data)
     {
         if (empty($data)) {
@@ -78,6 +111,17 @@ class TopicModel extends AdminModel
             return false;
         }
 
+        // Проверка Topic ID
+        $topicId = !empty($data['topic_selection']) && is_numeric($data['topic_selection']) ? (int)$data['topic_selection'] : 0;
+        if ($topicId === 0 || !$this->getTopicData($topicId)) {
+            $this->app->enqueueMessage(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $topicId ?: 'пустое'), 'error');
+            return false; // Форма остается открытой, таблица не обновляется
+        }
+
+        // Сохраняем topic_id для отображения заголовка
+        $this->app->setUserState('com_kunenatopic2article.topic_id', $topicId);
+
+        // Сохраняем все данные, включая topic_selection как число
         $table = new ParamsTable($this->db);
 
         if (!$table->load(1)) {
@@ -128,6 +172,7 @@ class TopicModel extends AdminModel
         }
 
         $this->app->setUserState('com_kunenatopic2article.save.success', false);
+        $this->app->setUserState('com_kunenatopic2article.topic_id', 0);
         return true;
     }
 
@@ -135,6 +180,7 @@ class TopicModel extends AdminModel
     {
         // В будущем управление будет передано ArticleController.php
         $this->app->setUserState('com_kunenatopic2article.save.success', false);
+        $this->app->setUserState('com_kunenatopic2article.topic_id', 0);
         return true;
     }
 }
