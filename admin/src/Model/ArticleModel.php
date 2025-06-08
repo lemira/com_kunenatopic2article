@@ -53,8 +53,9 @@ class TopicModel extends AdminModel
             return null;
         }
 
-        Log::add('Форма успешно загружена', Log::INFO, 'com_kunenatopic2article');
-        $this->app->enqueueMessage('Форма успешно загружена', 'notice');
+        $message = 'Форма успешно загружена';
+        Log::add($message, Log::INFO, 'com_kunenatopic2article');
+        $this->app->enqueueMessage($message, 'notice');
         return $form;
     }
 
@@ -112,8 +113,9 @@ class TopicModel extends AdminModel
             return null;
         }
 
-        Log::add('Параметры успешно загружены', Log::INFO, 'com_kunenatopic2article');
-        $this->app->enqueueMessage('Параметры успешно загружены', 'notice');
+        $message = 'Параметры успешно загружены';
+        Log::add($message, Log::INFO, 'com_kunenatopic2article');
+        $this->app->enqueueMessage($message, 'notice');
         return $table;
     }
 
@@ -139,7 +141,11 @@ class TopicModel extends AdminModel
             $message = 'SQL-запрос: ' . $query->dump();
             Log::add($message, Log::DEBUG, 'com_kunenatopic2article');
             $this->app->enqueueMessage($message, 'debug');
+
             $result = $this->db->setQuery($query)->loadObject();
+            $message = 'Результат SQL (raw): ' . print_r($result, true);
+            Log::add($message, Log::DEBUG, 'com_kunenatopic2article');
+            $this->app->enqueueMessage($message, 'debug');
 
             if ($result) {
                 $this->subject = $result->subject; // Присваиваем subject
