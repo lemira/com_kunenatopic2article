@@ -83,7 +83,7 @@ class TopicModel extends AdminModel
     {
         try {
             $query = $this->db->getQuery(true)
-                ->select(['id', 'subject'])
+                ->select(['subject'])
                 ->from($this->db->quoteName('#__kunena_topics'))
                 ->where($this->db->quoteName('first_post_id') . ' = ' . (int)$topicId)
                 ->where($this->db->quoteName('hold') . ' = 0');
@@ -116,10 +116,10 @@ class TopicModel extends AdminModel
             return false;
         }
 
-        // Сохраняем topic_id для отображения заголовка
+        // Сохраняем first_post_id как topic_id
         $this->app->setUserState('com_kunenatopic2article.topic_id', $topicId);
 
-        // Сохраняем все данные, включая topic_selection как число
+        // Сохраняем все данные, включая topic_selection как first_post_id
         $table = new ParamsTable($this->db);
 
         if (!$table->load(1)) {
