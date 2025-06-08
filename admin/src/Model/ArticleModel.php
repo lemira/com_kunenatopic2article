@@ -87,7 +87,7 @@ class TopicModel extends AdminModel
             $query = $this->db->getQuery(true)
                 ->select(['subject'])
                 ->from($this->db->quoteName('#__kunena_topics'))
-                ->where($this->db->quoteName('first_post_id') . ' = ' . (int)$topicId)
+                ->where($this->db->quoteName('first_post_id') . ' = ' . $this->db->quote((int)$topicId))
                 ->where($this->db->quoteName('hold') . ' = 0');
 
             $topic = $this->db->setQuery($query)->loadObject();
@@ -109,8 +109,9 @@ class TopicModel extends AdminModel
         // Сохраняем исходный topicId как временную переменную
         $originalTopicId = !empty($data['topic_selection']) && is_numeric($data['topic_selection']) ? (int)$data['topic_selection'] : 0;
 
-        // Проверка Topic ID
-        if ($originalTopicId === 0 || !$this->getTopicData($originalTopicId)) {
+        // Проверка Topic ID (только по first_post_id)
+        $topic = $this->getTopicData($originalTopicId);
+        if ($originalTopicId === 0 || !$topic) {
             $this->app->setUserState('com_kunenatopic2article.topic_id', 0);
             $this->app->enqueueMessage(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $originalTopicId), 'error');
             return false;
