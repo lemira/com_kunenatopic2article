@@ -9,7 +9,6 @@ use Joomla\CMS\MVC\Model\AdminModel;
 use Joomla\Component\KunenaTopic2Article\Administrator\Table\ParamsTable;
 use Joomla\Database\DatabaseInterface;
 use Joomla\CMS\Table\Table;
-use Joomla\CMS\Log\Log;
 
 class TopicModel extends AdminModel
 {
@@ -21,8 +20,6 @@ class TopicModel extends AdminModel
         parent::__construct($config);
         $this->app = Factory::getApplication();
         $this->db = Factory::getDbo();
-        // Временное логирование
-        Log::addLogger(['text_file' => 'com_kunenatopic2article.errors.php'], Log::ALL, ['com_kunenatopic2article']);
     }
 
     /**
@@ -88,15 +85,10 @@ class TopicModel extends AdminModel
             $query = $this->db->getQuery(true)
                 ->select(['id', 'subject'])
                 ->from($this->db->quoteName('#__kunena_topics'))
-                ->where($this->db->quoteName('id') . ' = ' . (int)$topicId);
-
-            // Логируем SQL-запрос
-            Log::add('SQL Query: ' . $query->dump(), Log::DEBUG, 'com_kunenatopic2article');
+                ->where($this->db->quoteName('first_post_id') . ' = ' . (int)$topicId)
+                ->where($this->db->quoteName('hold') . ' = 0');
 
             $topic = $this->db->setQuery($query)->loadObject();
-
-            // Логируем результат
-            Log::add('Topic Result: ' . print_r($topic, true), Log::DEBUG, 'com_kunenatopic2article');
 
             if (!$topic) {
                 throw new \Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $topicId));
@@ -105,7 +97,6 @@ class TopicModel extends AdminModel
             return $topic;
         } catch (\Exception $e) {
             $this->app->enqueueMessage($e->getMessage(), 'error');
-            Log::add('Error: ' . $e->getMessage(), Log::ERROR, 'com_kunenatopic2article');
             return null;
         }
     }
