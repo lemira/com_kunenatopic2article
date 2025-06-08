@@ -21,7 +21,7 @@ class TopicModel extends AdminModel
         parent::__construct($config);
         $this->app = Factory::getApplication();
         $this->db = Factory::getDbo();
-        // Временное логирование для отладки
+        // Временное логирование
         Log::addLogger(['text_file' => 'com_kunenatopic2article.errors.php'], Log::ALL, ['com_kunenatopic2article']);
     }
 
@@ -86,7 +86,7 @@ class TopicModel extends AdminModel
     {
         try {
             $query = $this->db->getQuery(true)
-                ->select(['id', 'subject', 'hold'])
+                ->select(['id', 'subject'])
                 ->from($this->db->quoteName('#__kunena_topics'))
                 ->where($this->db->quoteName('id') . ' = ' . (int)$topicId);
 
@@ -98,7 +98,7 @@ class TopicModel extends AdminModel
             // Логируем результат
             Log::add('Topic Result: ' . print_r($topic, true), Log::DEBUG, 'com_kunenatopic2article');
 
-            if (!$topic || $topic->hold != 0) {
+            if (!$topic) {
                 throw new \Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $topicId));
             }
 
