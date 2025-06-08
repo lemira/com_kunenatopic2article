@@ -57,7 +57,9 @@ class TopicModel extends AdminModel
             if ($topicId) {
                 $topic = $this->getTopicData($topicId);
                 if ($topic) {
-                    $data['topic_selection'] = $topic->subject;
+                    $data['topic_selection'] = $topic->subject; // Показываем subject в форме
+                } else {
+                    $data['topic_selection'] = 0; // Если не найдено, ставим 0
                 }
             }
         }
@@ -90,11 +92,7 @@ class TopicModel extends AdminModel
 
             $topic = $this->db->setQuery($query)->loadObject();
 
-            if (!$topic) {
-                throw new \Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $topicId));
-            }
-
-            return $topic;
+            return $topic; // Возвращаем объект с subject или null, если не найдено
         } catch (\Exception $e) {
             $this->app->enqueueMessage($e->getMessage(), 'error');
             return null;
@@ -108,16 +106,21 @@ class TopicModel extends AdminModel
             return false;
         }
 
+        // Сохраняем исходный topicId как временную переменную
+        $originalTopicId = !empty($data['topic_selection']) && is_numeric($data['topic_selection']) ? (int)$data['topic_selection'] : 0;
+
         // Проверка Topic ID
-        $topicId = !empty($data['topic_selection']) && is_numeric($data['topic_selection']) ? (int)$data['topic_selection'] : 0;
-        if ($topicId === 0 || !$this->getTopicData($topicId)) {
+        if ($originalTopicId === 0 || !$this->getTopicData($originalTopicId)) {
             $this->app->setUserState('com_kunenatopic2article.topic_id', 0);
-            $this->app->enqueueMessage(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $topicId ?: 'пустое'), 'error');
+            $this->app->enqueueMessage(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $originalTopicId), 'error');
             return false;
         }
 
+        // Восстанавливаем originalTopicId в topic_selection перед сохранением
+        $data['topic_selection'] = $originalTopicId;
+
         // Сохраняем first_post_id как topic_id
-        $this->app->setUserState('com_kunenatopic2article.topic_id', $topicId);
+        $this->app->setUserState('com_kunenatopic2article.topic_id', $originalTopicId);
 
         // Сохраняем все данные, включая topic_selection как first_post_id
         $table = new ParamsTable($this->db);
