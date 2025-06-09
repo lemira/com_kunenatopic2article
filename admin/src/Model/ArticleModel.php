@@ -5,7 +5,6 @@ use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Language\Text;
-use Joomla\CMS\Log\Log;
 use Joomla\CMS\MVC\Model\AdminModel;
 use Joomla\Component\KunenaTopic2Article\Administrator\Table\ParamsTable;
 use Joomla\Database\DatabaseInterface;
@@ -22,12 +21,6 @@ class TopicModel extends AdminModel
         parent::__construct($config);
         $this->app = Factory::getApplication();
         $this->db = Factory::getDbo();
-        // Настраиваем логирование
-        Log::addLogger(
-            ['logger' => 'formattedtext'],
-            Log::ALL, // Включаем все уровни логирования
-            ['com_kunenatopic2article']
-        );
     }
 
     /**
@@ -47,15 +40,10 @@ class TopicModel extends AdminModel
         );
 
         if (!$form) {
-            $message = 'Ошибка загрузки формы: ' . Text::_('COM_KUNENATOPIC2ARTICLE_FORM_LOAD_ERROR');
-            Log::add($message, Log::ERROR, 'com_kunenatopic2article');
-            $this->app->enqueueMessage($message, 'error');
+            $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_FORM_LOAD_ERROR'), 'error');
             return null;
         }
 
-        $message = 'Форма успешно загружена';
-        Log::add($message, Log::INFO, 'com_kunenatopic2article');
-        $this->app->enqueueMessage($message, 'notice');
         return $form;
     }
 
@@ -63,42 +51,20 @@ class TopicModel extends AdminModel
     {
         $data = $this->app->getUserState('com_kunenatopic2article.edit.topic.data', []);
 
-        $message = 'Начало загрузки данных формы. Текущие данные: ' . print_r($data, true);
-        Log::add($message, Log::DEBUG, 'com_kunenatopic2article');
-        $this->app->enqueueMessage($message, 'debug');
-
         if (empty($data)) {
             $params = $this->getParams();
             $data = $params ? $params->getProperties() : [];
-            $message = 'Данные из параметров: ' . print_r($data, true);
-            Log::add($message, Log::DEBUG, 'com_kunenatopic2article');
-            $this->app->enqueueMessage($message, 'debug');
             $topicId = $this->app->getUserState('com_kunenatopic2article.topic_id', 0);
-            $message = 'Topic ID из сессии: ' . $topicId;
-            Log::add($message, Log::DEBUG, 'com_kunenatopic2article');
-            $this->app->enqueueMessage($message, 'debug');
             if ($topicId) {
                 $this->getTopicData($topicId); // Заполняем $subject
-                $message = 'После getTopicData, subject: ' . $this->subject;
-                Log::add($message, Log::DEBUG, 'com_kunenatopic2article');
-                $this->app->enqueueMessage($message, 'debug');
                 if ($this->subject) {
                     $data['topic_selection'] = $this->subject; // Показываем subject в форме
-                    $message = 'Установлен topic_selection: ' . $this->subject;
-                    Log::add($message, Log::INFO, 'com_kunenatopic2article');
-                    $this->app->enqueueMessage($message, 'notice');
                 } else {
                     $data['topic_selection'] = ''; // Если не найдено, ставим пустую строку
-                    $message = 'Тема не найдена, topic_selection сброшен на пустую строку';
-                    Log::add($message, Log::WARNING, 'com_kunenatopic2article');
-                    $this->app->enqueueMessage($message, 'warning');
                 }
             }
         }
 
-        $message = 'Данные формы после обработки: ' . print_r($data, true);
-        Log::add($message, Log::DEBUG, 'com_kunenatopic2article');
-        $this->app->enqueueMessage($message, 'debug');
         return $data;
     }
 
@@ -107,15 +73,9 @@ class TopicModel extends AdminModel
         $table = new ParamsTable($this->db);
 
         if (!$table->load(1)) {
-            $message = 'Ошибка загрузки параметров: ' . Text::_('JLIB_DATABASE_ERROR_LOAD_FAILED');
-            Log::add($message, Log::ERROR, 'com_kunenatopic2article');
-            $this->app->enqueueMessage($message, 'error');
             return null;
         }
 
-        $message = 'Параметры успешно загружены';
-        Log::add($message, Log::INFO, 'com_kunenatopic2article');
-        $this->app->enqueueMessage($message, 'notice');
         return $table;
     }
 
@@ -126,10 +86,7 @@ class TopicModel extends AdminModel
     {
         $this->subject = ''; // Инициализируем subject
         // Сохраняем введённое Topic ID
-        $originalTopicId = !empty($topicId) && is_numeric($topicId) ? (int)$topicId : 0;
-        $message = 'Начало getTopicData. originalTopicId: ' . $originalTopicId;
-        Log::add($message, Log::DEBUG, 'com_kunenatopic2article');
-        $this->app->enqueueMessage($message, 'debug');
+        $originalTopicId = $topicId;
 
         try {
             $query = $this->db->getQuery(true)
@@ -138,126 +95,66 @@ class TopicModel extends AdminModel
                 ->where($this->db->quoteName('first_post_id') . ' = ' . $this->db->quote((int)$originalTopicId))
                 ->where($this->db->quoteName('hold') . ' = 0');
 
-            $message = 'SQL-запрос: ' . $query->dump();
-            Log::add($message, Log::DEBUG, 'com_kunenatopic2article');
-            $this->app->enqueueMessage($message, 'debug');
-
             $result = $this->db->setQuery($query)->loadObject();
-            $message = 'Результат SQL (raw): ' . print_r($result, true);
-            Log::add($message, Log::DEBUG, 'com_kunenatopic2article');
-            $this->app->enqueueMessage($message, 'debug');
 
             if ($result) {
                 $this->subject = $result->subject; // Присваиваем subject
-                $message = 'Тема найдена. subject: ' . $this->subject;
-                Log::add($message, Log::INFO, 'com_kunenatopic2article');
-                $this->app->enqueueMessage($message, 'notice');
-                $this->app->setUserState('com_kunenatopic2article.edit.topic.data.topic_selection', $this->subject); // Обновляем форму через сессию
-                $message = 'Обновлено topic_selection в сессии: ' . $this->subject;
-                Log::add($message, Log::INFO, 'com_kunenatopic2article');
-                $this->app->enqueueMessage($message, 'notice');
-            } else {
-                $message = 'Тема не найдена для first_post_id: ' . $originalTopicId;
-                Log::add($message, Log::WARNING, 'com_kunenatopic2article');
-                $this->app->enqueueMessage($message, 'warning');
             }
-        } catch (\Exception $e) {
-            $message = 'Ошибка в getTopicData: ' . $e->getMessage();
-            Log::add($message, Log::ERROR, 'com_kunenatopic2article');
-            $this->app->enqueueMessage($message, 'error');
-        }
 
-        $message = 'Конец getTopicData. subject: ' . $this->subject;
-        Log::add($message, Log::DEBUG, 'com_kunenatopic2article');
-        $this->app->enqueueMessage($message, 'debug');
+            // Не возвращаем $result, так как $subject достаточно
+        } catch (\Exception $e) {
+            $this->app->enqueueMessage($e->getMessage(), 'error');
+        }
     }
 
     public function save($data)
     {
-        $message = 'Начало save. Входные данные: ' . print_r($data, true);
-        Log::add($message, Log::DEBUG, 'com_kunenatopic2article');
-        $this->app->enqueueMessage($message, 'debug');
-
-        if (empty($data)) {
-            $message = 'Данные пусты, сохранение прервано';
-            Log::add($message, Log::ERROR, 'com_kunenatopic2article');
-            $this->app->enqueueMessage($message, 'error');
-            return false;
-        }
-
-        // Вызываем getTopicData
-        $this->getTopicData(!empty($data['topic_selection']) && is_numeric($data['topic_selection']) ? (int)$data['topic_selection'] : 0);
-        $message = 'После getTopicData, subject: ' . $this->subject;
-        Log::add($message, Log::DEBUG, 'com_kunenatopic2article');
-        $this->app->enqueueMessage($message, 'debug');
+$topicId = !empty($data['topic_selection']) && is_numeric($data['topic_selection']) ? (int)$data['topic_selection'] : 0;
+if ($topicId <= 0) {
+    $this->app->enqueueMessage('Topic ID должно быть числом больше 0', 'error');
+    return false;
+}
+$this->getTopicData($topicId);
 
         // Проверяем $subject
         if ($this->subject !== '') {
             // Возвращаем originalTopicId в Topic ID перед сохранением
-            $originalTopicId = !empty($data['topic_selection']) && is_numeric($data['topic_selection']) ? (int)$data['topic_selection'] : 0;
             $data['topic_selection'] = $originalTopicId;
-            $message = 'Успешная проверка, originalTopicId: ' . $originalTopicId . ', topic_selection восстановлен';
-            Log::add($message, Log::INFO, 'com_kunenatopic2article');
-            $this->app->enqueueMessage($message, 'notice');
 
-            // Сохраняем first_post_id как topic_id (для активации кнопки Create)
-            $this->app->setUserState('com_kunenatopic2article.topic_id', $originalTopicId);
-            $message = 'Установлен topic_id в сессии: ' . $originalTopicId;
-            Log::add($message, Log::INFO, 'com_kunenatopic2article');
-            $this->app->enqueueMessage($message, 'notice');
-
-            // Отправляем форму в таблицу
+       // Отправляем форму в таблицу
             $table = new ParamsTable($this->db);
 
             if (!$table->load(1)) {
-                $message = 'Ошибка загрузки таблицы параметров: ' . Text::_('JLIB_DATABASE_ERROR_LOAD_FAILED');
-                Log::add($message, Log::ERROR, 'com_kunenatopic2article');
-                $this->app->enqueueMessage($message, 'error');
+                $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED') . ': ' . Text::_('JLIB_DATABASE_ERROR_LOAD_FAILED'), 'error');
                 return false;
             }
 
             $table->bind($data);
 
-            if (!$table->check() || !$table->store()) {
-                $message = 'Ошибка сохранения в таблицу: ' . $table->getError();
-                Log::add($message, Log::ERROR, 'com_kunenatopic2article');
-                $this->app->enqueueMessage($message, 'error');
+            if (!$table->store()) {
+                $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED') . ': ' . $table->getError(), 'error');
                 return false;
             }
 
             // Устанавливаем успешное состояние для активации кнопки Create
             $this->app->setUserState('com_kunenatopic2article.save.success', true);
-            $message = 'Сохранение успешно, save.success = true';
-            Log::add($message, Log::INFO, 'com_kunenatopic2article');
-            $this->app->enqueueMessage($message, 'notice');
             return true;
         } else {
             // Сообщение об ошибке с originalTopicId
-            $originalTopicId = !empty($data['topic_selection']) && is_numeric($data['topic_selection']) ? (int)$data['topic_selection'] : 0;
-            $message = 'Ошибка валидации, originalTopicId: ' . $originalTopicId;
-            Log::add($message, Log::ERROR, 'com_kunenatopic2article');
-            $this->app->enqueueMessage($message, 'error');
+       // ?без гр?     $originalTopicId = !empty($data['topic_selection']) && is_numeric($data['topic_selection']) ? (int)$data['topic_selection'] : 0;
+            $this->app->enqueueMessage(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $originalTopicId), 'error');
             $data['topic_selection'] = ''; // Сбрасываем Topic ID в форме
             $this->app->setUserState('com_kunenatopic2article.topic_id', 0); // Сбрасываем topic_id
-            $message = 'Topic ID сброшен на пустую строку';
-            Log::add($message, Log::WARNING, 'com_kunenatopic2article');
-            $this->app->enqueueMessage($message, 'warning');
             return false;
         }
     }
 
     public function reset()
     {
-        $message = 'Начало reset';
-        Log::add($message, Log::DEBUG, 'com_kunenatopic2article');
-        $this->app->enqueueMessage($message, 'debug');
-
         $table = new ParamsTable($this->db);
 
         if (!$table->load(1)) {
-            $message = 'Ошибка загрузки таблицы для reset: ' . Text::_('JLIB_DATABASE_ERROR_LOAD_FAILED');
-            Log::add($message, Log::ERROR, 'com_kunenatopic2article');
-            $this->app->enqueueMessage($message, 'error');
+            $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_RESET_FAILED') . ': ' . Text::_('JLIB_DATABASE_ERROR_LOAD_FAILED'), 'error');
             return false;
         }
 
@@ -279,30 +176,19 @@ class TopicModel extends AdminModel
         $table->bind($defaults);
 
         if (!$table->check() || !$table->store()) {
-            $message = 'Ошибка сохранения дефолтных значений: ' . $table->getError();
-            Log::add($message, Log::ERROR, 'com_kunenatopic2article');
-            $this->app->enqueueMessage($message, 'error');
+            $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_RESET_FAILED') . ': ' . $table->getError(), 'error');
             return false;
         }
 
         $this->app->setUserState('com_kunenatopic2article.save.success', false);
         $this->app->setUserState('com_kunenatopic2article.topic_id', 0);
-        $message = 'Reset успешно выполнен';
-        Log::add($message, Log::INFO, 'com_kunenatopic2article');
-        $this->app->enqueueMessage($message, 'notice');
         return true;
     }
 
     public function create()
     {
-        $message = 'Начало create';
-        Log::add($message, Log::DEBUG, 'com_kunenatopic2article');
-        $this->app->enqueueMessage($message, 'debug');
         $this->app->setUserState('com_kunenatopic2article.save.success', false);
         $this->app->setUserState('com_kunenatopic2article.topic_id', 0);
-        $message = 'Create успешно выполнен';
-        Log::add($message, Log::INFO, 'com_kunenatopic2article');
-        $this->app->enqueueMessage($message, 'notice');
         return true;
     }
 }
