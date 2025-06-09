@@ -10,7 +10,8 @@
     <version>1.0.0</version>
     <description>COM_KUNENATOPIC2ARTICLE_DESC</description>
 
-    <namespace path="admin/src">Joomla\Component\KunenaTopic2Article</namespace>
+    <!-- ВАЖНО: Administrator добавлен в namespace -->
+    <namespace path="admin/src">Joomla\Component\KunenaTopic2Article\Administrator</namespace>
 
     <services>
         <provider>Joomla\Component\KunenaTopic2Article\Administrator\Extension\KunenaTopic2ArticleServiceProvider</provider>
