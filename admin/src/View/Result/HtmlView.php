@@ -1,3 +1,4 @@
+<?php
 // Файл: admin/src/View/Result/HtmlView.php
 namespace Joomla\Component\KunenaTopic2Article\View\Result;
 
