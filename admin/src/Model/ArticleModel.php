@@ -80,8 +80,48 @@ class TopicModel extends AdminModel
     }
 
     /**
-     * Проверка существования темы и получение ее данных
+     * Временно изменил метод, чтобы он выводил SQL-запрос и прерывал работу
      */
+    protected function getTopicData($topicId)
+{
+    $this->subject = '';
+
+    try {
+        $query = $this->db->getQuery(true)
+            ->select(['subject'])
+            ->from($this->db->quoteName('#__kunena_topics'))
+            ->where($this->db->quoteName('first_post_id') . ' = ' . $this->db->quote((int)$topicId))
+            ->where($this->db->quoteName('hold') . ' = 0');
+
+        // ==== НАЧАЛО ВРЕМЕННОЙ ОТЛАДКИ ====
+        echo '<h3>DEBUG MODE</h3>';
+        echo '<p><strong>Final SQL Query:</strong></p>';
+        echo '<pre>' . htmlspecialchars((string)$query) . '</pre>';
+
+        $this->db->setQuery($query);
+        $result = $this->db->loadObject();
+
+        echo '<p><strong>Query Result:</strong></p>';
+        echo '<pre>';
+        var_dump($result);
+        echo '</pre>';
+
+        die('--- End of Debug ---'); // Останавливаем выполнение скрипта
+        // ==== КОНЕЦ ВРЕМЕННОЙ ОТЛАДКИ ====
+
+        // Остальной код пока не будет выполняться
+        if ($result) {
+            $this->subject = $result->subject;
+        }
+
+    } catch (\Exception $e) {
+        // ...
+    }
+}
+    
+    /**
+     * Проверка существования темы и получение ее данных
+    
     protected function getTopicData($topicId)
     {
         $this->subject = ''; // Инициализируем subject
@@ -110,7 +150,8 @@ class TopicModel extends AdminModel
             $this->app->enqueueMessage("ОТЛАДКА ИСКЛЮЧЕНИЕ: " . $e->getMessage(), 'error');
         }
     }
-
+ */
+    
     public function save($data)
     {
         $originalTopicId = !empty($data['topic_selection']) && is_numeric($data['topic_selection']) ? (int)$data['topic_selection'] : 0;
