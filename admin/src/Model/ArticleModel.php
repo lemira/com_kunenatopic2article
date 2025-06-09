@@ -79,13 +79,61 @@ class TopicModel extends AdminModel
         return $table;
     }
 
+    /**
+     * ВРЕМЕННО Проверка существования темы и получение ее данных
+ */
+protected function getTopicData($topicId)
+{
+    ini_set('display_errors', 1);
+    error_reporting(E_ALL);
+
+    $this->subject = ''; // Инициализируем subject
+
+    try {
+        $query = $this->db->getQuery(true)
+            ->select(['id', 'first_post_id', 'subject'])
+            ->from($this->db->quoteName('#__kunena_topics'))
+            ->where($this->db->quoteName('first_post_id') . ' = ' . (int) $topicId)
+            ->where($this->db->quoteName('hold') . ' = 0');
+
+        $this->db->setQuery($query);
+
+        // ВРЕМЕННАЯ ОТЛАДКА: выводим SQL
+        echo '<pre>SQL: ' . htmlspecialchars((string)$query) . '</pre>';
+
+        $topic = $this->db->loadAssoc();
+
+        // Для отладки — вывод результата SQL-запроса
+        echo '<pre>Результат SQL:</pre>';
+        echo '<pre>'; print_r($topic); echo '</pre>';
+
+        // Завершаем выполнение после вывода отладочной информации
+        @ob_end_flush();
+        flush();
+        exit;
+
+        if (!$topic) {
+            throw new \RuntimeException("Topic with ID {$topicId} does not exist or is not the first post of a topic.");
+        }
+
+        $this->subject = $topic['subject'] ?? '';
+
+        return $topic;
+
+    } catch (\RuntimeException $e) {
+        $this->app->enqueueMessage($e->getMessage(), 'error');
+        return false;
+    }
+}
     
     /**
      * Проверка существования темы и получение ее данных
- */
     
     protected function getTopicData($topicId)
     {
+        ini_set('display_errors', 1);
+    error_reporting(E_ALL);
+        
         $this->subject = ''; // Инициализируем subject
 
         try {
@@ -173,7 +221,8 @@ echo '<pre>'; print_r($topic); echo '</pre>'; exit;
             return false;
         }
     }
-
+ */
+    
     public function reset()
     {
         $table = new ParamsTable($this->db);
