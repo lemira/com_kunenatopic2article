@@ -79,76 +79,78 @@ class TopicModel extends AdminModel
         return $table;
     }
 
-    /**
-     * Проверка существования темы и получение ее данных
-     */
-    protected function getTopicData($topicId)
-    {
-        $this->subject = ''; // Инициализируем subject
-        // Сохраняем введённое Topic ID
-        $originalTopicId = $topicId;
+<?php
 
-        try {
-            $query = $this->db->getQuery(true)
-                ->select(['subject'])
-                ->from($this->db->quoteName('#__kunena_topics'))
-                ->where($this->db->quoteName('first_post_id') . ' = ' . $this->db->quote((int)$originalTopicId))
-                ->where($this->db->quoteName('hold') . ' = 0');
+/**
+ * Проверка существования темы и получение ее данных
+ */
+protected function getTopicData($topicId)
+{
+    $this->subject = ''; // Инициализируем subject
+    
+    try {
+        $query = $this->db->getQuery(true)
+            ->select(['subject'])
+            ->from($this->db->quoteName('#__kunena_topics'))
+            ->where($this->db->quoteName('first_post_id') . ' = ' . $this->db->quote((int)$topicId))
+            ->where($this->db->quoteName('hold') . ' = 0');
 
-            $result = $this->db->setQuery($query)->loadObject();
+        $result = $this->db->setQuery($query)->loadObject();
 
-            if ($result) {
-                $this->subject = $result->subject; // Присваиваем subject
-            }
-
-            // Не возвращаем $result, так как $subject достаточно
-        } catch (\Exception $e) {
-            $this->app->enqueueMessage($e->getMessage(), 'error');
+        if ($result) {
+            $this->subject = $result->subject; // Присваиваем subject
         }
+
+    } catch (\Exception $e) {
+        $this->app->enqueueMessage($e->getMessage(), 'error');
+    }
+}
+
+public function save($data)
+{
+    // Получаем originalTopicId из формы
+    $originalTopicId = !empty($data['topic_selection']) && is_numeric($data['topic_selection']) ? (int)$data['topic_selection'] : 0;
+    
+    if ($originalTopicId <= 0) {
+        $this->app->enqueueMessage('Topic ID должно быть числом больше 0', 'error');
+        return false;
     }
 
-    public function save($data)
-    {
-$topicId = !empty($data['topic_selection']) && is_numeric($data['topic_selection']) ? (int)$data['topic_selection'] : 0;
-if ($topicId <= 0) {
-    $this->app->enqueueMessage('Topic ID должно быть числом больше 0', 'error');
-    return false;
-}
-$this->getTopicData($topicId);
+    // Вызываем getTopicData для проверки темы
+    $this->getTopicData($originalTopicId);
 
-        // Проверяем $subject
-        if ($this->subject !== '') {
-            // Возвращаем originalTopicId в Topic ID перед сохранением
-            $data['topic_selection'] = $originalTopicId;
+    // Проверяем, найдена ли тема (subject не пустой)
+    if ($this->subject !== '') {
+        // Тема найдена - сохраняем originalTopicId обратно в данные
+        $data['topic_selection'] = $originalTopicId;
 
-       // Отправляем форму в таблицу
-            $table = new ParamsTable($this->db);
+        // Отправляем форму в таблицу
+        $table = new ParamsTable($this->db);
 
-            if (!$table->load(1)) {
-                $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED') . ': ' . Text::_('JLIB_DATABASE_ERROR_LOAD_FAILED'), 'error');
-                return false;
-            }
-
-            $table->bind($data);
-
-            if (!$table->store()) {
-                $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED') . ': ' . $table->getError(), 'error');
-                return false;
-            }
-
-            // Устанавливаем успешное состояние для активации кнопки Create
-            $this->app->setUserState('com_kunenatopic2article.save.success', true);
-            return true;
-        } else {
-            // Сообщение об ошибке с originalTopicId
-       // ?без гр?     $originalTopicId = !empty($data['topic_selection']) && is_numeric($data['topic_selection']) ? (int)$data['topic_selection'] : 0;
-            $this->app->enqueueMessage(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $originalTopicId), 'error');
-            $data['topic_selection'] = ''; // Сбрасываем Topic ID в форме
-            $this->app->setUserState('com_kunenatopic2article.topic_id', 0); // Сбрасываем topic_id
+        if (!$table->load(1)) {
+            $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED') . ': ' . Text::_('JLIB_DATABASE_ERROR_LOAD_FAILED'), 'error');
             return false;
         }
-    }
 
+        $table->bind($data);
+
+        if (!$table->store()) {
+            $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED') . ': ' . $table->getError(), 'error');
+            return false;
+        }
+
+        // Устанавливаем успешное состояние для активации кнопки Create
+        $this->app->setUserState('com_kunenatopic2article.save.success', true);
+        return true;
+        
+    } else {
+        // Тема не найдена - выводим ошибку с originalTopicId
+        $this->app->enqueueMessage(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $originalTopicId), 'error');
+        $data['topic_selection'] = ''; // Сбрасываем Topic ID в форме
+        $this->app->setUserState('com_kunenatopic2article.topic_id', 0); // Сбрасываем topic_id
+        return false;
+    }
+}   
     public function reset()
     {
         $table = new ParamsTable($this->db);
