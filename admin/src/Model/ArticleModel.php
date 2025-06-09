@@ -96,14 +96,30 @@ class TopicModel extends AdminModel
                ->where($this->db->quoteName('hold') . ' = 0');
 
             // ВРЕМЕННАЯ ОТЛАДКА: выводим SQL
-            $this->app->enqueueMessage("ОТЛАДКА SQL: " . (string)$query, 'notice');
+            $this->app->enqueueMessage("ОТЛАДКА SQL: " . (string)$query, 'error');
 
             $result = $this->db->setQuery($query)->loadObject();
 
+            // Для отладки — вывод SQL-запроса
+            echo '<pre>' . $query . '</pre>';
+            
+try {
+    $topic = $this->db->loadAssoc();
+    if (!$topic) {
+        throw new \RuntimeException("Topic with ID {$topicId} does not exist or is not the first post of a topic.");
+    }
+} catch (\RuntimeException $e) {
+    $this->app->enqueueMessage($e->getMessage(), 'error');
+    return false;
+}
+
+echo '<pre>'; print_r($topic); echo '</pre>'; exit;
+
+            
             if ($result) {
                 $this->subject = $result->subject;
                 // ВРЕМЕННАЯ ОТЛАДКА: выводим результат
-                $this->app->enqueueMessage("ОТЛАДКА: найден subject = '{$result->subject}'", 'notice');
+                $this->app->enqueueMessage("ОТЛАДКА: найден subject = '{$result->subject}'", 'error');
             } else {
                 $this->app->enqueueMessage("ОТЛАДКА: запрос не вернул результата", 'warning');
             }
@@ -125,7 +141,7 @@ class TopicModel extends AdminModel
         $this->getTopicData($originalTopicId);
 
         // ВРЕМЕННАЯ ОТЛАДКА: выводим прямо в сообщение
-        $this->app->enqueueMessage("ОТЛАДКА: originalTopicId = $originalTopicId, subject = '{$this->subject}'", 'notice');
+        $this->app->enqueueMessage("ОТЛАДКА: originalTopicId = $originalTopicId, subject = '{$this->subject}'", 'error');
 
         if ($this->subject !== '') {
             // Возвращаем originalTopicId в Topic ID перед сохранением
