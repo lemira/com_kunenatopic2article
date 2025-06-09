@@ -1,12 +1,12 @@
 <?php
-namespace Joomla\Component\KunenaTopic2Article\Administrator\Model;
+namespace Joomla\Component\KunenaTopic2Article\Model;
 
 use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\AdminModel;
-use Joomla\Component\KunenaTopic2Article\Administrator\Table\ParamsTable;
+use Joomla\Component\KunenaTopic2Article\Table\ParamsTable;
 use Joomla\Database\DatabaseInterface;
 use Joomla\CMS\Table\Table;
 
