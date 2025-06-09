@@ -1,5 +1,5 @@
 <?php
-namespace Joomla\Component\KunenaTopic2Article\Administrator\Table;
+namespace Joomla\Component\KunenaTopic2Article\Table;
 
 \defined('_JEXEC') or die;
 
