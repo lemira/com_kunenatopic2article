@@ -1,5 +1,5 @@
 <?php
-namespace Joomla\Component\KunenaTopic2Article\Administrator\Extension;
+namespace Joomla\Component\KunenaTopic2Article\Extension;
 
 use Joomla\CMS\Extension\ComponentInterface;
 use Joomla\CMS\Extension\Service\Provider\ComponentDispatcherFactory;
