@@ -79,10 +79,6 @@ class TopicModel extends AdminModel
         return $table;
     }
 
-<?php
-
-<?php
-
 /**
  * Проверка существования темы и получение ее данных
  */
@@ -91,7 +87,7 @@ protected function getTopicData($topicId)
     $this->subject = ''; // Инициализируем subject
     
     // ОТЛАДКА: проверяем входящий параметр
-    error_log("DEBUG getTopicData: входящий topicId = " . $topicId);
+    $this->app->enqueueMessage("DEBUG getTopicData: входящий topicId = " . $topicId, 'notice');
     
     try {
         $query = $this->db->getQuery(true)
@@ -102,67 +98,53 @@ protected function getTopicData($topicId)
 
         // ОТЛАДКА: выводим SQL запрос
         $sqlQuery = (string)$query;
-        error_log("DEBUG getTopicData: SQL запрос = " . $sqlQuery);
+        $this->app->enqueueMessage("DEBUG getTopicData: SQL = " . $sqlQuery, 'notice');
 
         $result = $this->db->setQuery($query)->loadObject();
 
         // ОТЛАДКА: проверяем результат запроса
         if ($result) {
-            error_log("DEBUG getTopicData: найдена тема с subject = '" . $result->subject . "', first_post_id = " . $result->first_post_id . ", hold = " . $result->hold);
+            $this->app->enqueueMessage("DEBUG getTopicData: найдена тема с subject = '" . $result->subject . "'", 'notice');
             $this->subject = $result->subject;
         } else {
-            error_log("DEBUG getTopicData: тема не найдена");
-            
-            // Дополнительная проверка: есть ли вообще такая запись в таблице?
-            $checkQuery = $this->db->getQuery(true)
-                ->select(['subject', 'first_post_id', 'hold'])
-                ->from($this->db->quoteName('#__kunena_topics'))
-                ->where($this->db->quoteName('first_post_id') . ' = ' . $this->db->quote((int)$topicId));
-            
-            $checkResult = $this->db->setQuery($checkQuery)->loadObject();
-            if ($checkResult) {
-                error_log("DEBUG getTopicData: найдена запись с first_post_id = " . $topicId . ", но hold = " . $checkResult->hold . " (должно быть 0)");
-            } else {
-                error_log("DEBUG getTopicData: записи с first_post_id = " . $topicId . " вообще не существует");
-            }
+            $this->app->enqueueMessage("DEBUG getTopicData: тема не найдена", 'warning');
         }
 
         // ОТЛАДКА: проверяем итоговое значение subject
-        error_log("DEBUG getTopicData: итоговый subject = '" . $this->subject . "'");
+        $this->app->enqueueMessage("DEBUG getTopicData: итоговый subject = '" . $this->subject . "'", 'notice');
 
     } catch (\Exception $e) {
-        error_log("DEBUG getTopicData: ИСКЛЮЧЕНИЕ - " . $e->getMessage());
-        $this->app->enqueueMessage($e->getMessage(), 'error');
+        $this->app->enqueueMessage("DEBUG getTopicData: ИСКЛЮЧЕНИЕ - " . $e->getMessage(), 'error');
     }
 }
 
 public function save($data)
 {
     // ОТЛАДКА: проверяем входящие данные
-    error_log("DEBUG save: входящие данные = " . json_encode($data));
+    $this->app->enqueueMessage("DEBUG save: topic_selection = " . ($data['topic_selection'] ?? 'НЕ УСТАНОВЛЕНО'), 'notice');
     
     // Получаем originalTopicId из формы
     $originalTopicId = !empty($data['topic_selection']) && is_numeric($data['topic_selection']) ? (int)$data['topic_selection'] : 0;
     
     // ОТЛАДКА: проверяем originalTopicId
-    error_log("DEBUG save: originalTopicId = " . $originalTopicId);
+    $this->app->enqueueMessage("DEBUG save: originalTopicId = " . $originalTopicId, 'notice');
     
     if ($originalTopicId <= 0) {
-        error_log("DEBUG save: originalTopicId <= 0, возвращаем false");
+        $this->app->enqueueMessage("DEBUG save: originalTopicId <= 0", 'warning');
         $this->app->enqueueMessage('Topic ID должно быть числом больше 0', 'error');
         return false;
     }
 
     // Вызываем getTopicData для проверки темы
-    error_log("DEBUG save: вызываем getTopicData с ID = " . $originalTopicId);
+    $this->app->enqueueMessage("DEBUG save: вызываем getTopicData с ID = " . $originalTopicId, 'notice');
     $this->getTopicData($originalTopicId);
 
     // ОТЛАДКА: проверяем subject после getTopicData
-    error_log("DEBUG save: после getTopicData subject = '" . $this->subject . "'");
+    $this->app->enqueueMessage("DEBUG save: после getTopicData subject = '" . $this->subject . "'", 'notice');
 
     // Проверяем, найдена ли тема (subject не пустой)
     if ($this->subject !== '') {
-        error_log("DEBUG save: тема найдена, сохраняем данные");
+        $this->app->enqueueMessage("DEBUG save: тема найдена, сохраняем данные", 'notice');
         
         // Тема найдена - сохраняем originalTopicId обратно в данные
         $data['topic_selection'] = $originalTopicId;
@@ -171,7 +153,6 @@ public function save($data)
         $table = new ParamsTable($this->db);
 
         if (!$table->load(1)) {
-            error_log("DEBUG save: ошибка загрузки таблицы");
             $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED') . ': ' . Text::_('JLIB_DATABASE_ERROR_LOAD_FAILED'), 'error');
             return false;
         }
@@ -179,18 +160,17 @@ public function save($data)
         $table->bind($data);
 
         if (!$table->store()) {
-            error_log("DEBUG save: ошибка сохранения в таблицу - " . $table->getError());
             $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED') . ': ' . $table->getError(), 'error');
             return false;
         }
 
-        error_log("DEBUG save: данные успешно сохранены");
+        $this->app->enqueueMessage("DEBUG save: данные успешно сохранены", 'success');
         // Устанавливаем успешное состояние для активации кнопки Create
         $this->app->setUserState('com_kunenatopic2article.save.success', true);
         return true;
         
     } else {
-        error_log("DEBUG save: тема не найдена, выводим ошибку");
+        $this->app->enqueueMessage("DEBUG save: тема не найдена, subject пустой", 'warning');
         // Тема не найдена - выводим ошибку с originalTopicId
         $this->app->enqueueMessage(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $originalTopicId), 'error');
         $data['topic_selection'] = ''; // Сбрасываем Topic ID в форме
