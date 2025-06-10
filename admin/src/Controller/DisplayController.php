@@ -3,7 +3,7 @@
  * @package     KunenaTopic2Article
  * @subpackage  Administrator
  */
-namespace Joomla\Component\KunenaTopic2Article\Controller;
+namespace Joomla\Component\KunenaTopic2Article\Administrator\Controller;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Controller\BaseController;
