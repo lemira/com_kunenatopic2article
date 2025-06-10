@@ -2,24 +2,27 @@
 <extension type="component" version="5.0" method="upgrade">
     <name>com_kunenatopic2article</name>
     <author>lr</author>
-    <creationDate>June 2025</creationDate>
+    <creationDate>January 2025</creationDate>
     <copyright>(C) 2025 lr. All rights reserved.</copyright>
     <license>GNU/GPL</license>
     <authorEmail>lemirat@gmail.com</authorEmail>
     <authorUrl>https://geschichte-chronologie.de</authorUrl>
     <version>1.0.0</version>
     <description>COM_KUNENATOPIC2ARTICLE_DESC</description>
-
-    <!-- ВАЖНО: Administrator добавлен в namespace -->
-    <namespace path="admin/src">Joomla\Component\KunenaTopic2Article</namespace>
-
+    
+    <!-- Namespace обяз для Joomla 5)// path="src"?? -->
+    <namespace path="src">Joomla\Component\KunenaTopic2Article</namespace>
+    
+    <!-- Регистрация сервисов (обязательно для Joomla 5) -->
     <services>
-        <provider>Joomla\Component\KunenaTopic2Article\Extension\KunenaTopic2ArticleServiceProvider</provider>
+        <provider>Joomla\Component\KunenaTopic2Article\Administrator\Extension\KunenaTopic2ArticleServiceProvider</provider>
     </services>
-
+    
+    <!-- Административная часть -->
     <administration>
         <menu link="option=com_kunenatopic2article">COM_KUNENATOPIC2ARTICLE</menu>
-
+        
+        <!-- Файлы админки из папки admin/ -->
         <files folder="admin">
             <folder>services</folder>
             <folder>forms</folder>
@@ -27,8 +30,9 @@
             <folder>tmpl</folder>
             <folder>sql</folder>
             <folder>language</folder>
-        </files>
-
+              </files>
+        
+        <!-- Языковые файлы админки -->
         <languages folder="admin/language">
             <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.ini</language>
             <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.sys.ini</language>
