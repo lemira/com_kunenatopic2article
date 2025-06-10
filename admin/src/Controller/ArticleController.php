@@ -7,7 +7,7 @@
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
-namespace Joomla\Component\Kunenatopic2article\Controller;
+namespace Joomla\Component\KunenaTopic2Article\Administrator\Controller;
 
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
