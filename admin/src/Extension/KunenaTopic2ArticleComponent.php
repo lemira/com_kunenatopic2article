@@ -1,74 +1,48 @@
 <?php
+/**
+ * @package     KunenaTopic2Article
+ * @subpackage  com_kunenatopic2article
+ * @author      Your Name
+ * @copyright   Copyright (C) 2024 Your Name. All rights reserved.
+ * @license     GNU General Public License version 2 or later
+ */
+
+namespace Joomla\Component\KunenaTopic2Article\Administrator\Extension;
+
 defined('_JEXEC') or die;
 
-namespace Joomla\Component\KunenaTopic2Article\Extension;
+use Joomla\CMS\Extension\BootableExtensionInterface;
+use Joomla\CMS\Extension\MVCComponent;
+use Joomla\CMS\Component\ComponentHelper;
+use Joomla\CMS\HTML\HTMLRegistryAwareTrait;
+use Psr\Container\ContainerInterface;
+use Joomla\CMS\Factory;
 
-use Joomla\CMS\Extension\ComponentInterface;
-use Joomla\CMS\Dispatcher\ComponentDispatcherFactoryInterface;
-use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
-
-class KunenaTopic2ArticleComponent implements ComponentInterface
+/**
+ * Component class for KunenaTopic2Article
+ * Поддерживает структуру:
+ * - admin/ вместо administrator/
+ * - ArticleController, Result/Topic views
+ * - ParamsTable
+ *
+ * @since  1.0.0
+ */
+class KunenaTopic2ArticleComponent extends MVCComponent implements BootableExtensionInterface
 {
-    /**
-     * @var ComponentDispatcherFactoryInterface
-     */
-    protected $dispatcherFactory;
+    use HTMLRegistryAwareTrait;
 
     /**
-     * @var MVCFactoryInterface|null
+     * Booting the extension. This is the function to set up the environment of the extension like
+     * registering new class loaders, etc.
+     * If required, some initial set up can be done from services of the container, eg.
+     * registering HTML services.
+     * @param   ContainerInterface  $container  The container
+     * @return  void
+     * @since   1.0.0
      */
-    private $mvcFactory;
-
-    /**
-     * Конструктор компонента
-     *
-     * @param ComponentDispatcherFactoryInterface $dispatcherFactory
-     */
-    public function __construct(ComponentDispatcherFactoryInterface $dispatcherFactory)
-    {
-        $this->dispatcherFactory = $dispatcherFactory;
-    }
-
-    /**
-     * Устанавливает MVC фабрику
-     *
-     * @param MVCFactoryInterface $mvcFactory
-     */
-    public function setMVCFactory(MVCFactoryInterface $mvcFactory): void
-    {
-        $this->mvcFactory = $mvcFactory;
-    }
-
-    /**
-     * Возвращает имя компонента
-     *
-     * @return string
-     */
-    public function getName(): string
-    {
-        return 'KunenaTopic2Article';
-    }
-
-    /**
-     * Регистрирует сервисы компонента
-     *
-     * @param Container $container
-     */
-    public function register(Container $container): void
-    {
-        $container->set(
-            ComponentInterface::class,
-            $this
-        );
-    }
-
-    /**
-     * Создает диспетчер компонента
-     *
-     * @return DispatcherInterface
-     */
-    public function getDispatcher($application)
-    {
-        return $this->dispatcherFactory->createDispatcher($application);
-    }
+public function boot(ContainerInterface $container)
+{
+    // пусто, есл нет инициализации сервисов
 }
+    
+    }
