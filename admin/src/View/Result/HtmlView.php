@@ -1,6 +1,6 @@
 <?php
 // Файл: admin/src/View/Result/HtmlView.php
-namespace Joomla\Component\KunenaTopic2Article\View\Result;
+namespace Joomla\Component\KunenaTopic2Article\Administrator\View\Result;
 
 \defined('_JEXEC') or die;
 
