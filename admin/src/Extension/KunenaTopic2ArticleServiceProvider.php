@@ -1,4 +1,5 @@
-namespace Joomla\Component\KunenaTopic2Article\Extension;
+<?php
+namespace Joomla\Component\KunenaTopic2Article\Administrator\Extension;
 
 use Joomla\CMS\Extension\ComponentInterface;
 use Joomla\CMS\Extension\Service\Provider\ComponentDispatcherFactory;
@@ -12,10 +13,11 @@ class KunenaTopic2ArticleServiceProvider implements ServiceProviderInterface
 {
     public function register(Container $container): void
     {
-        // Оставляем БЕЗ Administrator!
+        // Подключаем фабрики MVC и Dispatcher
         $container->registerServiceProvider(new ComponentDispatcherFactory('\\Joomla\\Component\\KunenaTopic2Article'));
         $container->registerServiceProvider(new MVCFactory('\\Joomla\\Component\\KunenaTopic2Article'));
         
+        // Регистрируем сам компонент
         $container->set(
             ComponentInterface::class,
             function (Container $container) {
