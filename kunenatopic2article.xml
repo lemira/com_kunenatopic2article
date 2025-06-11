@@ -15,7 +15,7 @@
     
     <!-- Регистрация сервисов (обязательно для Joomla 5) -->
     <services>
-        <provider>Joomla\Component\KunenaTopic2Article\Administrator\Extension\KunenaTopic2ArticleServiceProvider</provider>
+        <provider>Joomla\Component\KunenaTopic2Article\Extension\KunenaTopic2ArticleServiceProvider</provider>
     </services>
     
     <!-- Административная часть -->
