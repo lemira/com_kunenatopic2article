@@ -99,18 +99,18 @@ protected function getTopicData($topicId)
         $this->db->setQuery($query);
 
         // ВРЕМЕННАЯ ОТЛАДКА: выводим SQL
-        echo '<pre>SQL: ' . htmlspecialchars((string)$query) . '</pre>';
+  //      echo '<pre>SQL: ' . htmlspecialchars((string)$query) . '</pre>';
 
         $topic = $this->db->loadAssoc();
 
         // Для отладки — вывод результата SQL-запроса
-        echo '<pre>Результат SQL:</pre>';
-        echo '<pre>'; print_r($topic); echo '</pre>';
+    //    echo '<pre>Результат SQL:</pre>';
+    //    echo '<pre>'; print_r($topic); echo '</pre>';
 
         // Завершаем выполнение после вывода отладочной информации
-        @ob_end_flush();
-        flush();
-        exit;
+   //     @ob_end_flush();
+   //     flush();
+   //     exit;
 
         if (!$topic) {
             throw new \RuntimeException("Topic with ID {$topicId} does not exist or is not the first post of a topic.");
@@ -144,12 +144,12 @@ protected function getTopicData($topicId)
                ->where($this->db->quoteName('hold') . ' = 0');
 
             // ВРЕМЕННАЯ ОТЛАДКА: выводим SQL
-            $this->app->enqueueMessage("ОТЛАДКА SQL: " . (string)$query, 'error');
+     //       $this->app->enqueueMessage("ОТЛАДКА SQL: " . (string)$query, 'error');
 
             $result = $this->db->setQuery($query)->loadObject();
 
             // Для отладки — вывод SQL-запроса
-            echo '<pre>' . $query . '</pre>';
+      //      echo '<pre>' . $query . '</pre>';
             
 try {
     $topic = $this->db->loadAssoc();
@@ -161,19 +161,19 @@ try {
     return false;
 }
 
-echo '<pre>'; print_r($topic); echo '</pre>'; exit;
+// ОТЛАДКА echo '<pre>'; print_r($topic); echo '</pre>'; exit;
 
             
             if ($result) {
                 $this->subject = $result->subject;
                 // ВРЕМЕННАЯ ОТЛАДКА: выводим результат
-                $this->app->enqueueMessage("ОТЛАДКА: найден subject = '{$result->subject}'", 'error');
+        //        $this->app->enqueueMessage("ОТЛАДКА: найден subject = '{$result->subject}'", 'error');
             } else {
-                $this->app->enqueueMessage("ОТЛАДКА: запрос не вернул результата", 'warning');
+        //??        $this->app->enqueueMessage("ОТЛАДКА: запрос не вернул результата", 'warning');
             }
 
         } catch (\Exception $e) {
-            $this->app->enqueueMessage("ОТЛАДКА ИСКЛЮЧЕНИЕ: " . $e->getMessage(), 'error');
+   //         $this->app->enqueueMessage("ОТЛАДКА ИСКЛЮЧЕНИЕ: " . $e->getMessage(), 'error');
         }
     }
     
@@ -189,7 +189,7 @@ echo '<pre>'; print_r($topic); echo '</pre>'; exit;
         $this->getTopicData($originalTopicId);
 
         // ВРЕМЕННАЯ ОТЛАДКА: выводим прямо в сообщение
-        $this->app->enqueueMessage("ОТЛАДКА: originalTopicId = $originalTopicId, subject = '{$this->subject}'", 'error');
+ //       $this->app->enqueueMessage("ОТЛАДКА: originalTopicId = $originalTopicId, subject = '{$this->subject}'", 'error');
 
         if ($this->subject !== '') {
             // Возвращаем originalTopicId в Topic ID перед сохранением
