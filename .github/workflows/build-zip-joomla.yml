@@ -1,12 +1,7 @@
 name: Build Joomla Package
 
 on:
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Выберите ветку для сборки'
-        required: true
-        default: 'main'
+  workflow_dispatch:  # Запуск вручную без выбора ветки
 
 jobs:
   build:
@@ -16,7 +11,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.branch }}
+          ref: ${{ github.ref }}  # Автоматически выбирает текущую ветку
 
       - name: Set timestamp variable (Берлинское время)
         run: |
