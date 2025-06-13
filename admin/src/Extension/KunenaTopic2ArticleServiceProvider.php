@@ -1,5 +1,4 @@
 <?php
-defined('_JEXEC') || exit;
 namespace Joomla\Component\KunenaTopic2Article\Administrator\Extension;
 
 use Joomla\CMS\Extension\ComponentInterface;
