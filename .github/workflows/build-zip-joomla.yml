@@ -1,7 +1,7 @@
 name: Build Joomla Package
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Запуск вручную без выбора ветки
 
 jobs:
   build:
@@ -10,11 +10,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}  # Автоматически выбирает текущую ветку
 
       - name: Set timestamp variable (Берлинское время)
         run: |
           TIMESTAMP=$(TZ="Europe/Berlin" date +"%y%m%d-%H%M")
-          echo "Используемый TIMESTAMP: $TIMESTAMP"
           echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
 
       - name: Create ZIP archive with timestamp
