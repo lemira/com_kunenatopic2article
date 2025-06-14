@@ -79,10 +79,8 @@ class TopicModel extends AdminModel
         return $table;
     }
 
-    /**
-     * ВРЕМЕННО Проверка существования темы и получение ее данных
- */
-protected function getTopicData($topicId)
+    /* Проверка существования темы и получение ее данных */
+    protected function getTopicData($topicId)
 {
     ini_set('display_errors', 1);
     error_reporting(E_ALL);
@@ -98,14 +96,11 @@ protected function getTopicData($topicId)
 
         $this->db->setQuery($query);
 
-        // ВРЕМЕННАЯ ОТЛАДКА: выводим SQL
-  //      echo '<pre>SQL: ' . htmlspecialchars((string)$query) . '</pre>';
-
-        $topic = $this->db->loadAssoc();
+            $topic = $this->db->loadAssoc();
 
         // Для отладки — вывод результата SQL-запроса
-    //    echo '<pre>Результат SQL:</pre>';
-    //    echo '<pre>'; print_r($topic); echo '</pre>';
+      echo '<pre>Результат SQL:</pre>'; // ОТЛАДКА
+      echo '<pre>'; print_r($topic); echo '</pre>'; // ОТЛАДКА
 
         // Завершаем выполнение после вывода отладочной информации
    //     @ob_end_flush();
@@ -125,57 +120,6 @@ protected function getTopicData($topicId)
         return false;
     }
 }
-    
-    /**
-     * Проверка существования темы и получение ее данных
-    
-    protected function getTopicData($topicId)
-    {
-        ini_set('display_errors', 1);
-    error_reporting(E_ALL);
-        
-        $this->subject = ''; // Инициализируем subject
-
-        try {
-            $query = $this->db->getQuery(true)
-                ->select(['subject'])
-                ->from($this->db->quoteName('#__kunena_topics'))
-               ->where($this->db->quoteName('first_post_id') . ' = ' . (int) $topicId)
-               ->where($this->db->quoteName('hold') . ' = 0');
-
-            // ВРЕМЕННАЯ ОТЛАДКА: выводим SQL
-     //       $this->app->enqueueMessage("ОТЛАДКА SQL: " . (string)$query, 'error');
-
-            $result = $this->db->setQuery($query)->loadObject();
-
-            // Для отладки — вывод SQL-запроса
-      //      echo '<pre>' . $query . '</pre>';
-            
-try {
-    $topic = $this->db->loadAssoc();
-    if (!$topic) {
-        throw new \RuntimeException("Topic with ID {$topicId} does not exist or is not the first post of a topic.");
-    }
-} catch (\RuntimeException $e) {
-    $this->app->enqueueMessage($e->getMessage(), 'error');
-    return false;
-}
-
-// ОТЛАДКА echo '<pre>'; print_r($topic); echo '</pre>'; exit;
-
-            
-            if ($result) {
-                $this->subject = $result->subject;
-                // ВРЕМЕННАЯ ОТЛАДКА: выводим результат
-        //        $this->app->enqueueMessage("ОТЛАДКА: найден subject = '{$result->subject}'", 'error');
-            } else {
-        //??        $this->app->enqueueMessage("ОТЛАДКА: запрос не вернул результата", 'warning');
-            }
-
-        } catch (\Exception $e) {
-   //         $this->app->enqueueMessage("ОТЛАДКА ИСКЛЮЧЕНИЕ: " . $e->getMessage(), 'error');
-        }
-    }
     
     public function save($data)
     {
@@ -221,7 +165,6 @@ try {
             return false;
         }
     }
- */
     
     public function reset()
     {
