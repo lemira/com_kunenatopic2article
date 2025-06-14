@@ -89,7 +89,7 @@ class TopicModel extends AdminModel
 
     try {
         $query = $this->db->getQuery(true)
-            ->select(['id', 'first_post_id', 'subject'])
+            ->select(['subject'])
             ->from($this->db->quoteName('#__kunena_topics'))
             ->where($this->db->quoteName('first_post_id') . ' = ' . (int) $topicId)
             ->where($this->db->quoteName('hold') . ' = 0');
@@ -98,7 +98,7 @@ class TopicModel extends AdminModel
 
             $topic = $this->db->loadAssoc();
 
-        // Для отладки — вывод результата SQL-запроса
+        //  ОТЛАДКА — вывод результата SQL-запроса
       echo '<pre>Результат SQL:</pre>'; // ОТЛАДКА
       echo '<pre>'; print_r($topic); echo '</pre>'; // ОТЛАДКА
 
