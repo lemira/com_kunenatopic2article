@@ -79,7 +79,7 @@ class TopicModel extends AdminModel
         return $table;
     }
 
-    /* Проверка существования темы и получение ее данных */
+    /* Проверка существования темы и получение ее данных 
     protected function getTopicData($topicId)
 {
     ini_set('display_errors', 1);
@@ -116,6 +116,65 @@ class TopicModel extends AdminModel
         return $topic;
 
     } catch (\RuntimeException $e) {
+        $this->app->enqueueMessage($e->getMessage(), 'error');
+        return false;
+    }
+}
+ */
+
+    // ОТЛАДКА
+    protected function getTopicData($topicId)
+{
+    ini_set('display_errors', 1);
+    error_reporting(E_ALL);
+
+    $this->subject = ''; // Инициализируем subject
+
+    try {
+        // Логируем входящий параметр
+        file_put_contents(JPATH_ROOT . '/debug.log', "=== getTopicData called ===\n", FILE_APPEND);
+        file_put_contents(JPATH_ROOT . '/debug.log', "Input topicId: " . var_export($topicId, true) . " (type: " . gettype($topicId) . ")\n", FILE_APPEND);
+
+        $query = $this->db->getQuery(true)
+            ->select(['subject'])
+            ->from($this->db->quoteName('#__kunena_topics'))
+            ->where($this->db->quoteName('first_post_id') . ' = ' . (int) $topicId)
+            ->where($this->db->quoteName('hold') . ' = 0');
+
+        // Логируем сформированный запрос
+        file_put_contents(JPATH_ROOT . '/debug.log', "SQL Query: " . (string)$query . "\n", FILE_APPEND);
+
+        $this->db->setQuery($query);
+        $topic = $this->db->loadAssoc();
+
+        // Логируем результат
+        file_put_contents(JPATH_ROOT . '/debug.log', "Query result: " . print_r($topic, true) . "\n", FILE_APPEND);
+
+        // Дополнительная проверка - посмотрим что вообще есть в таблице для этого first_post_id
+        $checkQuery = $this->db->getQuery(true)
+            ->select(['id', 'subject', 'first_post_id', 'hold'])
+            ->from($this->db->quoteName('#__kunena_topics'))
+            ->where($this->db->quoteName('first_post_id') . ' = ' . (int) $topicId);
+
+        $this->db->setQuery($checkQuery);
+        $allResults = $this->db->loadAssocList();
+
+        file_put_contents(JPATH_ROOT . '/debug.log', "All records with first_post_id = $topicId: " . print_r($allResults, true) . "\n", FILE_APPEND);
+
+        if (!$topic) {
+            file_put_contents(JPATH_ROOT . '/debug.log', "No topic found - throwing exception\n", FILE_APPEND);
+            throw new \RuntimeException("Topic with ID {$topicId} does not exist or is not the first post of a topic.");
+        }
+
+        $this->subject = $topic['subject'] ?? '';
+        file_put_contents(JPATH_ROOT . '/debug.log', "Subject set to: " . $this->subject . "\n", FILE_APPEND);
+        file_put_contents(JPATH_ROOT . '/debug.log', "=== getTopicData finished successfully ===\n\n", FILE_APPEND);
+
+        return $topic;
+
+    } catch (\RuntimeException $e) {
+        file_put_contents(JPATH_ROOT . '/debug.log', "Exception caught: " . $e->getMessage() . "\n", FILE_APPEND);
+        file_put_contents(JPATH_ROOT . '/debug.log', "=== getTopicData finished with error ===\n\n", FILE_APPEND);
         $this->app->enqueueMessage($e->getMessage(), 'error');
         return false;
     }
