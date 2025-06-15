@@ -146,7 +146,7 @@ class TopicModel extends AdminModel
         // Устанавливаем успешное состояние для активации кнопки Create
        if ($this->app->setUserState('com_kunenatopic2article.save.success', true))
         return true;
-        else {
+       } else {
             // Сообщение об ошибке с originalTopicId
             $this->app->enqueueMessage(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $originalTopicId), 'error');
             // ПРАВИЛЬНО очищаем данные формы
