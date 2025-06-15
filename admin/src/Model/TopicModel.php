@@ -1,4 +1,4 @@
-<?php
+ <?php
 namespace Joomla\Component\KunenaTopic2Article\Administrator\Model;
 
 use Joomla\CMS\Application\CMSApplication;
@@ -81,19 +81,28 @@ class TopicModel extends AdminModel
      */
     protected function getTopicData($topicId)
     {
+     $this->subject = ''; // Инициализируем subject
+
+    
         try {
             $query = $this->db->getQuery(true)
-                ->select(['id', 'subject'])
+                ->select(['subject'])
                 ->from($this->db->quoteName('#__kunena_topics'))
-                ->where($this->db->quoteName('id') . ' = ' . (int)$topicId);
+                ->where($this->db->quoteName('first_post_id') . ' = ' . (int) $topicId)
+                ->where($this->db->quoteName('hold') . ' = 0');
 
-            $topic = $this->db->setQuery($query)->loadObject();
+            $this->db->setQuery($query);
 
+            $topic = $this->db->loadAssoc();
+           
             if (!$topic) {
-                throw new \Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $topicId));
-            }
-
+        //         throw new \Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $topicId));
+                 throw new \RuntimeException("Topic with ID {$topicId} does not exist or is not the first post of a topic.");
+       }
+            
+            $this->subject = $topic['subject'] ?? '';
             return $topic;
+            
         } catch (\Exception $e) {
             $this->app->enqueueMessage($e->getMessage(), 'error');
             return null;
@@ -102,18 +111,18 @@ class TopicModel extends AdminModel
 
     public function save($data)
     {
-        if (empty($data)) {
-            $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_DATA_TO_SAVE'), 'error');
+        $originalTopicId = !empty($data['topic_selection']) && is_numeric($data['topic_selection']) ? (int)$data['topic_selection'] : 0;
+        
+        if ($originalTopicId <= 0) {
+            $this->app->enqueueMessage('Topic ID должно быть числом больше 0', 'error');
             return false;
         }
-
-        // Проверка Topic ID
-        $topicId = !empty($data['topic_selection']) && is_numeric($data['topic_selection']) ? (int)$data['topic_selection'] : 0;
-        if ($topicId === 0 || !$this->getTopicData($topicId)) {
-            $this->app->setUserState('com_kunenatopic2article.topic_id', 0);
-            $this->app->enqueueMessage(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $topicId ?: 'пустое'), 'error');
-            return false;
-        }
+    
+       $this->getTopicData($originalTopicId);
+       
+        if ($this->subject !== '') {
+            // Возвращаем originalTopicId в Topic ID перед сохранением
+            $data['topic_selection'] = $originalTopicId;
 
         // Сохраняем topic_id для отображения заголовка
         $this->app->setUserState('com_kunenatopic2article.topic_id', $topicId);
@@ -128,13 +137,30 @@ class TopicModel extends AdminModel
 
         $table->bind($data);
 
-        if (!$table->check() || !$table->store()) {
+      //??  if (!$table->check() || !$table->store()) {
+            if (!$table->store()) {
             $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED') . ': ' . $table->getError(), 'error');
             return false;
         }
 
-        $this->app->setUserState('com_kunenatopic2article.save.success', true);
+        // Устанавливаем успешное состояние для активации кнопки Create
+       if ($this->app->setUserState('com_kunenatopic2article.save.success', true))
         return true;
+        else {
+            // Сообщение об ошибке с originalTopicId
+            $this->app->enqueueMessage(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $originalTopicId), 'error');
+            // ПРАВИЛЬНО очищаем данные формы
+            $data['topic_selection'] = 0; // Сбрасываем Topic ID в форме
+            $this->app->setUserState('com_kunenatopic2article.topic_id', 0); // Сбрасываем topic_id  ??
+            
+        //?    $formData = $this->app->getUserState('com_kunenatopic2article.edit.topic.data', []);
+        //? $this->app->setUserState('com_kunenatopic2article.edit.topic.data', $formData);
+        
+        // ?? Сбрасываем состояния
+        $this->app->setUserState('com_kunenatopic2article.save.success', false);
+       
+            return false;
+        }
     }
 
     public function reset()
