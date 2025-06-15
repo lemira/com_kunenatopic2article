@@ -1,4 +1,4 @@
- <?php
+<?php
 namespace Joomla\Component\KunenaTopic2Article\Administrator\Model;
 
 use Joomla\CMS\Application\CMSApplication;
