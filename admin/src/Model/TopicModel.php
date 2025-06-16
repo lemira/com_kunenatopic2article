@@ -14,6 +14,7 @@ class TopicModel extends AdminModel
 {
     protected CMSApplication $app;
     protected DatabaseInterface $db;
+    protected string $subject = ''; // Переменная модели для хранения subject
 
     public function __construct($config = [])
     {
