@@ -126,13 +126,7 @@ class DisplayController extends BaseController
      */
     public function create()
     {
-        // Получаем модель
-        $model = $this->getModel('Topic');
-        if ($model->create()) {
-            // В будущем управление будет передано в ArticleController.php
-            $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topic'));
-        } else {
-            $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topic'), Text::_('COM_KUNENATOPIC2ARTICLE_CREATE_FAILED'), 'error');
-        }
+    // Простой редирект на ArticleController
+    $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&task=article.create'));
     }
 }
