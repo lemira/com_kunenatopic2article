@@ -205,11 +205,4 @@ class TopicModel extends AdminModel
         $this->app->setUserState('com_kunenatopic2article.topic_id', 0);
         return true;
     }
-
-    public function create()
-    {
-        $this->app->setUserState('com_kunenatopic2article.save.success', false);
-        $this->app->setUserState('com_kunenatopic2article.topic_id', 0);
-        return true;
-    }
 }
