@@ -49,19 +49,30 @@ class TopicModel extends AdminModel
 
     protected function loadFormData(): array
     {
+        // Сначала получаем данные из сессии, если мы вернулись после неудачного сохранения
         $data = $this->app->getUserState('com_kunenatopic2article.edit.topic.data', []);
 
+        // Если в сессии ничего нет (первая загрузка или после успешного сохранения)
         if (empty($data)) {
+            // Загружаем последние сохраненные параметры из базы
             $params = $this->getParams();
-            $data = $params ? $params->getProperties() : [];
-            $topicId = $this->app->getUserState('com_kunenatopic2article.topic_id', 0);
-             if ($topicId) {
-                $this->getTopicData($topicId); // Заполняем $subject
-                if ($this->subject) {
-                    $data['topic_selection'] = $this->subject; // Показываем subject в форме
-                } else {
-                    $data['topic_selection'] = ''; // Если не найдено, ставим пустую строку ?
-                }
+            $data   = $params ? $params->getProperties() : [];
+        }
+
+        // ПОЯСНЕНИЕ: Теперь, когда у нас есть данные (из сессии или из базы),
+        // мы проверяем, есть ли там валидный ID темы, чтобы показать ее заголовок.
+        // Это более надежно, чем использовать отдельную переменную в сессии.
+        $topicId = !empty($data['topic_selection']) ? (int) $data['topic_selection'] : 0;
+
+        if ($topicId > 0) {
+            // Пытаемся получить данные темы.
+            // getTopicData сам обработает ошибку, если тема не найдется.
+            $this->getTopicData($topicId);
+
+            if ($this->subject) {
+                // Если тема найдена, показываем в форме ее заголовок.
+                // При сохранении мы все равно будем использовать ID.
+                $data['topic_selection'] = $this->subject;
             }
         }
 
@@ -112,25 +123,28 @@ class TopicModel extends AdminModel
         }
     }
 
-    public function save($data)
+  public function save($data)
     {
-        $originalTopicId = !empty($data['topic_selection']) && is_numeric($data['topic_selection']) ? (int)$data['topic_selection'] : 0;
+        // Получаем ID из формы. Эта часть у вас была правильной.
+        $originalTopicId = !empty($data['topic_selection']) && is_numeric($data['topic_selection']) ? (int) $data['topic_selection'] : 0;
         
         if ($originalTopicId <= 0) {
             $this->app->enqueueMessage('Topic ID должно быть числом больше 0', 'error');
             return false;
         }
     
-       $this->getTopicData($originalTopicId);
-       
-        if ($this->subject !== '') {
-            // Возвращаем originalTopicId в Topic ID перед сохранением
-            $data['topic_selection'] = $originalTopicId;
+        // Пытаемся получить данные темы. Если темы нет, метод вернет null
+        // и добавит сообщение об ошибке.
+        if ($this->getTopicData($originalTopicId) === null) {
+            // Если getTopicData вернул ошибку, просто выходим
+            return false;
+        }
+        
+        // Если мы дошли сюда, значит getTopicData успешно нашел тему и заполнил $this->subject
+        
+        // Возвращаем ID в данные для сохранения в базу
+        $data['topic_selection'] = $originalTopicId;
 
-        // Сохраняем topic_id для отображения заголовка
-        $this->app->setUserState('com_kunenatopic2article.topic_id', $topicId);
-
-        // Сохраняем все данные, включая topic_selection как число
         $table = new ParamsTable($this->db);
 
         if (!$table->load(1)) {
@@ -140,32 +154,22 @@ class TopicModel extends AdminModel
 
         $table->bind($data);
 
-      //??  if (!$table->check() || !$table->store()) {
-            if (!$table->store()) {
+        if (!$table->store()) {
             $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED') . ': ' . $table->getError(), 'error');
             return false;
         }
 
-        // Устанавливаем успешное состояние для активации кнопки Create
-       if ($this->app->setUserState('com_kunenatopic2article.save.success', true))
-        return true;
-       } else {
-            // Сообщение об ошибке с originalTopicId
-            $this->app->enqueueMessage(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $originalTopicId), 'error');
-            // ПРАВИЛЬНО очищаем данные формы
-            $data['topic_selection'] = 0; // Сбрасываем Topic ID в форме
-            $this->app->setUserState('com_kunenatopic2article.topic_id', 0); // Сбрасываем topic_id  ??
-            
-        //?    $formData = $this->app->getUserState('com_kunenatopic2article.edit.topic.data', []);
-        //? $this->app->setUserState('com_kunenatopic2article.edit.topic.data', $formData);
+        // ИСПРАВЛЕНО: Правильный способ завершения.
+        // Сначала устанавливаем состояние, потом четко возвращаем true.
+        $this->app->setUserState('com_kunenatopic2article.save.success', true);
         
-        // ?? Сбрасываем состояния
-        $this->app->setUserState('com_kunenatopic2article.save.success', false);
-       
-            return false;
-        }
-    }
+        // ПОЯСНЕНИЕ: Мы больше не используем 'com_kunenatopic2article.topic_id',
+        // так как loadFormData теперь умнее и берет ID из сохраненных параметров.
+        // Это упрощает логику и делает ее надежнее.
 
+        return true;
+    }
+    
     public function reset()
     {
         $table = new ParamsTable($this->db);
