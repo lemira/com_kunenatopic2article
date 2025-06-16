@@ -55,10 +55,12 @@ class TopicModel extends AdminModel
             $params = $this->getParams();
             $data = $params ? $params->getProperties() : [];
             $topicId = $this->app->getUserState('com_kunenatopic2article.topic_id', 0);
-            if ($topicId) {
-                $topic = $this->getTopicData($topicId);
-                if ($topic) {
-                    $data['topic_selection'] = $topic->subject;
+             if ($topicId) {
+                $this->getTopicData($topicId); // Заполняем $subject
+                if ($this->subject) {
+                    $data['topic_selection'] = $this->subject; // Показываем subject в форме
+                } else {
+                    $data['topic_selection'] = ''; // Если не найдено, ставим пустую строку ?
                 }
             }
         }
