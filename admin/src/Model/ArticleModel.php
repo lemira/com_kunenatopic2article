@@ -22,6 +22,7 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\Filter\OutputFilter;
 use Joomla\Database\DatabaseInterface;
+use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 
 /**
  * Article Model
@@ -29,49 +30,18 @@ use Joomla\Database\DatabaseInterface;
  */
 class ArticleModel extends BaseDatabaseModel
 {
-    /** @var \Joomla\Database\DatabaseInterface */
-    protected $db;
+    protected $db; // @var \Joomla\Database\DatabaseInterface 
+    protected $app; /** @var \Joomla\CMS\Application\CMSApplication */
+    private $currentArticle = null;    /** @var object|null */
+    private $articleSize = 0;    // Текущий размер статьи , @var    int 
+    private $articleLinks = [];  // Массив ссылок на созданные статьи  @var array 
+    private $postId = 0;   // Текущий ID поста @var    int
+    private $postSize = 0; // Размер текущего поста var    int
+    private $postIdList = []; // Список ID постов для обработки @var    array
+    private $currentPost = null;  // Текущий пост @var    object
+    private $subject = ''; // Переменная модели для хранения subject
     
-    /** @var \Joomla\CMS\Application\CMSApplication */
-    protected $app;
-
-    /**
-     * Текущий размер статьи
-     * @var    int
-     */
-    private $articleSize = 0;
-
-    /**
-     * Массив ссылок на созданные статьи
-     * @var    array
-     */
-    private $articleLinks = [];
-
-    /**
-     * Текущий ID поста
-     * @var    int
-     */
-    private $postId = 0;
-
-    /**
-     * Размер текущего поста
-     * @var    int
-     */
-    private $postSize = 0;
-
-    /**
-     * Список ID постов для обработки
-     * @var    array
-     */
-    private $postIdList = [];
-
-    /**
-     * Текущий пост
-     * @var    object
-     */
-    private $currentPost = null;
-
-    public function __construct($config = [])
+        public function __construct($config = [])
     {
         parent::__construct($config);
         $this->app = Factory::getApplication();
@@ -87,17 +57,17 @@ class ArticleModel extends BaseDatabaseModel
     {
         // Инициализация массива ссылок
         $this->articleLinks = [];
-       
         try {
+         // Получаем параметры из таблицы kunenatopic2article_params
+        $params = $this->getComponentParams();
+       
             // Получаем ID первого поста
-            $firstPostId = (int) $settings['topic_selection']; // 3232
+            $firstPostId = $params->topic_selection; // 3232
            
-            // Получаем ID темы по first_post_id
-            $topicId = $this->getTopicIdByFirstPostId($firstPostId);
+            $topicId = $firstPostId; // текущий id 
+                      
+            $this->$subject = $this->getTopicSubject($firstPostId);
            
-            // Устанавливаем ID первого поста
-            $this->postId = $firstPostId;
-
             // Формируем список ID постов в зависимости от схемы обхода
             if ($settings['post_transfer_scheme'] == 'tree') {
                 $this->postIdList = $this->buildTreePostIdList($topicId);
@@ -136,7 +106,7 @@ class ArticleModel extends BaseDatabaseModel
             }
 
             return $this->articleLinks;
-        } catch (\Exception $e) {
+         } catch (\Exception $e) {
             $this->app->enqueueMessage($e->getMessage(), 'error');
             return $this->articleLinks;
         }
@@ -149,16 +119,9 @@ class ArticleModel extends BaseDatabaseModel
      */
     private function openArticle($settings)
     {
-        try {
-            // Получаем ID темы по first_post_id
-            $firstPostId = (int) $settings['topic_selection'];
-            $topicId = $this->getTopicIdByFirstPostId($firstPostId);
-
-            // Получаем заголовок темы для формирования заголовка статьи
-            $topic = $this->getTopicData($topicId);
-           
+          try {
             // Формируем базовый заголовок статьи
-            $title = $topic->subject;
+            $title = $subject;
            
             // Если это не первая статья, добавляем номер части
             if (!empty($this->articleLinks)) {
@@ -170,8 +133,8 @@ class ArticleModel extends BaseDatabaseModel
             $baseAlias = OutputFilter::stringURLSafe($title);
             $uniqueAlias = $this->getUniqueAlias($baseAlias);
 
-            // Создаем новую статью как ассоциативный массив (вместо использования Table)
-            $this->currentArticle = [
+            // Создаем новую статью как объект (вместо массива для лучшей совместимости)
+            $this->currentArticle = (object) [
                 'title' => $title,
                 'alias' => $uniqueAlias,
                 'introtext' => '',
@@ -187,7 +150,7 @@ class ArticleModel extends BaseDatabaseModel
             $this->app->enqueueMessage('Статья подготовлена: ' . $title . ', категория: ' . $settings['article_category'] . ', alias: ' . $uniqueAlias, 'notice');
 
             return true;
-        } catch (\Exception $e) {
+         } catch (\Exception $e) {
             $this->app->enqueueMessage('Ошибка при открытии статьи: ' . $e->getMessage(), 'error');
             return false;
         }
@@ -234,7 +197,7 @@ class ArticleModel extends BaseDatabaseModel
     }
 
     /**
-     * Закрытие и сохранение статьи с использованием упрощенного метода
+     * Закрытие и сохранение статьи
      * @param   array  $settings  Настройки для создания статьи
      * @return  boolean  True в случае успеха
      */
@@ -245,23 +208,23 @@ class ArticleModel extends BaseDatabaseModel
         }
 
         try {
-            $this->app->enqueueMessage('Сохранение статьи: ' . $this->currentArticle['title'], 'notice');
+            $this->app->enqueueMessage('Сохранение статьи: ' . $this->currentArticle->title, 'notice');
 
             // Обработка introtext, если он пустой
-            if (empty($this->currentArticle['introtext']) && !empty($this->currentArticle['fulltext'])) {
+            if (empty($this->currentArticle->introtext) && !empty($this->currentArticle->fulltext)) {
                 $maxIntroLength = 500; // Максимальная длина введения
-                if (strlen($this->currentArticle['fulltext']) > $maxIntroLength) {
-                    $this->currentArticle['introtext'] = substr($this->currentArticle['fulltext'], 0, $maxIntroLength) . '...';
+                if (strlen($this->currentArticle->fulltext) > $maxIntroLength) {
+                    $this->currentArticle->introtext = substr($this->currentArticle->fulltext, 0, $maxIntroLength) . '...';
                 } else {
-                    $this->currentArticle['introtext'] = $this->currentArticle['fulltext'];
+                    $this->currentArticle->introtext = $this->currentArticle->fulltext;
                 }
             }
 
-            // Вызываем упрощенный метод создания статьи
-            $articleId = $this->createSimpleArticle($this->currentArticle, $settings);
+            // Создаем статью через Table
+            $articleId = $this->createArticleViaTable($this->currentArticle, $settings);
             
             if (!$articleId) {
-                throw new \Exception('Ошибка сохранения статьи через упрощенный метод.');
+                throw new \Exception('Ошибка сохранения статьи.');
             }
 
             // Формируем URL для статьи
@@ -269,7 +232,7 @@ class ArticleModel extends BaseDatabaseModel
             
             // Добавляем ссылку и заголовок в массив для последующего вывода
             $this->articleLinks[] = [
-                'title' => $this->currentArticle['title'],
+                'title' => $this->currentArticle->title,
                 'url' => Uri::root() . ltrim($link, '/'),
                 'id' => $articleId
             ];
@@ -288,54 +251,58 @@ class ArticleModel extends BaseDatabaseModel
     }
 
     /**
-     * Упрощенный метод создания статьи в Joomla
-     * @param   array  $article   Основные данные статьи
-     * @param   array  $params    Параметры компонента
-     *
+     * Создание статьи через Table API
+     * @param   object  $article   Данные статьи
+     * @param   array   $settings  Настройки
      * @return  boolean|int  False в случае неудачи, ID статьи в случае успеха
      */
-    protected function createSimpleArticle($article, $params)
+    protected function createArticleViaTable($article, $settings)
     {
         try {
-            // Получаем модель контента
-            $contentModel = BaseDatabaseModel::getInstance('Article', 'ContentModel');
-            if (!$contentModel) {
-                $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_ERROR_CONTENT_MODEL_NOT_FOUND'), 'error');
-                return false;
+            // Получаем table для контента
+            $table = Table::getInstance('Content');
+            
+            if (!$table) {
+                throw new \Exception('Не удалось получить таблицу контента');
             }
 
-            // Создаем минимальные данные статьи
-            $articleData = [
-                'title' => $article['title'],
-                'catid' => (int) $params['article_category'],
-                'introtext' => $article['introtext'],
-                'fulltext' => $article['fulltext'] ?? '',
-                'created_by' => (int) $params['post_author'],
-                'state' => 1, // Published (или 0, если нужно сохранять как черновик)
+            // Подготавливаем данные
+            $data = [
+                'title' => $article->title,
+                'alias' => $article->alias,
+                'introtext' => $article->introtext,
+                'fulltext' => $article->fulltext,
+                'catid' => (int) $settings['article_category'],
+                'created_by' => (int) $settings['post_author'],
+                'state' => 1, // Published
                 'language' => '*',
-                'access' => 1
+                'access' => 1,
+                'created' => Factory::getDate()->toSql(),
+                'attribs' => '{}',
+                'metakey' => '',
+                'metadesc' => '',
+                'metadata' => '{}'
             ];
 
-            // Если есть alias, добавляем его
-            if (!empty($article['alias'])) {
-                $articleData['alias'] = $article['alias'];
+            // Привязываем данные к таблице
+            if (!$table->bind($data)) {
+                throw new \Exception('Ошибка привязки данных: ' . $table->getError());
             }
 
-            // Сохраняем статью с упрощенным подходом
-            if (!$contentModel->save($articleData)) {
-                $this->app->enqueueMessage(
-                    Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_SAVING_ARTICLE', $contentModel->getError()),
-                    'error'
-                );
-                return false;
+            // Проверяем данные
+            if (!$table->check()) {
+                throw new \Exception('Ошибка проверки данных: ' . $table->getError());
             }
 
-            return $contentModel->getState('article.id');
+            // Сохраняем
+            if (!$table->store()) {
+                throw new \Exception('Ошибка сохранения: ' . $table->getError());
+            }
+
+            return $table->id;
+            
         } catch (\Exception $e) {
-            $this->app->enqueueMessage(
-                Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_SAVING_ARTICLE', $e->getMessage()),
-                'error'
-            );
+            $this->app->enqueueMessage('Ошибка создания статьи через Table: ' . $e->getMessage(), 'error');
             return false;
         }
     }
@@ -345,18 +312,21 @@ class ArticleModel extends BaseDatabaseModel
      * @param   int  $postId  ID поста
      * @return  boolean  True в случае успеха
      */
-   
     private function openPost($postId)
     {
         try {
             // Получаем данные поста из базы данных Kunena, фильтрация промодерированных постов
-            //  Не проверяем существования, рассчитываем на целостность БД 
             $query = $this->db->getQuery(true)
                 ->select('*')
                 ->from($this->db->quoteName('#__kunena_messages'))
-                ->where($this->db->quoteName('id') . ' = ' . (int)$postId . ' AND ' . $this->db->quoteName('hold') . ' = 0');
+                ->where($this->db->quoteName('id') . ' = ' . (int)$postId)
+                ->where($this->db->quoteName('hold') . ' = 0');
 
             $this->currentPost = $this->db->setQuery($query)->loadObject();
+
+            if (!$this->currentPost) {
+                throw new \Exception('Пост не найден или заблокирован: ' . $postId);
+            }
 
             $this->postSize = strlen($this->currentPost->message); // Рассчитываем размер поста
 
@@ -383,20 +353,20 @@ class ArticleModel extends BaseDatabaseModel
             
             // Добавляем информационную строку в статью, если она не пуста
             if (!empty($infoString)) {
-                if (!isset($this->currentArticle['fulltext'])) {
-                    $this->currentArticle['fulltext'] = '';
+                if (!isset($this->currentArticle->fulltext)) {
+                    $this->currentArticle->fulltext = '';
                 }
-                $this->currentArticle['fulltext'] .= $infoString;
+                $this->currentArticle->fulltext .= $infoString;
             }
 
             // Преобразуем BBCode в HTML
             $htmlContent = $this->convertBBCodeToHtml($this->currentPost->message);
             
             // Добавляем преобразованный текст в статью
-            $this->currentArticle['fulltext'] .= $htmlContent;
+            $this->currentArticle->fulltext .= $htmlContent;
             
             // Обновляем размер статьи
-            $this->articleSize += strlen($this->currentArticle['fulltext']);
+            $this->articleSize += strlen($htmlContent);
 
             return true;
         } catch (\Exception $e) {
@@ -425,51 +395,16 @@ class ArticleModel extends BaseDatabaseModel
         return $this->postId;
     }
 
-    /**
-     * Получение данных темы
-     * @param   int  $topicId  ID темы
-     * @return  object  Объект с данными темы
-     */
-    private function getTopicData($topicId)
-    {
-        try {
-            $query = $this->db->getQuery(true)
-                ->select('*')
-                ->from($this->db->quoteName('#__kunena_topics'))
-                ->where($this->db->quoteName('id') . ' = ' . (int)$topicId);
-
-            $topic = $this->db->setQuery($query)->loadObject();
-                
-            if (!$topic) {
-                throw new \Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_TOPIC_NOT_FOUND', $topicId));
-            }
-
-            return $topic;
-        } catch (\Exception $e) {
-            $this->app->enqueueMessage($e->getMessage(), 'error');
-            return new \stdClass();
-        }
-    }
-
-    /**
-     * Получение ID темы по ID первого поста
-     * @param   int  $firstPostId  ID первого поста
-     * @return  int  ID темы
-     * @throws  \Exception  Если тема не найдена
-     */
-    private function getTopicIdByFirstPostId($firstPostId)
+    private function getTopicSubject($firstPostId)
     {
         $query = $this->db->getQuery(true)
-            ->select($this->db->quoteName('id'))
-            ->from($this->db->quoteName('#__kunena_topics'))
-            ->where($this->db->quoteName('first_post_id') . ' = ' . $this->db->quote($firstPostId));
-        $topicId = $this->db->setQuery($query)->loadResult();
+            ->select($this->db->quoteName('subject'))
+            ->from($this->db->quoteName('#__kunena_messages'))
+            ->where($this->db->quoteName('id') . ' = ' . $firstPostId);
         
-        if (!$topicId) {
-            throw new \Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_TOPIC_NOT_FOUND', $firstPostId));
-        }
+        $subject = $this->db->setQuery($query)->loadResult();
         
-        return (int) $topicId;
+        return $subject;
     }
 
     /**
@@ -480,24 +415,30 @@ class ArticleModel extends BaseDatabaseModel
     private function buildFlatPostIdList($firstPostId)
     {
         try {
-            // Получаем ID темы по first_post_id
-            $topicId = $this->getTopicIdByFirstPostId($firstPostId);
-
+          // Получаем Id темы
+        $query = $this->db->getQuery(true)
+            ->select($this->db->quoteName('thread'))
+            ->from($this->db->quoteName('#__kunena_messages'))
+            ->where($this->db->quoteName('id') . ' = ' . $firstPostId);
+        
+        $threadId = $this->db->setQuery($query)->loadResult();
+        
             // Получаем все посты темы
             $query = $this->db->getQuery(true)
                 ->select($this->db->quoteName('id'))
                 ->from($this->db->quoteName('#__kunena_messages'))
-                ->where($this->db->quoteName('thread') . ' = ' . (int)$topicId)
+                ->where($this->db->quoteName('thread') . ' = ' . (int)$threadId)
                 ->where($this->db->quoteName('hold') . ' = 0')
                 ->order($this->db->quoteName('time') . ' ASC');
 
             $postIds = $this->db->setQuery($query)->loadColumn();
                 
-            if (empty($postIds)) {
+            if (empty($postIds)) {    // эта проверка в принципе не нужна, так как минимум 1 пост с id=$firstPostId в список попадет
                 throw new \Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_NO_POSTS_IN_TOPIC', $firstPostId));
             }
 
             return $postIds;
+            
         } catch (\Exception $e) {
             $this->app->enqueueMessage($e->getMessage(), 'error');
             return [];
@@ -512,8 +453,17 @@ class ArticleModel extends BaseDatabaseModel
     private function buildTreePostIdList($topicId)
     {
         // Заглушка: в реальной реализации здесь должен быть алгоритм обхода дерева
-        // На данный момент возвращаем плоский список как временное решение
-        return $this->buildFlatPostIdList($topicId);
+        // На данный момент возвращаем список из 1го поста темы как временное решение
+        try {
+            $postIds = [$firstPostId];
+            return $postIds;
+            }
+            
+            return $this->buildFlatPostIdList($firstPostId);
+        } catch (\Exception $e) {
+            $this->app->enqueueMessage($e->getMessage(), 'error');
+            return [];
+        }
     }
 
     /**
@@ -536,8 +486,9 @@ class ArticleModel extends BaseDatabaseModel
 
         // Формируем информационную строку
         $infoString = '<div class="post-info">';
-        $infoString .= Text::sprintf('COM_KUNENATOPIC2ARTICLE_POST_INFO_FORMAT', $userName, $formattedDate);
-        $infoString .= '</div>';
+        $infoString .= '<p><strong>' . Text::_('COM_KUNENATOPIC2ARTICLE_AUTHOR') . ':</strong> ' . htmlspecialchars($userName) . '</p>';
+        $infoString .= '<p><strong>' . Text::_('COM_KUNENATOPIC2ARTICLE_DATE') . ':</strong> ' . $formattedDate . '</p>';
+        $infoString .= '</div><hr />';
 
         return $infoString;
     }
@@ -564,6 +515,36 @@ class ArticleModel extends BaseDatabaseModel
     }
 
     /**
+     * Получение параметров компонента из таблиц - копия из контроллера
+     * @return  object|null  Объект с параметрами компонента
+     */
+    private function getComponentParams()
+    {
+        try {
+            $db = Factory::getContainer()->get('DatabaseDriver');
+            $query = $db->getQuery(true)
+                ->select('*')
+                ->from($db->quoteName('#__kunenatopic2article_params'))
+                ->where($db->quoteName('id') . ' = 1');
+            
+            $params = $db->setQuery($query)->loadObject();
+            
+            if (!$params) {
+                Factory::getApplication()->enqueueMessage(
+                    Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_NOT_FOUND'), 
+                    'error'
+                );
+                return null;
+            }
+            
+            return $params;
+        } catch (\Exception $e) {
+            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+            return null;
+        }
+    }
+
+    /**
      * Преобразование BBCode в HTML
      * @param   string  $text  Текст с BBCode
      * @return  string  HTML-текст
@@ -571,44 +552,47 @@ class ArticleModel extends BaseDatabaseModel
     private function convertBBCodeToHtml($text)
     {
         // Проверяем наличие класса KunenaBbcode
-        if (!class_exists('KunenaBbcode')) {
-            // Если класс не найден, используем простую замену
-            return $this->simpleBBCodeToHtml($text);
+        if (class_exists('KunenaBbcode')) {
+            try {
+                // Используем парсер KunenaBbcode
+                $bbcode = KunenaBbcode::getInstance();
+                return $bbcode->parse($text);
+            } catch (\Exception $e) {
+                // В случае ошибки, используем простую замену
+                $this->app->enqueueMessage('Ошибка парсинга BBCode: ' . $e->getMessage(), 'warning');
+            }
         }
-
-        try {
-            // Используем парсер KunenaBbcode
-            $bbcode = KunenaBbcode::getInstance();
-            return $bbcode->parse($text);
-        } catch (\Exception $e) {
-            // В случае ошибки, используем простую замену
-            return $this->simpleBBCodeToHtml($text);
-        }
+        
+        // Используем простую замену
+        return $this->simpleBBCodeToHtml($text);
     }
 
     /**
      * Простое преобразование BBCode в HTML
-     * @param   string  $text  Текст с BBCod
+     * @param   string  $text  Текст с BBCode
      * @return  string  HTML-текст
      */
     private function simpleBBCodeToHtml($text)
     {
+        // Экранируем HTML теги сначала
+        $text = htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+        
         // Массив замен BBCode на HTML
         $bbcode = [
             '/\[b\](.*?)\[\/b\]/is' => '<strong>$1</strong>',
             '/\[i\](.*?)\[\/i\]/is' => '<em>$1</em>',
             '/\[u\](.*?)\[\/u\]/is' => '<u>$1</u>',
-            '/\[url\=(.*?)\](.*?)\[\/url\]/is' => '<a href="$1">$2</a>',
-            '/\[url\](.*?)\[\/url\]/is' => '<a href="$1">$1</a>',
-            '/\[img\](.*?)\[\/img\]/is' => '<img src="$1" alt="" />',
-            '/\[quote\](.*?)\[\/quote\]/is' => '<blockquote>$1</blockquote>',
-            '/\[quote\=(.*?)\](.*?)\[\/quote\]/is' => '<blockquote cite="$1">$2</blockquote>',
+            '/\[url\=(.*?)\](.*?)\[\/url\]/is' => '<a href="$1" target="_blank" rel="noopener">$2</a>',
+            '/\[url\](.*?)\[\/url\]/is' => '<a href="$1" target="_blank" rel="noopener">$1</a>',
+            '/\[img\](.*?)\[\/img\]/is' => '<img src="$1" alt="" class="img-responsive" />',
+            '/\[quote\](.*?)\[\/quote\]/is' => '<blockquote class="blockquote">$1</blockquote>',
+            '/\[quote\=(.*?)\](.*?)\[\/quote\]/is' => '<blockquote class="blockquote"><cite>$1</cite>$2</blockquote>',
             '/\[code\](.*?)\[\/code\]/is' => '<pre><code>$1</code></pre>',
-            '/\[size\=(.*?)\](.*?)\[\/size\]/is' => '<span style="font-size:$1px">$2</span>',
-            '/\[color\=(.*?)\](.*?)\[\/color\]/is' => '<span style="color:$1">$2</span>',
+            '/\[size\=(\d+)\](.*?)\[\/size\]/is' => '<span style="font-size:$1px">$2</span>',
+            '/\[color\=(#?[a-zA-Z0-9]+)\](.*?)\[\/color\]/is' => '<span style="color:$1">$2</span>',
             '/\[list\](.*?)\[\/list\]/is' => '<ul>$1</ul>',
             '/\[list\=1\](.*?)\[\/list\]/is' => '<ol>$1</ol>',
-            '/\[\*\](.*?)(\n|\r\n?)/is' => '<li>$1</li>',
+            '/\[\*\]\s*(.*?)(?=\[\*\]|\[\/list\]|$)/is' => '<li>$1</li>',
         ];
 
         // Применение замен
