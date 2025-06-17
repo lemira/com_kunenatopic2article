@@ -98,6 +98,7 @@ class DisplayController extends BaseController
      */
     public function save()
     {
+         $this->checkToken(); // Для безопасности в Joomla нужно проверять CSRF-токен перед редиректом:
         // Получаем модель
         $model = $this->getModel('Topic');
         $data = $this->input->get('jform', [], 'array');
@@ -128,9 +129,11 @@ class DisplayController extends BaseController
      * Метод для создания статей (Create Articles)
      * @since 1.0.0
      */
-    public function create()
+   public function create()
     {
-    // Простой редирект на ArticleController
-    $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&task=article.create'));
+        $this->checkToken();
+      // ОТЛ  Factory::getApplication()->enqueueMessage('DisplayController::create called', 'info');
+        $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&task=article.create'));
+        $this->redirect();
     }
 }
