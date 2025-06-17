@@ -32,7 +32,8 @@ class DisplayController extends BaseController
         $app = Factory::getApplication();
         // При каждой загрузке формы принудительно сбрасываем флаг успеха. дж
         // Это гарантирует, что кнопка "Create" всегда будет неактивна при первом показе.
-        $app->setUserState('com_kunenatopic2article.save.success', false);
+        // ??!! это не работает Create деактивирована не только при вызове компонента, но и после save 
+        // ??!! $app->setUserState('com_kunenatopic2article.save.success', false);
         $document = $app->getDocument();
         $input = $app->input;
         
