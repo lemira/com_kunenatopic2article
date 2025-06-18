@@ -38,7 +38,10 @@ class ArticleController extends BaseController
         $app = Factory::getApplication();
         
         /** @var \Joomla\Component\Kunenatopic2article\Administrator\Model\ArticleModel $model */
-        $model = $this->getModel('Article');
+$model = $this->getModel('Article', 'Administrator'); // ?? г вместо $model = $this->getModel('Article'); 
+        // гр чтобы явно указать область Administrator,  для фронтенд-контроллере будет $this->getModel('Article', 'Site');
+
+
 
         // Получаем параметры из таблицы kunenatopic2article_params
         $params = $this->getComponentParams();
@@ -52,7 +55,7 @@ class ArticleController extends BaseController
           try {
             Factory::getApplication()->enqueueMessage('до перехода в ArticleModel', 'info'); // ОТЛАДКА
             // Создаем статьи из темы Kunena
-            $articleLinks = $model->createArticlesFromTopic($settings);
+            $articleLinks = $model->createArticlesFromTopic($params);
              Factory::getApplication()->enqueueMessage('после возвращения из ArticleModel', 'info'); // ОТЛАДКА
             // Отправляем массив ссылок администратору
             $this->sendLinksToAdministrator($articleLinks);
