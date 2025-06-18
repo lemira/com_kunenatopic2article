@@ -63,16 +63,19 @@ class ArticleModel extends BaseDatabaseModel
        
             // Получаем ID первого поста
             $firstPostId = $params->topic_selection; // 3232
+            Factory::getApplication()->enqueueMessage('ArticleModel $firstPostId: ' . $firstPostId, 'info'); // ОТЛАДКА          
            
             $topicId = $firstPostId; // текущий id 
                       
             $this->$subject = $this->getTopicSubject($firstPostId);
-           
+           Factory::getApplication()->enqueueMessage('ArticleModel $subject: ' . $this->$subject, 'info'); // ОТЛАДКА 
+            
             // Формируем список ID постов в зависимости от схемы обхода
             if ($settings['post_transfer_scheme'] == 'tree') {
                 $this->postIdList = $this->buildTreePostIdList($topicId);
             } else {
                 $this->postIdList = $this->buildFlatPostIdList($firstPostId);
+                Factory::getApplication()->enqueueMessage('Массив ID постов: ' . print_r($this->postIdList, true), 'info'); // ОТЛАДКА
             }
 
             // Основной цикл обработки постов
