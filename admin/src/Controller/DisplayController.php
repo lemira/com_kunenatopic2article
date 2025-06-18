@@ -132,7 +132,7 @@ class DisplayController extends BaseController
    public function create()
     {
         $this->checkToken();
-      // ОТЛ  Factory::getApplication()->enqueueMessage('DisplayController::create called', 'info');
+      Factory::getApplication()->enqueueMessage('DisplayController::create called', 'info'); // ОТЛ  
         $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&task=article.create'));
         $this->redirect();
     }
