@@ -132,6 +132,8 @@ class DisplayController extends BaseController
    public function create()
     {
         $this->checkToken();
+        $this->app->setUserState('com_kunenatopic2article.save.success', false); // деактивируем create article
+        
       Factory::getApplication()->enqueueMessage('DisplayController::create called', 'info'); // ОТЛ  
         $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&task=article.create'));
         $this->redirect();
