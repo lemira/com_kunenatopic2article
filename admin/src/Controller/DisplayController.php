@@ -134,11 +134,13 @@ class DisplayController extends BaseController
         $this->checkToken();
         $this->app->setUserState('com_kunenatopic2article.save.success', false); // деактивируем create article
         
-      Factory::getApplication()->enqueueMessage('DisplayController::create called', 'info'); // ОТЛ  
-    $redirectUrl = Route::_('index.php?option=com_kunenatopic2article&task=article.create');
-    Factory::getApplication()->enqueueMessage('Redirecting to: ' . $redirectUrl, 'info'); // ОТЛ
-    $this->setRedirect($redirectUrl);
-        // было $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&task=article.create'));
-        $this->redirect();
+        Factory::getApplication()->enqueueMessage('DisplayController::create called', 'info'); // ОТЛАДКА
+        Factory::getApplication()->enqueueMessage('Calling ArticleController::create', 'info'); // ОТЛАДКА
+        
+        // Прямой вызов ArticleController::create
+        $controller = BaseController::getInstance('Article', ['base_path' => JPATH_COMPONENT_ADMINISTRATOR]);
+        $controller->execute('create');
+        
+        // Редирект не нужен, так как ArticleController::create сам редиректирует на view=result
     }
 }
