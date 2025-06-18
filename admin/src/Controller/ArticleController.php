@@ -30,7 +30,7 @@ class ArticleController extends BaseController
      */
     public function create()
     {
-        Factory::getApplication()->enqueueMessage('create() в ArticleController', 'info'); / / ОТЛАДКА
+        Factory::getApplication()->enqueueMessage('create() в ArticleController', 'info'); // ОТЛАДКА
             
         // Check for request forgeries
         Session::checkToken() or jexit(Text::_('JINVALID_TOKEN'));
@@ -50,10 +50,10 @@ class ArticleController extends BaseController
         }
 
           try {
-            Factory::getApplication()->enqueueMessage('до перехода в ArticleModel', 'info'); / / ОТЛАДКА
+            Factory::getApplication()->enqueueMessage('до перехода в ArticleModel', 'info'); // ОТЛАДКА
             // Создаем статьи из темы Kunena
             $articleLinks = $model->createArticlesFromTopic($settings);
-             Factory::getApplication()->enqueueMessage('после возвращения из ArticleModel', 'info'); / / ОТЛАДКА
+             Factory::getApplication()->enqueueMessage('после возвращения из ArticleModel', 'info'); // ОТЛАДКА
             // Отправляем массив ссылок администратору
             $this->sendLinksToAdministrator($articleLinks);
             
