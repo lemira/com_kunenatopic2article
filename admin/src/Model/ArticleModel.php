@@ -453,21 +453,13 @@ class ArticleModel extends BaseDatabaseModel
      * @param   int  $topicId  ID темы
      * @return  array  Список ID постов
      */
-    private function buildTreePostIdList($topicId)
+    private function buildTreePostIdList($firstPostId)
     {
         // Заглушка: в реальной реализации здесь должен быть алгоритм обхода дерева
-        // На данный момент возвращаем список из 1го поста темы как временное решение
-        try {
-            $postIds = [$firstPostId];
-            return $postIds;
-            }
-            
+        // На данный момент возвращаем плоский список как временное решение
+                 
             return $this->buildFlatPostIdList($firstPostId);
-        } catch (\Exception $e) {
-            $this->app->enqueueMessage($e->getMessage(), 'error');
-            return [];
-        }
-    }
+     }
 
     /**
      * Формирование информационной строки о посте
