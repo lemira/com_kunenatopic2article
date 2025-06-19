@@ -143,8 +143,14 @@ class DisplayController extends BaseController
     /** @var MVCFactoryInterface $mvcFactory */
     $mvcFactory = $container->getMVCFactory();
 
-    // Создаём контроллер Article в административном контексте
-    $controller = $mvcFactory->createController('Article', 'Administrator');
+    // Создаём контроллер Article в административном контексте // передаём 5 аргументов
+    $controller = $mvcFactory->createController(
+        'Article',
+        'Administrator',
+        [], // конфигурация, если есть
+        Factory::getApplication(),
+        Factory::getApplication()->input
+    );
     $controller->execute('create');
         
         // Редирект на view не нужен, так как ArticleController::create сам редиректирует на view=result
