@@ -29,6 +29,19 @@ class DisplayController extends BaseController
      */
     public function display($cachable = false, $urlparams = [])
     {
+       // Проверяем наличие Kunena
+        if (!class_exists('KunenaFactory')) {
+            Factory::getApplication()->enqueueMessage(Text::_('COM_YOURCOMPONENT_KUNENA_NOT_INSTALLED'), 'error');
+            $this->setRedirect('index.php?option=com_yourcomponent');
+            return false;
+        }
+        // Проверяем наличие NBBC-парсера
+        if (!file_exists(JPATH_BASE . '/libraries/kunena/External/Nbbc/Nbbc.php') && !class_exists('KunenaBbcode')) {
+            Factory::getApplication()->enqueueMessage(Text::_('COM_YOURCOMPONENT_BBCODE_PARSER_NOT_FOUND'), 'error');
+            $this->setRedirect('index.php?option=com_yourcomponent');
+            return false;
+        }
+        
         // Получаем приложение и документ
         $app = Factory::getApplication();
         // При каждой загрузке формы принудительно сбрасываем флаг успеха. дж
