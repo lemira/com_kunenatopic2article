@@ -38,7 +38,7 @@ class ArticleController extends BaseController
         $app = Factory::getApplication();
         
         /** @var \Joomla\Component\Kunenatopic2article\Administrator\Model\ArticleModel $model */
- $model = $this->getModel('Article'); // ?? г вместо  $model = $this->getModel('Article', 'Administrator');
+ $model = $this->getModel('Article', 'Administrator'); // г.ко вместо  $model = $this->getModel('Article');
         // гр чтобы явно указать область Administrator,  для фронтенд-контроллере будет $this->getModel('Article', 'Site');
 
 
