@@ -137,10 +137,10 @@ class DisplayController extends BaseController
         Factory::getApplication()->enqueueMessage('DisplayController::create called', 'info'); // ОТЛАДКА
         Factory::getApplication()->enqueueMessage('Calling ArticleController::create', 'info'); // ОТЛАДКА
         
-        // Прямой вызов ArticleController::create
+        // Прямой вызов ArticleController::create - вместо редиректа, чтобы избежать проблемы с CSRF-токеном
         $controller = BaseController::getInstance('Article', ['base_path' => JPATH_COMPONENT_ADMINISTRATOR]);
         $controller->execute('create');
         
-        // Редирект не нужен, так как ArticleController::create сам редиректирует на view=result
+        // Редирект на view не нужен, так как ArticleController::create сам редиректирует на view=result
     }
 }
