@@ -9,6 +9,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 
 class DisplayController extends BaseController
 {
@@ -135,11 +136,16 @@ class DisplayController extends BaseController
         $this->app->setUserState('com_kunenatopic2article.save.success', false); // деактивируем create article
         
         Factory::getApplication()->enqueueMessage('DisplayController::create called', 'info'); // ОТЛАДКА
-        Factory::getApplication()->enqueueMessage('Calling ArticleController::create', 'info'); // ОТЛАДКА
-        
+               
         // Прямой вызов ArticleController::create - вместо редиректа, чтобы избежать проблемы с CSRF-токеном
-        $controller = BaseController::getInstance('Article', ['base_path' => JPATH_COMPONENT_ADMINISTRATOR]);
-        $controller->execute('create');
+        // Получаем компонент и фабрику
+    $container = Factory::getApplication()->bootComponent('com_kunenatopic2article');
+    /** @var MVCFactoryInterface $mvcFactory */
+    $mvcFactory = $container->getMVCFactory();
+
+    // Создаём контроллер Article в административном контексте
+    $controller = $mvcFactory->createController('Article', 'Administrator');
+    $controller->execute('create');
         
         // Редирект на view не нужен, так как ArticleController::create сам редиректирует на view=result
     }
