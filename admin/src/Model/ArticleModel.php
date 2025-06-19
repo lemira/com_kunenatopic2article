@@ -539,56 +539,14 @@ class ArticleModel extends BaseDatabaseModel
      */
     private function convertBBCodeToHtml($text)
     {
-        // Проверяем наличие класса KunenaBbcode
-        if (class_exists('KunenaBbcode')) {
-            try {
-                // Используем парсер KunenaBbcode
-                $bbcode = KunenaBbcode::getInstance();
-                return $bbcode->parse($text);
-            } catch (\Exception $e) {
-                // В случае ошибки, используем простую замену
-                $this->app->enqueueMessage('Ошибка парсинга BBCode: ' . $e->getMessage(), 'warning');
-            }
+        try {
+            // Используем парсер KunenaBbcode
+            $bbcode = KunenaBbcode::getInstance();
+            return $bbcode->parse($text);
+        } catch (\Exception $e) {
+            // В случае ошибки
+            $this->app->enqueueMessage('Ошибка парсинга BBCode: ' . $e->getMessage(), 'warning');
+            return $text; // Возвращаем исходный текст при ошибке
         }
-        
-        // Используем простую замену
-        return $this->simpleBBCodeToHtml($text);
-    }
-
-    /**
-     * Простое преобразование BBCode в HTML
-     * @param   string  $text  Текст с BBCode
-     * @return  string  HTML-текст
-     */
-    private function simpleBBCodeToHtml($text)
-    {
-        // Экранируем HTML теги сначала
-        $text = htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
-        
-        // Массив замен BBCode на HTML
-        $bbcode = [
-            '/\[b\](.*?)\[\/b\]/is' => '<strong>$1</strong>',
-            '/\[i\](.*?)\[\/i\]/is' => '<em>$1</em>',
-            '/\[u\](.*?)\[\/u\]/is' => '<u>$1</u>',
-            '/\[url\=(.*?)\](.*?)\[\/url\]/is' => '<a href="$1" target="_blank" rel="noopener">$2</a>',
-            '/\[url\](.*?)\[\/url\]/is' => '<a href="$1" target="_blank" rel="noopener">$1</a>',
-            '/\[img\](.*?)\[\/img\]/is' => '<img src="$1" alt="" class="img-responsive" />',
-            '/\[quote\](.*?)\[\/quote\]/is' => '<blockquote class="blockquote">$1</blockquote>',
-            '/\[quote\=(.*?)\](.*?)\[\/quote\]/is' => '<blockquote class="blockquote"><cite>$1</cite>$2</blockquote>',
-            '/\[code\](.*?)\[\/code\]/is' => '<pre><code>$1</code></pre>',
-            '/\[size\=(\d+)\](.*?)\[\/size\]/is' => '<span style="font-size:$1px">$2</span>',
-            '/\[color\=(#?[a-zA-Z0-9]+)\](.*?)\[\/color\]/is' => '<span style="color:$1">$2</span>',
-            '/\[list\](.*?)\[\/list\]/is' => '<ul>$1</ul>',
-            '/\[list\=1\](.*?)\[\/list\]/is' => '<ol>$1</ol>',
-            '/\[\*\]\s*(.*?)(?=\[\*\]|\[\/list\]|$)/is' => '<li>$1</li>',
-        ];
-
-        // Применение замен
-        $html = preg_replace(array_keys($bbcode), array_values($bbcode), $text);
-        
-        // Замена переносов строк на HTML-теги
-        $html = nl2br($html);
-
-        return $html;
     }
 }
