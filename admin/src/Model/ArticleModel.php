@@ -41,7 +41,8 @@ class ArticleModel extends BaseDatabaseModel
     private $currentPost = null;  // Текущий пост @var    object
     private $subject = ''; // Переменная модели для хранения subject
     private $topicAuthorId = ''; // Переменная модели для хранения Id автора
-    
+    private $params = null; // Хранение параметров для доступа в других методах
+
         public function __construct($config = [])
     {
         parent::__construct($config);
@@ -56,7 +57,7 @@ class ArticleModel extends BaseDatabaseModel
      */
     public function createArticlesFromTopic($params)
     {   // Параметры $params получены в контроллере из таблицы kunenatopic2article_params; копию функции можно взять из контроллера
-         
+        $this->params = $params; 
         // Инициализация массива ссылок
         $this->articleLinks = [];
         try {
