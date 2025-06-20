@@ -74,7 +74,7 @@ class ArticleModel extends BaseDatabaseModel
             $this->$topicAuthorId = $data['topicAuthorId'];
             
             // Формируем список ID постов в зависимости от схемы обхода
-            if ($params['post_transfer_scheme'] = 1) {
+            if ($this->params['post_transfer_scheme'] = 1) {
                 $this->postIdList = $this->buildTreePostIdList($topicId);
             } else {
                 $this->postIdList = $this->buildFlatPostIdList($firstPostId);
