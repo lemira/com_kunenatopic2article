@@ -55,7 +55,7 @@ class ArticleModel extends BaseDatabaseModel
      * @return  array  Массив ссылок на созданные статьи
      */
     public function createArticlesFromTopic($params)
-    {   // Параметры $params получены в контроллере из таблицы kunenatopic2article_params
+    {   // Параметры $params получены в контроллере из таблицы kunenatopic2article_params; копию функции можно взять из контроллера
          
         // Инициализация массива ссылок
         $this->articleLinks = [];
@@ -499,36 +499,6 @@ class ArticleModel extends BaseDatabaseModel
             return $userName ? $userName : Text::_('COM_KUNENATOPIC2ARTICLE_UNKNOWN_USER');
         } catch (\Exception $e) {
             return Text::_('COM_KUNENATOPIC2ARTICLE_UNKNOWN_USER');
-        }
-    }
-
-    /**
-     * Получение параметров компонента из таблиц - копия из контроллера
-     * @return  object|null  Объект с параметрами компонента
-     */
-    private function getComponentParams()
-    {
-        try {
-            $db = Factory::getContainer()->get('DatabaseDriver');
-            $query = $db->getQuery(true)
-                ->select('*')
-                ->from($db->quoteName('#__kunenatopic2article_params'))
-                ->where($db->quoteName('id') . ' = 1');
-            
-            $params = $db->setQuery($query)->loadObject();
-            
-            if (!$params) {
-                Factory::getApplication()->enqueueMessage(
-                    Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_NOT_FOUND'), 
-                    'error'
-                );
-                return null;
-            }
-            
-            return $params;
-        } catch (\Exception $e) {
-            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
-            return null;
         }
     }
 
