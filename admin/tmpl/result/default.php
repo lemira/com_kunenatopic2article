@@ -1,26 +1,19 @@
 <?php
-/**
- * @package     Joomla.Administrator
- * @subpackage  com_kunenatopic2article
- *
- * @copyright   (C) 2025 lr. All rights reserved.
- * @license     GNU/GPL
- */
-
 defined('_JEXEC') or die;
 
-/**
- * Указываем IDE, что $this - это объект нашего View класса.
- * @var Joomla\Component\KunenaTopic2Article\Administrator\View\Result\HtmlView $this
- */
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\Router\Route;
+
+// Указываем IDE, что $this — HtmlView
+/** @var Joomla\Component\KunenaTopic2Article\Administrator\View\Result\HtmlView $this */
 ?>
 
 <div class="joomla-overview">
-    <h1>Результаты работы компонента</h1>
-    
+    <h1><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_RESULT_HEADING'); ?></h1>
+
     <?php if (!empty($this->links)) : ?>
         <div class="alert alert-success">
-            <p>Были успешно созданы или обновлены следующие материалы:</p>
+            <p><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED'); ?></p>
             <ul>
                 <?php foreach ($this->links as $link) : ?>
                     <li>
@@ -33,9 +26,22 @@ defined('_JEXEC') or die;
         </div>
     <?php else : ?>
         <div class="alert alert-info">
-            <p>Не было создано ни одной статьи или информация о них не найдена.</p>
+            <p><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_NO_ARTICLES_CREATED'); ?></p>
         </div>
     <?php endif; ?>
-    
-   <p>Администратор, вы можете сообщить автору темы о созданных на ее основе статьях</p>
+
+    <?php if ($this->emailsSent ?? false) : ?>
+        <div class="alert alert-warning">
+            <p><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_EMAILS_SENT_NOTICE'); ?></p>
+        </div>
+    <?php endif; ?>
+
+    <div class="button-container" style="margin-top: 2rem;">
+        <a class="btn btn-primary" href="<?php echo Route::_('index.php?option=com_kunenatopic2article'); ?>">
+            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_CONTINUE_WORK'); ?>
+        </a>
+        <a class="btn btn-secondary" href="<?php echo Route::_('index.php'); ?>">
+            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_FINISH_WORK'); ?>
+        </a>
+    </div>
 </div>
