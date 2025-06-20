@@ -47,7 +47,7 @@ class ArticleModel extends BaseDatabaseModel
     {
         parent::__construct($config);
         $this->app = Factory::getApplication();
-        $this->db = Factory::getContainer()->get(DatabaseInterface::class);
+         $this->db = $this->getDatabase(); // Оптимизировано для J5
     }
 
     /**
@@ -126,7 +126,7 @@ class ArticleModel extends BaseDatabaseModel
     {
           try {
             // Формируем базовый заголовок статьи
-            $title = $subject;
+            $title = $this->subject;
            
             // Если это не первая статья, добавляем номер части
             if (!empty($this->articleLinks)) {
@@ -142,7 +142,7 @@ class ArticleModel extends BaseDatabaseModel
             $this->articleSize = 0;
 
             // Отладка
-            $this->app->enqueueMessage('Статья подготовлена: ' . $title . ', категория: ' . $params['article_category'] . ', alias: ' . $uniqueAlias, 'notice');
+            $this->app->enqueueMessage('Статья подготовлена: ' . $title . ', категория: ' . $this->params['article_category'] . ', alias: ' . $uniqueAlias, 'notice');
 
             return true;
          } catch (\Exception $e) {
@@ -215,8 +215,8 @@ class ArticleModel extends BaseDatabaseModel
             }
 
             // Создаем статью через Table
-            $this->currentArticle =  createArticleViaTable();
-                        
+            $articleId = $this->createArticleViaTable();
+                         
             if (!$articleId) {
                 throw new \Exception('Ошибка сохранения статьи.');
             }
@@ -259,17 +259,20 @@ class ArticleModel extends BaseDatabaseModel
             }
 
             // Подготавливаем данные 
+            $title = $this->currentArticle->title;
+            $uniqueAlias = $this->currentArticle->alias;
+            
             $data = [
                 'title' => $title,
                 'alias' => $uniqueAlias,
                 'introtext' => '',
                 'fulltext' => $this->currentArticle->fulltext,
-                'catid' => (int) $this->$params['article_category'],
-                'created_by' => (int)$this->$topicAuthorId 
+                'catid' => (int) $this->params['article_category'],
+                'created_by' => (int)$this->topicAuthorId, 
                 'state' => 1, // Published
                 'language' => '*',
                 'access' => 1,
-                'created' => Factory::getDate()->toSql(),
+                'created' =>  (new Date())->toSql(), 
                 'attribs' => '{}',
                 'metakey' => '',
                 'metadesc' => '',
