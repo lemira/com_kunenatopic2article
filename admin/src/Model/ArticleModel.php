@@ -155,19 +155,20 @@ class ArticleModel extends BaseDatabaseModel
      * @param   string  $baseAlias  Базовый алиас
      * @return  string  Уникальный алиас
      */
-    private function getUniqueAlias($baseAlias)
-    {
-        $uniqueAlias = $baseAlias;
-        $counter = 0;
-        
-        // Проверяем уникальность алиаса
-        while ($this->aliasExists($uniqueAlias)) {
-            $counter++;
-            $uniqueAlias = $baseAlias . '-' . $counter;
-        }
-        
-        return $uniqueAlias;
+   private function getUniqueAlias($baseAlias)
+{
+    $db = $this->db;
+    $counter = '';
+    $alias = $baseAlias;
+
+    // Проверяем уникальность алиаса и автоматически добавляем номер, если нужно
+    while ($this->aliasExists($alias)) {
+        $counter = ($counter === '') ? 2 : $counter + 1;
+        $alias = $baseAlias . '-' . $counter;
     }
+
+    return $alias;
+}
     
     /**
      * Проверка существования алиаса
@@ -176,19 +177,18 @@ class ArticleModel extends BaseDatabaseModel
      */
     private function aliasExists($alias)
     {
-        try {
-            $query = $this->db->getQuery(true)
-                ->select('COUNT(*)')
-                ->from($this->db->quoteName('#__content'))
-                ->where($this->db->quoteName('alias') . ' = ' . $this->db->quote($alias));
-                
-            $count = $this->db->setQuery($query)->loadResult();
-                
-            return $count > 0;
-        } catch (\Exception $e) {
-            return false;
-        }
+    try {
+        $query = $this->db->getQuery(true)
+            ->select('1')
+            ->from($this->db->quoteName('#__content'))
+            ->where($this->db->quoteName('alias') . ' = ' . $this->db->quote($alias))
+            ->setLimit(1);
+
+        return (bool) $this->db->setQuery($query)->loadResult();
+    } catch (\Exception $e) {
+        return false;
     }
+}
 
     /**
      * Закрытие и сохранение статьи
