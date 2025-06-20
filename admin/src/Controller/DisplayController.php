@@ -29,6 +29,8 @@ class DisplayController extends BaseController
      */
     public function display($cachable = false, $urlparams = [])
     {
+
+          /** проверку наличия Kunena и NBBC-парсера пропускаю, выдалась ошибка Kunena is not installed.
        // Проверяем наличие Kunena
         if (!class_exists('KunenaFactory')) {
             Factory::getApplication()->enqueueMessage(Text::_('COM_YOURCOMPONENT_KUNENA_NOT_INSTALLED'), 'error');
@@ -41,6 +43,7 @@ class DisplayController extends BaseController
             $this->setRedirect('index.php?option=com_yourcomponent');
             return false;
         }
+        */
         
         // Получаем приложение и документ
         $app = Factory::getApplication();
