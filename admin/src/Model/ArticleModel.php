@@ -212,8 +212,7 @@ class ArticleModel extends BaseDatabaseModel
                 //} else {
                   //  $this->currentArticle->introtext = $this->currentArticle->fulltext;
                // }
-            }
-
+       
             // Создаем статью через Table
             $articleId = $this->createArticleViaTable();
                          
