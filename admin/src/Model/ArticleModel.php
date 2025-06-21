@@ -88,7 +88,7 @@ class ArticleModel extends BaseDatabaseModel
 
                 // Если статья не открыта или текущий пост не помещается в статью
                 if ($this->currentArticle === null || 
-                    ($this->articleSize + $this->postSize > $this->params->max_article_size)] && $this->articleSize > 0)) {
+                    (($this->articleSize + $this->postSize > $this->params->max_article_size) && $this->articleSize > 0)) {
                    
                     // Если статья уже открыта, закрываем её перед открытием новой
                     if ($this->currentArticle !== null) {
