@@ -70,8 +70,8 @@ class ArticleModel extends BaseDatabaseModel
                       
             $data = $this->getTopicSubject($firstPostId);    // Возвращаем массив
             $this->subject = $data['subject'];
-           Factory::getApplication()->enqueueMessage('ArticleModel $subject: ' . $this->$subject, 'info'); // ОТЛАДКА 
-            $this->$topicAuthorId = $data['topicAuthorId'];
+           Factory::getApplication()->enqueueMessage('ArticleModel $subject: ' . $this->subject, 'info'); // ОТЛАДКА 
+            $this->topicAuthorId = $data['topicAuthorId'];
             
             // Формируем список ID постов в зависимости от схемы обхода
             if ($this->params->post_transfer_scheme == 1) {
