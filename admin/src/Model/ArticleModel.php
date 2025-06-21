@@ -74,13 +74,13 @@ class ArticleModel extends BaseDatabaseModel
             $this->topicAuthorId = $data['topicAuthorId'];
             
             // Формируем список ID постов в зависимости от схемы обхода
-            if ($this->params->post_transfer_scheme == 1) {
-                $this->postIdList = $this->buildTreePostIdList($topicId);
-            } else {
+            if ($this->params->post_transfer_scheme != 1) {
                 $this->postIdList = $this->buildFlatPostIdList($firstPostId);
-                Factory::getApplication()->enqueueMessage('Массив ID постов: ' . print_r($this->postIdList, true), 'info'); // ОТЛАДКА
-            }
-
+                } else {
+                $this->postIdList = $this->buildTreePostIdList($firstPostId);
+                }
+            Factory::getApplication()->enqueueMessage('Массив ID постов: ' . print_r($this->postIdList, true), 'info'); // ОТЛАДКА
+          
             // Основной цикл обработки постов
             while ($this->postId != 0) {
                 // Открываем пост для доступа к его параметрам
