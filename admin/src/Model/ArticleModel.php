@@ -69,12 +69,12 @@ class ArticleModel extends BaseDatabaseModel
             $topicId = $firstPostId; // текущий id 
                       
             $data = $this->getTopicSubject($firstPostId);    // Возвращаем массив
-            $this->$subject = $data['subject'];
+            $this->subject = $data['subject'];
            Factory::getApplication()->enqueueMessage('ArticleModel $subject: ' . $this->$subject, 'info'); // ОТЛАДКА 
             $this->$topicAuthorId = $data['topicAuthorId'];
             
             // Формируем список ID постов в зависимости от схемы обхода
-            if ($this->params['post_transfer_scheme'] === 1) {
+            if ($this->params->post_transfer_scheme == 1) {
                 $this->postIdList = $this->buildTreePostIdList($topicId);
             } else {
                 $this->postIdList = $this->buildFlatPostIdList($firstPostId);
@@ -88,7 +88,7 @@ class ArticleModel extends BaseDatabaseModel
 
                 // Если статья не открыта или текущий пост не помещается в статью
                 if ($this->currentArticle === null || 
-                    ($this->articleSize + $this->postSize > $params['max_article_size'] && $this->articleSize > 0)) {
+                    ($this->articleSize + $this->postSize > $this->params->max_article_size)] && $this->articleSize > 0)) {
                    
                     // Если статья уже открыта, закрываем её перед открытием новой
                     if ($this->currentArticle !== null) {
@@ -142,7 +142,7 @@ class ArticleModel extends BaseDatabaseModel
             $this->articleSize = 0;
 
             // Отладка
-            $this->app->enqueueMessage('Статья подготовлена: ' . $title . ', категория: ' . $this->params['article_category'] . ', alias: ' . $uniqueAlias, 'notice');
+            $this->app->enqueueMessage('Статья подготовлена: ' . $title . ', категория: ' . $this->params->article_category . ', alias: ' . $uniqueAlias, 'notice');
 
             return true;
          } catch (\Exception $e) {
@@ -266,7 +266,7 @@ class ArticleModel extends BaseDatabaseModel
                 'alias' => $uniqueAlias,
                 'introtext' => '',
                 'fulltext' => $this->currentArticle->fulltext,
-                'catid' => (int) $this->params['article_category'],
+                'catid' => (int) $this->params->article_category,
                 'created_by' => (int)$this->topicAuthorId, 
                 'state' => 1, // Published
                 'language' => '*',
