@@ -66,8 +66,6 @@ class ArticleModel extends BaseDatabaseModel
             $firstPostId = $params->topic_selection; // 3232
             Factory::getApplication()->enqueueMessage('ArticleModel $firstPostId: ' . $firstPostId, 'info'); // ОТЛАДКА          
            
-            $topicId = $firstPostId; // текущий id 
-                      
             $data = $this->getTopicSubject($firstPostId);    // Возвращаем массив
             $this->subject = $data['subject'];
            Factory::getApplication()->enqueueMessage('ArticleModel $subject: ' . $this->subject, 'info'); // ОТЛАДКА 
@@ -80,6 +78,8 @@ class ArticleModel extends BaseDatabaseModel
                 $this->postIdList = $this->buildTreePostIdList($firstPostId);
                 }
 
+              $this->postId = $firstPostId; // текущий id 
+            
                // Основной цикл обработки постов
                 while ($this->postId != 0) {
                 $this->openPost($this->postId); // Открываем пост для доступа к его параметрам
