@@ -36,6 +36,7 @@ class ArticleModel extends BaseDatabaseModel
     private $articleSize = 0;    // Текущий размер статьи , @var    int 
     private $articleLinks = [];  // Массив ссылок на созданные статьи  @var array 
     private $postId = 0;   // Текущий ID поста @var    int
+    private $postText = ''; // Текст текущего поста 
     private $postSize = 0; // Размер текущего поста var    int
     private $postIdList = []; // Список ID постов для обработки @var    array
     private $currentPost = null;  // Текущий пост @var    object
@@ -312,8 +313,24 @@ class ArticleModel extends BaseDatabaseModel
             $this->currentPost = $this->db->setQuery($query)->loadObject();
             // Проверка if (!$this->currentPost) не не нужна, все посты проверены; сбой БД ловится в catch 
         
-            $this->postSize = strlen($this->currentPost->message); // Размер поста
-Factory::getApplication()->enqueueMessage('openPost Размер поста: ' . $this->postSize, 'info'); // ОТЛАДКА          
+            // Создаём запрос текста поста
+            $query = $this->db->getQuery(true)
+                ->select($this->db->quoteName('message'))
+                ->from($this->db->quoteName('#__kunena_messages_text'))
+                ->where($this->db->quoteName('mesid') . ' = ' . (int)$postId);
+
+            // Получаем текст поста
+            $this->postText = $this->db->setQuery($query)->loadResult();
+
+            // Проверяем, найден ли текст
+            if ($this->postText === null) {
+                throw new \Exception(Text::sprintf('COM_YOURCOMPONENT_POST_TEXT_NOT_FOUND', $postId));
+            }
+
+            // Вычисляем размер поста (в символах)
+            $this->postSize = mb_strlen($this->postText, 'UTF-8');
+            
+            Factory::getApplication()->enqueueMessage('openPost Размер поста: ' . $this->postSize, 'info'); // ОТЛАДКА          
            
             return true;
         } catch (\Exception $e) {
