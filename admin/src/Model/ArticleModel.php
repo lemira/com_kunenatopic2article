@@ -79,36 +79,31 @@ class ArticleModel extends BaseDatabaseModel
                 } else {
                 $this->postIdList = $this->buildTreePostIdList($firstPostId);
                 }
-         
-            // Основной цикл обработки постов
-            while ($this->postId != 0) {
-                // Открываем пост для доступа к его параметрам
-                $this->openPost($this->postId);
 
-                // Если статья не открыта или текущий пост не помещается в статью
-                if ($this->currentArticle === null || 
-                    (($this->articleSize + $this->postSize > $this->params->max_article_size) && $this->articleSize > 0)) {
-                   
-                    // Если статья уже открыта, закрываем её перед открытием новой
-                    if ($this->currentArticle !== null) {
-                        $this->closeArticle();
+               // Основной цикл обработки постов
+                while ($this->postId != 0) {
+                $this->openPost($this->postId); // Открываем пост для доступа к его параметрам
+
+                if ($this->currentArticle === null){     // Если статья не открыта 
+                    $this->openArticle();     // Открываем новую статью
                     }
                    
-                    // Открываем новую статью
-                    $this->openArticle();
-                }
+                    // Если статья уже открыта
+                if ($this->articleSize + $this->postSize > $this->params->max_article_size) {
+                    $this->closeArticle();     // закрываем её перед открытием новой
+                    $this->openArticle();   // Открываем новую статью
+                    }
+            
+                $this->transferPost(); // Переносим содержимое поста в статью
+                $this->nextPost(); // Переходим к следующему посту
+            }      // Конец основного цикла обработки постов
 
-                // Переносим содержимое поста в статью
-                $this->transferPost();
-
-                // Переходим к следующему посту
-                $this->nextPost();
-              }
-
+       
             // Закрываем последнюю статью
             if ($this->currentArticle !== null) {
                 $this->closeArticle();
             }
+            Factory::getApplication()->enqueueMessage('createArticlesFromTopic: последняя статья' . $this->subject, 'info'); // ОТЛАДКА 
 
             return $this->articleLinks;
          } catch (\Exception $e) {
