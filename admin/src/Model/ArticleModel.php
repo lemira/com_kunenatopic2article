@@ -120,24 +120,28 @@ class ArticleModel extends BaseDatabaseModel
     private function openArticle()
     {
           try {
+
+            $this->currentArticle->fulltext = '';
+              
             // Формируем базовый заголовок статьи
             $title = $this->subject;
-           
             // Если это не первая статья, добавляем номер части
             if (!empty($this->articleLinks)) {
                 $partNum = count($this->articleLinks) + 1;
                 $title .= ' - ' . Text::sprintf('COM_KUNENATOPIC2ARTICLE_PART_NUMBER', $partNum);
             }
-
+            $this->currentArticle->title = $title;
+           
             // Формируем уникальный алиас
             $baseAlias = OutputFilter::stringURLSafe($title);
             $uniqueAlias = $this->getUniqueAlias($baseAlias);
-
+            $this->currentArticle->alias = $uniqueAlias;
+              
             // Сбрасываем текущий размер статьи
             $this->articleSize = 0;
 
             // Отладка
-            $this->app->enqueueMessage('Статья подготовлена: ' . $title . ', категория: ' . $this->params->article_category . ', alias: ' . $uniqueAlias, 'notice');
+            $this->app->enqueueMessage('openArticle Статья открыта: ' . $title . ', категория: ' . $this->params->article_category . ', alias: ' . $uniqueAlias, 'notice');
 
             return true;
          } catch (\Exception $e) {
@@ -197,7 +201,7 @@ class ArticleModel extends BaseDatabaseModel
         }
 
         try {
-            $this->app->enqueueMessage('Сохранение статьи: ' . $this->currentArticle->title, 'notice');
+            $this->app->enqueueMessage('closeArticle Сохранение статьи: ' . $this->currentArticle->title, 'notice');
 
             // Обработка introtext, если он пустой
            // if (empty($this->currentArticle->introtext) && !empty($this->currentArticle->fulltext)) {
@@ -253,12 +257,9 @@ class ArticleModel extends BaseDatabaseModel
             }
 
             // Подготавливаем данные 
-            $title = $this->currentArticle->title;
-            $uniqueAlias = $this->currentArticle->alias;
-            
-            $data = [
-                'title' => $title,
-                'alias' => $uniqueAlias,
+                $data = [
+                'title' => $this->currentArticle->title,
+                'alias' => $this->currentArticle->alias,
                 'introtext' => '',
                 'fulltext' => $this->currentArticle->fulltext,
                 'catid' => (int) $this->params->article_category,
@@ -351,15 +352,15 @@ class ArticleModel extends BaseDatabaseModel
 
         try {
             // Формируем информационную строку о посте
-            $infoString = $this->formatPostInfo();
+      //      $infoString = $this->formatPostInfo();
             
             // Добавляем информационную строку в статью, если она не пуста
-            if (!empty($infoString)) {
-                if (!isset($this->currentArticle->fulltext)) {  // ??
-                    $this->currentArticle->fulltext = '';        // ??
-                }                                                // ??
-                $this->currentArticle->fulltext .= $infoString;
-            }
+      //      if (!empty($infoString)) {
+        //        if (!isset($this->currentArticle->fulltext)) {  // ??
+          //          $this->currentArticle->fulltext = '';        // ??
+           //     }                                                // ??
+           //     $this->currentArticle->fulltext .= $infoString;
+           // }
 
             // Преобразуем BBCode в HTML
             $htmlContent = $this->convertBBCodeToHtml($this->currentPost->message);
@@ -368,7 +369,7 @@ class ArticleModel extends BaseDatabaseModel
             $this->currentArticle->fulltext .= $htmlContent;
             
             // Обновляем размер статьи
-            $this->articleSize += strlen($htmlContent);
+            $this->articleSize += $this->postSize;
 Factory::getApplication()->enqueueMessage('transferPost Размер текста: ' . $this->articleSize, 'info'); // ОТЛАДКА   
             return true;
         } catch (\Exception $e) {
