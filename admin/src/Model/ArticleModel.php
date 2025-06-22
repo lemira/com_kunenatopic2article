@@ -414,12 +414,12 @@ class ArticleModel extends BaseDatabaseModel
     {
         try {
           // Получаем Id темы
-        $query = $this->db->getQuery(true)
-            ->select($this->db->quoteName('thread'))
-            ->from($this->db->quoteName('#__kunena_messages'))
-            ->where($this->db->quoteName('id') . ' = ' . $firstPostId);
-        
-        $threadId = $this->db->setQuery($query)->loadResult();
+            $query = $this->db->getQuery(true)
+                ->select($this->db->quoteName('thread'))
+                ->from($this->db->quoteName('#__kunena_messages'))
+                ->where($this->db->quoteName('id') . ' = ' . $this->db->quote($firstPostId));
+
+            $threadId = $this->db->setQuery($query)->loadResult();
         
             // Получаем все посты темы
             $query = $this->db->getQuery(true)
@@ -428,19 +428,23 @@ class ArticleModel extends BaseDatabaseModel
                 ->where($this->db->quoteName('thread') . ' = ' . (int)$threadId)
                 ->where($this->db->quoteName('hold') . ' = 0')
                 ->order($this->db->quoteName('time') . ' ASC');
-
+            /* оптимизация для уменьшения нагрузки на базу данных г: $query = $this->db->getQuery(true) \\  ->select($this->db->quoteName('id')) \\
+    ->from($this->db->quoteName('#__kunena_messages')) \\ ->where($this->db->quoteName('thread') . ' IN (' . \\ $this->db->getQuery(true) \\
+ ->select($this->db->quoteName('thread')) \\ ->from($this->db->quoteName('#__kunena_messages')) \\ 
+ ->where($this->db->quoteName('id') . ' = ' . $this->db->quote($firstPostId)) . ')') \\  ->where($this->db->quoteName('hold') . ' = 0') \\
+    ->order($this->db->quoteName('time') . ' ASC');
+    */
             $postIds = $this->db->setQuery($query)->loadColumn();
+            // Приводим ID к целым числам
+            $postIds = array_map('intval', $postIds);
                 
-            if (empty($postIds)) {    // эта проверка в принципе не нужна, так как минимум 1 пост с id=$firstPostId в список попадет
-                throw new \Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_NO_POSTS_IN_TOPIC', $firstPostId));
-            }
-    Factory::getApplication()->enqueueMessage('Массив ID постов: ' . print_r($this->postIdList, true), 'info'); // ОТЛАДКА
+    Factory::getApplication()->enqueueMessage('Массив ID постов: ' . print_r($postIds, true), 'info'); // ОТЛАДКА
          
             return $postIds;
             
         } catch (\Exception $e) {
             $this->app->enqueueMessage($e->getMessage(), 'error');
-            return [];
+            return []; // м. использовать: return null; // Вернуть null при ошибке
         }
     }
 
