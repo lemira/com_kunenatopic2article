@@ -79,8 +79,7 @@ class ArticleModel extends BaseDatabaseModel
                 } else {
                 $this->postIdList = $this->buildTreePostIdList($firstPostId);
                 }
-            Factory::getApplication()->enqueueMessage('Массив ID постов: ' . print_r($this->postIdList, true), 'info'); // ОТЛАДКА
-          
+         
             // Основной цикл обработки постов
             while ($this->postId != 0) {
                 // Открываем пост для доступа к его параметрам
@@ -104,7 +103,7 @@ class ArticleModel extends BaseDatabaseModel
 
                 // Переходим к следующему посту
                 $this->nextPost();
-            }
+              }
 
             // Закрываем последнюю статью
             if ($this->currentArticle !== null) {
@@ -385,7 +384,7 @@ class ArticleModel extends BaseDatabaseModel
             // Если больше нет постов
             $this->postId = 0;
         }
-
+  Factory::getApplication()->enqueueMessage('ArticleModel $this->nextPost: ' . $this->postId, 'info'); // ОТЛАДКА          
         return $this->postId;
     }
 
@@ -435,7 +434,8 @@ class ArticleModel extends BaseDatabaseModel
             if (empty($postIds)) {    // эта проверка в принципе не нужна, так как минимум 1 пост с id=$firstPostId в список попадет
                 throw new \Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_NO_POSTS_IN_TOPIC', $firstPostId));
             }
-
+    Factory::getApplication()->enqueueMessage('Массив ID постов: ' . print_r($this->postIdList, true), 'info'); // ОТЛАДКА
+         
             return $postIds;
             
         } catch (\Exception $e) {
