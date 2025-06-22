@@ -121,7 +121,8 @@ class ArticleModel extends BaseDatabaseModel
     {
           try {
 
-            $this->currentArticle->fulltext = '';
+           $this->currentArticle = new \stdClass(); // Инициализируем $this->currentArticle как stdClass
+           $this->currentArticle->fulltext = '';
               
             // Формируем базовый заголовок статьи
             $title = $this->subject;
@@ -201,7 +202,7 @@ class ArticleModel extends BaseDatabaseModel
         }
 
         try {
-            $this->app->enqueueMessage('closeArticle Сохранение статьи: ' . $this->currentArticle->title, 'notice');
+Factory::getApplication()->enqueueMessage('closeArticle Сохранение статьи: ' . $this->currentArticle->title, 'info'); // ОТЛАДКА          
 
             // Обработка introtext, если он пустой
            // if (empty($this->currentArticle->introtext) && !empty($this->currentArticle->fulltext)) {
