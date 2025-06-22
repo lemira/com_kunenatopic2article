@@ -308,21 +308,18 @@ class ArticleModel extends BaseDatabaseModel
     private function openPost($postId)
     {
         try {
-            // Получаем данные поста из базы данных Kunena, фильтрация промодерированных постов
+            // Получаем данные поста из базы данных Kunena, фильтрация промодерированных постов сделана раньше
             $query = $this->db->getQuery(true)
-                ->select('*')
+                ->select('*')        // Нужно сделать получение только используемых полей
                 ->from($this->db->quoteName('#__kunena_messages'))
-                ->where($this->db->quoteName('id') . ' = ' . (int)$postId)
-                ->where($this->db->quoteName('hold') . ' = 0');
+                ->where($this->db->quoteName('id') . ' = ' . (int)$postId);
 
             $this->currentPost = $this->db->setQuery($query)->loadObject();
-
-            if (!$this->currentPost) {
-                throw new \Exception('Пост не найден или заблокирован: ' . $postId);
-            }
-
-            $this->postSize = strlen($this->currentPost->message); // Рассчитываем размер поста
-
+            // Проверка if (!$this->currentPost) не не нужна, все посты проверены; сбой БД ловится в catch 
+        
+            $this->postSize = strlen($this->currentPost->message); // Размер поста
+Factory::getApplication()->enqueueMessage('openPost Размер поста: ' . $this->postSize, 'info'); // ОТЛАДКА          
+           
             return true;
         } catch (\Exception $e) {
             $this->app->enqueueMessage($e->getMessage(), 'error');
@@ -346,9 +343,9 @@ class ArticleModel extends BaseDatabaseModel
             
             // Добавляем информационную строку в статью, если она не пуста
             if (!empty($infoString)) {
-                if (!isset($this->currentArticle->fulltext)) {
-                    $this->currentArticle->fulltext = '';
-                }
+                if (!isset($this->currentArticle->fulltext)) {  // ??
+                    $this->currentArticle->fulltext = '';        // ??
+                }                                                // ??
                 $this->currentArticle->fulltext .= $infoString;
             }
 
@@ -360,7 +357,7 @@ class ArticleModel extends BaseDatabaseModel
             
             // Обновляем размер статьи
             $this->articleSize += strlen($htmlContent);
-
+Factory::getApplication()->enqueueMessage('transferPost Размер текста: ' . $this->articleSize, 'info'); // ОТЛАДКА   
             return true;
         } catch (\Exception $e) {
             $this->app->enqueueMessage($e->getMessage(), 'error');
@@ -377,14 +374,14 @@ class ArticleModel extends BaseDatabaseModel
         // Находим индекс текущего поста в списке
         $currentIndex = array_search($this->postId, $this->postIdList);
         
-        // Если текущий пост найден и есть следующий элемент
-        if ($currentIndex !== false && isset($this->postIdList[$currentIndex + 1])) {
+        // Если есть следующий элемент
+        if (isset($this->postIdList[$currentIndex + 1])) {
             $this->postId = $this->postIdList[$currentIndex + 1];
         } else {
             // Если больше нет постов
             $this->postId = 0;
         }
-  Factory::getApplication()->enqueueMessage('ArticleModel $this->nextPost: ' . $this->postId, 'info'); // ОТЛАДКА          
+  Factory::getApplication()->enqueueMessage('nextPost Id: ' . $this->postId, 'info'); // ОТЛАДКА          
         return $this->postId;
     }
 
