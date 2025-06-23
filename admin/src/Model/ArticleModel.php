@@ -259,23 +259,23 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             }
 
             // Подготавливаем данные 
-              $data = [
-            'title'       => $this->currentArticle->title,
-            'alias'       => $this->currentArticle->alias,
-            'introtext'   => $this->currentArticle->introtext ?? '',
-            'fulltext'    => $this->currentArticle->fulltext,
-            'catid'       => (int) $this->params->article_category, 
-            'created_by'  => (int) $this->topicAuthorId,
-            'state'       => 1, // Published
-            'language'    => '*',
-            'access'      => $categoryTable->access, // Наследуем уровень доступа от категории
-            'created'     => (new \Joomla\CMS\Date\Date('now'))->toSql(),
-            'publish_up'  => (new \Joomla\CMS\Date\Date('now'))->toSql(),
-            'attribs'     => '{"show_publishing_options":"","show_article_options":"","show_urls_images_backend":"","show_urls_images_frontend":""}',
-            'metakey'     => '',
-            'metadesc'    => '',
-            'metadata'    => '{"robots":"","author":"","rights":""}'   // Стандартные метаданные
-           ];
+                $data = [
+                'title' => $this->currentArticle->title,
+                'alias' => $this->currentArticle->alias,
+                'introtext' => $this->currentArticle->introtext ?? '',
+                'fulltext' => $this->currentArticle->fulltext,
+                'catid' => (int) $this->params->article_category,
+                'created_by' => (int)$this->topicAuthorId, 
+                'state' => 1, // Published
+                'language' => '*',
+                'access' => 1,
+                'created' => (new \Joomla\CMS\Date\Date())->toSql(),
+                'publish_up' => (new \Joomla\CMS\Date\Date())->toSql(),
+                'attribs' => '{"show_publishing_options":"","show_article_options":"","show_urls_images_backend":"","show_urls_images_frontend":""}',
+                'metakey' => '',
+                'metadesc' => '',
+                 'metadata' => '{"robots":"","author":"","rights":""}', // Стандартные метаданные
+            ];
 
             // Привязываем данные к таблице
             if (!$tableArticle->bind($data)) {
@@ -299,7 +299,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             return false;
         }
     }
-    
+
     /**
      * Открытие поста для доступа к его параметрам
      * @param   int  $postId  ID поста
