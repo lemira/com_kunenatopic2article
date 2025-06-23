@@ -314,7 +314,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
                 ->where($this->db->quoteName('id') . ' = ' . (int)$postId);
 
             $this->currentPost = $this->db->setQuery($query)->loadObject();
-            // Проверка if (!$this->currentPost) не не нужна, все посты проверены; сбой БД ловится в catch 
+            // Проверка if (!$this->currentPost) не нужна, все посты проверены; сбой БД ловится в catch 
         
             // Создаём запрос текста поста
             $query = $this->db->getQuery(true)
@@ -365,7 +365,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
            // }
 
             // Преобразуем BBCode в HTML
-            $htmlContent = $this->convertBBCodeToHtml($this->currentPost->message);
+            $htmlContent = $this->convertBBCodeToHtml($this->postText);
             
             // Добавляем преобразованный текст в статью
             $this->currentArticle->fulltext .= $htmlContent;
