@@ -244,10 +244,10 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
         }
     }
 
-    /** ОТЛАДКА . заменяем на 'rules'       => $assetRules->toString()
+    /** 
      * Создание статьи через Table API
      * @return  boolean|int  False в случае неудачи, ID статьи в случае успеха
-    
+     */
     protected function createArticleViaTable()
     {
         try {
@@ -259,23 +259,23 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             }
 
             // Подготавливаем данные 
-                $data = [
-                'title' => $this->currentArticle->title,
-                'alias' => $this->currentArticle->alias,
-                'introtext' => $this->currentArticle->introtext ?? '',
-                'fulltext' => $this->currentArticle->fulltext,
-                'catid' => (int) $this->params->article_category,
-                'created_by' => (int)$this->topicAuthorId, 
-                'state' => 1, // Published
-                'language' => '*',
-                'access' => 1,
-                'created' => (new \Joomla\CMS\Date\Date())->toSql(),
-                'publish_up' => (new \Joomla\CMS\Date\Date())->toSql(),
-                'attribs' => '{"show_publishing_options":"","show_article_options":"","show_urls_images_backend":"","show_urls_images_frontend":""}',
-                'metakey' => '',
-                'metadesc' => '',
-                 'metadata' => '{"robots":"","author":"","rights":""}', // Стандартные метаданные
-            ];
+              $data = [
+            'title'       => $this->currentArticle->title,
+            'alias'       => $this->currentArticle->alias,
+            'introtext'   => $this->currentArticle->introtext ?? '',
+            'fulltext'    => $this->currentArticle->fulltext,
+            'catid'       => (int) $this->params->article_category, 
+            'created_by'  => (int) $this->topicAuthorId,
+            'state'       => 1, // Published
+            'language'    => '*',
+            'access'      => $categoryTable->access, // Наследуем уровень доступа от категории
+            'created'     => (new \Joomla\CMS\Date\Date('now'))->toSql(),
+            'publish_up'  => (new \Joomla\CMS\Date\Date('now'))->toSql(),
+            'attribs'     => '{"show_publishing_options":"","show_article_options":"","show_urls_images_backend":"","show_urls_images_frontend":""}',
+            'metakey'     => '',
+            'metadesc'    => '',
+            'metadata'    => '{"robots":"","author":"","rights":""}'   // Стандартные метаданные
+           ];
 
             // Привязываем данные к таблице
             if (!$tableArticle->bind($data)) {
@@ -299,59 +299,6 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             return false;
         }
     }
- */
-    
-    protected function createArticleViaTable()
-{
-    try {
-        // Получаем table для контента
-        $tableArticle = \Joomla\CMS\Table\Table::getInstance('Content'); // вместо   $tableArticle = Table::getInstance('Content');
-        
-        if (!$tableArticle) {
-            throw new \Exception('Не удалось получить таблицу контента');
-        }
-
-        // Подготавливаем данные для новой статьи
-        $data = [
-            'title'       => $this->currentArticle->title,
-            'alias'       => $this->currentArticle->alias,
-            'introtext'   => $this->currentArticle->introtext ?? '',
-            'fulltext'    => $this->currentArticle->fulltext,
-            'catid'       => (int) $this->params->article_category, 
-            'created_by'  => (int) $this->topicAuthorId,
-            'state'       => 1, // Published
-            'language'    => '*',
-            'access'      => $categoryTable->access, // Наследуем уровень доступа от категории
-            'created'     => (new \Joomla\CMS\Date\Date('now'))->toSql(),
-            'publish_up'  => (new \Joomla\CMS\Date\Date('now'))->toSql(),
-            'attribs'     => '{"show_publishing_options":"","show_article_options":"","show_urls_images_backend":"","show_urls_images_frontend":""}',
-            'metakey'     => '',
-            'metadesc'    => '',
-            'metadata'    => '{"robots":"","author":"","rights":""}'   // Стандартные метаданные
-           ];
-
-        // Привязываем данные к таблице
-        if (!$tableArticle->bind($data)) {
-            throw new \Exception('Ошибка привязки данных: ' . $tableArticle->getError());
-        }
-
-        // Проверяем данные
-        if (!$tableArticle->check()) {
-            throw new \Exception('Ошибка проверки данных: ' . $tableArticle->getError());
-        }
-
-        // Сохраняем
-        if (!$tableArticle->store()) {
-            throw new \Exception('Ошибка сохранения: ' . $tableArticle->getError());
-        }
-
-        return $tableArticle->id;
-        
-    } catch (\Exception $e) {
-        \Joomla\CMS\Factory::getApplication()->enqueueMessage('Ошибка создания статьи через Table: ' . $e->getMessage(), 'error');
-        return false;
-    }
-}
     
     /**
      * Открытие поста для доступа к его параметрам
