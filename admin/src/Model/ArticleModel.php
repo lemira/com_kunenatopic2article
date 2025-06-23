@@ -269,8 +269,8 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
                 'state' => 1, // Published
                 'language' => '*',
                 'access' => 1,
-                'created' =>  $now,
-                'publish_up' => $now,
+                'created' => (new \Joomla\CMS\Date\Date())->toSql(),
+                'publish_up' => (new \Joomla\CMS\Date\Date())->toSql(),
                 'attribs' => '{}',
                 'metakey' => '',
                 'metadesc' => '',
