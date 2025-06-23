@@ -291,8 +291,37 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             if (!$tableArticle->store()) {
                 throw new \Exception('Ошибка сохранения: ' . $tableArticle->getError());
             }
+        // Получаем ID созданной статьи
+        $articleId = $tableArticle->id;
+            
+        // --- Запись в #__workflow_associations
+         try {
+            // Проверяем, есть ли уже запись
+            $query = $db->getQuery(true)
+                ->select('COUNT(*)')
+                ->from($db->quoteName('#__workflow_associations'))
+                ->where($db->quoteName('item_id') . ' = ' . $db->quote($articleId))
+                ->where($db->quoteName('extension') . ' = ' . $db->quote('com_content.article'));
+            $exists = (bool) $db->setQuery($query)->loadResult();
 
-            return $tableArticle->id;
+            if (!$exists) {
+                $query = $db->getQuery(true)
+                    ->insert($db->quoteName('#__workflow_associations'))
+                    ->columns([$db->quoteName('item_id'), $db->quoteName('stage_id'), $db->quoteName('extension')])
+                    ->values(implode(',', [
+                        $db->quote($articleId),
+                        $db->quote(1), // stage_id=1 (опубликовано)
+                        $db->quote('com_content.article')
+                    ]));
+                $db->setQuery($query)->execute();
+            }
+        } catch (\Exception $e) {
+            // Логируем ошибку, но не прерываем работу
+            $this->app->enqueueMessage('Ошибка добавления записи в workflow_associations: ' . $e->getMessage(), 'warning');
+        }
+       // --- Конец записи в #__workflow_associations
+            
+            return $articleId;
             
         } catch (\Exception $e) {
             $this->app->enqueueMessage('Ошибка создания статьи через Table: ' . $e->getMessage(), 'error');
