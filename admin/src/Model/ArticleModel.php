@@ -271,7 +271,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
                 'access' => 1,
                 'created' => (new \Joomla\CMS\Date\Date())->toSql(),
                 'publish_up' => (new \Joomla\CMS\Date\Date())->toSql(),
-                'attribs' => '{}',
+                'attribs' => '{"show_publishing_options":"","show_article_options":"","show_urls_images_backend":"","show_urls_images_frontend":""}',
                 'metakey' => '',
                 'metadesc' => '',
                  'metadata' => '{"robots":"","author":"","rights":""}', // Стандартные метаданные
