@@ -352,7 +352,6 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
         return false;
     }
 }
-  */
     
     /**
      * Открытие поста для доступа к его параметрам
