@@ -23,6 +23,7 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\Filter\OutputFilter;
 use Joomla\Database\DatabaseInterface;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
+use Kunena\Forum\Libraries\Bbcode\KunenaBbcode;
 
 /**
  * Article Model
@@ -526,15 +527,24 @@ Factory::getApplication()->enqueueMessage('transferPost Размер текст�
      * @return  string  HTML-текст
      */
     private function convertBBCodeToHtml($text)
-    {
-        try {
-            // Используем парсер KunenaBbcode
-            $bbcode = KunenaBbcode::getInstance();
-            return $bbcode->parse($text);
-        } catch (\Exception $e) {
-            // В случае ошибки
-            $this->app->enqueueMessage('Ошибка парсинга BBCode: ' . $e->getMessage(), 'warning');
-            return $text; // Возвращаем исходный текст при ошибке
+{
+    try {
+        if (!class_exists('Kunena\Forum\Libraries\Bbcode\KunenaBbcode')) {
+            $this->app->enqueueMessage(
+                Text::_('COM_KUNENATOPIC2ARTICLE_BBCODE_PARSER_NOT_AVAILABLE'),
+                'warning'
+            );
+            return $text;
         }
+
+        $bbcode = \Kunena\Forum\Libraries\Bbcode\KunenaBbcode::getInstance();
+        return $bbcode->parse($text);
+    } catch (\Exception $e) {
+        $this->app->enqueueMessage(
+            Text::_('COM_KUNENATOPIC2ARTICLE_BBCODE_PARSE_ERROR') . ': ' . $e->getMessage(),
+            'warning'
+        );
+        return $text;
     }
+}
 }
