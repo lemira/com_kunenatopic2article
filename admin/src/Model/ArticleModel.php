@@ -262,18 +262,19 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
                 $data = [
                 'title' => $this->currentArticle->title,
                 'alias' => $this->currentArticle->alias,
-                'introtext' => '',
+                'introtext' => $this->currentArticle->introtext ?? '',
                 'fulltext' => $this->currentArticle->fulltext,
                 'catid' => (int) $this->params->article_category,
                 'created_by' => (int)$this->topicAuthorId, 
                 'state' => 1, // Published
                 'language' => '*',
                 'access' => 1,
-                'created' =>  (new Date())->toSql(), 
+                'created' =>  $now,
+                'publish_up' => $now,
                 'attribs' => '{}',
                 'metakey' => '',
                 'metadesc' => '',
-                'metadata' => '{}'
+                 'metadata' => '{"robots":"","author":"","rights":""}', // Стандартные метаданные
             ];
 
             // Привязываем данные к таблице
