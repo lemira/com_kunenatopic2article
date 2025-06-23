@@ -299,8 +299,9 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             return false;
         }
     }
- */ 
-protected function createArticleViaTable()
+ */
+    
+    protected function createArticleViaTable()
 {
     try {
         // Получаем table для контента
@@ -310,12 +311,6 @@ protected function createArticleViaTable()
             throw new \Exception('Не удалось получить таблицу контента');
         }
 
-        $categoryTable = \Joomla\CMS\Table\Table::getInstance('Category');
-        $categoryTable->load((int) $this->params->article_category);
-
-        $assetRules = \Joomla\CMS\Factory::getContainer()->get(\Joomla\CMS\Access\Access::class)
-            ->getAssetRules($categoryTable->asset_id);
-      
         // Подготавливаем данные для новой статьи
         $data = [
             'title'       => $this->currentArticle->title,
@@ -332,9 +327,8 @@ protected function createArticleViaTable()
             'attribs'     => '{"show_publishing_options":"","show_article_options":"","show_urls_images_backend":"","show_urls_images_frontend":""}',
             'metakey'     => '',
             'metadesc'    => '',
-            'metadata'    => '{"robots":"","author":"","rights":""}',   // Стандартные метаданные
-            'rules'       => $assetRules->toString()  // для таблицы assets 
-        ];
+            'metadata'    => '{"robots":"","author":"","rights":""}'   // Стандартные метаданные
+           ];
 
         // Привязываем данные к таблице
         if (!$tableArticle->bind($data)) {
@@ -358,6 +352,7 @@ protected function createArticleViaTable()
         return false;
     }
 }
+  */
     
     /**
      * Открытие поста для доступа к его параметрам
