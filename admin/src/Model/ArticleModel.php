@@ -33,6 +33,7 @@ class ArticleModel extends BaseDatabaseModel
 {
     protected $db; // @var \Joomla\Database\DatabaseInterface 
     protected $app; /** @var \Joomla\CMS\Application\CMSApplication */
+    protected $kunenaApiAvailable = false;
     private $currentArticle = null;  
     private $articleSize = 0;    // Текущий размер статьи , @var    int 
     private $articleLinks = [];  // Массив ссылок на созданные статьи  @var array 
@@ -45,7 +46,8 @@ class ArticleModel extends BaseDatabaseModel
     private $topicAuthorId = ''; // Переменная модели для хранения Id автора
     private $params = null; // Хранение параметров для доступа в других методах
     private $currentIndex = 0; // первый переход с первого элемента $topicId = $firstPostId (0) на 2-й (1)
-
+    private $infoPostString = '';  // Информационная строка поста
+   
         public function __construct($config = [])
     {
         parent::__construct($config);
@@ -369,7 +371,12 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             $this->postSize = mb_strlen($this->postText, 'UTF-8');
             
             Factory::getApplication()->enqueueMessage('openPost Размер поста: ' . $this->postSize, 'info'); // ОТЛАДКА          
-           
+
+             // Вычиcляем информационную строку (всегда есть хотя бы разделители) в статью)
+           $this->$postInfoString = $this->createPostInfoString();       
+            // Добавляем размер информационной строки (в символах)
+            $this->postSize .= mb_strlen($this->$postInfoString, 'UTF-8');
+            
             return true;
         } catch (\Exception $e) {
             $this->app->enqueueMessage($e->getMessage(), 'error');
@@ -388,26 +395,18 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
         }
 
         try {
-            // Формируем информационную строку о посте
-      //      $infoString = $this->formatPostInfo();
+           // Добавляем в статью инф строку
+           $this->currentArticle->fulltext .= $this->$postInfoString;
             
-            // Добавляем информационную строку в статью, если она не пуста
-      //      if (!empty($infoString)) {
-        //        if (!isset($this->currentArticle->fulltext)) {  // ??
-          //          $this->currentArticle->fulltext = '';        // ??
-           //     }                                                // ??
-           //     $this->currentArticle->fulltext .= $infoString;
-           // }
-
-            // Преобразуем BBCode в HTML
+           // Преобразуем BBCode в HTML
             $htmlContent = $this->convertBBCodeToHtml($this->postText);
             
             // Добавляем преобразованный текст в статью
             $this->currentArticle->fulltext .= $htmlContent;
             
-            // Обновляем размер статьи
+            // Обновляем размер статьи ; $this->postSize включает длину инф строки
             $this->articleSize += $this->postSize;
-Factory::getApplication()->enqueueMessage('transferPost Размер текста: ' . $this->articleSize, 'info'); // ОТЛАДКА   
+Factory::getApplication()->enqueueMessage('transferPost Размер статьи: ' . $this->articleSize, 'info'); // ОТЛАДКА   
             return true;
         } catch (\Exception $e) {
             $this->app->enqueueMessage($e->getMessage(), 'error');
@@ -509,51 +508,64 @@ Factory::getApplication()->enqueueMessage('transferPost Размер текст�
      * Формирование информационной строки о посте
      * @return  string  Информационная строка
      */
-    private function formatPostInfo()
-    {
-        if ($this->currentPost === null) {
-            return '';
-        }
+ private function createPostInfoString()
+{
+    if ($this->currentPost === null) {
+        return '';
+    }
 
-        // Получаем данные пользователя
-        $userId = $this->currentPost->userid;
-        $userName = $this->getUserName($userId);
+    $infoPostString = '<div class="infoPostString">';
+    $infoPostString .= '<br /> v v v v v<br />';
+    
+    // 1. Автор (никнейм)
+    if ($this->params->get('post_author', 0)) {
+        $infoPostString .= htmlspecialchars($this->currentPost->name, ENT_QUOTES, 'UTF-8');
+    }
+    
+    // 2. Заголовок поста
+    if ($this->params->get('post_title', 0)) {
+        $infoPostString .= ' / ' . htmlspecialchars($this->currentPost->subject, ENT_QUOTES, 'UTF-8');
+    }
+    
+    // 3. Дата и время
+    if ($this->params->get('post_creation_date', 0)) {
+        $date = date('d.m.Y', $this->currentPost->time);
+        $infoPostString .= ' / ' . $date;
         
-        // Форматируем дату создания поста
-      //  $date = new Date($this->currentPost->time);
-       // $formattedDate = $date->format(Text::_('DATE_FORMAT_LC2'));
-
-        // Формируем информационную строку
-      //  $infoString = '<div class="post-info">';
-      //  $infoString .= '<p><strong>' . Text::_('COM_KUNENATOPIC2ARTICLE_AUTHOR') . ':</strong> ' . htmlspecialchars($userName) . '</p>';
-      //  $infoString .= '<p><strong>' . Text::_('COM_KUNENATOPIC2ARTICLE_DATE') . ':</strong> ' . $formattedDate . '</p>';
-      //  $infoString .= '</div><hr />';
-
-        return "";    // $infoString;
-    }
-
-    /**
-     * Получение имени пользователя по ID
-     * @param   int  $userId  ID пользователя
-     * @return  string  Имя пользователя
-     */
-    private function getUserName($userId)
-    {
-        try {
-            $query = $this->db->getQuery(true)
-                ->select($this->db->quoteName('name'))
-                ->from($this->db->quoteName('#__users'))
-                ->where($this->db->quoteName('id') . ' = ' . (int)$userId);
-
-            $userName = $this->db->setQuery($query)->loadResult();
-                
-            return $userName ? $userName : Text::_('COM_KUNENATOPIC2ARTICLE_UNKNOWN_USER');
-        } catch (\Exception $e) {
-            return Text::_('COM_KUNENATOPIC2ARTICLE_UNKNOWN_USER');
+        if ($this->params->get('post_creation_time', 0)) {
+            $time = date('H:i', $this->currentPost->time);
+            $infoPostString .= ' ' . $time;
         }
     }
-
-    /**
+  
+    // 4. ID поста (с ссылкой или без)
+    if ($this->params->get('post_ids', 0)) {
+        // Текущий пост
+        if ($this->shouldAddPostLink()) {
+            $postUrl = $this->getKunenaPostUrl($this->currentPost->id);
+            $infoPostString .= ' / <a href="' . htmlspecialchars($postUrl, ENT_QUOTES, 'UTF-8') . '">' 
+                            . $this->currentPost->id . '</a>';
+        } else {
+            $infoPostString .= ' / ' . $this->currentPost->id;
+        }
+        
+        // Родительский пост (если есть)
+        if (!empty($this->currentPost->parent)) {
+            if ($this->shouldAddPostLink()) {
+                $parentUrl = $this->getKunenaPostUrl($this->currentPost->parent);
+                $infoPostString .= ' << <a href="' . htmlspecialchars($parentUrl, ENT_QUOTES, 'UTF-8') . '">' 
+                                . $this->currentPost->parent . '</a>';
+            } else {
+                $infoPostString .= ' << ' . $this->currentPost->parent;
+            }
+        }
+    }  
+    
+    // Закрываем блок
+    $infoPostString .= '<br /> * * * * *</div><br />';
+    return $infoPostString;
+}
+   /**
      * Преобразование BBCode в HTML
      * @param   string  $text  Текст с BBCode
      * @return  string  HTML-текст
@@ -579,4 +591,28 @@ Factory::getApplication()->enqueueMessage('transferPost Размер текст�
         return $text;
     }
 }
+
+     /**
+     * Проверяет, нужно ли добавлять ссылки на посты
+     */
+    private function shouldAddPostLink(): bool
+    {
+        return $this->params->get('kunena_post_link', 0) == 1;
+    }
+    
+    /**
+     * Генерирует URL поста в Kunena
+     */
+    private function getKunenaPostUrl(int $postId): string
+    {
+        try {
+            $post = KunenaForumMessageHelper::get($postId);
+            return $post->exists() 
+                ? KunenaRoute::getMessageUrl($postId, false)
+                : "#{$postId}";
+        } catch (Exception $e) {
+            // Просто возвращаем якорь, если что-то пошло не так
+            return "#{$postId}";
+        }
+    }
 }
