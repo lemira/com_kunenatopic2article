@@ -44,6 +44,7 @@ class ArticleModel extends BaseDatabaseModel
     private $subject = ''; // Переменная модели для хранения subject
     private $topicAuthorId = ''; // Переменная модели для хранения Id автора
     private $params = null; // Хранение параметров для доступа в других методах
+    private $currentIndex = 0; // первый переход с первого элемента $topicId = $firstPostId (0) на 2-й (1)
 
         public function __construct($config = [])
     {
@@ -420,13 +421,11 @@ Factory::getApplication()->enqueueMessage('transferPost Размер текст�
      */
     private function nextPost()
     {
-        // Находим индекс текущего поста в списке
-        $currentIndex = array_search($this->postId, $this->postIdList);
-        
-        // Если есть следующий элемент
-        if (isset($this->postIdList[$currentIndex + 1])) {
-            $this->postId = $this->postIdList[$currentIndex + 1];
-        } else {
+         // Переход к следующему посту
+           if (isset($this->postIdList[$this->currentIndex + 1])) {      // Если есть следующий элемент
+            $this->currentIndex += 1;
+            $this->postId = $this->postIdList[$this->currentIndex]; // Возвращаем следующий ID
+   } else {
             // Если больше нет постов
             $this->postId = 0;
         }
@@ -481,8 +480,7 @@ Factory::getApplication()->enqueueMessage('transferPost Размер текст�
     ->order($this->db->quoteName('time') . ' ASC');
     */
             $postIds = $this->db->setQuery($query)->loadColumn();
-            // Приводим ID к целым числам
-            $postIds = array_map('intval', $postIds);
+            $this->currentIndex = 0; // в nextPost() начинаем переход сразу к элементу (1), т.к. (0) = $topicId = $firstPostId
                 
     Factory::getApplication()->enqueueMessage('Массив ID постов: ' . print_r($postIds, true), 'info'); // ОТЛАДКА
          
