@@ -46,7 +46,7 @@ class ArticleModel extends BaseDatabaseModel
     private $topicAuthorId = ''; // Переменная модели для хранения Id автора
     private $params = null; // Хранение параметров для доступа в других методах
     private $currentIndex = 0; // первый переход с первого элемента $topicId = $firstPostId (0) на 2-й (1)
-    private $infoPostString = '';  // Информационная строка поста
+    private $postInfoString = '';  // Информационная строка поста
    
         public function __construct($config = [])
     {
