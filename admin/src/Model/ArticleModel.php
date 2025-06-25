@@ -46,13 +46,14 @@ class ArticleModel extends BaseDatabaseModel
     private $topicAuthorId = ''; // Переменная модели для хранения Id автора
     private $params = null; // Хранение параметров для доступа в других методах
     private $currentIndex = 0; // первый переход с первого элемента $topicId = $firstPostId (0) на 2-й (1)
+    private $infoString = '';  // строка сборки информационной строки поста в createPostInfoString()
     private $postInfoString = '';  // Информационная строка поста
    
         public function __construct($config = [])
     {
         parent::__construct($config);
         $this->app = Factory::getApplication();
-         $this->db = $this->getDatabase(); // Оптимизировано для J5
+        $this->db = $this->getDatabase(); // Оптимизировано для J5
     }
 
     /**
@@ -64,7 +65,6 @@ class ArticleModel extends BaseDatabaseModel
     {   // Параметры $params получены в контроллере из таблицы kunenatopic2article_params; копию функции можно взять из контроллера
         $this->params = $params; 
         $this->articleLinks = []; // Инициализация массива ссылок
-        $this->$postInfoString = ''; // Инициализация информационной строки
      
         try {
               
@@ -373,7 +373,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             
             Factory::getApplication()->enqueueMessage('openPost Размер поста: ' . $this->postSize, 'info'); // ОТЛАДКА          
 
-             // Вычиcляем информационную строку (всегда есть хотя бы разделители) в статью)
+             // Вычиcляем информационную строку (всегда есть хотя бы разделители) поста
            $this->$postInfoString = $this->createPostInfoString();       
             // Добавляем размер информационной строки (в символах)
             $this->postSize .= mb_strlen($this->$postInfoString, 'UTF-8');
@@ -515,27 +515,27 @@ Factory::getApplication()->enqueueMessage('transferPost Размер стать�
         return '';
     }
 
-    $infoPostString = '<div class="infoPostString">';
-    $infoPostString .= '<br /> v v v v v<br />';
+    $infoString = '<div class="kun_p2a_infoPostString">';
+    $infoString .= '<br /> v v v v v<br />';
     
     // Автор (никнейм)
     if ($this->params->post_author) {
-        $infoPostString .= htmlspecialchars($this->currentPost->name, ENT_QUOTES, 'UTF-8');
+        $infoString .= htmlspecialchars($this->currentPost->name, ENT_QUOTES, 'UTF-8');
     }
     
     // Заголовок поста
     if ($this->params->post_title) {
-        $infoPostString .= ' / ' . htmlspecialchars($this->currentPost->subject, ENT_QUOTES, 'UTF-8');
+        $infoString .= ' / ' . htmlspecialchars($this->currentPost->subject, ENT_QUOTES, 'UTF-8');
     }
     
     // Дата и время
     if ($this->params->post_creation_date) {
         $date = date('d.m.Y', $this->currentPost->time);
-        $infoPostString .= ' / ' . $date;
+        $infoString .= ' / ' . $date;
         
         if ($this->params->post_creation_time) {
             $time = date('H:i', $this->currentPost->time);
-            $infoPostString .= ' ' . $time;
+            $infoString .= ' ' . $time;
         }
     }
   
@@ -544,27 +544,27 @@ Factory::getApplication()->enqueueMessage('transferPost Размер стать�
         // Текущий пост
         if ($this->params->kunena_post_link) {
             $postUrl = $this->getKunenaPostUrl($this->currentPost->id);
-            $infoPostString .= ' / #<a href="' . htmlspecialchars($postUrl, ENT_QUOTES, 'UTF-8') . '">' 
+            $infoString .= ' / #<a href="' . htmlspecialchars($postUrl, ENT_QUOTES, 'UTF-8') . '">' 
                             . $this->currentPost->id . '</a>';
         } else {
-            $infoPostString .= ' / #' . $this->currentPost->id;
+            $infoString .= ' / #' . $this->currentPost->id;
         }
-        
+       }  
+    
         // Родительский пост (если есть)
         if (!empty($this->currentPost->parent)) {
             if ($this->params->kunena_post_link) {
                 $parentUrl = $this->getKunenaPostUrl($this->currentPost->parent);
-                $infoPostString .= ' << #<a href="' . htmlspecialchars($parentUrl, ENT_QUOTES, 'UTF-8') . '>' 
+                $infoString .= ' << #<a href="' . htmlspecialchars($parentUrl, ENT_QUOTES, 'UTF-8') . '>' 
                                 . $this->currentPost->parent . '</a>';
             } else {
-                $infoPostString .= ' << #' . $this->currentPost->parent;
+                $infoString .= ' << #' . $this->currentPost->parent;
             }
         }
-    }  
     
     // Закрываем блок
-    $infoPostString .= '<br /> * * * * *</div><br />';
-    return $infoPostString;
+    $infoString .= '<br /> * * * * *</div><br />';
+    return $infoString;
 }
     
    /**
@@ -594,14 +594,6 @@ Factory::getApplication()->enqueueMessage('transferPost Размер стать�
     }
 }
 
-     /**
-     * Проверяет, нужно ли добавлять ссылки на посты
-     */
-    private function shouldAddPostLink(): bool
-    {
-        return $this->params->get('kunena_post_link', 0) == 1;
-    }
-    
     /**
      * Генерирует URL поста в Kunena
      */
