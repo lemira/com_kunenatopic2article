@@ -65,6 +65,7 @@ class ArticleModel extends BaseDatabaseModel
     {   // Параметры $params получены в контроллере из таблицы kunenatopic2article_params; копию функции можно взять из контроллера
         $this->params = $params; 
         $this->articleLinks = []; // Инициализация массива ссылок
+        $this->currentArticle = null;     // статья не открыта 
      
         try {
               
