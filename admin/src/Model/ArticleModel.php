@@ -374,13 +374,13 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             // Вычисляем размер поста (в символах)
             $this->postSize = mb_strlen($this->postText, 'UTF-8');
             
-            Factory::getApplication()->enqueueMessage('openPost Размер поста: ' . $this->postSize, 'info'); // ОТЛАДКА          
+           // Factory::getApplication()->enqueueMessage('openPost Размер поста: ' . $this->postSize, 'info'); // ОТЛАДКА          
 
              // Вычиcляем информационную строку (всегда есть хотя бы разделители) поста
            $this->postInfoString = $this->createPostInfoString();       
             // Добавляем размер информационной строки (в символах)
             $this->postSize += mb_strlen($this->postInfoString, 'UTF-8');
-            Factory::getApplication()->enqueueMessage('openPost Размер поста с и.с.: ' . $this->postSize, 'info'); // ОТЛАДКА          
+        //    Factory::getApplication()->enqueueMessage('openPost Размер поста с и.с.: ' . $this->postSize, 'info'); // ОТЛАДКА          
  
             return true;
         } catch (\Exception $e) {
@@ -402,7 +402,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
         try {
            // Добавляем в статью инф строку
            $this->currentArticle->fulltext .= $this->postInfoString;
-        Factory::getApplication()->enqueueMessage('transferPost инф стр: ' . $this->postInfoString, 'info'); // ОТЛАДКА   
+  //      Factory::getApplication()->enqueueMessage('transferPost инф стр: ' . $this->postInfoString, 'info'); // ОТЛАДКА   
              
            // Преобразуем BBCode в HTML
             $htmlContent = $this->convertBBCodeToHtml($this->postText);
@@ -412,7 +412,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             
             // Обновляем размер статьи ; $this->postSize включает длину инф строки
             $this->articleSize += $this->postSize;
-Factory::getApplication()->enqueueMessage('transferPost Размер статьи: ' . $this->articleSize, 'info'); // ОТЛАДКА   
+// Factory::getApplication()->enqueueMessage('transferPost Размер статьи: ' . $this->articleSize, 'info'); // ОТЛАДКА   
             return true;
         } catch (\Exception $e) {
             $this->app->enqueueMessage($e->getMessage(), 'error');
