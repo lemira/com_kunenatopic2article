@@ -374,7 +374,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             Factory::getApplication()->enqueueMessage('openPost Размер поста: ' . $this->postSize, 'info'); // ОТЛАДКА          
 
              // Вычиcляем информационную строку (всегда есть хотя бы разделители) поста
-           $this->$postInfoString = $this->createPostInfoString();       
+           $this->postInfoString = $this->createPostInfoString();       
             // Добавляем размер информационной строки (в символах)
             $this->postSize .= mb_strlen($this->$postInfoString, 'UTF-8');
             
@@ -549,8 +549,7 @@ Factory::getApplication()->enqueueMessage('transferPost Размер стать�
         } else {
             $infoString .= ' / #' . $this->currentPost->id;
         }
-       }  
-    
+       
         // Родительский пост (если есть)
         if (!empty($this->currentPost->parent)) {
             if ($this->params->kunena_post_link) {
@@ -561,6 +560,7 @@ Factory::getApplication()->enqueueMessage('transferPost Размер стать�
                 $infoString .= ' << #' . $this->currentPost->parent;
             }
         }
+      }
     
     // Закрываем блок
     $infoString .= '<br /> * * * * *</div><br />';
