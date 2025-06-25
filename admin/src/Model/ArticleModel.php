@@ -85,15 +85,13 @@ class ArticleModel extends BaseDatabaseModel
               $this->subject = $this->currentPost->subject;
            Factory::getApplication()->enqueueMessage('createArticlesFromTopic $subject: ' . $this->subject, 'info'); // ОТЛАДКА 
               $this->topicAuthorId = $this->currentPost->userid;
-          
+
+              $this->openArticle();     // Открываем первую статью
+                    
                // Основной цикл обработки постов
                 while ($this->postId != 0) {
                 
-                if ($this->currentArticle === null){     // Если статья не открыта 
-                    $this->openArticle();     // Открываем новую статью
-                    }
-                   
-                    // Если статья уже открыта
+                   // Статья открыта
                 if ($this->articleSize + $this->postSize > $this->params->max_article_size) {
                     $this->closeArticle();     // закрываем её перед открытием новой
                     $this->openArticle();   // Открываем новую статью
