@@ -446,27 +446,30 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
     private function buildFlatPostIdList($firstPostId)
     {
         try {
-          // Получаем Id темы
-            $query = $this->db->getQuery(true)
-                ->select($this->db->quoteName('thread'))
-                ->from($this->db->quoteName('#__kunena_messages'))
-                ->where($this->db->quoteName('id') . ' = ' . $this->db->quote($firstPostId));
+      $threadId = (int) $this->currentPost->thread; // Получаем Id темы
 
-            $threadId = $this->db->setQuery($query)->loadResult();
-        
             // Получаем все посты темы
-            $query = $this->db->getQuery(true)
-                ->select($this->db->quoteName('id'))
-                ->from($this->db->quoteName('#__kunena_messages'))
-                ->where($this->db->quoteName('thread') . ' = ' . (int)$threadId)
-                ->where($this->db->quoteName('hold') . ' = 0')
-                ->order($this->db->quoteName('time') . ' ASC');
-            /* оптимизация для уменьшения нагрузки на базу данных г: $query = $this->db->getQuery(true) \\  ->select($this->db->quoteName('id')) \\
-    ->from($this->db->quoteName('#__kunena_messages')) \\ ->where($this->db->quoteName('thread') . ' IN (' . \\ $this->db->getQuery(true) \\
- ->select($this->db->quoteName('thread')) \\ ->from($this->db->quoteName('#__kunena_messages')) \\ 
- ->where($this->db->quoteName('id') . ' = ' . $this->db->quote($firstPostId)) . ')') \\  ->where($this->db->quoteName('hold') . ' = 0') \\
-    ->order($this->db->quoteName('time') . ' ASC');
-    */
+    $query = $this->db->getQuery(true)
+    ->select($this->db->quoteName('id'))
+    ->from($this->db->quoteName('#__kunena_messages'))
+    ->where($this->db->quoteName('thread') . ' = ' . $threadId) // Используем полученный ID
+    ->where($this->db->quoteName('hold') . ' = 0');
+
+// --- НАЧАЛО БЛОКА ДЛЯ ИСКЛЮЧЕНИЯ АВТОРОВ --- дж
+$ignoredAuthors = trim($params->ignored_authors); // Получаем и обрабатываем список игнорируемых авторов
+if (!empty($ignoredAuthors)) { // Проверяем, что список не пустой
+    $ignoredAuthorsArray = array_filter(array_map('trim', explode(',', $ignoredAuthors)));  // Разбиваем строку на массив, очищаем от пробелов и удаляем пустые значения
+   if (!empty($ignoredAuthorsArray)) {     // Если после очистки в массиве остались имена, добавляем условие в запрос
+       $quotedAuthors = array_map(array($this->db, 'quote'), $ignoredAuthorsArray);  // Безопасно квотируем каждое имя для использования в SQL-запросе
+        // Добавляем условие NOT IN к запросу
+        $query->where($this->db->quoteName('name') . ' NOT IN (' . implode(',', $quotedAuthors) . ')');
+    }
+}
+// --- КОНЕЦ БЛОКА ИСКЛЮЧЕНИЯ АВТОРОВ ---
+
+// Добавляем сортировку в конце
+$query->order($this->db->quoteName('time') . ' ASC');
+         
             $postIds = $this->db->setQuery($query)->loadColumn();
             $this->currentIndex = 0; // в nextPost() начинаем переход сразу к элементу (1), т.к. (0) = $topicId = $firstPostId
                 
