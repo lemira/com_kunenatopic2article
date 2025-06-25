@@ -344,6 +344,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
      */
     private function openPost($postId)
     {
+         $postInfoString = ''; // Инициализация
         try {
             // Получаем данные поста из базы данных Kunena, фильтрация промодерированных постов сделана раньше
             $query = $this->db->getQuery(true)
