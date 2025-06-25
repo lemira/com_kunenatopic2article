@@ -72,11 +72,6 @@ class ArticleModel extends BaseDatabaseModel
             $firstPostId = $params->topic_selection; // 3232
             Factory::getApplication()->enqueueMessage('ArticleModel $firstPostId: ' . $firstPostId, 'info'); // ОТЛАДКА          
            
-            $data = $this->getTopicSubject($firstPostId);    // Возвращаем массив
-            $this->subject = $data['subject'];
-           Factory::getApplication()->enqueueMessage('ArticleModel $subject: ' . $this->subject, 'info'); // ОТЛАДКА 
-            $this->topicAuthorId = $data['topicAuthorId'];
-            
             // Формируем список ID постов в зависимости от схемы обхода
             if ($this->params->post_transfer_scheme != 1) {
                 $this->postIdList = $this->buildFlatPostIdList($firstPostId);
@@ -85,11 +80,14 @@ class ArticleModel extends BaseDatabaseModel
                 }
 
               $this->postId = $firstPostId; // текущий id 
-            
+              $this->openPost($this->postId); // Открываем первый пост темы для доступа к его параметрам
+              $this->subject = $this->currentPost->subject;
+           Factory::getApplication()->enqueueMessage('createArticlesFromTopic $subject: ' . $this->subject, 'info'); // ОТЛАДКА 
+              $this->topicAuthorId = $this->currentPost->userid;
+          
                // Основной цикл обработки постов
                 while ($this->postId != 0) {
-                $this->openPost($this->postId); // Открываем пост для доступа к его параметрам
-
+                
                 if ($this->currentArticle === null){     // Если статья не открыта 
                     $this->openArticle();     // Открываем новую статью
                     }
@@ -102,6 +100,7 @@ class ArticleModel extends BaseDatabaseModel
             
                 $this->transferPost(); // Переносим содержимое поста в статью
                 $this->nextPost(); // Переходим к следующему посту
+                $this->openPost($this->postId); // Открываем пост для доступа к его параметрам, не открываем пост после последнего
             }      // Конец основного цикла обработки постов
 
        
@@ -127,6 +126,8 @@ class ArticleModel extends BaseDatabaseModel
           try {
 
            $this->currentArticle = new \stdClass(); // Инициализируем $this->currentArticle как stdClass
+           // Сбрасываем текущий размер статьи
+           $this->articleSize = 0;
            $this->currentArticle->fulltext = '';
               
             // Формируем базовый заголовок статьи
@@ -143,9 +144,6 @@ class ArticleModel extends BaseDatabaseModel
             $uniqueAlias = $this->getUniqueAlias($baseAlias);
             $this->currentArticle->alias = $uniqueAlias;
               
-            // Сбрасываем текущий размер статьи
-            $this->articleSize = 0;
-
             // Отладка
             $this->app->enqueueMessage('openArticle Статья открыта: ' . $title . ', категория: ' . $this->params->article_category . ', alias: ' . $uniqueAlias, 'notice');
 
@@ -346,6 +344,9 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
     {
          $postInfoString = ''; // Инициализация
         try {
+            if ($this->postId == 0) {      // не открываем пост после последнего
+                 return false;
+                    }
             // Получаем данные поста из базы данных Kunena, фильтрация промодерированных постов сделана раньше
             $query = $this->db->getQuery(true)
                 ->select('*')        // Нужно сделать получение только используемых полей
@@ -399,7 +400,8 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
         try {
            // Добавляем в статью инф строку
            $this->currentArticle->fulltext .= $this->postInfoString;
-            
+        Factory::getApplication()->enqueueMessage('transferPost Размер инф стр: ' . $this->postInfoString, 'info'); // ОТЛАДКА   
+             
            // Преобразуем BBCode в HTML
             $htmlContent = $this->convertBBCodeToHtml($this->postText);
             
@@ -433,23 +435,6 @@ Factory::getApplication()->enqueueMessage('transferPost Размер стать�
   Factory::getApplication()->enqueueMessage('nextPost Id: ' . $this->postId, 'info'); // ОТЛАДКА          
         return $this->postId;
     }
-
-    private function getTopicSubject($firstPostId)
-{
-    // Получаем subject и userid одним запросом
-    $query = $this->db->getQuery(true)
-        ->select([$this->db->quoteName('subject'), $this->db->quoteName('userid')])
-        ->from($this->db->quoteName('#__kunena_messages'))
-        ->where($this->db->quoteName('id') . ' = ' . $firstPostId);
-
-    $result = $this->db->setQuery($query)->loadObject();
-
-    // Возвращаем массив
-    return [
-        'subject' => $result->subject,
-        'topicAuthorId' => $result->userid
-    ];
-}
 
     /**
      * Построение списка ID постов для плоской схемы обхода (по времени создания)
