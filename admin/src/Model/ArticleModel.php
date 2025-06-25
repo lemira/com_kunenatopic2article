@@ -377,7 +377,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
              // Вычиcляем информационную строку (всегда есть хотя бы разделители) поста
            $this->postInfoString = $this->createPostInfoString();       
             // Добавляем размер информационной строки (в символах)
-            $this->postSize .= mb_strlen($this->$postInfoString, 'UTF-8');
+            $this->postSize .= mb_strlen($this->postInfoString, 'UTF-8');
             
             return true;
         } catch (\Exception $e) {
@@ -398,7 +398,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
 
         try {
            // Добавляем в статью инф строку
-           $this->currentArticle->fulltext .= $this->$postInfoString;
+           $this->currentArticle->fulltext .= $this->postInfoString;
             
            // Преобразуем BBCode в HTML
             $htmlContent = $this->convertBBCodeToHtml($this->postText);
