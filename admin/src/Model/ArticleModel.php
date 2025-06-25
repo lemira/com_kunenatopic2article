@@ -92,6 +92,8 @@ class ArticleModel extends BaseDatabaseModel
                 while ($this->postId != 0) {
                 
                    // Статья открыта
+                    Factory::getApplication()->enqueueMessage('Основной цикл Размер статьи: ' . $this->articleSize, 'info'); // ОТЛАДКА  
+                    Factory::getApplication()->enqueueMessage('Основной цикл Размер статьи: ' . $this->postSize, 'info'); // ОТЛАДКА 
                 if ($this->articleSize + $this->postSize > $this->params->max_article_size) {
                     $this->closeArticle();     // закрываем её перед открытием новой
                     $this->openArticle();   // Открываем новую статью
@@ -378,7 +380,8 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
            $this->postInfoString = $this->createPostInfoString();       
             // Добавляем размер информационной строки (в символах)
             $this->postSize .= mb_strlen($this->postInfoString, 'UTF-8');
-            
+            Factory::getApplication()->enqueueMessage('openPost Размер поста с и.с.: ' . $this->postSize, 'info'); // ОТЛАДКА          
+ 
             return true;
         } catch (\Exception $e) {
             $this->app->enqueueMessage($e->getMessage(), 'error');
@@ -399,7 +402,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
         try {
            // Добавляем в статью инф строку
            $this->currentArticle->fulltext .= $this->postInfoString;
-        Factory::getApplication()->enqueueMessage('transferPost Размер инф стр: ' . $this->postInfoString, 'info'); // ОТЛАДКА   
+        Factory::getApplication()->enqueueMessage('transferPost инф стр: ' . $this->postInfoString, 'info'); // ОТЛАДКА   
              
            // Преобразуем BBCode в HTML
             $htmlContent = $this->convertBBCodeToHtml($this->postText);
