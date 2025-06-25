@@ -379,7 +379,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
              // Вычиcляем информационную строку (всегда есть хотя бы разделители) поста
            $this->postInfoString = $this->createPostInfoString();       
             // Добавляем размер информационной строки (в символах)
-            $this->postSize .= mb_strlen($this->postInfoString, 'UTF-8');
+            $this->postSize += mb_strlen($this->postInfoString, 'UTF-8');
             Factory::getApplication()->enqueueMessage('openPost Размер поста с и.с.: ' . $this->postSize, 'info'); // ОТЛАДКА          
  
             return true;
