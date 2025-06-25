@@ -63,8 +63,9 @@ class ArticleModel extends BaseDatabaseModel
     public function createArticlesFromTopic($params)
     {   // Параметры $params получены в контроллере из таблицы kunenatopic2article_params; копию функции можно взять из контроллера
         $this->params = $params; 
-        // Инициализация массива ссылок
-        $this->articleLinks = [];
+        $this->articleLinks = []; // Инициализация массива ссылок
+        $this->$postInfoString = ''; // Инициализация информационной строки
+     
         try {
               
             // Получаем ID первого поста
