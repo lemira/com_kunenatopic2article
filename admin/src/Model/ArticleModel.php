@@ -599,20 +599,9 @@ $query->order($this->db->quoteName('time') . ' ASC');
      */
 private function getKunenaPostUrl(int $postId): string
 {
-    // 1. Ручная загрузка классов Kunena (если не загружены)
-    $kunenaFiles = [
-        JPATH_LIBRARIES . '/kunena/src/Route/KunenaRoute.php',
-        JPATH_LIBRARIES . '/kunena/src/Forum/Message/KunenaMessageHelper.php'
-    ];
-    
-    foreach ($kunenaFiles as $file) {
-        if (!class_exists(basename($file, '.php')) && file_exists($file)) {
-            require_once $file;
-        }
-    }
-
-    // 2. Если Kunena доступна - используем SEO-URL
-    if (class_exists('Kunena\Route\KunenaRoute')) {
+    // Пытаемся использовать Kunena API
+    if (class_exists('Kunena\Route\KunenaRoute') && 
+        class_exists('Kunena\Forum\Message\KunenaMessageHelper')) {
         try {
             return KunenaRoute::getMessageUrl($postId, false);
         } catch (Exception $e) {
@@ -620,13 +609,13 @@ private function getKunenaPostUrl(int $postId): string
         }
     }
     
-    // 3. Fallback: стандартный URL
-    return JUri::root() . "index.php?option=com_kunena&view=topic&mesid={$postId}#{$postId}";
+    // Fallback: базовый URL (Joomla 5+ style)
+    return Uri::root() . "index.php?option=com_kunena&view=topic&mesid={$postId}#{$postId}";
 }
 
 // простейшая базовая версия на всякий случай
 // private function getKunenaPostUrl(int $postId): string
 // {
-   // return JUri::root() . "index.php?option=com_kunena&view=topic&mesid={$postId}#{$postId}";
+   // return Uri::root() . "index.php?option=com_kunena&view=topic&mesid={$postId}#{$postId}";
 // }
 }
