@@ -599,23 +599,21 @@ $query->order($this->db->quoteName('time') . ' ASC');
      */
 private function getKunenaPostUrl(int $postId): string
 {
-    // Пытаемся использовать Kunena API
-    if (class_exists('Kunena\Route\KunenaRoute') && 
-        class_exists('Kunena\Forum\Message\KunenaMessageHelper')) {
+    // Пытаемся получить полный URL через Kunena API
+    if (class_exists('Kunena\Route\KunenaRoute')) {
         try {
-            return KunenaRoute::getMessageUrl($postId, false);
+            $url = KunenaRoute::getMessageUrl($postId, true); // true = абсолютный URL
+            if (!empty($url)) {
+                return $url;
+            }
         } catch (Exception $e) {
-            error_log('Kunena API error: ' . $e->getMessage());
+            error_log('Kunena URL error: '.$e->getMessage());
         }
     }
     
-    // Fallback: базовый URL (Joomla 5+ style)
-    return Uri::root() . "index.php?option=com_kunena&view=topic&mesid={$postId}#{$postId}";
+    // Формируем правильный fallback URL
+    $base = Uri::root();
+    return rtrim($base, '/').'/index.php?option=com_kunena&view=topic&mesid='.$postId.'#'.$postId;
 }
-
-// простейшая базовая версия на всякий случай
-// private function getKunenaPostUrl(int $postId): string
-// {
-   // return Uri::root() . "index.php?option=com_kunena&view=topic&mesid={$postId}#{$postId}";
-// }
+    
 }
