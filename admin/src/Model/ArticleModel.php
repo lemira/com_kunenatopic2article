@@ -629,3 +629,4 @@ private function getKunenaPostUrl(int $postId): string
 // {
    // return JUri::root() . "index.php?option=com_kunena&view=topic&mesid={$postId}#{$postId}";
 // }
+}
