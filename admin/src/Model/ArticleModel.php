@@ -53,16 +53,16 @@ class ArticleModel extends BaseDatabaseModel
    
       public function __construct($config = [])
 {
-    // Стандартная инициализация модели
     parent::__construct($config);
     
-    // текущие настройки
     $this->app = Factory::getApplication();
     $this->db = $this->getDatabase();
     
-    // Автозагрузка Kunena (только если не загружена)
+    // Автозагрузка Kunena (Joomla 5+ style)
     if (!class_exists('Kunena\Route\KunenaRoute', false)) {
-        JLoader::registerNamespace('Kunena', JPATH_LIBRARIES . '/kunena/src');
+        $container = Factory::getContainer();
+        $container->get(\Joomla\CMS\Autoload\ClassLoader::class)
+            ->registerNamespace('Kunena', JPATH_LIBRARIES . '/kunena/src');
     }
 }
 
