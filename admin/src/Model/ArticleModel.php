@@ -595,25 +595,13 @@ $query->order($this->db->quoteName('time') . ' ASC');
 }
 
     /**
-     * Генерирует URL поста в Kunena
+     * Генерирует URL открытого поста в Kunena
      */
 private function getKunenaPostUrl(int $postId): string
 {
-    // Пытаемся получить полный URL через Kunena API
-    if (class_exists('Kunena\Route\KunenaRoute')) {
-        try {
-            $url = KunenaRoute::getMessageUrl($postId, true); // true = абсолютный URL
-            if (!empty($url)) {
-                return $url;
-            }
-        } catch (Exception $e) {
-            error_log('Kunena URL error: '.$e->getMessage());
-        }
-    }
-    
-    // Формируем правильный fallback URL
-    $base = Uri::root();
-    return rtrim($base, '/').'/index.php?option=com_kunena&view=topic&mesid='.$postId.'#'.$postId;
+    $catid = $this->currentPost->catid ?? 0;
+    $thread = $this->currentPost->thread ?? 0;
+    return Uri::root() . "forum/{$catid}/{$thread}#{$postId}";
 }
     
 }
