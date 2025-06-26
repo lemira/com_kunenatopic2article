@@ -24,6 +24,8 @@ use Joomla\CMS\Filter\OutputFilter;
 use Joomla\Database\DatabaseInterface;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Kunena\Forum\Libraries\Bbcode\KunenaBbcode;
+use Kunena\Forum\Libraries\Forum\KunenaForumMessageHelper;
+use Kunena\Forum\Libraries\Route\KunenaRoute;
 
 /**
  * Article Model
@@ -532,26 +534,30 @@ $query->order($this->db->quoteName('time') . ' ASC');
   
     // IDs постов (с ссылкой или без)
     if ($this->params->post_ids) {
-        // Текущий пост
+    // Формируем часть строки с ID постов
+    $idsString = '';
+    
+    // Текущий пост
+    if ($this->params->kunena_post_link) {
+        $postUrl = $this->getKunenaPostUrl($this->currentPost->id);
+        $idsString .= ' / <a href="' . htmlspecialchars($postUrl, ENT_QUOTES, 'UTF-8') . '">#' 
+                    . $this->currentPost->id . '</a>';
+    } else {
+        $idsString .= ' / #' . $this->currentPost->id;
+    }
+    
+    // Родительский пост
+    if (!empty($this->currentPost->parent)) {
         if ($this->params->kunena_post_link) {
-            $postUrl = $this->getKunenaPostUrl($this->currentPost->id);
-            $infoString .= ' / #<a href="' . htmlspecialchars($postUrl, ENT_QUOTES, 'UTF-8') . '">' 
-                            . $this->currentPost->id . '</a>';
+            $parentUrl = $this->getKunenaPostUrl($this->currentPost->parent);
+            $idsString .= ' << <a href="' . htmlspecialchars($parentUrl, ENT_QUOTES, 'UTF-8') . '">#' 
+                        . $this->currentPost->parent . '</a>';
         } else {
-            $infoString .= ' / #' . $this->currentPost->id;
+            $idsString .= ' << #' . $this->currentPost->parent;
         }
-       
-        // Родительский пост (если есть)
-        if (!empty($this->currentPost->parent)) {
-            if ($this->params->kunena_post_link) {
-                $parentUrl = $this->getKunenaPostUrl($this->currentPost->parent);
-                $infoString .= ' << #<a href="' . htmlspecialchars($parentUrl, ENT_QUOTES, 'UTF-8') . '>' 
-                                . $this->currentPost->parent . '</a>';
-            } else {
-                $infoString .= ' << #' . $this->currentPost->parent;
-            }
-        }
-      }
+    }
+    $infoString .= $idsString;
+    }
     
     // Закрываем блок
     $infoString .= '<br /> * * * * *</div><br />';
