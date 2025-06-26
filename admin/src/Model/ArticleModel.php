@@ -58,12 +58,13 @@ class ArticleModel extends BaseDatabaseModel
     $this->app = Factory::getApplication();
     $this->db = $this->getDatabase();
     
-    // Автозагрузка Kunena (Joomla 5+ style)
-    if (!class_exists('Kunena\Route\KunenaRoute', false)) {
-        $container = Factory::getContainer();
-        $container->get(\Joomla\CMS\Autoload\ClassLoader::class)
-            ->registerNamespace('Kunena', JPATH_LIBRARIES . '/kunena/src');
-    }
+    // Автозагрузка Kunena (Joomla 5+ style)  
+    // !!??так не раб-т не раб-т: Resource 'Joomla\CMS\Autoload\ClassLoader' has not been registered with the container.
+   // if (!class_exists('Kunena\Route\KunenaRoute', false)) {
+    //    $container = Factory::getContainer();
+      //  $container->get(\Joomla\CMS\Autoload\ClassLoader::class)
+        //    ->registerNamespace('Kunena', JPATH_LIBRARIES . '/kunena/src');
+   // }
 }
 
     /**
