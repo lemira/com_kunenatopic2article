@@ -23,9 +23,9 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\Filter\OutputFilter;
 use Joomla\Database\DatabaseInterface;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
-use Kunena\Forum\Libraries\Bbcode\KunenaBbcode;
-use Kunena\Forum\Libraries\Forum\KunenaForumMessageHelper;
-use Kunena\Forum\Libraries\Route\KunenaRoute;
+use Kunena\Forum\Message\KunenaMessageHelper; 
+use Kunena\Route\KunenaRoute;                 
+use Kunena\Bbcode\KunenaBbcode; 
 
 /**
  * Article Model
@@ -51,12 +51,20 @@ class ArticleModel extends BaseDatabaseModel
     private $infoString = '';  // строка сборки информационной строки поста в createPostInfoString()
     private $postInfoString = '';  // Информационная строка поста
    
-        public function __construct($config = [])
-    {
-        parent::__construct($config);
-        $this->app = Factory::getApplication();
-        $this->db = $this->getDatabase(); // Оптимизировано для J5
+      public function __construct($config = [])
+{
+    // Стандартная инициализация модели
+    parent::__construct($config);
+    
+    // текущие настройки
+    $this->app = Factory::getApplication();
+    $this->db = $this->getDatabase();
+    
+    // Автозагрузка Kunena (только если не загружена)
+    if (!class_exists('Kunena\Route\KunenaRoute', false)) {
+        JLoader::registerNamespace('Kunena', JPATH_LIBRARIES . '/kunena/src');
     }
+}
 
     /**
      * Создание статей из темы форума Kunena
@@ -595,18 +603,12 @@ $query->order($this->db->quoteName('time') . ' ASC');
     /**
      * Генерирует URL поста в Kunena
      */
-   private function getKunenaPostUrl(int $postId): string
+private function getKunenaPostUrl(int $postId): string
 {
-    // Пробуем API Kunena
-    if (class_exists('KunenaRoute')) {
-        try {
-            return KunenaRoute::getMessageUrl($postId, false);
-        } catch (Exception $e) {
-            // Логируем ошибку, но продолжаем
-        }
+    try {
+        return KunenaRoute::getMessageUrl($postId, false);
+    } catch (Exception $e) {
+        return Uri::root() . "index.php?option=com_kunena&view=topic&mesid={$postId}#{$postId}";
     }
-    
-    // Fallback: базовый URL
-    return JUri::root() . "index.php?option=com_kunena&view=topic&mesid={$postId}#{$postId}";
 }
 }
