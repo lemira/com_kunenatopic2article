@@ -58,13 +58,6 @@ class ArticleModel extends BaseDatabaseModel
     $this->app = Factory::getApplication();
     $this->db = $this->getDatabase();
     
-    // Автозагрузка Kunena (Joomla 5+ style)  
-    // !!??так не раб-т не раб-т: Resource 'Joomla\CMS\Autoload\ClassLoader' has not been registered with the container.
-   // if (!class_exists('Kunena\Route\KunenaRoute', false)) {
-    //    $container = Factory::getContainer();
-      //  $container->get(\Joomla\CMS\Autoload\ClassLoader::class)
-        //    ->registerNamespace('Kunena', JPATH_LIBRARIES . '/kunena/src');
-   // }
 }
 
     /**
@@ -606,10 +599,33 @@ $query->order($this->db->quoteName('time') . ' ASC');
      */
 private function getKunenaPostUrl(int $postId): string
 {
-    try {
-        return KunenaRoute::getMessageUrl($postId, false);
-    } catch (Exception $e) {
-        return Uri::root() . "index.php?option=com_kunena&view=topic&mesid={$postId}#{$postId}";
+    // 1. Ручная загрузка классов Kunena (если не загружены)
+    $kunenaFiles = [
+        JPATH_LIBRARIES . '/kunena/src/Route/KunenaRoute.php',
+        JPATH_LIBRARIES . '/kunena/src/Forum/Message/KunenaMessageHelper.php'
+    ];
+    
+    foreach ($kunenaFiles as $file) {
+        if (!class_exists(basename($file, '.php')) && file_exists($file)) {
+            require_once $file;
+        }
     }
+
+    // 2. Если Kunena доступна - используем SEO-URL
+    if (class_exists('Kunena\Route\KunenaRoute')) {
+        try {
+            return KunenaRoute::getMessageUrl($postId, false);
+        } catch (Exception $e) {
+            error_log('Kunena API error: ' . $e->getMessage());
+        }
+    }
+    
+    // 3. Fallback: стандартный URL
+    return JUri::root() . "index.php?option=com_kunena&view=topic&mesid={$postId}#{$postId}";
 }
-}
+
+// простейшая базовая версия на всякий случай
+// private function getKunenaPostUrl(int $postId): string
+// {
+   // return JUri::root() . "index.php?option=com_kunena&view=topic&mesid={$postId}#{$postId}";
+// }
