@@ -409,17 +409,18 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             // Добавляем в статью инф строку   (не пуста)
            $this->currentArticle->fulltext .= $this->postInfoString;
   //      Factory::getApplication()->enqueueMessage('transferPost инф стр: ' . $this->postInfoString, 'info'); // ОТЛАДКА   
-           if ($this->params->reminder_lines) {      // Если нужно выводить строки напоминнания
+            
+           // Преобразуем BBCode в HTML
+            $htmlContent = $this->convertBBCodeToHtml($this->postText);
+            
+            if ($this->params->reminder_lines) {      // Если нужно выводить строки напоминнания
                 $this->currentArticle->fulltext .=  $this->reminderLines;    // Добавляем в статью строки напоминания предыдущего поста
                 // Вычисляем строки напоминания текущего поста, используются в следующем посте
                  $this->$reminderLines = '<br />'  . Text::_('COM_KUNENATOPIC2ARTICLE_REFERENCE_TO_POST') 
                  . '#' . $this->currentPost->parent . ': '
                        . HTMLHelper::_('string.truncate', $htmlContent, (int)$this->params->reminder_lines) . '<br />';
             } 
-            
-           // Преобразуем BBCode в HTML
-            $htmlContent = $this->convertBBCodeToHtml($this->postText);
-            
+           
             // Добавляем преобразованный текст в статью
             $this->currentArticle->fulltext .= $htmlContent;
             
