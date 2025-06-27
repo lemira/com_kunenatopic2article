@@ -416,7 +416,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             if ($this->params->reminder_lines) {      // Если нужно выводить строки напоминнания
                 $this->currentArticle->fulltext .=  $this->reminderLines;    // Добавляем в статью строки напоминания предыдущего поста
                 // Вычисляем строки напоминания текущего поста, используются в следующем посте
-                 $this->$reminderLines = '<br />'  . Text::_('COM_KUNENATOPIC2ARTICLE_REFERENCE_TO_POST') 
+                 $this->reminderLines = '<br />'  . Text::_('COM_KUNENATOPIC2ARTICLE_REFERENCE_TO_POST') 
                  . '#' . $this->currentPost->parent . ': '
                        . HTMLHelper::_('string.truncate', $htmlContent, (int)$this->params->reminder_lines) . '<br />';
             } 
