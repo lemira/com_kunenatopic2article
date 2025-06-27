@@ -415,7 +415,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
                 // Вычисляем строки напоминания текущего поста, используются в следующем посте
                  $this->$reminderLines = '<br />'  . JText::_('COM_KUNENATOPIC2ARTICLE_REFERENCE_TO_POST') 
                  . '#' . $this->currentPost->parent . ': '
-                       . JHtml::_('string.truncate', $htmlContent, (int))$this->params->reminder_lines . '<br />';
+                       . JHtml::_('string.truncate', $htmlContent, (int))$this->params->reminder_lines) . '<br />';
             } 
             
            // Преобразуем BBCode в HTML
