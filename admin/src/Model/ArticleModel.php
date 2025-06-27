@@ -270,7 +270,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
                 $data = [
                 'title' => $this->currentArticle->title,
                 'alias' => $this->currentArticle->alias,
-                'introtext' => $this->currentArticle->introtext ?? '',
+                'introtext' => JHtml::_('string.truncate', $this->currentArticle->fulltext, 200),
                 'fulltext' => $this->currentArticle->fulltext,
                 'catid' => (int) $this->params->article_category,
                 'created_by' => (int)$this->topicAuthorId, 
