@@ -542,26 +542,28 @@ $query->order($this->db->quoteName('time') . ' ASC');
     
     // Текущий пост
     if ($this->params->kunena_post_link) {
-        $postUrl = $this->getKunenaPostUrl($this->currentPost->id);
-        $idsString .= ' / <a href="' . htmlspecialchars($postUrl, ENT_QUOTES, 'UTF-8') . '">#' 
-                    . $this->currentPost->id . '</a>';
+    $postUrl = $this->getKunenaPostUrl($this->currentPost->id);
+    $idsString .= ' / <a href="' . htmlspecialchars($postUrl, ENT_QUOTES, 'UTF-8') 
+               . '" target="_blank" rel="noopener noreferrer">#' 
+               . $this->currentPost->id . '</a>';
+} else {
+    $idsString .= ' / #' . $this->currentPost->id;
+}
+
+// Родительский пост
+if (!empty($this->currentPost->parent)) {
+    if ($this->params->kunena_post_link) {
+        $parentUrl = $this->getKunenaPostUrl($this->currentPost->parent);
+        $idsString .= ' << <a href="' . htmlspecialchars($parentUrl, ENT_QUOTES, 'UTF-8') 
+                   . '" target="_blank" rel="noopener noreferrer">#' 
+                   . $this->currentPost->parent . '</a>';
     } else {
-        $idsString .= ' / #' . $this->currentPost->id;
+        $idsString .= ' << #' . $this->currentPost->parent;
     }
-    
-    // Родительский пост
-    if (!empty($this->currentPost->parent)) {
-        if ($this->params->kunena_post_link) {
-            $parentUrl = $this->getKunenaPostUrl($this->currentPost->parent);
-            $idsString .= ' << <a href="' . htmlspecialchars($parentUrl, ENT_QUOTES, 'UTF-8') . '">#' 
-                        . $this->currentPost->parent . '</a>';
-        } else {
-            $idsString .= ' << #' . $this->currentPost->parent;
-        }
+}
+
+$infoString .= $idsString;
     }
-    $infoString .= $idsString;
-    }
-    
     // Закрываем блок
     $infoString .= '<br /> * * * * *</div><br />';
     return $infoString;
