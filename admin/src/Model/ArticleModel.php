@@ -23,9 +23,8 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\Filter\OutputFilter;
 use Joomla\Database\DatabaseInterface;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
-use Kunena\Forum\Message\KunenaMessageHelper; 
-use Kunena\Route\KunenaRoute;                 
 use Kunena\Bbcode\KunenaBbcode; 
+use Joomla\CMS\HTML\HTMLHelper;
 
 /**
  * Article Model
@@ -413,9 +412,9 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
            if ($this->params->reminder_lines) {      // Если нужно выводить строки напоминнания
                 $this->currentArticle->fulltext .=  $this->reminderLines;    // Добавляем в статью строки напоминания предыдущего поста
                 // Вычисляем строки напоминания текущего поста, используются в следующем посте
-                 $this->$reminderLines = '<br />'  . JText::_('COM_KUNENATOPIC2ARTICLE_REFERENCE_TO_POST') 
+                 $this->$reminderLines = '<br />'  . Text::_('COM_KUNENATOPIC2ARTICLE_REFERENCE_TO_POST') 
                  . '#' . $this->currentPost->parent . ': '
-                       . JHtml::_('string.truncate', $htmlContent, (int)$this->params->reminder_lines) . '<br />';
+                       . HTMLHelper::_('string.truncate', $htmlContent, (int)$this->params->reminder_lines) . '<br />';
             } 
             
            // Преобразуем BBCode в HTML
