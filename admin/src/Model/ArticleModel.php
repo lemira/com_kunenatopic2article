@@ -271,7 +271,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
                 $data = [
                 'title' => $this->currentArticle->title,
                 'alias' => $this->currentArticle->alias,
-                'introtext' => JHtml::_('string.truncate', $this->currentArticle->fulltext, 200),
+                'introtext' => HTMLHelper::_('string.truncate', $this->currentArticle->fulltext, 200),
                 'fulltext' => $this->currentArticle->fulltext,
                 'catid' => (int) $this->params->article_category,
                 'created_by' => (int)$this->topicAuthorId, 
@@ -283,7 +283,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
                 'attribs' => '{"show_publishing_options":"","show_article_options":"","show_urls_images_backend":"","show_urls_images_frontend":""}',
                 'metakey' => '',
                 'metadesc' => '',
-                 'metadata' => '{"robots":"","author":"","rights":""}', // Стандартные метаданные
+                'metadata' => '{"robots":"","author":"","rights":""}', // Стандартные метаданные
             ];
 
             // Привязываем данные к таблице
