@@ -50,6 +50,7 @@ class ArticleModel extends BaseDatabaseModel
     private $currentIndex = 0; // первый переход с первого элемента $topicId = $firstPostId (0) на 2-й (1)
     private $infoString = '';  // строка сборки информационной строки поста в createPostInfoString()
     private $postInfoString = '';  // Информационная строка поста
+    private $reminderLines = '';  // строки напоминания поста
    
       public function __construct($config = [])
 {
@@ -79,6 +80,7 @@ class ArticleModel extends BaseDatabaseModel
            
               $this->postId = $firstPostId; // текущий id 
               $this->openPost($this->postId); // Открываем первый пост темы для доступа к его параметрам
+              $this->reminderLines = ""; // у первого поста нет строк напоминания
 
             // Формируем список ID постов в зависимости от схемы обхода; должно быть после открытия первого поста!
             if ($this->params->post_transfer_scheme != 1) {
@@ -381,11 +383,12 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             
            // Factory::getApplication()->enqueueMessage('openPost Размер поста: ' . $this->postSize, 'info'); // ОТЛАДКА          
 
-             // Вычиcляем информационную строку (всегда есть хотя бы разделители) поста
-           $this->postInfoString = $this->createPostInfoString();       
-            // Добавляем размер информационной строки (в символах)
+            $this->postInfoString = $this->createPostInfoString(); // Вычиcляем информационную строку (всегда есть хотя бы разделители) поста
+           // Добавляем размер информационной строки (в символах)
             $this->postSize += mb_strlen($this->postInfoString, 'UTF-8');
-        //    Factory::getApplication()->enqueueMessage('openPost Размер поста с и.с.: ' . $this->postSize, 'info'); // ОТЛАДКА          
+             // Добавляем размер строк напоминания(в символах)
+            $this->postSize += mb_strlen($this->reminderLines, 'UTF-8');  // проверку признака не делаем - лишние строки кода 
+           //    Factory::getApplication()->enqueueMessage('openPost Размер поста с и.с.: ' . $this->postSize, 'info'); // ОТЛАДКА          
  
             return true;
         } catch (\Exception $e) {
@@ -403,19 +406,25 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
         if ($this->currentArticle === null || $this->currentPost === null) {
             return false;
         }
-
         try {
-           // Добавляем в статью инф строку
+            // Добавляем в статью инф строку   (не пуста)
            $this->currentArticle->fulltext .= $this->postInfoString;
   //      Factory::getApplication()->enqueueMessage('transferPost инф стр: ' . $this->postInfoString, 'info'); // ОТЛАДКА   
-             
+           if ($this->params->reminder_lines) {      // Если нужно выводить строки напоминнания
+                $this->currentArticle->fulltext .=  $this->reminderLines;    // Добавляем в статью строки напоминания предыдущего поста
+                // Вычисляем строки напоминания текущего поста, используются в следующем посте
+                 $this->$reminderLines = '<br />'  . JText::_('COM_KUNENATOPIC2ARTICLE_REFERENCE_TO_POST') 
+                 . '#' . $this->currentPost->parent . ': '
+                       . JHtml::_('string.truncate', $htmlContent, (int))$this->params->reminder_lines . '<br />';
+            } 
+            
            // Преобразуем BBCode в HTML
             $htmlContent = $this->convertBBCodeToHtml($this->postText);
             
             // Добавляем преобразованный текст в статью
             $this->currentArticle->fulltext .= $htmlContent;
             
-            // Обновляем размер статьи ; $this->postSize включает длину инф строки
+            // Обновляем размер статьи ; $this->postSize включает длину инф строки и строки напоминания, вычислен в openPost
             $this->articleSize += $this->postSize;
 // Factory::getApplication()->enqueueMessage('transferPost Размер статьи: ' . $this->articleSize, 'info'); // ОТЛАДКА   
             return true;
