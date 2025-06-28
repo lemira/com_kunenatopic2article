@@ -135,8 +135,11 @@ class ArticleModel extends BaseDatabaseModel
            $this->currentArticle = new \stdClass(); // Инициализируем $this->currentArticle как stdClass
            // Сбрасываем текущий размер статьи
            $this->articleSize = 0;
-           $this->currentArticle->fulltext = '';
-              
+           //   $this->currentArticle->fulltext = '';
+           $this->currentArticle->fulltext .=  Text::_('COM_KUNENATOPIC2ARTICLE_INFORMATION_SIGN') . '<br />'    // ?? не учтена длина!
+                 . Text::_('COM_KUNENATOPIC2ARTICLE_WARNING_SIGN') 
+                 . '<hr style="width: 50%; height: 1px; background: linear-gradient(to right, transparent, #ccc, transparent); margin: 0 auto; border: none;">' //  Линия с тенью (эффект углубления)
+           
             // Формируем базовый заголовок статьи
             $title = $this->subject;
             // Если это не первая статья, добавляем номер части
@@ -402,28 +405,17 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
      */
     private function transferPost()
     {
-        if ($this->currentArticle === null || $this->currentPost === null) {
-            return false;
-        }
-        try {
-            // Добавляем в статью инф строку   (не пуста)
-           $this->currentArticle->fulltext .= $this->postInfoString;
-  //      Factory::getApplication()->enqueueMessage('transferPost инф стр: ' . $this->postInfoString, 'info'); // ОТЛАДКА   
-            
-           // Преобразуем BBCode в HTML
+       try {
+            // Преобразуем BBCode в HTML
             $htmlContent = $this->convertBBCodeToHtml($this->postText);
             
-            if ($this->params->reminder_lines) {      // Если нужно выводить строки напоминнания
-                $this->currentArticle->fulltext .=  $this->reminderLines;    // Добавляем в статью строки напоминания предыдущего поста
-                // Вычисляем строки напоминания текущего поста, используются в следующем посте
-                 $this->reminderLines = '<br />'  . Text::_('COM_KUNENATOPIC2ARTICLE_REFERENCE_TO_POST') 
-                 . '#' . $this->currentPost->parent . ': '
-                       . HTMLHelper::_('string.truncate', $htmlContent, (int)$this->params->reminder_lines) . '<br />';
-            } 
-           
+            $this->printHeadOfPost();    // Добавляем в статью инф строку(не пуста) и, если нужно, строки напоминнания ; обязательно ПОСЛЕ Преобразования BBCode
+                      
             // Добавляем преобразованный текст в статью
             $this->currentArticle->fulltext .= $htmlContent;
-            
+
+            $this->currentArticle->fulltext .= '<hr style="width: 75%; height: 1px; background: black; margin: 0 auto; border: none;">' // добавляем линию разделения пстов, ?? не учтена в длине статьи!
+                        
             // Обновляем размер статьи ; $this->postSize включает длину инф строки и строки напоминания, вычислен в openPost
             $this->articleSize += $this->postSize;
 // Factory::getApplication()->enqueueMessage('transferPost Размер статьи: ' . $this->articleSize, 'info'); // ОТЛАДКА   
@@ -520,8 +512,8 @@ $query->order($this->db->quoteName('time') . ' ASC');
         return '';
     }
 
-    $infoString = '<div class="kun_p2a_infoPostString">';
-    $infoString .= '<br /> v v v v v<br />';
+    $infoString = '<div class="kun_p2a_infoPostString" style="text-align: center;">';
+    $infoString .= ' v v v v v<br />';          // <br /> v v v v v<br /> ??
     
     // Автор (никнейм)
     if ($this->params->post_author) {
@@ -574,7 +566,8 @@ if (!empty($this->currentPost->parent)) {
 $infoString .= $idsString;
     }
     // Закрываем блок
-    $infoString .= '<br /> * * * * *</div><br />';
+    $infoString .= '<br /> * * * * *</div>';         // <br /> * * * * *</div><br /> ??
+    
     return $infoString;
 }
     
@@ -614,5 +607,24 @@ private function getKunenaPostUrl(int $postId): string
     $thread = $this->currentPost->thread ?? 0;
     return Uri::root() . "forum/{$catid}/{$thread}#{$postId}";
 }
-    
-}
+
+             private function printHeadOfPost()
+{
+        // Добавляем в статью инф строку   (не пуста)
+           $this->currentArticle->fulltext .= $this->postInfoString;
+  //      Factory::getApplication()->enqueueMessage('transferPost инф стр: ' . $this->postInfoString, 'info'); // ОТЛАДКА   
+            
+          if ($this->params->reminder_lines) {      // Если нужно выводить строки напоминнания
+                $this->currentArticle->fulltext .=  $this->reminderLines;    // Добавляем в статью строки напоминания предыдущего поста
+                // Вычисляем строки напоминания текущего поста, используются в следующем посте
+                $this->reminderLines = '<br />'  . Text::_('COM_KUNENATOPIC2ARTICLE_REFERENCE_TO_POST') 
+                 . '#' . $this->currentPost->parent . ': '
+                       . HTMLHelper::_('string.truncate', $this->htmlContent, (int)$this->params->reminder_lines) . '<br />';
+            } 
+        $this->currentArticle->fulltext .=  '<hr style="width: 50%; height: 1px; background-color: #e0e0e0; margin: 0 auto; border: none;">';        //    Светло-серый
+                     
+        // return;   в конце void-метода не нужен
+    }
+
+} // КОНЕЦ КЛАССА
+
