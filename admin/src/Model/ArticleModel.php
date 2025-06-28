@@ -381,16 +381,16 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
                 throw new \Exception(Text::sprintf('COM_YOURCOMPONENT_POST_TEXT_NOT_FOUND', $postId));
             }
 
-            // Вычисляем размер поста (в символах)
-            $this->postSize = mb_strlen($this->postText, 'UTF-8');
+            // Вычисляем размер поста (в символах)  ?? Может быть, надо вычислять размер после перекодировки?
+            $this->postSize = mb_strlen($this->postText ?? '', 'UTF-8');    // Если переменная null, подставит пустую строку "", и mb_strlen() отработает без ошибок. дс
             
            // Factory::getApplication()->enqueueMessage('openPost Размер поста: ' . $this->postSize, 'info'); // ОТЛАДКА          
 
             $this->postInfoString = $this->createPostInfoString(); // Вычиcляем информационную строку (всегда есть хотя бы разделители) поста
            // Добавляем размер информационной строки (в символах)
-            $this->postSize += mb_strlen($this->postInfoString, 'UTF-8');
+            $this->postSize += mb_strlen($this->postInfoString ?? '', 'UTF-8'); 
              // Добавляем размер строк напоминания(в символах)
-            $this->postSize += mb_strlen($this->reminderLines, 'UTF-8');  // проверку признака не делаем - лишние строки кода 
+             $this->postSize += mb_strlen($this->reminderLines ?? '', 'UTF-8'); // проверку признака не делаем - лишние строки кода 
            //    Factory::getApplication()->enqueueMessage('openPost Размер поста с и.с.: ' . $this->postSize, 'info'); // ОТЛАДКА          
  
             return true;
@@ -415,7 +415,12 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             // Добавляем преобразованный текст в статью
             $this->currentArticle->fulltext .= $htmlContent;
 
-            $this->currentArticle->fulltext .= '<hr style="width: 75%; height: 1px; background: black; margin: 0 auto; border: none;">'; // добавляем линию разделения пстов, ?? не учтена в длине статьи!
+           // Вычисляем строки напоминания текущего поста, используются в следующем посте
+                $this->reminderLines = '<br />'  . Text::_('COM_KUNENATOPIC2ARTICLE_REFERENCE_TO_POST') 
+                 . '#' . $this->currentPost->parent . ': '
+                       . HTMLHelper::_('string.truncate', $this->htmlContent, (int)$this->params->reminder_lines) . '<br />';
+
+           $this->currentArticle->fulltext .= '<hr style="width: 75%; height: 1px; background: black; margin: 0 auto; border: none;">'; // добавляем линию разделения пстов, ?? не учтена в длине статьи!
                         
             // Обновляем размер статьи DOLLARthis - postSize включает длину инф строки и строки напоминания, вычислен в openPost
             $this->articleSize += $this->postSize;
@@ -514,9 +519,36 @@ $query->order($this->db->quoteName('time') . ' ASC');
     }
 
     $infoString = '<div class="kun_p2a_infoPostString" style="text-align: center;">';
-    $infoString .= ' v v v v v<br />';          // <br /> v v v v v<br /> ??
+          // IDs постов (с ссылкой или без)
+    if ($this->params->post_ids) {      // НАЧАЛО БЛОКА IDs
+    // Формируем часть строки с ID постов
+    $idsString = '';
     
-    // Автор (никнейм)
+    // Текущий пост
+    if ($this->params->kunena_post_link) {
+    $postUrl = $this->getKunenaPostUrl($this->currentPost->id);
+    $idsString .= ' / <a href="' . htmlspecialchars($postUrl, ENT_QUOTES, 'UTF-8') 
+               . '" target="_blank" rel="noopener noreferrer">#' 
+               . $this->currentPost->id . '</a>';
+} else {
+    $idsString .= ' / #' . $this->currentPost->id;
+}
+ // Родительский пост
+if (!empty($this->currentPost->parent)) {
+    if ($this->params->kunena_post_link) {
+        $parentUrl = $this->getKunenaPostUrl($this->currentPost->parent);
+        $idsString .= ' << <a href="' . htmlspecialchars($parentUrl, ENT_QUOTES, 'UTF-8') 
+                   . '" target="_blank" rel="noopener noreferrer">#' 
+                   . $this->currentPost->parent . '</a>';
+    } else {
+        $idsString .= ' << #' . $this->currentPost->parent;
+    }
+}
+$infoString .= $idsString;
+    }  // КОНЕЦ БЛОКА IDs
+  $infoString .= '<br />';  
+    
+  // Автор (никнейм)
     if ($this->params->post_author) {
         $infoString .= htmlspecialchars($this->currentPost->name, ENT_QUOTES, 'UTF-8');
     }
@@ -536,38 +568,9 @@ $query->order($this->db->quoteName('time') . ' ASC');
             $infoString .= ' ' . $time;
         }
     }
-  
-    // IDs постов (с ссылкой или без)
-    if ($this->params->post_ids) {
-    // Формируем часть строки с ID постов
-    $idsString = '';
-    
-    // Текущий пост
-    if ($this->params->kunena_post_link) {
-    $postUrl = $this->getKunenaPostUrl($this->currentPost->id);
-    $idsString .= ' / <a href="' . htmlspecialchars($postUrl, ENT_QUOTES, 'UTF-8') 
-               . '" target="_blank" rel="noopener noreferrer">#' 
-               . $this->currentPost->id . '</a>';
-} else {
-    $idsString .= ' / #' . $this->currentPost->id;
-}
 
-// Родительский пост
-if (!empty($this->currentPost->parent)) {
-    if ($this->params->kunena_post_link) {
-        $parentUrl = $this->getKunenaPostUrl($this->currentPost->parent);
-        $idsString .= ' << <a href="' . htmlspecialchars($parentUrl, ENT_QUOTES, 'UTF-8') 
-                   . '" target="_blank" rel="noopener noreferrer">#' 
-                   . $this->currentPost->parent . '</a>';
-    } else {
-        $idsString .= ' << #' . $this->currentPost->parent;
-    }
-}
-
-$infoString .= $idsString;
-    }
     // Закрываем блок
-    $infoString .= '<br /> * * * * *</div>';         // <br /> * * * * *</div><br /> ??
+   $infoString .= '<br /></div>';   
     
     return $infoString;
 }
@@ -609,7 +612,7 @@ private function getKunenaPostUrl(int $postId): string
     return Uri::root() . "forum/{$catid}/{$thread}#{$postId}";
 }
 
-             private function printHeadOfPost()
+private function printHeadOfPost()
 {
         // Добавляем в статью инф строку   (не пуста)
            $this->currentArticle->fulltext .= $this->postInfoString;
@@ -617,11 +620,7 @@ private function getKunenaPostUrl(int $postId): string
             
           if ($this->params->reminder_lines) {      // Если нужно выводить строки напоминнания
                 $this->currentArticle->fulltext .=  $this->reminderLines;    // Добавляем в статью строки напоминания предыдущего поста
-                // Вычисляем строки напоминания текущего поста, используются в следующем посте
-                $this->reminderLines = '<br />'  . Text::_('COM_KUNENATOPIC2ARTICLE_REFERENCE_TO_POST') 
-                 . '#' . $this->currentPost->parent . ': '
-                       . HTMLHelper::_('string.truncate', $this->htmlContent, (int)$this->params->reminder_lines) . '<br />';
-            } 
+             } 
         $this->currentArticle->fulltext .=  '<hr style="width: 50%; height: 1px; background-color: #e0e0e0; margin: 0 auto; border: none;">';        //    Светло-серый
                      
         // return;   в конце void-метода не нужен
