@@ -136,7 +136,7 @@ class ArticleModel extends BaseDatabaseModel
            $this->currentArticle = new \stdClass(); // Инициализируем $this->currentArticle как stdClass
            // Сбрасываем текущий размер статьи
            $this->articleSize = 0;
-           //   $this->currentArticle->fulltext = '';
+           $this->currentArticle->fulltext = ''; // для возможного изменения строк предупреждения
            $this->currentArticle->fulltext .=  Text::_('COM_KUNENATOPIC2ARTICLE_INFORMATION_SIGN') . '<br />'    // ?? не учтена длина!
                  . Text::_('COM_KUNENATOPIC2ARTICLE_WARNING_SIGN') 
                  . '<hr style="width: 50%; height: 1px; background: linear-gradient(to right, transparent, #ccc, transparent); margin: 0 auto; border: none;">'; //  Линия с тенью (эффект углубления)
