@@ -50,7 +50,8 @@ class ArticleModel extends BaseDatabaseModel
     private $infoString = '';  // строка сборки информационной строки поста в createPostInfoString()
     private $postInfoString = '';  // Информационная строка поста
     private $reminderLines = '';  // строки напоминания поста
-   
+    private $title = '';   // Заголовок статьи
+    
       public function __construct($config = [])
 {
     parent::__construct($config);
@@ -138,24 +139,24 @@ class ArticleModel extends BaseDatabaseModel
            //   $this->currentArticle->fulltext = '';
            $this->currentArticle->fulltext .=  Text::_('COM_KUNENATOPIC2ARTICLE_INFORMATION_SIGN') . '<br />'    // ?? не учтена длина!
                  . Text::_('COM_KUNENATOPIC2ARTICLE_WARNING_SIGN') 
-                 . '<hr style="width: 50%; height: 1px; background: linear-gradient(to right, transparent, #ccc, transparent); margin: 0 auto; border: none;">' //  Линия с тенью (эффект углубления)
+                 . '<hr style="width: 50%; height: 1px; background: linear-gradient(to right, transparent, #ccc, transparent); margin: 0 auto; border: none;">'; //  Линия с тенью (эффект углубления)
            
             // Формируем базовый заголовок статьи
-            $title = $this->subject;
+            $this->title = $this->subject;
             // Если это не первая статья, добавляем номер части
             if (!empty($this->articleLinks)) {
                 $partNum = count($this->articleLinks) + 1;
-                $title .= ' - ' . Text::sprintf('COM_KUNENATOPIC2ARTICLE_PART_NUMBER', $partNum);
+                $this->title .= ' - ' . Text::sprintf('COM_KUNENATOPIC2ARTICLE_PART_NUMBER', $partNum);
             }
-            $this->currentArticle->title = $title;
+            $this->currentArticle->title = $this->title;
            
             // Формируем уникальный алиас
-            $baseAlias = OutputFilter::stringURLSafe($title);
+            $baseAlias = OutputFilter::stringURLSafe($this->title);
             $uniqueAlias = $this->getUniqueAlias($baseAlias);
             $this->currentArticle->alias = $uniqueAlias;
               
             // Отладка
-            $this->app->enqueueMessage('openArticle Статья открыта: ' . $title . ', категория: ' . $this->params->article_category . ', alias: ' . $uniqueAlias, 'notice');
+            $this->app->enqueueMessage('openArticle Статья открыта: ' . $this->title . ', категория: ' . $this->params->article_category . ', alias: ' . $uniqueAlias, 'notice');
 
             return true;
          } catch (\Exception $e) {
@@ -414,9 +415,9 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             // Добавляем преобразованный текст в статью
             $this->currentArticle->fulltext .= $htmlContent;
 
-            $this->currentArticle->fulltext .= '<hr style="width: 75%; height: 1px; background: black; margin: 0 auto; border: none;">' // добавляем линию разделения пстов, ?? не учтена в длине статьи!
+            $this->currentArticle->fulltext .= '<hr style="width: 75%; height: 1px; background: black; margin: 0 auto; border: none;">'; // добавляем линию разделения пстов, ?? не учтена в длине статьи!
                         
-            // Обновляем размер статьи ; $this->postSize включает длину инф строки и строки напоминания, вычислен в openPost
+            // Обновляем размер статьи DOLLARthis - postSize включает длину инф строки и строки напоминания, вычислен в openPost
             $this->articleSize += $this->postSize;
 // Factory::getApplication()->enqueueMessage('transferPost Размер статьи: ' . $this->articleSize, 'info'); // ОТЛАДКА   
             return true;
@@ -627,4 +628,3 @@ private function getKunenaPostUrl(int $postId): string
     }
 
 } // КОНЕЦ КЛАССА
-
