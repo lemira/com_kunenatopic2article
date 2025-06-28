@@ -34,23 +34,21 @@ class ArticleModel extends BaseDatabaseModel
 {
     protected $db; // @var \Joomla\Database\DatabaseInterface 
     protected $app; /** @var \Joomla\CMS\Application\CMSApplication */
-    protected $kunenaApiAvailable = false;
     private $currentArticle = null;  
-    private $articleSize = 0;    // Текущий размер статьи , @var    int 
+    private int $articleSize = 0;    // Текущий размер статьи , @var    int 
     private $articleLinks = [];  // Массив ссылок на созданные статьи  @var array 
-    private $postId = 0;   // Текущий ID поста @var    int
-    private $postText = ''; // Текст текущего поста 
-    private $postSize = 0; // Размер текущего поста var    int
+    private int $postId = 0;   // Текущий ID поста @var    int
+    private string $postText = ''; // Текст текущего поста 
+    private int $postSize = 0; // Размер текущего поста var    int
     private $postIdList = []; // Список ID постов для обработки @var    array
     private $currentPost = null;  // Текущий пост @var    object
-    private $subject = ''; // Переменная модели для хранения subject
-    private $topicAuthorId = ''; // Переменная модели для хранения Id автора
+    private string $subject = ''; // Переменная модели для хранения subject
     private $params = null; // Хранение параметров для доступа в других методах
-    private $currentIndex = 0; // первый переход с первого элемента $topicId = $firstPostId (0) на 2-й (1)
-    private $infoString = '';  // строка сборки информационной строки поста в createPostInfoString()
-    private $postInfoString = '';  // Информационная строка поста
-    private $reminderLines = '';  // строки напоминания поста
-    private $title = '';   // Заголовок статьи
+    private int $currentIndex = 0; // первый переход с первого элемента $topicId = $firstPostId (0) на 2-й (1)
+    private string $infoString = '';  // строка сборки информационной строки поста в createPostInfoString()
+    private string $postInfoString = '';  // Информационная строка поста
+    private string $reminderLines = '';  // строки напоминания поста
+    private string $title = '';   // Заголовок статьи
     
       public function __construct($config = [])
 {
@@ -381,19 +379,23 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
                 throw new \Exception(Text::sprintf('COM_YOURCOMPONENT_POST_TEXT_NOT_FOUND', $postId));
             }
 
-            // Вычисляем размер поста (в символах)  ?? Может быть, надо вычислять размер после перекодировки?
-            $this->postSize = mb_strlen($this->postText ?? '', 'UTF-8');    // Если переменная null, подставит пустую строку "", и mb_strlen() отработает без ошибок. дс
+            // Приведение типов с проверкой (PHP 8.2+ style)
+           $this->postText = $this->postText ?? '';
+           $this->reminderLines = $this->reminderLines ?? '';
             
-           // Factory::getApplication()->enqueueMessage('openPost Размер поста: ' . $this->postSize, 'info'); // ОТЛАДКА          
-
-            $this->postInfoString = $this->createPostInfoString(); // Вычиcляем информационную строку (всегда есть хотя бы разделители) поста
-           // Добавляем размер информационной строки (в символах)
-            $this->postSize += mb_strlen($this->postInfoString ?? '', 'UTF-8'); 
-             // Добавляем размер строк напоминания(в символах)
-             $this->postSize += mb_strlen($this->reminderLines ?? '', 'UTF-8'); // проверку признака не делаем - лишние строки кода 
-           //    Factory::getApplication()->enqueueMessage('openPost Размер поста с и.с.: ' . $this->postSize, 'info'); // ОТЛАДКА          
- 
-            return true;
+           $this->postInfoString = $this->createPostInfoString(); // Вычиcляем информационную строку (всегда есть хотя бы разделители) поста
+           
+            // Вычисляем размер поста (в символах)  ?? Может быть, надо вычислять размер после перекодировки?
+           // Расчёт длины с обработкой ошибок
+           try {
+              $this->postSize = mb_strlen($this->postText, 'UTF-8')
+              + mb_strlen($this->postInfoString, 'UTF-8')
+              + mb_strlen($this->reminderLines, 'UTF-8');
+          } catch (\Throwable $e) {
+               throw new \RuntimeException('Ошибка расчёта размера поста: ' . $e->getMessage());
+          }
+            //    Factory::getApplication()->enqueueMessage('openPost Размер поста с и.с.: ' . $this->postSize, 'info'); // ОТЛАДКА          
+          return true;
         } catch (\Exception $e) {
             $this->app->enqueueMessage($e->getMessage(), 'error');
             return false;
@@ -416,7 +418,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             $this->currentArticle->fulltext .= $htmlContent;
 
            // Вычисляем строки напоминания текущего поста, используются в следующем посте
-                $this->reminderLines = '<br />'  . Text::_('COM_KUNENATOPIC2ARTICLE_REFERENCE_TO_POST') 
+                $this->reminderLines = '<br />'  . Text::_('COM_KUNENATOPIC2ARTICLE_START_OF_REMINDER_LINES') 
                  . '#' . $this->currentPost->parent . ': '
                        . HTMLHelper::_('string.truncate', $this->htmlContent, (int)$this->params->reminder_lines) . '<br />';
 
@@ -518,8 +520,9 @@ $query->order($this->db->quoteName('time') . ' ASC');
         return '';
     }
 
-    $infoString = '<div class="kun_p2a_infoPostString" style="text-align: center;">';
-          // IDs постов (с ссылкой или без)
+    $infoString = HTMLHelper::_('content.prepare', '<div class="kun_p2a_infoPostString text-center">'); // Используем современный синтаксис Joomla 5
+    
+    // IDs постов (с ссылкой или без)
     if ($this->params->post_ids) {      // НАЧАЛО БЛОКА IDs
     // Формируем часть строки с ID постов
     $idsString = '';
