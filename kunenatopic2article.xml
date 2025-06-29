@@ -25,6 +25,7 @@
             <folder>tmpl</folder>
             <folder>sql</folder>
             <folder>language</folder>
+            <folder>assets</folder>
               </files>
         
         <!-- Языковые файлы админки -->
@@ -32,5 +33,9 @@
             <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.ini</language>
             <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.sys.ini</language>
         </languages>
+
+        <media destination="com_kunenatopic2article">
+        <stylesheet file="admin/assets/css/admin.css" />
+        </media>
     </administration>
 </extension>
