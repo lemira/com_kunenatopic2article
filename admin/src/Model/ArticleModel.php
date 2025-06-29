@@ -138,8 +138,7 @@ class ArticleModel extends BaseDatabaseModel
            $this->currentArticle->fulltext = ''; // для возможного изменения строк предупреждения
            $this->currentArticle->fulltext .=  Text::_('COM_KUNENATOPIC2ARTICLE_INFORMATION_SIGN') . '<br />'    // ?? не учтена длина!
                  . Text::_('COM_KUNENATOPIC2ARTICLE_WARNING_SIGN') 
-                 . '<hr style="width: 75%; height: 1px; background: black; margin: 0 auto; border: none;">';
-               // '<hr style="width: 50%; height: 1px; background: linear-gradient(to right, transparent, #ccc, transparent); margin: 0 auto; border: none;">'; //  Линия с тенью (эффект углубления)
+                 . '<div class="kun_p2a_divider-shadow"></div>'; //  Линия с тенью (эффект углубления)
            
             // Формируем базовый заголовок статьи
             $this->title = $this->subject;
@@ -413,8 +412,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
            $this->reminderLines = HTMLHelper::_('string.truncate', $this->htmlContent, (int)$this->params->reminder_lines);
            Factory::getApplication()->enqueueMessage('transferPost reminderLines: ' . $this->reminderLines, 'info'); // ОТЛАДКА   
            } 
-           $this->currentArticle->fulltext .= '<hr style="width: 75%; height: 1px; background: black; margin: 0 auto; border: none;">';
-               // '<hr style="width: 75%; height: 1px; background: black; margin: 0 auto; border: none;">'; // добавляем линию разделения пстов, ?? не учтена в длине статьи!
+           $this->currentArticle->fulltext .= '<div class="kun_p2a_divider-gray"></div>'; // добавляем линию разделения постов, ?? не учтена в длине статьи!
                         
             // Обновляем размер статьи DOLLARthis - postSize включает длину инф строки и строки напоминания, вычислен в openPost
             $this->articleSize += $this->postSize;
@@ -615,14 +613,11 @@ private function printHeadOfPost()
             
           if ($this->params->reminder_lines) {      // Если нужно выводить строки напоминнания
              if ($this->currentPost->parent) {
-                $this->currentArticle->fulltext .= Text::_('COM_KUNENATOPIC2ARTICLE_START_OF_REMINDER_LINES')      // <br /> . 
+                $this->currentArticle->fulltext .= Text::_('COM_KUNENATOPIC2ARTICLE_START_OF_REMINDER_LINES') 
                        . '#' . $this->currentPost->parent . ': '
-                       .  $this->reminderLines;  // Добавляем в статью строки напоминания предыдущего поста //  . '<br />
-            } 
+                       . '<div class="kun_p2a_reminderLines">' . $this->reminderLines . '</div>'; // Добавляем в статью строки напоминания предыдущего поста             } 
            } 
-        $this->currentArticle->fulltext .= '<hr style="width: 75%; height: 1px; background: black; margin: 0 auto; border: none;">'
-             . '<br />';
-            // '<hr style="width: 50%; height: 1px; background-color: #e0e0e0; margin: 0 auto; border: none;">';        //    Светло-серый
+        $this->currentArticle->fulltext .= '<div class="kun_p2a_divider-gray"></div>';   //    Светло-серый //  . '<br />'?
                      
         // return;   в конце void-метода не нужен
     }
