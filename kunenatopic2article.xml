@@ -25,7 +25,7 @@
             <folder>tmpl</folder>
             <folder>sql</folder>
             <folder>language</folder>
-            <folder>assets</folder>
+            <folder>assets/css</folder>
               </files>
         
         <!-- Языковые файлы админки -->
@@ -34,11 +34,8 @@
             <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.sys.ini</language>
         </languages>
 
-        <media destination="com_kunenatopic2article">
-       <!-- Для админки (редактирование) -->
-    <stylesheet file="admin/assets/css/kun_p2a.css" />
-       <!-- Для статей (публичная часть) -->
-    <stylesheet file="media/com_kunenatopic2article/css/kun_p2a.css" />
-        </media>
+       <media destination="com_kunenatopic2article">
+        <stylesheet file="media/com_kunenatopic2article/css/kun_p2a.css" />
+       </media>
     </administration>
 </extension>
