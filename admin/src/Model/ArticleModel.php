@@ -620,7 +620,7 @@ private function printHeadOfPost()
              if ($this->currentPost->parent) {
                 $this->currentArticle->fulltext .= Text::_('COM_KUNENATOPIC2ARTICLE_REFERENCE_TO_POST')      // <br /> . 
                        . '#' . $this->currentPost->parent . ': '
-                       .  $this->reminderLines';  // Добавляем в статью строки напоминания предыдущего поста //  . '<br />
+                       .  $this->reminderLines;  // Добавляем в статью строки напоминания предыдущего поста //  . '<br />
             } 
            } 
         $this->currentArticle->fulltext .= '<hr style="width: 75%; height: 1px; background: black; margin: 0 auto; border: none;">';
