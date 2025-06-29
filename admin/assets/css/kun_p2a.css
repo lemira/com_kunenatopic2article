@@ -1,58 +1,26 @@
-/* Стиль для информационной строки поста */
+/* Импорт основных стилей из media */
+@import url('../../../../../media/com_kunenatopic2article/css/kun_p2a.css');
+
+/* Дополнительные стили ТОЛЬКО для админки */
+.kun-p2a-admin-form {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 5px;
+}
+
+.kun-p2a-admin-button {
+    background: #2a69b8;
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+/* Переопределения для админки (если нужно) */
 .kun_p2a_infoPostString {
-    font-size: 70% !important;  /* Уменьшение шрифта до 70% */
-    line-height: 1.4;
-    margin: 0.5em 0;
-    padding: 0.3em;
-    color: #333;
-}
-
-/* Центрирование текста */
-.kun_p2a_infoPostString.text-center {
-    text-align: center !important;
-}
-
-/* Стиль для строк-напоминаний */
-.kun_p2a_reminderLines {
-    font-size: 85% !important;
-    color: #8B8000 !important;  /* Темно-желтый */
-    background-color: #FFFDE7 !important;  /* Светло-желтый фон */
-    width: 80% !important;
-    margin: 0.8em auto !important;
-    padding: 0.5em;
-    border-left: 3px solid #FFD700;  /* Золотистая левая граница */
-}
-
-/* Линия с эффектом углубления */
-.kun_p2a_divider-shadow {
-    width: 50% !important;
-    height: 1px !important;
-    background: linear-gradient(to right, transparent, #ccc, transparent) !important;
-    margin: 1em auto !important;
-    border: none !important;
-}
-
-/* Светло-серая линия */
-.kun_p2a_divider-gray {
-    width: 50% !important;
-    height: 1px !important;
-    background-color: #e0e0e0 !important;
-    margin: 1em auto !important;
-    border: none !important;
-}
-
-hr.kun_p2a-hr-shadow {
-    width: 50% !important;
-    height: 1px !important;
-    background: linear-gradient(to right, transparent, #ccc, transparent) !important;
-    margin: 1em auto !important;
-    border: none !important;
-}
-
-hr.kun_p2a-hr-gray {
-    width: 50% !important;
-    height: 1px !important;
-    background-color: #e0e0e0 !important;
-    margin: 1em auto !important;
-    border: none !important;
+    /* Специфичные настройки для админ-превью */
+    border: 1px dashed #ccc;
 }
