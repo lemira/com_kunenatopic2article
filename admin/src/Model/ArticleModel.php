@@ -49,6 +49,7 @@ class ArticleModel extends BaseDatabaseModel
     private string $postInfoString = '';  // Информационная строка поста
     private string $reminderLines = '';  // строки напоминания поста
     private string $title = '';   // Заголовок статьи
+    private string $htmlContent = '';   // Текс поста после BBCode
     
       public function __construct($config = [])
 {
@@ -370,12 +371,8 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             if ($this->postText === null) {
                 throw new \Exception(Text::sprintf('COM_YOURCOMPONENT_POST_TEXT_NOT_FOUND', $postId));
             }
-
-            // Приведение типов с проверкой (PHP 8.2+ style)
-           $this->postText = $this->postText ?? '';
-           $this->reminderLines = $this->reminderLines ?? '';
-            
-           $this->postInfoString = $this->createPostInfoString(); // Вычиcляем информационную строку (всегда есть хотя бы разделители) поста
+ 
+            $this->postInfoString = $this->createPostInfoString(); // Вычиcляем информационную строку (всегда есть хотя бы разделители) поста
            
             // Вычисляем размер поста (в символах)  ?? Может быть, надо вычислять размер после перекодировки?
            // Расчёт длины с обработкой ошибок
@@ -404,12 +401,12 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
     {
        try {
             // Преобразуем BBCode в HTML
-            $htmlContent = $this->convertBBCodeToHtml($this->postText);
+            $this->$htmlContent = $this->convertBBCodeToHtml($this->postText);
             
             $this->printHeadOfPost();    // Добавляем в статью инф строку(не пуста) и, если нужно, строки напоминнания ; обязательно ПОСЛЕ Преобразования BBCode
                       
             // Добавляем преобразованный текст в статью
-            $this->currentArticle->fulltext .= $htmlContent;
+            $this->currentArticle->fulltext .= $this->$htmlContent;
 
            // Вычисляем строки напоминания текущего поста, используются в следующем посте
            if ($this->params->reminder_lines) {   
@@ -623,7 +620,8 @@ private function printHeadOfPost()
                        .  $this->reminderLines;  // Добавляем в статью строки напоминания предыдущего поста //  . '<br />
             } 
            } 
-        $this->currentArticle->fulltext .= '<hr style="width: 75%; height: 1px; background: black; margin: 0 auto; border: none;">';
+        $this->currentArticle->fulltext .= '<hr style="width: 75%; height: 1px; background: black; margin: 0 auto; border: none;">'
+             . '<br />';
             // '<hr style="width: 50%; height: 1px; background-color: #e0e0e0; margin: 0 auto; border: none;">';        //    Светло-серый
                      
         // return;   в конце void-метода не нужен
