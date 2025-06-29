@@ -215,16 +215,7 @@ class ArticleModel extends BaseDatabaseModel
 
         try {
 Factory::getApplication()->enqueueMessage('closeArticle Сохранение статьи: ' . $this->currentArticle->title, 'info'); // ОТЛАДКА          
-
-            // Обработка introtext, если он пустой
-           // if (empty($this->currentArticle->introtext) && !empty($this->currentArticle->fulltext)) {
-             //   $maxIntroLength = 500; // Максимальная длина введения
-               // if (strlen($this->currentArticle->fulltext) > $maxIntroLength) {
-                 //   $this->currentArticle->introtext = substr($this->currentArticle->fulltext, 0, $maxIntroLength) . '...';
-                //} else {
-                  //  $this->currentArticle->introtext = $this->currentArticle->fulltext;
-               // }
-       
+   
             // Создаем статью через Table
             $articleId = $this->createArticleViaTable();
                          
@@ -273,7 +264,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
                 $data = [
                 'title' => $this->currentArticle->title,
                 'alias' => $this->currentArticle->alias,
-                'introtext' => HTMLHelper::_('string.truncate', $this->currentArticle->fulltext, 200),
+                'introtext' => '',
                 'fulltext' => $this->currentArticle->fulltext,
                 'catid' => (int) $this->params->article_category,
                 'created_by' => (int)$this->topicAuthorId, 
