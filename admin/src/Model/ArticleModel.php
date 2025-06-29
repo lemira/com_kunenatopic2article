@@ -611,15 +611,15 @@ private function printHeadOfPost()
            $this->currentArticle->fulltext .= $this->postInfoString;
   //      Factory::getApplication()->enqueueMessage('transferPost инф стр: ' . $this->postInfoString, 'info'); // ОТЛАДКА   
             
-          if ($this->params->reminder_lines) {      // Если нужно выводить строки напоминнания
-             if ($this->currentPost->parent) {
-                $this->currentArticle->fulltext .= Text::_('COM_KUNENATOPIC2ARTICLE_START_OF_REMINDER_LINES') 
-                       . '#' . $this->currentPost->parent . ': '
-                       . '<div class="kun_p2a_reminderLines">' . $this->reminderLines . '</div>'; // Добавляем в статью строки напоминания предыдущего поста             } 
-           } 
-        $this->currentArticle->fulltext .= '<div class="kun_p2a_divider-gray"></div>';   //    Светло-серый //  . '<br />'?
+    if ($this->params->reminder_lines && $this->currentPost->parent) {        // Если нужно выводить строки напоминнания
+    $this->currentArticle->fulltext .= Text::_('COM_KUNENATOPIC2ARTICLE_START_OF_REMINDER_LINES')
+        . '#' . $this->currentPost->parent . ': '
+        . '<div class="kun_p2a_reminderLines">' . $this->reminderLines . '</div>';    // Добавляем в статью строки напоминания предыдущего поста  
+ }    
+        
+    $this->currentArticle->fulltext .= '<div class="kun_p2a_divider-gray"></div>';   //    Светло-серый 
                      
         // return;   в конце void-метода не нужен
-    }
-
+ }
+    
 } // КОНЕЦ КЛАССА
