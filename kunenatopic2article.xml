@@ -35,7 +35,7 @@
         </languages>
 
         <media destination="com_kunenatopic2article">
-        <stylesheet file="admin/assets/css/admin.css" />
+        <stylesheet file="admin/assets/css/kun_p2a.css" />
         </media>
     </administration>
 </extension>
