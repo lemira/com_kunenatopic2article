@@ -401,12 +401,12 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
     {
        try {
             // Преобразуем BBCode в HTML
-            $this->$htmlContent = $this->convertBBCodeToHtml($this->postText);
+            $this->htmlContent = $this->convertBBCodeToHtml($this->postText);
             
             $this->printHeadOfPost();    // Добавляем в статью инф строку(не пуста) и, если нужно, строки напоминнания ; обязательно ПОСЛЕ Преобразования BBCode
                       
             // Добавляем преобразованный текст в статью
-            $this->currentArticle->fulltext .= $this->$htmlContent;
+            $this->currentArticle->fulltext .= $this->htmlContent;
 
            // Вычисляем строки напоминания текущего поста, используются в следующем посте
            if ($this->params->reminder_lines) {   
