@@ -1,0 +1,58 @@
+/* Стиль для информационной строки поста */
+.kun_p2a_infoPostString {
+    font-size: 70% !important;  /* Уменьшение шрифта до 70% */
+    line-height: 1.4;
+    margin: 0.5em 0;
+    padding: 0.3em;
+    color: #333;
+}
+
+/* Центрирование текста */
+.kun_p2a_infoPostString.text-center {
+    text-align: center !important;
+}
+
+/* Стиль для строк-напоминаний */
+.kun_p2a_reminderLines {
+    font-size: 85% !important;
+    color: #8B8000 !important;  /* Темно-желтый */
+    background-color: #FFFDE7 !important;  /* Светло-желтый фон */
+    width: 80% !important;
+    margin: 0.8em auto !important;
+    padding: 0.5em;
+    border-left: 3px solid #FFD700;  /* Золотистая левая граница */
+}
+
+/* Линия с эффектом углубления */
+.kun_p2a_divider-shadow {
+    width: 50% !important;
+    height: 1px !important;
+    background: linear-gradient(to right, transparent, #ccc, transparent) !important;
+    margin: 1em auto !important;
+    border: none !important;
+}
+
+/* Светло-серая линия */
+.kun_p2a_divider-gray {
+    width: 50% !important;
+    height: 1px !important;
+    background-color: #e0e0e0 !important;
+    margin: 1em auto !important;
+    border: none !important;
+}
+
+hr.kun_p2a-hr-shadow {
+    width: 50% !important;
+    height: 1px !important;
+    background: linear-gradient(to right, transparent, #ccc, transparent) !important;
+    margin: 1em auto !important;
+    border: none !important;
+}
+
+hr.kun_p2a-hr-gray {
+    width: 50% !important;
+    height: 1px !important;
+    background-color: #e0e0e0 !important;
+    margin: 1em auto !important;
+    border: none !important;
+}
