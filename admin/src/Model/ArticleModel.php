@@ -418,9 +418,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             $this->currentArticle->fulltext .= $htmlContent;
 
            // Вычисляем строки напоминания текущего поста, используются в следующем посте
-                $this->reminderLines = '<br />'  . Text::_('COM_KUNENATOPIC2ARTICLE_START_OF_REMINDER_LINES') 
-                 . '#' . $this->currentPost->parent . ': '
-                       . HTMLHelper::_('string.truncate', $this->htmlContent, (int)$this->params->reminder_lines) . '<br />';
+               $this->reminderLines = HTMLHelper::_('string.truncate', $this->htmlContent, (int)$this->params->reminder_lines);
 
            $this->currentArticle->fulltext .= '<hr style="width: 75%; height: 1px; background: black; margin: 0 auto; border: none;">'; // добавляем линию разделения пстов, ?? не учтена в длине статьи!
                         
@@ -572,7 +570,7 @@ $infoString .= $idsString;
         }
     }
 
-    // Закрываем блок
+   // Закрываем блок инф строки
    $infoString .= '<br /></div>';   
     
     return $infoString;
@@ -622,8 +620,12 @@ private function printHeadOfPost()
   //      Factory::getApplication()->enqueueMessage('transferPost инф стр: ' . $this->postInfoString, 'info'); // ОТЛАДКА   
             
           if ($this->params->reminder_lines) {      // Если нужно выводить строки напоминнания
-                $this->currentArticle->fulltext .=  $this->reminderLines;    // Добавляем в статью строки напоминания предыдущего поста
-             } 
+             if ($this->currentPost->parent) {
+                $this->currentArticle->fulltext .= '<br />' . Text::_('COM_KUNENATOPIC2ARTICLE_REFERENCE_TO_POST')
+                       . '#' . $this->currentPost->parent . ': '
+                       .  $this->reminderLines . '<br />';  // Добавляем в статью строки напоминания предыдущего поста
+            } 
+           } 
         $this->currentArticle->fulltext .=  '<hr style="width: 50%; height: 1px; background-color: #e0e0e0; margin: 0 auto; border: none;">';        //    Светло-серый
                      
         // return;   в конце void-метода не нужен
