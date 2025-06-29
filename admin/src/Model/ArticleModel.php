@@ -618,7 +618,7 @@ private function printHeadOfPost()
             
           if ($this->params->reminder_lines) {      // Если нужно выводить строки напоминнания
              if ($this->currentPost->parent) {
-                $this->currentArticle->fulltext .= 'Text::_('COM_KUNENATOPIC2ARTICLE_REFERENCE_TO_POST') // <br />' . 
+                $this->currentArticle->fulltext .= 'Text::_('COM_KUNENATOPIC2ARTICLE_REFERENCE_TO_POST')'      // <br /> . 
                        . '#' . $this->currentPost->parent . ': '
                        .  $this->reminderLines';  // Добавляем в статью строки напоминания предыдущего поста //  . '<br />
             } 
