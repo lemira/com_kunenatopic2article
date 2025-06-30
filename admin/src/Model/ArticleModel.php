@@ -137,9 +137,11 @@ class ArticleModel extends BaseDatabaseModel
            $this->articleSize = 0;
            $this->currentArticle->fulltext = ''; // для возможного изменения строк предупреждения
            // Подключение CSS
-           $cssUrl = Uri::root(true) . '/media/com_kunenatopic2article/css/kun_p2a.css';
-           $cssLink = '<link href="' . $cssUrl . '" rel="stylesheet">';
-           $this->currentArticle->fulltext .= $cssLink;
+          // $cssUrl = Uri::root(true) . '/media/com_kunenatopic2article/css/kun_p2a.css';
+          // $cssLink = '<link href="' . $cssUrl . '" rel="stylesheet">';
+          // $this->currentArticle->fulltext .= $cssLink;
+
+              $this->currentArticle->fulltext .= '<div class="kunenatopic2article_marker" style="display:none;"></div>'; // для плагина подклюсения CSS
            
            $this->currentArticle->fulltext .=  Text::_('COM_KUNENATOPIC2ARTICLE_INFORMATION_SIGN') . '<br />'    // ?? не учтена длина!
                  . Text::_('COM_KUNENATOPIC2ARTICLE_WARNING_SIGN') 
