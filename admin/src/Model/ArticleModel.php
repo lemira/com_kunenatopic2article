@@ -247,10 +247,52 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
         }
     }
 
-    /** 
+     // ОТЛАДКА      * Создание статьи через Table API
+protected function createArticleViaTable()
+{
+    try {
+        $tableArticle = Table::getInstance('Content');
+        
+        // Принудительное разрешение HTML
+        $filter = Joomla\CMS\Filter\InputFilter::getInstance([], [], 1, 1);
+        $fulltext = $filter->clean($this->currentArticle->fulltext, 'html');
+        
+        $data = [
+                'title' => $this->currentArticle->title,
+                'alias' => $this->currentArticle->alias,
+                'introtext' => '',
+                'fulltext' => $fulltext,
+                'catid' => (int) $this->params->article_category,
+                'created_by' => (int)$this->topicAuthorId, 
+                'state' => 1, // Published
+                'language' => '*',
+                'access' => 1,
+                'created' => (new \Joomla\CMS\Date\Date())->toSql(),
+                'publish_up' => (new \Joomla\CMS\Date\Date())->toSql(),
+                'attribs' => '{"show_publishing_options":"","show_article_options":"","show_urls_images_backend":"","show_urls_images_frontend":""}',
+                'metakey' => '',
+                'metadesc' => '',
+                'metadata' => '{"robots":"","author":"","rights":""}', // Стандартные метаданные
+        ];
+
+        // Для Joomla 5 Workflow
+        $data['stage_id'] = 1; // Публиковано
+        
+        if (!$tableArticle->save($data)) {
+            throw new \Exception($tableArticle->getError());
+        }
+        
+        return $tableArticle->id;
+        
+    } catch (\Exception $e) {
+        $this->app->enqueueMessage($e->getMessage(), 'error');
+        return false;
+    }
+}
+    
+    /** ОТЛАДКА
      * Создание статьи через Table API
      * @return  boolean|int  False в случае неудачи, ID статьи в случае успеха
-     */
     protected function createArticleViaTable()
     {
         try {
@@ -335,12 +377,13 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             return false;
         }
     }
-
+    */
     /**
      * Открытие поста для доступа к его параметрам
      * @param   int  $postId  ID поста
      * @return  boolean  True в случае успеха
-     */
+   ОТЛАДКА */
+    
     private function openPost($postId)
     {
          $postInfoString = ''; // Инициализация
