@@ -262,6 +262,7 @@ protected function createArticleViaTable()
             'title' => $this->currentArticle->title,
             'alias' => $this->currentArticle->alias,
             'fulltext' => $filteredContent,
+            'introtext' => '',
             'catid' => (int) $this->params->article_category,
             'created_by' => (int)$this->topicAuthorId,
             'state' => 1,      // Published
@@ -271,6 +272,8 @@ protected function createArticleViaTable()
             'created' => (new Date())->toSql(),
             'publish_up' => (new Date())->toSql(),
             'attribs' => '{"show_title":"","link_titles":"","show_tags":""}',
+            'metakey' => '',
+            'metadesc' => '',
             'metadata' => '{"robots":"","author":"","rights":""}' // Стандартные метаданные
          ];
 
