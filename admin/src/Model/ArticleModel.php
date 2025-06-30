@@ -136,12 +136,7 @@ class ArticleModel extends BaseDatabaseModel
            // Сбрасываем текущий размер статьи
            $this->articleSize = 0;
            $this->currentArticle->fulltext = ''; // для возможного изменения строк предупреждения
-           // Подключение CSS
-          // $cssUrl = Uri::root(true) . '/media/com_kunenatopic2article/css/kun_p2a.css';
-          // $cssLink = '<link href="' . $cssUrl . '" rel="stylesheet">';
-          // $this->currentArticle->fulltext .= $cssLink;
-
-              $this->currentArticle->fulltext .= '<div class="kunenatopic2article_marker" style="display:none;"></div>'; // для плагина подклюсения CSS
+           $this->currentArticle->fulltext .= '<div class="kunenatopic2article_marker" style="display:none;"></div>'; // для плагина подклюсения CSS
            
            $this->currentArticle->fulltext .=  Text::_('COM_KUNENATOPIC2ARTICLE_INFORMATION_SIGN') . '<br />'    // ?? не учтена длина!
                  . Text::_('COM_KUNENATOPIC2ARTICLE_WARNING_SIGN') 
@@ -224,7 +219,18 @@ class ArticleModel extends BaseDatabaseModel
         try {
 Factory::getApplication()->enqueueMessage('closeArticle Сохранение статьи: ' . $this->currentArticle->title, 'info'); // ОТЛАДКА          
    
-            // Создаем статью через Table
+            // 1. Фильтрация контента
+            $filter = InputFilter::getInstance([], [], 1, 1);
+            $filteredContent = $filter->clean($this->currentArticle->fulltext, 'html');
+    
+            // 2. Добавление CSS
+            $cssUrl = Uri::root(true) . '/media/com_kunenatopic2article/css/kun_p2a.css';
+            $cssLink = '<link href="' . $cssUrl . '" rel="stylesheet">';
+    
+            // 3. Сборка финального контента
+            $this->currentArticle->fulltext = $cssLink . $filteredContent;
+           
+            // 4. Создаем статью через Table
             $articleId = $this->createArticleViaTable();
                          
             if (!$articleId) {
@@ -313,16 +319,12 @@ protected function createArticleViaTable()
             // Получаем table для контента
             $tableArticle = Table::getInstance('Content');
             
-            // строки для фильтрации ---
-        $filter = InputFilter::getInstance([], [], 1, 1);
-        $filteredContent = $filter->clean($this->currentArticle->fulltext, 'html');
-
             // Подготавливаем данные 
                 $data = [
                 'title' => $this->currentArticle->title,
                 'alias' => $this->currentArticle->alias,
                 'introtext' => '',
-                'fulltext' => $filteredContent, // Используем отфильтрованный контент
+                'fulltext' => $this->currentArticle->fulltext, // Используем отфильтрованный контент с добавленным впереди css
                 'catid' => (int) $this->params->article_category,
                 'created' => (new Date())->toSql(),
                 'publish_up' => (new Date())->toSql(),
