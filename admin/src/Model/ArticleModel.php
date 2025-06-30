@@ -260,6 +260,7 @@ protected function createArticleViaTable()
         
         $data = [
             'title' => $this->currentArticle->title,
+            'alias' => $this->currentArticle->alias,
             'fulltext' => $filteredContent,
             'catid' => (int) $this->params->article_category,
             'created_by' => (int)$this->topicAuthorId,
