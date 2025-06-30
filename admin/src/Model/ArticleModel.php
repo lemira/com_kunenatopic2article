@@ -25,6 +25,7 @@ use Joomla\Database\DatabaseInterface;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Kunena\Bbcode\KunenaBbcode; 
 use Joomla\CMS\HTML\HTMLHelper;
+use Joomla\CMS\Filter\InputFilter;
 
 /**
  * Article Model
@@ -253,33 +254,33 @@ protected function createArticleViaTable()
     try {
         $tableArticle = Table::getInstance('Content');
         
-        // Принудительное разрешение HTML
-        $filter = Joomla\CMS\Filter\InputFilter::getInstance([], [], 1, 1);
-        $fulltext = $filter->clean($this->currentArticle->fulltext, 'html');
+        // Фильтрация HTML
+        $filter = InputFilter::getInstance([], [], 1, 1);
+        $filteredContent = $filter->clean($this->currentArticle->fulltext, 'html');
         
         $data = [
-                'title' => $this->currentArticle->title,
-                'alias' => $this->currentArticle->alias,
-                'introtext' => '',
-                'fulltext' => $fulltext,
-                'catid' => (int) $this->params->article_category,
-                'created_by' => (int)$this->topicAuthorId, 
-                'state' => 1, // Published
-                'language' => '*',
-                'access' => 1,
-                'created' => (new \Joomla\CMS\Date\Date())->toSql(),
-                'publish_up' => (new \Joomla\CMS\Date\Date())->toSql(),
-                'attribs' => '{"show_publishing_options":"","show_article_options":"","show_urls_images_backend":"","show_urls_images_frontend":""}',
-                'metakey' => '',
-                'metadesc' => '',
-                'metadata' => '{"robots":"","author":"","rights":""}', // Стандартные метаданные
-        ];
+            'title' => $this->currentArticle->title,
+            'fulltext' => $filteredContent,
+            'catid' => (int) $this->params->article_category,
+            'created_by' => (int)$this->topicAuthorId,
+            'state' => 1,      // Published
+            'stage_id' => 1,   // Для Joomla 5 Workflow
+            'language' => '*',
+            'access' => 1,
+            'created' => (new Date())->toSql(),
+            'publish_up' => (new Date())->toSql(),
+            'attribs' => '{"show_title":"","link_titles":"","show_tags":""}',
+            'metadata' => '{"robots":"","author":"","rights":""}' // Стандартные метаданные
+         ];
 
-        // Для Joomla 5 Workflow
-        $data['stage_id'] = 1; // Публиковано
-        
         if (!$tableArticle->save($data)) {
             throw new \Exception($tableArticle->getError());
+        }
+
+        // Двойная проверка Workflow
+        if ($tableArticle->get('stage_id') != 1) {
+            $tableArticle->stage_id = 1;
+            $tableArticle->store();
         }
         
         return $tableArticle->id;
