@@ -389,6 +389,7 @@ protected function createArticleViaTable()
      * Открытие поста для доступа к его параметрам
      * @param   int  $postId  ID поста
      * @return  boolean  True в случае успеха
+       */
      private function openPost($postId)
     {
          $postInfoString = ''; // Инициализация
