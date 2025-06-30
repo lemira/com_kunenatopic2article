@@ -230,19 +230,11 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
      //       Factory::getApplication()->enqueueMessage('closeArticle Добавление CSS:' . $cssLink, 'info'); // ОТЛАДКА 
             // 3. Сборка финального контента
             $this->currentArticle->fulltext = $cssLink . $filteredContent;
-      //    Factory::getApplication()->enqueueMessage(     // ОТЛАДКА   true - сохранять целые слова, false - не добавлять многоточие
-//    'closeArticle fulltext до createArt' . 
-  //  HTMLHelper::_('string.truncate', $this->currentArticle->fulltext, 100, true, false),
-    //'info'
- // );             
+    // Factory::getApplication()->enqueueMessage('closeArticle fulltext до createArt' . HTMLHelper::_('string.truncate', $this->currentArticle->fulltext, 100, true, false), 'info'); //ОТЛАДКА true-сохр целые слова, false-не доб многоточие          
             // 4. Создаем статью через Table
             $articleId = $this->createArticleViaTable();
 
-  //            Factory::getApplication()->enqueueMessage(     // ОТЛАДКА   true - сохранять целые слова, false - не добавлять многоточие
-  //  'closeArticle fulltext после createArt' . 
-  //  HTMLHelper::_('string.truncate', $this->currentArticle->fulltext, 100, true, false),
-  //  'info'
-  //  ); 
+  // Factory::getApplication()->enqueueMessage('closeArticle fulltext после createArt' . HTMLHelper::_('string.truncate', $this->currentArticle->fulltext, 100, true, false),'info'); 
                          
             if (!$articleId) {
                 throw new \Exception('Ошибка сохранения статьи.');
@@ -271,55 +263,6 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
         }
     }
 
-     /** ОТЛАДКА дс что-то не работает
-    // ОТЛАДКА      * Создание статьи через Table API
-protected function createArticleViaTable()
-{
-    try {
-        $tableArticle = Table::getInstance('Content');
-        
-        // Фильтрация HTML
-        $filter = InputFilter::getInstance([], [], 1, 1);
-        $filteredContent = $filter->clean($this->currentArticle->fulltext, 'html');
-        
-        $data = [
-            'title' => $this->currentArticle->title,
-            'alias' => $this->currentArticle->alias,
-            'fulltext' => $filteredContent,
-            'introtext' => '',
-            'catid' => (int) $this->params->article_category,
-            'created_by' => (int)$this->topicAuthorId,
-            'state' => 1,      // Published
-            'stage_id' => 1,   // Для Joomla 5 Workflow
-            'language' => '*',
-            'access' => 1,
-            'created' => (new Date())->toSql(),
-            'publish_up' => (new Date())->toSql(),
-            'attribs' => '{"show_title":"","link_titles":"","show_tags":""}',
-            'metakey' => '',
-            'metadesc' => '',
-            'metadata' => '{"robots":"","author":"","rights":""}' // Стандартные метаданные
-         ];
-
-        if (!$tableArticle->save($data)) {
-            throw new \Exception($tableArticle->getError());
-        }
-
-        // Двойная проверка Workflow
-        if ($tableArticle->get('stage_id') != 1) {
-            $tableArticle->stage_id = 1;
-            $tableArticle->store();
-        }
-        
-        return $tableArticle->id;
-        
-    } catch (\Exception $e) {
-        $this->app->enqueueMessage($e->getMessage(), 'error');
-        return false;
-    }
-}
-*/
-    
     /** 
      * Создание статьи через Table API
      * @return  boolean|int  False в случае неудачи, ID статьи в случае успеха
@@ -342,26 +285,23 @@ protected function createArticleViaTable()
                 'state' => 1, // Published
                 'language' => '*',
                 'access' => 1,
-                'attribs' => '{"show_publishing_options":"","show_article_options":"","show_urls_images_backend":"","show_urls_images_frontend":""}',
+                'attribs' => '{"show_title":"","link_titles":"","show_tags":""}',
                 'metakey' => '',
                 'metadesc' => '',
                 'metadata' => '{"robots":"","author":"","rights":""}' // Стандартные метаданные
             ];
 
-           if (!$tableArticle->save($data)) {
+           if (!$tableArticle->save($data)) {    // Получаем ID созданной статьи в $tableArticle->id
             throw new \Exception($tableArticle->getError());
         }
- 
-            // Получаем ID созданной статьи
-        $articleId = $tableArticle->id;
-            
+             
         // --- Запись в #__workflow_associations
          try {
             // Проверяем, есть ли уже запись
            $query = $this->db->getQuery(true)
                 ->select('COUNT(*)')
                 ->from($this->db->quoteName('#__workflow_associations'))
-                ->where($this->db->quoteName('item_id') . ' = ' . $this->db->quote($articleId))
+                ->where($this->db->quoteName('item_id') . ' = ' . $this->db->quote($tableArticle->id))
                 ->where($this->db->quoteName('extension') . ' = ' . $this->db->quote('com_content.article'));
             $exists = (bool) $this->db->setQuery($query)->loadResult();
 
@@ -374,7 +314,7 @@ protected function createArticleViaTable()
                         $this->db->quoteName('extension')
                     ])
                     ->values(implode(',', [
-                        $this->db->quote($articleId),
+                        $this->db->quote($tableArticle->id),
                         $this->db->quote(1), // stage_id=1 (опубликовано)
                         $this->db->quote('com_content.article')
                     ]));
@@ -386,7 +326,7 @@ protected function createArticleViaTable()
         }
        // --- Конец записи в #__workflow_associations
             
-            return $articleId;
+            return $tableArticle->id;
             
         } catch (\Exception $e) {
             $this->app->enqueueMessage('Ошибка создания статьи через Table: ' . $e->getMessage(), 'error');
