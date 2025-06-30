@@ -248,7 +248,8 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
         }
     }
 
-     // ОТЛАДКА      * Создание статьи через Table API
+     /** ОТЛАДКА дс что-то не работает
+    // ОТЛАДКА      * Создание статьи через Table API
 protected function createArticleViaTable()
 {
     try {
@@ -294,37 +295,38 @@ protected function createArticleViaTable()
         return false;
     }
 }
+*/
     
-    /** ОТЛАДКА
+    /** 
      * Создание статьи через Table API
      * @return  boolean|int  False в случае неудачи, ID статьи в случае успеха
+         */
     protected function createArticleViaTable()
     {
         try {
             // Получаем table для контента
             $tableArticle = Table::getInstance('Content');
             
-            if (!$tableArticle) {
-                throw new \Exception('Не удалось получить таблицу контента');
-            }
+            // строки для фильтрации ---
+        $filter = InputFilter::getInstance([], [], 1, 1);
+        $filteredContent = $filter->clean($this->currentArticle->fulltext, 'html');
 
             // Подготавливаем данные 
                 $data = [
                 'title' => $this->currentArticle->title,
                 'alias' => $this->currentArticle->alias,
                 'introtext' => '',
-                'fulltext' => $this->currentArticle->fulltext,
+                'fulltext' => $filteredContent, // Используем отфильтрованный контент
                 'catid' => (int) $this->params->article_category,
-                'created_by' => (int)$this->topicAuthorId, 
+                'created' => (new Date())->toSql(),
+                'publish_up' => (new Date())->toSql(),
                 'state' => 1, // Published
                 'language' => '*',
                 'access' => 1,
-                'created' => (new \Joomla\CMS\Date\Date())->toSql(),
-                'publish_up' => (new \Joomla\CMS\Date\Date())->toSql(),
                 'attribs' => '{"show_publishing_options":"","show_article_options":"","show_urls_images_backend":"","show_urls_images_frontend":""}',
                 'metakey' => '',
                 'metadesc' => '',
-                'metadata' => '{"robots":"","author":"","rights":""}', // Стандартные метаданные
+                'metadata' => '{"robots":"","author":"","rights":""}' // Стандартные метаданные
             ];
 
             // Привязываем данные к таблице
@@ -382,14 +384,12 @@ protected function createArticleViaTable()
             return false;
         }
     }
-    */
+
     /**
      * Открытие поста для доступа к его параметрам
      * @param   int  $postId  ID поста
      * @return  boolean  True в случае успеха
-   ОТЛАДКА */
-    
-    private function openPost($postId)
+     private function openPost($postId)
     {
          $postInfoString = ''; // Инициализация
         try {
