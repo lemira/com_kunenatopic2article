@@ -223,15 +223,26 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             $filter = InputFilter::getInstance([], [], 1, 1);
             $filteredContent = $filter->clean($this->currentArticle->fulltext, 'html');
     
-            // 2. Добавление CSS
+            // 2. Формирование ссылки на CSS
             $cssUrl = Uri::root(true) . '/media/com_kunenatopic2article/css/kun_p2a.css';
             $cssLink = '<link href="' . $cssUrl . '" rel="stylesheet">';
-    
+  
+            Factory::getApplication()->enqueueMessage('closeArticle Добавление CSS:' . $cssLink, 'info'); // ОТЛАДКА 
             // 3. Сборка финального контента
             $this->currentArticle->fulltext = $cssLink . $filteredContent;
-           
+          Factory::getApplication()->enqueueMessage(     // ОТЛАДКА   true - сохранять целые слова, false - не добавлять многоточие
+    'closeArticle fulltext до createArt' . 
+    HTMLHelper::_('string.truncate', $this->currentArticle->fulltext, 100, true, false),
+    'info'
+);             
             // 4. Создаем статью через Table
             $articleId = $this->createArticleViaTable();
+
+              Factory::getApplication()->enqueueMessage(     // ОТЛАДКА   true - сохранять целые слова, false - не добавлять многоточие
+    'closeArticle fulltext после createArt' . 
+    HTMLHelper::_('string.truncate', $this->currentArticle->fulltext, 100, true, false),
+    'info'
+); 
                          
             if (!$articleId) {
                 throw new \Exception('Ошибка сохранения статьи.');
@@ -577,7 +588,7 @@ $query->order($this->db->quoteName('time') . ' ASC');
     // Текущий пост
     if ($this->params->kunena_post_link) {
     $postUrl = $this->getKunenaPostUrl($this->currentPost->id);
-    $idsString .= ' / <a href="' . htmlspecialchars($postUrl, ENT_QUOTES, 'UTF-8') 
+    $idsString .= ' <a href="' . htmlspecialchars($postUrl, ENT_QUOTES, 'UTF-8') 
                . '" target="_blank" rel="noopener noreferrer">#' 
                . $this->currentPost->id . '</a>';
 } else {
