@@ -76,7 +76,7 @@ class ArticleModel extends BaseDatabaseModel
               
             // Получаем ID первого поста
             $firstPostId = $params->topic_selection; // 3232
-            Factory::getApplication()->enqueueMessage('ArticleModel $firstPostId: ' . $firstPostId, 'info'); // ОТЛАДКА          
+        //    Factory::getApplication()->enqueueMessage('ArticleModel $firstPostId: ' . $firstPostId, 'info'); // ОТЛАДКА          
            
               $this->postId = $firstPostId; // текущий id 
               $this->openPost($this->postId); // Открываем первый пост темы для доступа к его параметрам
@@ -90,7 +90,7 @@ class ArticleModel extends BaseDatabaseModel
                 }
 
               $this->subject = $this->currentPost->subject;
-           Factory::getApplication()->enqueueMessage('createArticlesFromTopic $subject: ' . $this->subject, 'info'); // ОТЛАДКА 
+        //   Factory::getApplication()->enqueueMessage('createArticlesFromTopic $subject: ' . $this->subject, 'info'); // ОТЛАДКА 
               $this->topicAuthorId = $this->currentPost->userid;
 
               $this->openArticle();     // Открываем первую статью
@@ -227,22 +227,22 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             $cssUrl = Uri::root(true) . '/media/com_kunenatopic2article/css/kun_p2a.css';
             $cssLink = '<link href="' . $cssUrl . '" rel="stylesheet">';
   
-            Factory::getApplication()->enqueueMessage('closeArticle Добавление CSS:' . $cssLink, 'info'); // ОТЛАДКА 
+     //       Factory::getApplication()->enqueueMessage('closeArticle Добавление CSS:' . $cssLink, 'info'); // ОТЛАДКА 
             // 3. Сборка финального контента
             $this->currentArticle->fulltext = $cssLink . $filteredContent;
-          Factory::getApplication()->enqueueMessage(     // ОТЛАДКА   true - сохранять целые слова, false - не добавлять многоточие
-    'closeArticle fulltext до createArt' . 
-    HTMLHelper::_('string.truncate', $this->currentArticle->fulltext, 100, true, false),
-    'info'
-);             
+      //    Factory::getApplication()->enqueueMessage(     // ОТЛАДКА   true - сохранять целые слова, false - не добавлять многоточие
+//    'closeArticle fulltext до createArt' . 
+  //  HTMLHelper::_('string.truncate', $this->currentArticle->fulltext, 100, true, false),
+    //'info'
+ // );             
             // 4. Создаем статью через Table
             $articleId = $this->createArticleViaTable();
 
-              Factory::getApplication()->enqueueMessage(     // ОТЛАДКА   true - сохранять целые слова, false - не добавлять многоточие
-    'closeArticle fulltext после createArt' . 
-    HTMLHelper::_('string.truncate', $this->currentArticle->fulltext, 100, true, false),
-    'info'
-); 
+  //            Factory::getApplication()->enqueueMessage(     // ОТЛАДКА   true - сохранять целые слова, false - не добавлять многоточие
+  //  'closeArticle fulltext после createArt' . 
+  //  HTMLHelper::_('string.truncate', $this->currentArticle->fulltext, 100, true, false),
+  //  'info'
+  //  ); 
                          
             if (!$articleId) {
                 throw new \Exception('Ошибка сохранения статьи.');
@@ -258,7 +258,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
                 'id' => $articleId
             ];
 
-            // Отладка
+            // ОТЛАДКА
             $this->app->enqueueMessage('Статья успешно сохранена с ID: ' . $articleId, 'notice');
 
             // Сбрасываем текущую статью
@@ -348,21 +348,11 @@ protected function createArticleViaTable()
                 'metadata' => '{"robots":"","author":"","rights":""}' // Стандартные метаданные
             ];
 
-            // Привязываем данные к таблице
-            if (!$tableArticle->bind($data)) {
-                throw new \Exception('Ошибка привязки данных: ' . $tableArticle->getError());
-            }
-
-            // Проверяем данные
-            if (!$tableArticle->check()) {
-                throw new \Exception('Ошибка проверки данных: ' . $tableArticle->getError());
-            }
-
-            // Сохраняем
-            if (!$tableArticle->store()) {
-                throw new \Exception('Ошибка сохранения: ' . $tableArticle->getError());
-            }
-        // Получаем ID созданной статьи
+           if (!$tableArticle->save($data)) {
+            throw new \Exception($tableArticle->getError());
+        }
+ 
+            // Получаем ID созданной статьи
         $articleId = $tableArticle->id;
             
         // --- Запись в #__workflow_associations
@@ -447,7 +437,7 @@ protected function createArticleViaTable()
               $this->postSize = mb_strlen($this->postText, 'UTF-8')
               + mb_strlen($this->postInfoString, 'UTF-8')
               + mb_strlen($this->reminderLines, 'UTF-8');
-                Factory::getApplication()->enqueueMessage('openPost Размер reminderLines: ' . mb_strlen($this->reminderLines, 'UTF-8'), 'info'); // ОТЛАДКА 
+       //         Factory::getApplication()->enqueueMessage('openPost Размер reminderLines: ' . mb_strlen($this->reminderLines, 'UTF-8'), 'info'); // ОТЛАДКА 
                Factory::getApplication()->enqueueMessage('openPost Размер поста: ' . $this->postSize, 'info'); // ОТЛАДКА 
           } catch (\Throwable $e) {
                throw new \RuntimeException('Ошибка расчёта размера поста: ' . $e->getMessage());
