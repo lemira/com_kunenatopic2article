@@ -132,11 +132,15 @@ class ArticleModel extends BaseDatabaseModel
     private function openArticle()
     {
           try {
-
            $this->currentArticle = new \stdClass(); // Инициализируем $this->currentArticle как stdClass
            // Сбрасываем текущий размер статьи
            $this->articleSize = 0;
            $this->currentArticle->fulltext = ''; // для возможного изменения строк предупреждения
+           // Подключение CSS
+           $cssUrl = Uri::root(true) . '/media/com_kunenatopic2article/css/kun_p2a.css';
+           $cssLink = '<link href="' . $cssUrl . '" rel="stylesheet">';
+           $this->currentArticle->fulltext .= $cssLink;
+           
            $this->currentArticle->fulltext .=  Text::_('COM_KUNENATOPIC2ARTICLE_INFORMATION_SIGN') . '<br />'    // ?? не учтена длина!
                  . Text::_('COM_KUNENATOPIC2ARTICLE_WARNING_SIGN') 
                  . '<div class="kun_p2a_divider-shadow"></div>'; //  Линия с тенью (эффект углубления)
