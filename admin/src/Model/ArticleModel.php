@@ -61,6 +61,8 @@ class ArticleModel extends BaseDatabaseModel
     
 }
 
+    // -------------------------- РАБОТА СО СТАТЬЯМИ -------------------------
+    
     /**
      * Создание статей из темы форума Kunena
      * @param   array  $params  Настройки для создания статей
@@ -165,48 +167,8 @@ class ArticleModel extends BaseDatabaseModel
             return false;
         }
     }
-
-    /**
-     * Генерация уникального алиаса для статьи
-     * @param   string  $baseAlias  Базовый алиас
-     * @return  string  Уникальный алиас
-     */
-   private function getUniqueAlias($baseAlias)
-{
-    $db = $this->db;
-    $counter = '';
-    $alias = $baseAlias;
-
-    // Проверяем уникальность алиаса и автоматически добавляем номер, если нужно
-    while ($this->aliasExists($alias)) {
-        $counter = ($counter === '') ? 2 : $counter + 1;
-        $alias = $baseAlias . '-' . $counter;
-    }
-
-    return $alias;
-}
-    
-    /**
-     * Проверка существования алиаса
-     * @param   string  $alias  Алиас для проверки
-     * @return  boolean  True если алиас существует
-     */
-    private function aliasExists($alias)
-    {
-    try {
-        $query = $this->db->getQuery(true)
-            ->select('1')
-            ->from($this->db->quoteName('#__content'))
-            ->where($this->db->quoteName('alias') . ' = ' . $this->db->quote($alias))
-            ->setLimit(1);
-
-        return (bool) $this->db->setQuery($query)->loadResult();
-    } catch (\Exception $e) {
-        return false;
-    }
-}
-
-    /**
+     
+         /**
      * Закрытие и сохранение статьи
      * @return  boolean  True в случае успеха
      */
@@ -262,6 +224,46 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             return false;
         }
     }
+ 
+    /**
+     * Генерация уникального алиаса для статьи
+     * @param   string  $baseAlias  Базовый алиас
+     * @return  string  Уникальный алиас
+     */
+   private function getUniqueAlias($baseAlias)
+{
+    $db = $this->db;
+    $counter = '';
+    $alias = $baseAlias;
+
+    // Проверяем уникальность алиаса и автоматически добавляем номер, если нужно
+    while ($this->aliasExists($alias)) {
+        $counter = ($counter === '') ? 2 : $counter + 1;
+        $alias = $baseAlias . '-' . $counter;
+    }
+
+    return $alias;
+}
+    
+    /**
+     * Проверка существования алиаса
+     * @param   string  $alias  Алиас для проверки
+     * @return  boolean  True если алиас существует
+     */
+    private function aliasExists($alias)
+    {
+    try {
+        $query = $this->db->getQuery(true)
+            ->select('1')
+            ->from($this->db->quoteName('#__content'))
+            ->where($this->db->quoteName('alias') . ' = ' . $this->db->quote($alias))
+            ->setLimit(1);
+
+        return (bool) $this->db->setQuery($query)->loadResult();
+    } catch (\Exception $e) {
+        return false;
+    }
+}
 
     /** 
      * Создание статьи через Table API
@@ -334,6 +336,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
         }
     }
 
+    // --------------------------- РАБОТА С ПОСТАМИ -------------------
     /**
      * Открытие поста для доступа к его параметрам
      * @param   int  $postId  ID поста
@@ -434,6 +437,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
     return $this->postId; // Автоматически получим 0 в конце
 }
 
+ // -------------------------- РАБОТА СО СТРУКТУРОЙ СТАТЕЙ ---------------------
     /**
      * Построение списка ID постов для плоской схемы обхода (по времени создания)
      * @param   int  $firstPostId  ID первого поста темы
@@ -493,7 +497,35 @@ $query->order($this->db->quoteName('time') . ' ASC');
             return $this->buildFlatPostIdList($firstPostId);
      }
 
-    /**
+  // ----------------------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------------------------------   
+   /**
+     * Преобразование BBCode в HTML
+     * @param   string  $text  Текст с BBCode
+     * @return  string  HTML-текст
+     */
+    private function convertBBCodeToHtml($text)
+{
+    try {
+        if (!class_exists('Kunena\Forum\Libraries\Bbcode\KunenaBbcode')) {
+            $this->app->enqueueMessage(
+                Text::_('COM_KUNENATOPIC2ARTICLE_BBCODE_PARSER_NOT_AVAILABLE'),
+                'warning'
+            );
+            return $text;
+        }
+
+        $bbcode = \Kunena\Forum\Libraries\Bbcode\KunenaBbcode::getInstance();
+        return $bbcode->parse($text);
+    } catch (\Exception $e) {
+        $this->app->enqueueMessage(
+            Text::_('COM_KUNENATOPIC2ARTICLE_BBCODE_PARSE_ERROR') . ': ' . $e->getMessage(),
+            'warning'
+        );
+        return $text;
+    }
+}
+
+   /**
      * Формирование информационной строки о посте
      * @return  string  Информационная строка
      */
@@ -559,33 +591,6 @@ $infoString .= $idsString;
    $infoString .= '<br /></div>';   
     
     return $infoString;
-}
-    
-   /**
-     * Преобразование BBCode в HTML
-     * @param   string  $text  Текст с BBCode
-     * @return  string  HTML-текст
-     */
-    private function convertBBCodeToHtml($text)
-{
-    try {
-        if (!class_exists('Kunena\Forum\Libraries\Bbcode\KunenaBbcode')) {
-            $this->app->enqueueMessage(
-                Text::_('COM_KUNENATOPIC2ARTICLE_BBCODE_PARSER_NOT_AVAILABLE'),
-                'warning'
-            );
-            return $text;
-        }
-
-        $bbcode = \Kunena\Forum\Libraries\Bbcode\KunenaBbcode::getInstance();
-        return $bbcode->parse($text);
-    } catch (\Exception $e) {
-        $this->app->enqueueMessage(
-            Text::_('COM_KUNENATOPIC2ARTICLE_BBCODE_PARSE_ERROR') . ': ' . $e->getMessage(),
-            'warning'
-        );
-        return $text;
-    }
 }
 
     /**
