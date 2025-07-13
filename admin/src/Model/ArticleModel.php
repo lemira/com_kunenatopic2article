@@ -431,7 +431,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
     $this->currentIndex += 1;
     $this->postId = $this->postIdList[$this->currentIndex];
     Factory::getApplication()->enqueueMessage('nextPost Id: ' . $this->postId, 'info'); // ОТЛАДКА       
-    return $this->postId;
+    return $this->postId; // Автоматически получим 0 в конце
 }
 
     /**
