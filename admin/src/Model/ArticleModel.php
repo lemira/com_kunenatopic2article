@@ -426,19 +426,13 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
      * Переход к следующему посту
      * @return  int  ID следующего поста или 0, если больше нет постов
      */
-    private function nextPost()
-    {
-         // Переход к следующему посту
-           if (isset($this->postIdList[$this->currentIndex + 1])) {      // Если есть следующий элемент
-            $this->currentIndex += 1;
-            $this->postId = $this->postIdList[$this->currentIndex]; // Возвращаем следующий ID
-   } else {
-            // Если больше нет постов
-            $this->postId = 0;
-        }
-  Factory::getApplication()->enqueueMessage('nextPost Id: ' . $this->postId, 'info'); // ОТЛАДКА          
-        return $this->postId;
-    }
+   private function nextPost()
+{
+    $this->currentIndex += 1;
+    $this->postId = $this->postIdList[$this->currentIndex];
+    Factory::getApplication()->enqueueMessage('nextPost Id: ' . $this->postId, 'info'); // ОТЛАДКА       
+    return $this->postId;
+}
 
     /**
      * Построение списка ID постов для плоской схемы обхода (по времени создания)
@@ -473,6 +467,7 @@ if (!empty($ignoredAuthors)) { // Проверяем, что список не �
 $query->order($this->db->quoteName('time') . ' ASC');
          
             $postIds = $this->db->setQuery($query)->loadColumn();
+            array_push($postIds, 0);    // добавляем элемент 0 в конец массива
             $this->currentIndex = 0; // в nextPost() начинаем переход сразу к элементу (1), т.к. (0) = $topicId = $firstPostId
                 
     Factory::getApplication()->enqueueMessage('Массив ID постов: ' . print_r($postIds, true), 'info'); // ОТЛАДКА
