@@ -26,6 +26,7 @@ use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Kunena\Bbcode\KunenaBbcode; 
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Filter\InputFilter;
+use Joomla\Component\Content\Site\Helper\RouteHelper;
 
 /**
  * Article Model
@@ -203,12 +204,13 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             }
 
             // Формируем URL для статьи
-            $link = Route::_('index.php?option=com_content&view=article&id=' . $articleId);
+            $link = RouteHelper::getArticleRoute($articleId, $this->params->article_category);
+            $url = Route::_($link);
             
             // Добавляем ссылку и заголовок в массив для последующего вывода
             $this->articleLinks[] = [
                 'title' => $this->currentArticle->title,
-                'url' => $link,
+                'url' => $url,
                 'id' => $articleId
             ];
 
