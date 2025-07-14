@@ -171,5 +171,6 @@ class DisplayController extends BaseController
     Factory::getApplication()->redirect(
     Route::_('index.php?option=com_kunenatopic2article&view=result')
 );
+    exit;
     }
 }
