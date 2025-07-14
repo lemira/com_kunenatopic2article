@@ -168,7 +168,7 @@ class DisplayController extends BaseController
         Factory::getApplication()->input
     );
     $controller->execute('create');
-        
-        // Редирект на view не нужен, так как ArticleController::create сам редиректирует на view=result
+       // Редирект на view не нужен, так как ArticleController::create сам редиректирует на view=result
+    return;
     }
 }
