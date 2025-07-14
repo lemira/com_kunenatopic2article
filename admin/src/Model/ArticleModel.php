@@ -208,7 +208,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             // Добавляем ссылку и заголовок в массив для последующего вывода
             $this->articleLinks[] = [
                 'title' => $this->currentArticle->title,
-                'url' => Uri::root() . ltrim($link, '/'),
+                'url' => $link,
                 'id' => $articleId
             ];
 
