@@ -67,9 +67,7 @@ class ArticleController extends BaseController
         } catch (\Exception $e) {
             $app->enqueueMessage($e->getMessage(), 'error');
         }
-        
-        // Перенаправляем на страницу с результатами
-        $this->setRedirect('index.php?option=com_kunenatopic2article&view=result');
+          // Возвращаемся в DisplayController
     }
 
     /**
