@@ -168,7 +168,8 @@ class DisplayController extends BaseController
         Factory::getApplication()->input
     );
     $controller->execute('create');
-       // Редирект на view не нужен, так как ArticleController::create сам редиректирует на view=result
-    return;
+    Factory::getApplication()->redirect(
+    Route::_('index.php?option=com_kunenatopic2article&view=result')
+);
     }
 }
