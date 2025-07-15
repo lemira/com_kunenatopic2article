@@ -205,7 +205,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
 
             // Формируем URL для статьи
             $link = RouteHelper::getArticleRoute($articleId, $this->params->article_category);
-            $url = Uri::base(true) . ltrim(Route::_($link), '/'); // Uri::base(true) возвращает относ. путь к корню сайта, без administrator/, Route::_($link) для SEF
+            $url = Route::_($link, true);  // путь к корню сайта, без administrator/, для SEF
             
             // Добавляем ссылку и заголовок в массив для последующего вывода
             $this->articleLinks[] = [
