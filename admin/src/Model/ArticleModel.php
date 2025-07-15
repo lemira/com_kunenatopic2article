@@ -205,7 +205,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
 
             // Формируем URL для статьи
             $link = RouteHelper::getArticleRoute($articleId, $this->params->article_category);
-            $url = Route::_($link);
+            $url = Uri::root() . ltrim(Route::_($link), '/');
             
             // Добавляем ссылку и заголовок в массив для последующего вывода
             $this->articleLinks[] = [
