@@ -45,3 +45,18 @@ use Joomla\CMS\Router\Route;
         </a>
     </div>
 </div>
+
+<?php if ($this->emailsSent): ?>
+    <div class="alert alert-info">
+        <?= Text::_('COM_KUNENATOPIC2ARTICLE_EMAILS_SENT'); ?><br />
+        <?php if (!empty($this->emailsSentTo)): ?>
+            <strong>Отправлено на:</strong>
+            <ul>
+                <?php foreach ($this->emailsSentTo as $email): ?>
+                    <li><?= htmlspecialchars($email) ?></li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
+    </div>
+<?php endif; ?>
+
