@@ -52,6 +52,9 @@ class ArticleModel extends BaseDatabaseModel
     private string $reminderLines = '';  // строки напоминания поста
     private string $title = '';   // Заголовок статьи
     private string $htmlContent = '';   // Текс поста после BBCode
+    public bool $emailsSent = false;
+    public array $emailsSentTo = [];
+
     
       public function __construct($config = [])
 {
