@@ -119,7 +119,7 @@ class ArticleModel extends BaseDatabaseModel
             if ($this->currentArticle !== null) {
                 $this->closeArticle();
             }
-            Factory::getApplication()->enqueueMessage('createArticlesFromTopic: последняя статья' . $this->subject, 'info'); // ОТЛАДКА 
+       //     Factory::getApplication()->enqueueMessage('createArticlesFromTopic: последняя статья' . $this->subject, 'info'); // ОТЛАДКА 
 
             return $this->articleLinks;
          } catch (\Exception $e) {
@@ -204,9 +204,11 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             }
 
             // Формируем URL для статьи
-            $link = RouteHelper::getArticleRoute($articleId, $this->params->article_category);
-            $url = Route::_($link, true);  // путь к корню сайта, без administrator/, для SEF
-            
+            $link = 'index.php?option=com_content&view=article&id=' . $articleId . '&catid=' . $this->params->article_category;   // Формируем базовый маршрут
+            $url = Route::link('site', $link, true, -1);  // Преобразуем в SEF-URL (если SEF включен) : 'site' — гарантирует, что URL будет сформирован для фронтенда
+            // Если в глобальных настройках Joomla включены ЧПУ (SEF) и rewrite-правила (например, .htaccess), метод автоматически сгенерирует "красивый" URL, 
+            // а если SEF выключен, получится стандартный URL: http://localhost/gchru/index.php?option=com_content&view=article&id=265&catid=57
+
             // Добавляем ссылку и заголовок в массив для последующего вывода
             $this->articleLinks[] = [
                 'title' => $this->currentArticle->title,
