@@ -180,7 +180,7 @@ class DisplayController extends BaseController
         Factory::getApplication(),
         $input
     );
-    $resultController->execute();
+    $resultController->execute('display'); // Указываем task явно
     // Нет redirect() и exit — Joomla сама отобразит нужный view
 }
 } // КОНЕЦ КЛАССА
