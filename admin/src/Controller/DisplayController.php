@@ -146,31 +146,41 @@ class DisplayController extends BaseController
      * Метод для создания статей (Create Articles)
      * @since 1.0.0
      */
-   public function create()
-    {
-        $this->checkToken();
-        $this->app->setUserState('com_kunenatopic2article.save.success', false); // деактивируем create article
-        
-        Factory::getApplication()->enqueueMessage('DisplayController::create called', 'info'); // ОТЛАДКА
-               
-        // Прямой вызов ArticleController::create - вместо редиректа, чтобы избежать проблемы с CSRF-токеном
-        // Получаем компонент и фабрику
+    public function create()
+{
+    $this->checkToken();
+    $this->app->setUserState('com_kunenatopic2article.save.success', false); // деактивируем create article
+
+    Factory::getApplication()->enqueueMessage('DisplayController::create called', 'info'); // ОТЛАДКА
+
+    // Получаем контейнер и фабрику
     $container = Factory::getApplication()->bootComponent('com_kunenatopic2article');
     /** @var MVCFactoryInterface $mvcFactory */
     $mvcFactory = $container->getMVCFactory();
 
-    // Создаём контроллер Article в административном контексте // передаём 5 аргументов
-    $controller = $mvcFactory->createController(
+    // Вызываем контроллер Article
+    $articleController = $mvcFactory->createController(
         'Article',
         'Administrator',
-        [], // конфигурация, если есть
+        [],
         Factory::getApplication(),
         Factory::getApplication()->input
     );
-    $controller->execute('create');
-    Factory::getApplication()->redirect(
-    Route::_('index.php?option=com_kunenatopic2article&view=result')
-);
-    exit;
-    }
+    $articleController->execute('create');
+
+    // Переключаем Input на нужный View
+    $input = Factory::getApplication()->input;
+    $input->set('view', 'result');
+
+    // Вызываем DisplayController с новым Input
+    $resultController = $mvcFactory->createController(
+        'Display',
+        'Administrator',
+        [],
+        Factory::getApplication(),
+        $input
+    );
+    $resultController->execute();
+    // Нет redirect() и exit — Joomla сама отобразит нужный view
 }
+} // КОНЕЦ КЛАССА
