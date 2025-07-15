@@ -58,12 +58,15 @@ class ArticleController extends BaseController
             Factory::getApplication()->enqueueMessage('до перехода в ArticleModel', 'info'); // ОТЛАДКА
             // Создаем статьи из темы Kunena
             $articleLinks = $model->createArticlesFromTopic($params);
-             Factory::getApplication()->enqueueMessage('после возвращения из ArticleModel', 'info'); // ОТЛАДКА
+ Factory::getApplication()->enqueueMessage('после возвращения из ArticleModel', 'info'); // ОТЛАДКА
             // Отправляем массив ссылок администратору
             $this->sendLinksToAdministrator($articleLinks);
+
+            $model->setState('articleLinks', $articleLinks);  // для View
+            $model->emailsSent = true;
+            $model->emailsSentTo = $recipients;
             
             // Отображаем результаты
-            $app->setUserState('com_kunenatopic2article.article_links', $articleLinks);
             $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESSFULLY'), 'success');
             $app->setUserState('com_kunenatopic2article.can_create', false); // управление флагом can_create
         } catch (\Exception $e) {
