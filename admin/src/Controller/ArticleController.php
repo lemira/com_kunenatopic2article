@@ -17,6 +17,8 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
+use Joomla\CMS\Mail\MailTemplate;
+use Joomla\CMS\Mail\Mail;
 
 /**
  * Article Controller
@@ -105,40 +107,48 @@ class ArticleController extends BaseController
      * @param   array  $articleLinks  Массив ссылок на статьи
      * @return  boolean  True в случае успеха, False в случае ошибки
      */
-    private function sendLinksToAdministrator($articleLinks)
-    {
-        // Получаем объект приложения
-        $app = Factory::getApplication();
+protected function sendLinksToAdministrator(array $articleLinks): void
+{
+    $config = Factory::getConfig();
+    $app = Factory::getApplication();
 
-        // Проверяем, есть ли статьи для отправки
-        if (empty($articleLinks)) {
-            return false;
-        }
-
-        try {
-            // Создаем текст сообщения со ссылками на созданные статьи
-            $messageText = Text::_('COM_KUNENATOPIC2ARTICLE_NEW_ARTICLES_CREATED') . "\n\n";
-            
-            foreach ($articleLinks as $link) {
-                $messageText .= $link['title'] . ': ' . $link['url'] . "\n";
-            }
-
-            // Здесь должен быть код для отправки личного сообщения администратору
-            // Можно использовать API Kunena или другой подходящий метод
-            
-            // Пример интеграции с системой сообщений Kunena:
-            // if (class_exists('KunenaForum') && \KunenaForum::installed()) {
-                // Реализация отправки сообщения через Kunena API
-            //    $this->sendKunenaMessage($messageText);
-            // } else {
-                // Альтернативный способ - отправка email
-            //    $this->sendEmailToAdmin($messageText);
-            // }
-
-            return true;
-        } catch (\Exception $e) {
-            $app->enqueueMessage($e->getMessage(), 'error');
-            return false;
-        }
+    // Тело письма
+    $body = "Созданы/обновлены следующие статьи:\n\n";
+    foreach ($articleLinks as $link) {
+        $body .= "- {$link['title']}: {$link['url']}\n";
     }
+
+    $subject = 'KunenaTopic2Article: Созданы статьи';
+
+    // Получатели
+    $adminEmail = $config->get('mailfrom');
+    $authorEmail = null;
+
+    if (!empty($this->topicAuthorId)) {
+        $author = Factory::getUser($this->topicAuthorId);
+        $authorEmail = $author->email;
+    }
+
+    $recipients = array_filter([$adminEmail, $authorEmail]);
+
+    // Отправка
+    $mailer = class_exists(MailTemplate::class)
+        ? new MailTemplate()
+        : Factory::getMailer();
+
+    foreach ($recipients as $email) {
+        $mailer->sendMail(
+            $config->get('mailfrom'),
+            $email,
+            $subject,
+            $body,
+            false
+        );
+    }
+
+    // Для View
+    $this->emailsSent = true;
+    $this->emailsSentTo = $recipients;
+}
+
 }
