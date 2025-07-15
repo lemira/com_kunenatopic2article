@@ -11,10 +11,14 @@ class HtmlView extends BaseHtmlView
 {
     protected $links;
 
-    public function display($tpl = null)
-    {
-        $app = Factory::getApplication();
-        $this->links = $app->getUserState('com_kunenatopic2article.article_links', []);
-        parent::display($tpl);
-    }
+   public function display($tpl = null): void
+{
+    $model = $this->getModel();
+    $this->articleLinks = $model->getState('articleLinks');
+    $this->emailsSent = $model->emailsSent ?? false;
+    $this->emailsSentTo = $model->emailsSentTo ?? [];
+
+    parent::display($tpl);
+}
+
 }
