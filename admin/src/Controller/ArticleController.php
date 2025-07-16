@@ -19,6 +19,7 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 use Joomla\CMS\Mail\MailTemplate;
 use Joomla\CMS\Mail\Mail;
+use Joomla\CMS\Uri\Uri;
 
 /**
  * Article Controller
@@ -106,50 +107,58 @@ class ArticleController extends BaseController
     }
    
      /**
-     * Отправка ссылок на созданные статьи администратору
+     * Отправка ссылок на созданные статьи администратору и автору
      * @param   array  $articleLinks  Массив ссылок на статьи
      * @return  boolean  True в случае успеха, False в случае ошибки
      */
 protected function sendLinksToAdministrator(array $articleLinks): void
 {
-    $config = Factory::getConfig();
-    $app = Factory::getApplication();
+    $config     = Factory::getConfig();
+    $mailer     = Factory::getMailer();
 
-    // Тело письма
-    $body = "Созданы/обновлены следующие статьи:\n\n";
+    $siteName   = $config->get('sitename');
+    $topicTitle = $this->subject;
+    $author     = Factory::getUser($this->topicAuthorId);
+    $authorName = $author->name;
+    $authorEmail = $author->email;
+
+    // Простая ссылка по postid 
+    $postId = (int) $this->params->topic_selection;
+    $topicLink = Uri::root() . 'index.php?option=com_kunena&view=topic&postid=' . $postId;
+
+    // Список статей
+    $articleList = '';
     foreach ($articleLinks as $link) {
-        $body .= "- {$link['title']}: {$link['url']}\n";
+        $articleList .= "- {$link['title']}: {$link['url']}\n";
     }
 
-    $subject = 'KunenaTopic2Article: Созданы статьи';
+    // Тело письма с языковой константой
+    $body = Text::sprintf(
+        'COM_KUNENATOPIC2ARTICLE_MAIL_BODY',
+        $siteName,
+        $topicTitle,
+        $topicLink,
+        $authorName,
+        $articleList
+    );
 
-    // Получатели
+    $subject = Text::sprintf('COM_KUNENATOPIC2ARTICLE_MAIL_SUBJECT', $siteName);
+
+    // Отправка письма администратору и автору
     $adminEmail = $config->get('mailfrom');
-    $authorEmail = null;
-
-    if (!empty($this->topicAuthorId)) {
-        $author = Factory::getUser($this->topicAuthorId);
-        $authorEmail = $author->email;
-    }
-
-    $recipients = array_filter([$adminEmail, $authorEmail]);
-
-    // Отправка
-    $mailer = class_exists(MailTemplate::class)
-        ? new MailTemplate()
-        : Factory::getMailer();
+    $recipients = [$adminEmail, $authorEmail];
 
     foreach ($recipients as $email) {
         $mailer->sendMail(
-            $config->get('mailfrom'),
-            $email,
+            $adminEmail, // From
+            $email,      // To
             $subject,
             $body,
-            false
+            false        // Plain-text
         );
     }
 
-    // Для View
+    // Флаги для View
     $this->emailsSent = true;
     $this->emailsSentTo = $recipients;
 }
