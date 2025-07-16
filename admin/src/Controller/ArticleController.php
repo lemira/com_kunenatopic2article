@@ -116,6 +116,23 @@ class ArticleController extends BaseController
      */
 protected function sendLinksToAdministrator(array $articleLinks): array
 {
+     // Временный код для тестирования в НАЧАЛО метода)
+    if (Factory::getApplication()->isClient('administrator')) {
+        $logData = [
+            'date' => date('Y-m-d H:i:s'),
+            'articles' => $articleLinks,
+            'subject' => $this->subject,
+            'author_id' => $this->topicAuthorId
+        ];
+        
+        file_put_contents(JPATH_ROOT.'/logs/kunena_mail_test.log', 
+            json_encode($logData, JSON_PRETTY_PRINT) . "\n\n", 
+            FILE_APPEND);
+            
+        return ['success' => true, 'recipients' => ['test_admin@example.com', 'test_author@example.com']];
+    }
+
+    // ОСНОВНОЙ КОД! (временный убрать!)
     $app = Factory::getApplication();
     $result = [
         'success' => false,
