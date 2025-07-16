@@ -13,12 +13,13 @@ class HtmlView extends BaseHtmlView
 
    public function display($tpl = null): void
 {
-    $model = $this->getModel();
+    /** @var \Joomla\Component\KunenaTopic2Article\Administrator\Model\ArticleModel $model */
+    $model = $this->getModel('Article', 'Administrator'); // ✅ явное указание
+
     $this->articleLinks = $model->getState('articleLinks');
-    $this->emailsSent = $model->emailsSent ?? false;
+    $this->emailsSent   = $model->emailsSent ?? false;
     $this->emailsSentTo = $model->emailsSentTo ?? [];
 
     parent::display($tpl);
 }
-
 }
