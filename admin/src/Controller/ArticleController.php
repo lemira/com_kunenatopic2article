@@ -64,6 +64,9 @@ class ArticleController extends BaseController
         $model->setState('articleLinks', $articleLinks);
         $model->emailsSent = $mailResult['success'];
         $model->emailsSentTo = $mailResult['recipients']; // Гарантированно массив
+
+        // Сохраняем модель для View
+        $this->app->setUserState('com_kunenatopic2article.model', $model);
         
         $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESSFULLY'), 'success'); // ОТЛАДКА
         $app->setUserState('com_kunenatopic2article.can_create', false); // управление флагом can_create
