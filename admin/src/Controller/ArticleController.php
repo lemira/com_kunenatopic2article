@@ -15,10 +15,10 @@ defined('_JEXEC') or die('Restricted access');
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
-use Joomla\CMS\Session\Session; // ? еще нужно?
 use Joomla\CMS\Uri\Uri;
-use Joomla\CMS\User\User;
+use Joomla\CMS\Mail\Mailer;
 use Joomla\Component\Users\Administrator\Model\UsersModel;
+use RuntimeException;
 
 /**
  * Article Controller
@@ -32,15 +32,15 @@ class ArticleController extends BaseController
      */
     public function create()
     {
-        Factory::getApplication()->enqueueMessage('create() в ArticleController', 'info'); // ОТЛАДКА
-            
-        // Check for request forgeries
-        Session::checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+        // Проверка токена (современный способ)
+        $this->checkToken() or die(Text::_('JINVALID_TOKEN'));
+
+        Factory::getApplication()->enqueueMessage('create() в ArticleController', 'info'); $app = Factory::getApplication(); // Отладка
 
         $app = Factory::getApplication();
         
-        /** @var \Joomla\Component\Kunenatopic2article\Administrator\Model\ArticleModel $model */
- $model = $this->getModel('Article', 'Administrator'); // г.ко вместо  $model = $this->getModel('Article');
+       try {
+         $model = $this->getModel('Article', 'Administrator'); // г.ко вместо  $model = $this->getModel('Article');
         // гр чтобы явно указать область Administrator,  для фронтенд-контроллере будет $this->getModel('Article', 'Site');
 
 
@@ -73,6 +73,10 @@ class ArticleController extends BaseController
             $app->enqueueMessage($e->getMessage(), 'error');
         }
           // Возвращаемся в DisplayController
+         } catch (\Exception $e) {
+        $app->enqueueMessage($e->getMessage(), 'error');
+        return false;
+    }     
     }
 
     /**
@@ -110,69 +114,61 @@ class ArticleController extends BaseController
      * @param   array  $articleLinks  Массив ссылок на статьи
      * @return  boolean  True в случае успеха, False в случае ошибки
      */
-use Joomla\CMS\Factory;
-use Joomla\CMS\User\User;
-use Joomla\Component\Users\Administrator\Model\UsersModel;
-
 protected function sendLinksToAdministrator(array $articleLinks): void
 {
-    // 1. Получаем модель пользователей (J5)
-    $model = Factory::getApplication()->bootComponent('com_users')
-                ->getMVCFactory()
-                ->createModel('Users', 'Administrator', ['ignore_request' => true]);
-    
-    // 2. Настраиваем фильтры (группа Super Users = 8)
-    $model->setState('filter.group_id', 8);
-    $model->setState('list.start', 0);
-    $model->setState('list.limit', 1); // Только первый пользователь
-    
-    // 3. Получаем суперадминистратора
-    $superUsers = $model->getItems();
-    
-    if (empty($superUsers)) {
-        throw new RuntimeException('В системе не найден суперадминистратор');
-    }
-    
-    $superAdmin = $superUsers[0];
-    $superAdminEmail = $superAdmin->email;
-
-    // 4. Получаем данные автора (гарантированно зарегистрированного)
-    $author = Factory::getUser($this->topicAuthorId);
-    $authorEmail = $author->email;
-
-    // 5. Формируем и отправляем письма
-    $config = Factory::getConfig();
-    $mailer = Factory::getMailer();
-    $siteName = $config->get('sitename');
-    
-    $subject = Text::sprintf('COM_KUNENATOPIC2ARTICLE_MAIL_SUBJECT', $siteName);
-    $body = Text::sprintf(
-        'COM_KUNENATOPIC2ARTICLE_MAIL_BODY',
-        $siteName,
-        $this->subject,
-        Uri::root() . 'index.php?option=com_kunena&view=topic&postid=' . (int)$this->params->topic_selection,
-        $author->name,
-        implode("\n", array_map(
-            fn($link) => "- {$link['title']}: {$link['url']}",
-            $articleLinks
-        ))
-    );
-
-    // 6. Отправка (с обработкой ошибок)
     try {
-        foreach ([$superAdminEmail, $authorEmail] as $email) {
-            $mailer->clearAllRecipients()
-                   ->setSender([$config->get('mailfrom'), $siteName])
-                   ->addRecipient($email)
-                   ->setSubject($subject)
-                   ->setBody($body)
-                   ->Send();
+        $app = Factory::getApplication();
+        $config = Factory::getConfig();
+        
+        // Получаем модель пользователей
+        $usersModel = $app->bootComponent('com_users')
+                        ->getMVCFactory()
+                        ->createModel('Users', 'Administrator', ['ignore_request' => true]);
+        
+        // Находим суперадминистратора (группа 8)
+        $usersModel->setState('filter.group_id', 8);
+        $superUsers = $usersModel->getItems();
+        
+        if (empty($superUsers)) {
+            throw new RuntimeException('Не найден суперадминистратор');
         }
         
+        $superAdminEmail = $superUsers[0]->email;
+        $author = Factory::getUser($this->topicAuthorId);
+        
+        // Формируем письмо
+        $mailer = Factory::getMailer();
+        $mailer->setSubject(
+            Text::sprintf('COM_KUNENATOPIC2ARTICLE_MAIL_SUBJECT', $config->get('sitename'))
+        );
+        
+        $mailer->setBody(
+            Text::sprintf(
+                'COM_KUNENATOPIC2ARTICLE_MAIL_BODY',
+                $config->get('sitename'),
+                $this->subject,
+                Uri::root() . 'index.php?option=com_kunena&view=topic&postid=' . (int)$this->params->topic_selection,
+                $author->name,
+                implode("\n", array_map(
+                    function($link) {
+                        return "- {$link['title']}: {$link['url']}";
+                    },
+                    $articleLinks
+                ))
+            )
+        );
+        
+        // Отправляем письма
+        $mailer->addRecipient($superAdminEmail);
+        $mailer->addRecipient($author->email);
+        $mailer->Send();
+        
         $this->emailsSent = true;
-        $this->emailsSentTo = [$superAdminEmail, $authorEmail];
-    } catch (MailException $e) {
-        throw new RuntimeException('Ошибка отправки письма: ' . $e->getMessage());
+        $this->emailsSentTo = [$superAdminEmail, $author->email];
+        
+    } catch (\Exception $e) {
+        $app->enqueueMessage($e->getMessage(), 'error');
+        $this->emailsSent = false;
     }
 }
 }
