@@ -31,54 +31,51 @@ class ArticleController extends BaseController
      * @return  void
      */
     public function create()
-    {
-        // Проверка токена (современный способ)
-        $this->checkToken() or die(Text::_('JINVALID_TOKEN'));
+{
+    // Проверка токена
+    $this->checkToken() or die(Text::_('JINVALID_TOKEN'));
 
-        Factory::getApplication()->enqueueMessage('create() в ArticleController', 'info'); $app = Factory::getApplication(); // Отладка
+    $app = Factory::getApplication();
+    $app->enqueueMessage('create() в ArticleController', 'info'); // ОТЛАДКА
 
-        $app = Factory::getApplication();
+    try {
+        $model = $this->getModel('Article', 'Administrator');
         
-       try {
-         $model = $this->getModel('Article', 'Administrator'); // г.ко вместо  $model = $this->getModel('Article');
-        // гр чтобы явно указать область Administrator,  для фронтенд-контроллере будет $this->getModel('Article', 'Site');
-
-
-
         // Получаем параметры из таблицы kunenatopic2article_params
         $params = $this->getComponentParams();
         
-        if (empty($params) || empty($params->topic_selection)) {
+        if (empty($params) || empty($params->topic_selection)) {        // НЕ НУЖНО, УБРАТЬ?
             $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'), 'error');
             $this->setRedirect('index.php?option=com_kunenatopic2article');
-            return;
+            return false;
         }
 
-          try {
-            Factory::getApplication()->enqueueMessage('до перехода в ArticleModel', 'info'); // ОТЛАДКА
-            // Создаем статьи из темы Kunena
-            $articleLinks = $model->createArticlesFromTopic($params);
- Factory::getApplication()->enqueueMessage('после возвращения из ArticleModel', 'info'); // ОТЛАДКА
-            // Отправляем массив ссылок администратору
-            $this->sendLinksToAdministrator($articleLinks);
+   //     $app->enqueueMessage('До перехода в ArticleModel', 'info'); // ОТЛАДКА
+        
+        // Создаем статьи
+        $articleLinks = $model->createArticlesFromTopic($params);
+        
+       $app->enqueueMessage('После возвращения из ArticleModel', 'info'); // ОТЛАДКА
 
-            $model->setState('articleLinks', $articleLinks);  // для View
-            $model->emailsSent = true;
-            $model->emailsSentTo = $recipients;
-            
-            // Отображаем результаты
-            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESSFULLY'), 'success');
-            $app->setUserState('com_kunenatopic2article.can_create', false); // управление флагом can_create
-        } catch (\Exception $e) {
-            $app->enqueueMessage($e->getMessage(), 'error');
-        }
-          // Возвращаемся в DisplayController
-         } catch (\Exception $e) {
+        // Отправляем письма
+        $mailResult = $this->sendLinksToAdministrator($articleLinks);
+        
+        // Сохраняем состояние
+        $model->setState('articleLinks', $articleLinks);
+        $model->emailsSent = $mailResult['success'];
+        $model->emailsSentTo = $mailResult['recipients']; // Гарантированно массив
+        
+        $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESSFULLY'), 'success'); // ОТЛАДКА
+        $app->setUserState('com_kunenatopic2article.can_create', false); // управление флагом can_create
+        
+        return true;
+        
+    } catch (\Exception $e) {
         $app->enqueueMessage($e->getMessage(), 'error');
         return false;
     }     
-    }
-
+}
+    
     /**
      * Получение параметров компонента из таблиц
      * @return  object|null  Объект с параметрами компонента
@@ -114,61 +111,61 @@ class ArticleController extends BaseController
      * @param   array  $articleLinks  Массив ссылок на статьи
      * @return  boolean  True в случае успеха, False в случае ошибки
      */
-protected function sendLinksToAdministrator(array $articleLinks): void
+protected function sendLinksToAdministrator(array $articleLinks): array
 {
+    $app = Factory::getApplication();
+    $result = [
+        'success' => false,
+        'recipients' => []
+    ];
+
     try {
-        $app = Factory::getApplication();
         $config = Factory::getConfig();
+        $mailer = Factory::getMailer();
         
-        // Получаем модель пользователей
-        $usersModel = $app->bootComponent('com_users')
-                        ->getMVCFactory()
-                        ->createModel('Users', 'Administrator', ['ignore_request' => true]);
+        // Получаем email администратора
+        $adminEmail = $config->get('mailfrom');
         
-        // Находим суперадминистратора (группа 8)
-        $usersModel->setState('filter.group_id', 8);
-        $superUsers = $usersModel->getItems();
-        
-        if (empty($superUsers)) {
-            throw new RuntimeException('Не найден суперадминистратор');
-        }
-        
-        $superAdminEmail = $superUsers[0]->email;
+        // Получаем email автора
         $author = Factory::getUser($this->topicAuthorId);
+        $authorEmail = $author->email;
         
         // Формируем письмо
-        $mailer = Factory::getMailer();
-        $mailer->setSubject(
-            Text::sprintf('COM_KUNENATOPIC2ARTICLE_MAIL_SUBJECT', $config->get('sitename'))
+        $subject = Text::sprintf('COM_KUNENATOPIC2ARTICLE_MAIL_SUBJECT', $config->get('sitename'));
+        $body = Text::sprintf(
+            'COM_KUNENATOPIC2ARTICLE_MAIL_BODY',
+            $config->get('sitename'),
+            $this->subject,
+            Uri::root() . 'index.php?option=com_kunena&view=topic&postid=' . (int)$this->params->topic_selection,
+            $author->name,
+            implode("\n", array_map(
+                fn($link) => "- {$link['title']}: {$link['url']}",
+                $articleLinks
+            ))
         );
+
+        // Настраиваем отправку
+        $mailer->setSender([$adminEmail, $config->get('sitename')]);
+        $mailer->setSubject($subject);
+        $mailer->setBody($body);
         
-        $mailer->setBody(
-            Text::sprintf(
-                'COM_KUNENATOPIC2ARTICLE_MAIL_BODY',
-                $config->get('sitename'),
-                $this->subject,
-                Uri::root() . 'index.php?option=com_kunena&view=topic&postid=' . (int)$this->params->topic_selection,
-                $author->name,
-                implode("\n", array_map(
-                    function($link) {
-                        return "- {$link['title']}: {$link['url']}";
-                    },
-                    $articleLinks
-                ))
-            )
-        );
+        // Добавляем получателей
+        $recipients = array_filter([$adminEmail, $authorEmail], 'filter_var', FILTER_VALIDATE_EMAIL);
+        foreach ($recipients as $email) {
+            $mailer->addRecipient($email);
+        }
         
-        // Отправляем письма
-        $mailer->addRecipient($superAdminEmail);
-        $mailer->addRecipient($author->email);
-        $mailer->Send();
+        // Отправляем
+        $sendResult = $mailer->Send();
         
-        $this->emailsSent = true;
-        $this->emailsSentTo = [$superAdminEmail, $author->email];
+        $result['success'] = $sendResult === true;
+        $result['recipients'] = $recipients;
         
     } catch (\Exception $e) {
-        $app->enqueueMessage($e->getMessage(), 'error');
-        $this->emailsSent = false;
+        $app->enqueueMessage('Ошибка отправки почты: ' . $e->getMessage(), 'error');
     }
+    
+    return $result;
 }
+
 }
