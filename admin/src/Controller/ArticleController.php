@@ -113,54 +113,49 @@ class ArticleController extends BaseController
      */
 protected function sendLinksToAdministrator(array $articleLinks): void
 {
-    $config     = Factory::getConfig();
-    $mailer     = Factory::getMailer();
+    $app = Factory::getApplication();
+    $config = Factory::getConfig();
+    $mailer = Factory::getMailer();
 
-    $siteName   = $config->get('sitename');
-    $topicTitle = $this->subject;
-    $author     = Factory::getUser($this->topicAuthorId);
-    $authorName = $author->name;
+    // 1. Получаем email суперадминистратора (первого из группы Super Users)
+    $superAdminEmail = Factory::getUser(UserHelper::getUsersByGroup(8)[0]->id)->email;
+    
+    // 2. Данные автора (по условиям компонента автор всегда зарегистрирован)
+    $author = Factory::getUser($this->topicAuthorId);
     $authorEmail = $author->email;
 
-    // Простая ссылка по postid 
+    // 3. Формируем содержимое письма
+    $siteName = $config->get('sitename');
     $postId = (int) $this->params->topic_selection;
     $topicLink = Uri::root() . 'index.php?option=com_kunena&view=topic&postid=' . $postId;
 
-    // Список статей
-    $articleList = '';
-    foreach ($articleLinks as $link) {
-        $articleList .= "- {$link['title']}: {$link['url']}\n";
-    }
+    $articleList = implode("\n", array_map(
+        fn($link) => "- {$link['title']}: {$link['url']}",
+        $articleLinks
+    ));
 
-    // Тело письма с языковой константой
+    $subject = Text::sprintf('COM_KUNENATOPIC2ARTICLE_MAIL_SUBJECT', $siteName);
     $body = Text::sprintf(
         'COM_KUNENATOPIC2ARTICLE_MAIL_BODY',
         $siteName,
-        $topicTitle,
+        $this->subject,
         $topicLink,
-        $authorName,
+        $author->name,
         $articleList
     );
 
-    $subject = Text::sprintf('COM_KUNENATOPIC2ARTICLE_MAIL_SUBJECT', $siteName);
-
-    // Отправка письма администратору и автору
-    $adminEmail = $config->get('mailfrom');
-    $recipients = [$adminEmail, $authorEmail];
-
-    foreach ($recipients as $email) {
-        $mailer->sendMail(
-            $adminEmail, // From
-            $email,      // To
-            $subject,
-            $body,
-            false        // Plain-text
-        );
+    // 4. Отправка писем
+    foreach ([$superAdminEmail, $authorEmail] as $email) {
+        $mailer->clearAllRecipients()
+               ->setSender([$config->get('mailfrom'), $siteName])
+               ->addRecipient($email)
+               ->setSubject($subject)
+               ->setBody($body)
+               ->Send();
     }
 
-    // Флаги для View
+    // 5. Сохраняем статус отправки
     $this->emailsSent = true;
-    $this->emailsSentTo = $recipients;
+    $this->emailsSentTo = [$superAdminEmail, $authorEmail];
 }
-
 }
