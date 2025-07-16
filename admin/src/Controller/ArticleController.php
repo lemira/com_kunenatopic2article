@@ -15,11 +15,9 @@ defined('_JEXEC') or die('Restricted access');
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
-use Joomla\CMS\Router\Route;
-use Joomla\CMS\Session\Session;
-use Joomla\CMS\Mail\MailTemplate;
-use Joomla\CMS\Mail\Mail;
+use Joomla\CMS\Session\Session; // ? еще нужно?
 use Joomla\CMS\Uri\Uri;
+use Joomla\CMS\User\UserHelper;
 
 /**
  * Article Controller
