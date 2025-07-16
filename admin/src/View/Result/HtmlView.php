@@ -13,11 +13,16 @@ class HtmlView extends BaseHtmlView
 
    public function display($tpl = null): void
 {
-    $model = $this->getModel('Article', 'Administrator'); // явное указание модели
+    // Загружаем модель явно, если она не загружена автоматически
+    $model = $this->getModel('Article');
 
-    $this->articleLinks = $model->getState('articleLinks');
-    $this->emailsSent   = $model->emailsSent ?? false;
-    $this->emailsSentTo = $model->emailsSentTo ?? [];
+    if (!$model) {
+        throw new \RuntimeException('Model not found');
+    }
+
+    $this->articleLinks = $model->getState('articleLinks', []); // Добавляем значение по умолчанию
+    $this->emailsSent   = $model->getState('emailsSent', false);
+    $this->emailsSentTo = $model->getState('emailsSentTo', []);
 
     parent::display($tpl);
 }
