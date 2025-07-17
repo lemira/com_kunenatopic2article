@@ -78,12 +78,7 @@ class ArticleController extends BaseController
 // Устанавливаем флаг блокировки
 $app->setUserState('com_kunenatopic2article.can_create', false);
 
-// Редирект
-$this->setRedirect(
-    Route::_('index.php?option=com_kunenatopic2article&view=result', false),
-    Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESSFULLY'),
-    'success'
-);
+$this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=result', false));
         
         return true;
         
