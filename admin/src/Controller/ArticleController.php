@@ -59,7 +59,12 @@ class ArticleController extends BaseController
         $app->enqueueMessage('После возвращения из ArticleModel', 'info'); // ОТЛАДКА
 
         // Отправляем письма
+        try {
         $mailResult = $this->sendLinksToAdministrator($articleLinks);
+        } catch (\Exception $e) {
+        $mailResult = ['success' => false, 'recipients' => []];
+        Factory::getApplication()->enqueueMessage($e->getMessage(), 'warning');
+        }
         
         // Сохраняем данные и флаги для представления
       $app->setUserState('com_kunenatopic2article.result_data', [
