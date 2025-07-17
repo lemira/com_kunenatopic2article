@@ -148,14 +148,14 @@ class DisplayController extends BaseController
      */
     public function create()
 {
-    // Проверка токена
-    $this->checkToken();
-
+    // Проверка токена с правильным обработчиком ошибок
+    $this->checkToken('post') or jexit(Text::_('JINVALID_TOKEN'));
+    
     Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', false); // деактивируем кнопку create article
 
     Factory::getApplication()->enqueueMessage('DisplayController::create called', 'info');  // ОТЛАДКА
 
-    // Редирект в ArticleController для обработки
+    // Редирект в ArticleController с явным указанием task
     $this->setRedirect(
         Route::_('index.php?option=com_kunenatopic2article&task=article.create', false)
     );
