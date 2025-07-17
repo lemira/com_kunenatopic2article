@@ -4,21 +4,20 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 
-// Указываем IDE, что $this — HtmlView
-/** @var Joomla\Component\KunenaTopic2Article\Administrator\View\Result\HtmlView $this */
+/** @var \Joomla\Component\KunenaTopic2Article\Administrator\View\Result\HtmlView $this */
 ?>
 
-<div class="joomla-overview">
+<div class="container-fluid">
     <h1><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_RESULT_HEADING'); ?></h1>
 
-    <?php if (!empty($this->links)) : ?>
+    <?php if (is_array($this->links) && !empty($this->links)) : ?>
         <div class="alert alert-success">
             <p><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED'); ?></p>
-            <ul>
+            <ul class="list-group">
                 <?php foreach ($this->links as $link) : ?>
-                    <li>
-                        <a href="<?php echo $link['url']; ?>" target="_blank">
-                            <?php echo htmlspecialchars($link['title'], ENT_QUOTES, 'UTF-8'); ?>
+                    <li class="list-group-item">
+                        <a href="<?php echo $this->escape($link['url']); ?>" target="_blank">
+                            <?php echo $this->escape($link['title']); ?>
                         </a>
                     </li>
                 <?php endforeach; ?>
@@ -26,37 +25,32 @@ use Joomla\CMS\Router\Route;
         </div>
     <?php else : ?>
         <div class="alert alert-info">
-            <p><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_NO_ARTICLES_CREATED'); ?></p>
+            <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_NO_ARTICLES_CREATED'); ?>
         </div>
     <?php endif; ?>
 
-    <?php if ($this->emailsSent ?? false) : ?>
-        <div class="alert alert-warning">
-            <p><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_EMAILS_SENT_NOTICE'); ?></p>
+    <?php if ($this->emailsSent) : ?>
+        <div class="alert alert-info mt-3">
+            <h3><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_EMAILS_SENT'); ?></h3>
+            <?php if (is_array($this->emailsSentTo) && !empty($this->emailsSentTo)) : ?>
+                <p><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_RECIPIENTS_LIST'); ?></p>
+                <ul>
+                    <?php foreach ($this->emailsSentTo as $email) : ?>
+                        <li><?php echo $this->escape($email); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
         </div>
     <?php endif; ?>
 
-    <div class="button-container" style="margin-top: 2rem;">
-        <a class="btn btn-primary" href="<?php echo Route::_('index.php?option=com_kunenatopic2article'); ?>">
+    <div class="mt-4">
+        <a href="<?php echo Route::_('index.php?option=com_kunenatopic2article'); ?>" 
+           class="btn btn-primary">
             <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_CONTINUE_WORK'); ?>
         </a>
-        <a class="btn btn-secondary" href="<?php echo Route::_('index.php'); ?>">
+        <a href="<?php echo Route::_('index.php'); ?>" 
+           class="btn btn-secondary ms-2">
             <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_FINISH_WORK'); ?>
         </a>
     </div>
 </div>
-
-<?php if ($this->emailsSent): ?>
-    <div class="alert alert-info">
-        <?= Text::_('COM_KUNENATOPIC2ARTICLE_EMAILS_SENT'); ?><br />
-        <?php if (!empty($this->emailsSentTo)): ?>
-            <strong>Отправлено на:</strong>
-            <ul>
-                <?php foreach ($this->emailsSentTo as $email): ?>
-                    <li><?= htmlspecialchars($email) ?></li>
-                <?php endforeach; ?>
-            </ul>
-        <?php endif; ?>
-    </div>
-<?php endif; ?>
-
