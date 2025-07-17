@@ -5,30 +5,46 @@ defined('_JEXEC') or die;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Router\Route;
 
 class HtmlView extends BaseHtmlView
 {
+    protected $articles = [];
+    protected $emailsSent = false;
+    protected $emailsSentTo = [];
+
     public function display($tpl = null): void
     {
-        try {
-            // Явно указываем администраторскую модель
-            $model = $this->getModel('Article', 'Administrator');
-            
-            if (!$model) {
-                throw new \RuntimeException(
-                    Text::sprintf('COM_KUNENATOPIC2ARTICLE_MODEL_NOT_FOUND', 'Article')
-                );
-            }
+        $app = Factory::getApplication();
+        
+        // Получаем данные из сессии
+        $data = $app->getUserState('com_kunenatopic2article.result_data');
 
-            // Безопасное получение данных
-            $this->articleLinks = (array) $model->getState('articleLinks', []);
-            $this->emailsSent = (bool) $model->getState('emailsSent', false);
-            $this->emailsSentTo = (array) $model->getState('emailsSentTo', []);
-            
-            parent::display($tpl);
-            
-        } catch (\Exception $e) {
-            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+        if (empty($data)) {
+            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_RESULTS'), 'error');
+            $app->redirect(Route::_('index.php?option=com_kunenatopic2article', false));
+            return;
         }
+
+        // Устанавливаем данные для представления
+        $this->articles = $data['articles'] ?? [];
+        $this->emailsSent = $data['emails']['sent'] ?? false;
+        $this->emailsSentTo = $data['emails']['recipients'] ?? [];
+
+        // Очищаем сессию
+        $app->setUserState('com_kunenatopic2article.result_data', null);
+
+        $this->addToolbar();
+        parent::display($tpl);
+    }
+
+    protected function addToolbar()
+    {
+        $toolbar = Factory::getApplication()->getToolbar();
+        $toolbar->title(Text::_('COM_KUNENATOPIC2ARTICLE_RESULTS'), 'file');
+        
+        $toolbar->back('JTOOLBAR_BACK')
+            ->listCheck(false)
+            ->href(Route::_('index.php?option=com_kunenatopic2article', false));
     }
 }
