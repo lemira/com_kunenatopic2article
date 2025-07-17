@@ -93,4 +93,4 @@ class DisplayController extends BaseController
             Route::_('index.php?option=com_kunenatopic2article&task=article.create', false)
         );
     }
-}
+} // КОНЕЦ КЛАССА
