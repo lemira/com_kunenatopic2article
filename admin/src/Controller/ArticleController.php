@@ -31,62 +31,59 @@ class ArticleController extends BaseController
      * Создание статей из темы форума Kunena
      * @return  void
      */
-   public function create()
+  public function create()
 {
     // Проверка токена
     $this->checkToken() or die(Text::_('JINVALID_TOKEN'));
 
     $app = Factory::getApplication();
-    $app->enqueueMessage('create() в ArticleController', 'info'); // ОТЛАДКА
+    $app->enqueueMessage('ArticleController::create called', 'info');
 
     try {
         $model = $this->getModel('Article', 'Administrator');
-        
-        // Получаем параметры
         $params = $this->getComponentParams();
         
         if (empty($params) || empty($params->topic_selection)) {
-            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'), 'error');
-            $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article', false));
-            return false;
+            throw new \RuntimeException(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'));
         }
 
-        $app->enqueueMessage('До перехода в ArticleModel', 'info'); // ОТЛАДКА
-        
-        // Создаем статьи
+        // Создание статей
+        $app->enqueueMessage('До перехода в ArticleModel', 'info');  // ОТЛАДКА
         $articleLinks = $model->createArticlesFromTopic($params);
-        
-        $app->enqueueMessage('После возвращения из ArticleModel', 'info'); // ОТЛАДКА
 
-        // Отправляем письма
+        // Отправка писем
         try {
-        $mailResult = $this->sendLinksToAdministrator($articleLinks);
+            $mailResult = $this->sendLinksToAdministrator($articleLinks);
         } catch (\Exception $e) {
-        $mailResult = ['success' => false, 'recipients' => []];
-        Factory::getApplication()->enqueueMessage($e->getMessage(), 'warning');
+            $mailResult = ['success' => false, 'recipients' => []];
+            $app->enqueueMessage($e->getMessage(), 'warning');
         }
-        
-        // Сохраняем данные и флаги для представления
-      $app->setUserState('com_kunenatopic2article.result_data', [
-        'articles' => $articleLinks,
-        'emails' => [
-        'sent' => $mailResult['success'],
-        'recipients' => $mailResult['recipients']
-    ]
-]);
 
-// Устанавливаем флаг блокировки
-$app->setUserState('com_kunenatopic2article.can_create', false);
+        // Сохраняем необходимые данные для представления
+        $app->setUserState('com_kunenatopic2article.result_data', [
+            'articles' => $articleLinks,
+            'emails' => [
+                'sent' => $mailResult['success'],
+                'recipients' => $mailResult['recipients'] // Полный массив получателей
+            ]
+        ]);
 
-$this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=result', false));
-        
-        return true;
-        
+        $app->setUserState('com_kunenatopic2article.can_create', false); // Устанавливаем флаг блокировки кнопки create
+
+        // Редирект на страницу результатов
+        $this->setRedirect(
+            Route::_('index.php?option=com_kunenatopic2article&view=result', false),
+            Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESSFULLY'),
+            'success'
+        );
+
     } catch (\Exception $e) {
         $app->enqueueMessage($e->getMessage(), 'error');
-        $this->setRedirect('index.php?option=com_kunenatopic2article');
+        $this->setRedirect(
+            Route::_('index.php?option=com_kunenatopic2article', false)
+        );
         return false;
-    }     
+    }
 }
     
     /**
