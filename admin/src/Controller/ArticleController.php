@@ -19,6 +19,7 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\Mail\Mailer;
 use Joomla\Component\Users\Administrator\Model\UsersModel;
 use RuntimeException;
+use Joomla\CMS\Router\Route;
 
 /**
  * Article Controller
@@ -46,7 +47,7 @@ class ArticleController extends BaseController
         
         if (empty($params) || empty($params->topic_selection)) {
             $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'), 'error');
-            $this->setRedirect('index.php?option=com_kunenatopic2article');
+            $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article', false));
             return false;
         }
 
@@ -60,27 +61,24 @@ class ArticleController extends BaseController
         // Отправляем письма
         $mailResult = $this->sendLinksToAdministrator($articleLinks);
         
-        // Сохраняем данные для представления
-        $resultData = [
-            'articles' => $articleLinks,
-            'emails' => [
-                'sent' => $mailResult['success'],
-                'recipients' => $mailResult['recipients']
-            ]
-        ];
-        
-        // Сохраняем в сессию
-        $app->setUserState('com_kunenatopic2article.result_data', $resultData);
-        
-        // Устанавливаем флаг
-        $app->setUserState('com_kunenatopic2article.can_create', false);
-        
-        // Редирект на страницу результатов
-        $this->setRedirect(
-            Route::_('index.php?option=com_kunenatopic2article&view=result', false),
-            Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESSFULLY'),
-            'success'
-        );
+        // Сохраняем данные и флаги для представления
+      $app->setUserState('com_kunenatopic2article.result_data', [
+        'articles' => $articleLinks,
+        'emails' => [
+        'sent' => $mailResult['success'],
+        'recipients' => $mailResult['recipients']
+    ]
+]);
+
+// Устанавливаем флаг блокировки
+$app->setUserState('com_kunenatopic2article.can_create', false);
+
+// Редирект
+$this->setRedirect(
+    Route::_('index.php?option=com_kunenatopic2article&view=result', false),
+    Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESSFULLY'),
+    'success'
+);
         
         return true;
         
