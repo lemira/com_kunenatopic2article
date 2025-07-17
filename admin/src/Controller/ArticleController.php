@@ -34,11 +34,10 @@ class ArticleController extends BaseController
   public function create()
 {
     // Проверка токена
-    $this->checkToken() or die(Text::_('JINVALID_TOKEN'));
+    $this->checkToken('post') or jexit(Text::_('JINVALID_TOKEN'));
 
     $app = Factory::getApplication();
-    $app->enqueueMessage('ArticleController::create called', 'info');
-
+    
     try {
         $model = $this->getModel('Article', 'Administrator');
         $params = $this->getComponentParams();
@@ -48,7 +47,6 @@ class ArticleController extends BaseController
         }
 
         // Создание статей
-        $app->enqueueMessage('До перехода в ArticleModel', 'info');  // ОТЛАДКА
         $articleLinks = $model->createArticlesFromTopic($params);
 
         // Отправка писем
@@ -59,26 +57,34 @@ class ArticleController extends BaseController
             $app->enqueueMessage($e->getMessage(), 'warning');
         }
 
-        // Сохраняем необходимые данные для представления
+        // Сохраняем данные для представления
         $app->setUserState('com_kunenatopic2article.result_data', [
             'articles' => $articleLinks,
             'emails' => [
                 'sent' => $mailResult['success'],
-                'recipients' => $mailResult['recipients'] // Полный массив получателей
+                'recipients' => $mailResult['recipients']
             ]
         ]);
 
-        $app->setUserState('com_kunenatopic2article.can_create', false); // Устанавливаем флаг блокировки кнопки create
+        // Сохраняем сообщение для отображения после редиректа
+        $app->setUserState('com_kunenatopic2article.redirect_data', [
+            'message' => Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESSFULLY'),
+            'type' => 'success'
+        ]);
+
+        // Устанавливаем флаг блокировки
+        $app->setUserState('com_kunenatopic2article.can_create', false);
 
         // Редирект на страницу результатов
         $this->setRedirect(
-            Route::_('index.php?option=com_kunenatopic2article&view=result', false),
-            Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESSFULLY'),
-            'success'
+            Route::_('index.php?option=com_kunenatopic2article&view=result', false)
         );
 
     } catch (\Exception $e) {
-        $app->enqueueMessage($e->getMessage(), 'error');
+        $app->setUserState('com_kunenatopic2article.redirect_data', [
+            'message' => $e->getMessage(),
+            'type' => 'error'
+        ]);
         $this->setRedirect(
             Route::_('index.php?option=com_kunenatopic2article', false)
         );
