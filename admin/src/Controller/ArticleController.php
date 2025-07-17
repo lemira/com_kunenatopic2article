@@ -30,7 +30,7 @@ class ArticleController extends BaseController
      * Создание статей из темы форума Kunena
      * @return  void
      */
-    public function create()
+   public function create()
 {
     // Проверка токена
     $this->checkToken() or die(Text::_('JINVALID_TOKEN'));
@@ -41,40 +41,52 @@ class ArticleController extends BaseController
     try {
         $model = $this->getModel('Article', 'Administrator');
         
-        // Получаем параметры из таблицы kunenatopic2article_params
+        // Получаем параметры
         $params = $this->getComponentParams();
         
-        if (empty($params) || empty($params->topic_selection)) {        // НЕ НУЖНО, УБРАТЬ?
+        if (empty($params) || empty($params->topic_selection)) {
             $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'), 'error');
             $this->setRedirect('index.php?option=com_kunenatopic2article');
             return false;
         }
 
-   //     $app->enqueueMessage('До перехода в ArticleModel', 'info'); // ОТЛАДКА
+        $app->enqueueMessage('До перехода в ArticleModel', 'info'); // ОТЛАДКА
         
         // Создаем статьи
         $articleLinks = $model->createArticlesFromTopic($params);
         
-       $app->enqueueMessage('После возвращения из ArticleModel', 'info'); // ОТЛАДКА
+        $app->enqueueMessage('После возвращения из ArticleModel', 'info'); // ОТЛАДКА
 
         // Отправляем письма
         $mailResult = $this->sendLinksToAdministrator($articleLinks);
         
-        // Сохраняем состояние
-        $model->setState('articleLinks', $articleLinks);
-        $model->emailsSent = $mailResult['success'];
-        $model->emailsSentTo = $mailResult['recipients']; // Гарантированно массив
-
-        // Сохраняем модель для View
-        $this->app->setUserState('com_kunenatopic2article.model', $model);
+        // Сохраняем данные для представления
+        $resultData = [
+            'articles' => $articleLinks,
+            'emails' => [
+                'sent' => $mailResult['success'],
+                'recipients' => $mailResult['recipients']
+            ]
+        ];
         
-        $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESSFULLY'), 'success'); // ОТЛАДКА
-        $app->setUserState('com_kunenatopic2article.can_create', false); // управление флагом can_create
+        // Сохраняем в сессию
+        $app->setUserState('com_kunenatopic2article.result_data', $resultData);
+        
+        // Устанавливаем флаг
+        $app->setUserState('com_kunenatopic2article.can_create', false);
+        
+        // Редирект на страницу результатов
+        $this->setRedirect(
+            Route::_('index.php?option=com_kunenatopic2article&view=result', false),
+            Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESSFULLY'),
+            'success'
+        );
         
         return true;
         
     } catch (\Exception $e) {
         $app->enqueueMessage($e->getMessage(), 'error');
+        $this->setRedirect('index.php?option=com_kunenatopic2article');
         return false;
     }     
 }
@@ -116,7 +128,7 @@ class ArticleController extends BaseController
      */
 protected function sendLinksToAdministrator(array $articleLinks): array
 {
-     // Временный код для тестирования в НАЧАЛО метода)
+/**     // Временный код для тестирования в НАЧАЛО метода)
     if (Factory::getApplication()->isClient('administrator')) {
         $logData = [
             'date' => date('Y-m-d H:i:s'),
@@ -131,7 +143,7 @@ protected function sendLinksToAdministrator(array $articleLinks): array
             
         return ['success' => true, 'recipients' => ['test_admin@example.com', 'test_author@example.com']];
     }
-
+**/ 
     // ОСНОВНОЙ КОД! (временный убрать!)
     $app = Factory::getApplication();
     $result = [
