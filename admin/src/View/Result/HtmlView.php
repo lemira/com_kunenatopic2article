@@ -26,10 +26,10 @@ class HtmlView extends BaseHtmlView
             return;
         }
 
-        // Устанавливаем данные для представления
-        $this->articles = $data['articles'];
-        $this->emailsSent = $data['emails']['sent'] ?? false;
-        $this->emailsSentTo = $data['emails']['recipients'] ?? [];
+       // Назначаем данные для представления
+    $this->articles = $data['articles'];
+    $this->emailsSent = $data['emails']['sent'];
+    $this->emailsSentTo = $data['emails']['recipients'];
 
         parent::display($tpl);
    } 
