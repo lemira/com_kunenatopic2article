@@ -6,18 +6,17 @@ use Joomla\CMS\Router\Route;
 
 /** @var \Joomla\Component\KunenaTopic2Article\Administrator\View\Result\HtmlView $this */
 ?>
-
 <div class="container-fluid">
-    <h1><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_RESULT_HEADING'); ?></h1>
+    <h2><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_RESULTS_TITLE'); ?></h2>
 
-    <?php if (is_array($this->links) && !empty($this->links)) : ?>
+    <?php if (!empty($this->articles)) : ?>
         <div class="alert alert-success">
-            <p><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED'); ?></p>
+            <h3><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_CREATED_ARTICLES'); ?></h3>
             <ul class="list-group">
-                <?php foreach ($this->links as $link) : ?>
+                <?php foreach ($this->articles as $article) : ?>
                     <li class="list-group-item">
-                        <a href="<?php echo $this->escape($link['url']); ?>" target="_blank">
-                            <?php echo $this->escape($link['title']); ?>
+                        <a href="<?php echo $this->escape($article['url']); ?>" target="_blank">
+                            <?php echo $this->escape($article['title']); ?>
                         </a>
                     </li>
                 <?php endforeach; ?>
@@ -32,9 +31,9 @@ use Joomla\CMS\Router\Route;
     <?php if ($this->emailsSent) : ?>
         <div class="alert alert-info mt-3">
             <h3><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_EMAILS_SENT'); ?></h3>
-            <?php if (is_array($this->emailsSentTo) && !empty($this->emailsSentTo)) : ?>
+            <?php if (!empty($this->emailsSentTo)) : ?>
                 <p><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_RECIPIENTS_LIST'); ?></p>
-                <ul>
+                <ul class="list-unstyled">
                     <?php foreach ($this->emailsSentTo as $email) : ?>
                         <li><?php echo $this->escape($email); ?></li>
                     <?php endforeach; ?>
@@ -44,10 +43,13 @@ use Joomla\CMS\Router\Route;
     <?php endif; ?>
 
     <div class="mt-4">
+        <!-- кнопка "Продолжить работу" -->
         <a href="<?php echo Route::_('index.php?option=com_kunenatopic2article'); ?>" 
            class="btn btn-primary">
             <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_CONTINUE_WORK'); ?>
         </a>
+        
+        <!--кнопка "Завершить" -->
         <a href="<?php echo Route::_('index.php'); ?>" 
            class="btn btn-secondary ms-2">
             <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_FINISH_WORK'); ?>
