@@ -27,24 +27,10 @@ class HtmlView extends BaseHtmlView
         }
 
         // Устанавливаем данные для представления
-        $this->articles = $data['articles'] ?? [];
+        $this->articles = $data['articles'];
         $this->emailsSent = $data['emails']['sent'] ?? false;
         $this->emailsSentTo = $data['emails']['recipients'] ?? [];
 
-        // Очищаем сессию
-        $app->setUserState('com_kunenatopic2article.result_data', null);
-
-        $this->addToolbar();
         parent::display($tpl);
-    }
-
-    protected function addToolbar()
-    {
-        $toolbar = Factory::getApplication()->getToolbar();
-        $toolbar->title(Text::_('COM_KUNENATOPIC2ARTICLE_RESULTS'), 'file');
-        
-        $toolbar->back('JTOOLBAR_BACK')
-            ->listCheck(false)
-            ->href(Route::_('index.php?option=com_kunenatopic2article', false));
-    }
+   } 
 }
