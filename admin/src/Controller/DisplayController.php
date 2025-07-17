@@ -148,39 +148,17 @@ class DisplayController extends BaseController
      */
     public function create()
 {
+    // Проверка токена
     $this->checkToken();
-    $this->app->setUserState('com_kunenatopic2article.save.success', false); // деактивируем create article
 
-    Factory::getApplication()->enqueueMessage('DisplayController::create called', 'info'); // ОТЛАДКА
+    Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', false); // деактивируем кнопку create article
 
-    // Получаем контейнер и фабрику
-    $container = Factory::getApplication()->bootComponent('com_kunenatopic2article');
-    /** @var MVCFactoryInterface $mvcFactory */
-    $mvcFactory = $container->getMVCFactory();
+    Factory::getApplication()->enqueueMessage('DisplayController::create called', 'info');  // ОТЛАДКА
 
-    // Вызываем контроллер Article
-    $articleController = $mvcFactory->createController(
-        'Article',
-        'Administrator',
-        [],
-        Factory::getApplication(),
-        Factory::getApplication()->input
+    // Редирект в ArticleController для обработки
+    $this->setRedirect(
+        Route::_('index.php?option=com_kunenatopic2article&task=article.create', false)
     );
-    $articleController->execute('create');
-
-    // Переключаем Input на нужный View
-    $input = Factory::getApplication()->input;
-    $input->set('view', 'result');
-
-    // Вызываем DisplayController с новым Input
-    $resultController = $mvcFactory->createController(
-        'Display',
-        'Administrator',
-        [],
-        Factory::getApplication(),
-        $input
-    );
-    $resultController->execute('display'); // Указываем task явно
-    // Нет redirect() и exit — Joomla сама отобразит нужный view
 }
+    
 } // КОНЕЦ КЛАССА
