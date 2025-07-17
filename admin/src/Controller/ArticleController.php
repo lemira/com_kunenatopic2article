@@ -66,7 +66,7 @@ class ArticleController extends BaseController
             ]
         ]);
 
-        // Сохраняем сообщение для отображения после редиректа
+        // Сохраняем сообщение для отображения после редиректа  // НЕ хватит ли // Сохраняем данные для представления -- то же самое?
         $app->setUserState('com_kunenatopic2article.redirect_data', [
             'message' => Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESSFULLY'),
             'type' => 'success'
@@ -88,10 +88,9 @@ class ArticleController extends BaseController
         $this->setRedirect(
             Route::_('index.php?option=com_kunenatopic2article', false)
         );
-        return false;
     }
 }
-    
+
     /**
      * Получение параметров компонента из таблиц
      * @return  object|null  Объект с параметрами компонента
