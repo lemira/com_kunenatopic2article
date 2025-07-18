@@ -77,7 +77,7 @@ try {
                 'sent' => $mailResult['success'],
                 'recipients' => $mailResult['recipients']
             ]
-        ]);
+        ];
         $app->setUserState('com_kunenatopic2article.result_data', $resultData);
         error_log('Session data saved: ' . print_r($resultData, true));
 
