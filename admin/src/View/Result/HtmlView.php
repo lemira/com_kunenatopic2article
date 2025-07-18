@@ -33,6 +33,8 @@ class HtmlView extends BaseHtmlView
     $this->emailsSent = $data['emails']['sent'];
     $this->emailsSentTo = $data['emails']['recipients'];
 
+error_log('Result view: Loading template from ' . $this->getLayout());
+
         parent::display($tpl);
    } 
 }
