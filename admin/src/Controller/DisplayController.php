@@ -17,7 +17,7 @@ class DisplayController extends BaseController
     public function display($cachable = false, $urlparams = array())
 {
      // Деактивируем кнопку create
-   //    $app->setUserState('com_kunenatopic2article.can_create', false);
+  $app->setUserState('com_kunenatopic2article.can_create', false);
     
     // Всегда используем view по умолчанию ('topic')
     $this->input->set('view', $this->default_view);
