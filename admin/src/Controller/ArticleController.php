@@ -53,13 +53,23 @@ class ArticleController extends BaseController
 
 
         // Отправка писем
-   /** ОТЛАДКА    try {
+   /**     try {
             $mailResult = $this->sendLinksToAdministrator($articleLinks);
         } catch (\Exception $e) {
             $mailResult = ['success' => false, 'recipients' => []];
             $app->enqueueMessage($e->getMessage(), 'warning');
         }
 **/
+        // ОТЛАДКА Отправка писем (временно закомментировать)
+try {
+    // $mailResult = $this->sendLinksToAdministrator($articleLinks);
+    $mailResult = ['success' => true, 'recipients' => ['test@example.com']]; // Мок для тестирования
+} catch (\Exception $e) {
+    $mailResult = ['success' => false, 'recipients' => []];
+    $app->enqueueMessage($e->getMessage(), 'warning');
+    error_log('Mail error: ' . $e->getMessage());
+}
+        
         // Сохраняем данные для представления
         $resultData = [
              'articles' => $articleLinks,
