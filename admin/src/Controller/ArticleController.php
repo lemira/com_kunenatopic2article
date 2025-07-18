@@ -47,7 +47,10 @@ class ArticleController extends BaseController
         }
 
         // Создание статей
+        error_log('Starting createArticlesFromTopic');
         $articleLinks = $model->createArticlesFromTopic($params);
+        error_log('createArticlesFromTopic completed: ' . print_r($articleLinks, true));
+
 
         // Отправка писем
    /** ОТЛАДКА    try {
@@ -58,30 +61,30 @@ class ArticleController extends BaseController
         }
 **/
         // Сохраняем данные для представления
-        $app->setUserState('com_kunenatopic2article.result_data', [
-            'articles' => $articleLinks,
+        $resultData = [
+             'articles' => $articleLinks,
             'emails' => [
                 'sent' => $mailResult['success'],
                 'recipients' => $mailResult['recipients']
             ]
         ]);
+        $app->setUserState('com_kunenatopic2article.result_data', $resultData);
+        error_log('Session data saved: ' . print_r($resultData, true));
 
         // Устанавливаем флаг блокировки
         $app->setUserState('com_kunenatopic2article.can_create', false);
 
         // Редирект на страницу результатов
-        $this->setRedirect(
-            Route::_('index.php?option=com_kunenatopic2article&view=result', false)
-        );
+       error_log('Redirecting to view=result');
+        $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=result', false));
 
     } catch (\Exception $e) {
         $app->setUserState('com_kunenatopic2article.redirect_data', [
             'message' => $e->getMessage(),
             'type' => 'error'
         ]);
-        $this->setRedirect(
-            Route::_('index.php?option=com_kunenatopic2article', false)
-        );
+        error_log('Error in create: ' . $e->getMessage());
+        $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article', false));
     }
 }
 
