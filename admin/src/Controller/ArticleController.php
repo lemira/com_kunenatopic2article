@@ -50,13 +50,13 @@ class ArticleController extends BaseController
         $articleLinks = $model->createArticlesFromTopic($params);
 
         // Отправка писем
-        try {
+   /** ОТЛАДКА    try {
             $mailResult = $this->sendLinksToAdministrator($articleLinks);
         } catch (\Exception $e) {
             $mailResult = ['success' => false, 'recipients' => []];
             $app->enqueueMessage($e->getMessage(), 'warning');
         }
-
+**/
         // Сохраняем данные для представления
         $app->setUserState('com_kunenatopic2article.result_data', [
             'articles' => $articleLinks,
@@ -64,12 +64,6 @@ class ArticleController extends BaseController
                 'sent' => $mailResult['success'],
                 'recipients' => $mailResult['recipients']
             ]
-        ]);
-
-        // Сохраняем сообщение для отображения после редиректа  // НЕ хватит ли // Сохраняем данные для представления -- то же самое?
-        $app->setUserState('com_kunenatopic2article.redirect_data', [
-            'message' => Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESSFULLY'),
-            'type' => 'success'
         ]);
 
         // Устанавливаем флаг блокировки
