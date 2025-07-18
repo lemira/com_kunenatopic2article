@@ -19,9 +19,11 @@ class HtmlView extends BaseHtmlView
         
         // Получаем данные из сессии
         $data = $app->getUserState('com_kunenatopic2article.result_data');
+ error_log('Result view session data: ' . print_r($data, true));
 
         if (empty($data)) {
             $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_RESULTS'), 'error');
+ error_log('Redirecting from Result view due to empty session data');
             $app->redirect(Route::_('index.php?option=com_kunenatopic2article', false));
             return;
         }
