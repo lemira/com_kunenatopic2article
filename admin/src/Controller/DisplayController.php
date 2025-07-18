@@ -14,24 +14,13 @@ class DisplayController extends BaseController
 {
     protected $default_view = 'topic';
 
-    public function display($cachable = false, $urlparams = [])
-    {
-        $app = Factory::getApplication();
-        
-        // Обработка сообщений после редиректа
-        if ($redirectData = $app->getUserState('com_kunenatopic2article.redirect_data')) {
-            $app->enqueueMessage($redirectData['message'], $redirectData['type']);
-            $app->setUserState('com_kunenatopic2article.redirect_data', null);
-        }
-
-        // Сбрасываем флаг создания только при прямом доступе к view
-        if ($app->input->getMethod() === 'GET') {
-            $app->setUserState('com_kunenatopic2article.can_create', true);
-        }
-
-        return parent::display($cachable, $urlparams);
-    }
-
+    public function display($cachable = false, $urlparams = array())
+{
+    // Всегда используем view по умолчанию ('topic')
+    $this->input->set('view', $this->default_view);
+    
+    return parent::display($cachable, $urlparams);
+}
     public function getModel($name = '', $prefix = '', $config = [])
     {
         if (empty($name)) {
