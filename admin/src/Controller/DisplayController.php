@@ -42,7 +42,7 @@ class DisplayController extends BaseController
 
     public function save()
     {
-     // ТЕСТ    $this->checkToken();
+ $this->checkToken();
         $model = $this->getModel('Topic');
         $data = $this->input->get('jform', [], 'array');
 
@@ -83,7 +83,7 @@ class DisplayController extends BaseController
 
     public function create()
     {
-      // ТЕСТ  $this->checkToken('post') or jexit(Text::_('JINVALID_TOKEN'));
+  $this->checkToken('post') or jexit(Text::_('JINVALID_TOKEN'));
         
         // Блокируем повторное создание
         Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', false);
