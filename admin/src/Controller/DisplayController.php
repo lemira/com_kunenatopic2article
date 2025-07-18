@@ -17,13 +17,21 @@ class DisplayController extends BaseController
     public function display($cachable = false, $urlparams = array())
 {
      // Деактивируем кнопку create
-  // выдает Call to a member function setUserState() on null \\ $app->setUserState('com_kunenatopic2article.can_create', false);
+     Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', false);
     
-    // Всегда используем view по умолчанию ('topic')
-    $this->input->set('view', $this->default_view);
+   // Получаем запрошенный вид из input
+        $view = $this->input->get('view', $this->default_view, 'cmd');
+
+        // Устанавливаем вид только если он не указан
+        if (!$this->input->get('view')) {
+            $this->input->set('view', $this->default_view);
+        }
+
+        error_log('DisplayController: Using view=' . $view);
     
     return parent::display($cachable, $urlparams);
 }
+    
     public function getModel($name = '', $prefix = '', $config = [])
     {
         if (empty($name)) {
