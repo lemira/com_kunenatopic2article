@@ -81,16 +81,6 @@ class DisplayController extends BaseController
         );
     }
 
-    public function create()
-    {
-  $this->checkToken('post') or jexit(Text::_('JINVALID_TOKEN'));
-        
-        // Блокируем повторное создание
-        Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', false);
+// function create() в в ArticleController
 
-        // Редирект в ArticleController
-        $this->setRedirect(
-            Route::_('index.php?option=com_kunenatopic2article&task=article.create', false)
-        );
-    }
 } // КОНЕЦ КЛАССА
