@@ -31,7 +31,7 @@ class DisplayController extends BaseController
     
     return parent::display($cachable, $urlparams);
 }
-    
+
     public function getModel($name = '', $prefix = '', $config = [])
     {
         if (empty($name)) {
