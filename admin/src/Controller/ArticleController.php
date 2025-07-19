@@ -86,7 +86,13 @@ try {
 
         // Редирект на страницу результатов
        error_log('Redirecting to view=result');
-        $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=result', false));
+       
+error_log('Redirecting to view=result with data: ' . print_r($resultData, true)); //дс
+$this->setRedirect(
+    Route::_('index.php?option=com_kunenatopic2article&view=result', false),
+    Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESS'),
+    'success'
+);
 
     } catch (\Exception $e) {
         $app->setUserState('com_kunenatopic2article.redirect_data', [
