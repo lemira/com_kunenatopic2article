@@ -14,27 +14,29 @@ class HtmlView extends BaseHtmlView
     protected $emailsSentTo = [];
 
     public function display($tpl = null): void
-    {
-        $app = Factory::getApplication();
-        
-        // Получаем данные из сессии
-        $data = $app->getUserState('com_kunenatopic2article.result_data');
- error_log('Result view session data: ' . print_r($data, true));
+{
+    $app = Factory::getApplication();
+    $data = null;
 
-        if (empty($data)) {
-            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_RESULTS'), 'error');
- error_log('Redirecting from Result view due to empty session data');
-            $app->redirect(Route::_('index.php?option=com_kunenatopic2article', false));
-            return;
+    // Получаем данные из flash-сообщений
+    foreach ($app->getMessageQueue() as $message) {
+        if ($message['type'] === 'kunena-result-data') {
+            $data = json_decode($message['message'], true);
+            break;
         }
+    }
 
-       // Назначаем данные для представления
+    if (empty($data)) {
+        $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_RESULTS'), 'error');
+        $app->redirect(Route::_('index.php?option=com_kunenatopic2article', false));
+        return;
+    }
+
+    // Назначаем данные для представления
     $this->articles = $data['articles'];
     $this->emailsSent = $data['emails']['sent'];
     $this->emailsSentTo = $data['emails']['recipients'];
 
-error_log('Result view: Loading template from ' . $this->getLayout());
-
-        parent::display($tpl);
-   } 
+    parent::display($tpl);
+}
 }
