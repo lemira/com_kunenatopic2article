@@ -16,10 +16,11 @@ class HtmlView extends BaseHtmlView
 public function display($tpl = null): void
 {
     $app = Factory::getApplication();
+    
+    // 1. Извлекаем данные из flash-сообщения
+    $messages = $app->getMessageQueue();
     $data = null;
     
-    // Извлекаем данные из flash-сообщения
-    $messages = $app->getMessageQueue();
     foreach ($messages as $message) {
         if ($message['type'] === 'kunena-result-data') {
             $data = json_decode($message['message'], true);
@@ -27,24 +28,22 @@ public function display($tpl = null): void
         }
     }
 
-    // Если данных нет - редирект из-за ошибки на начало ком-та
+    // 2. Если данных нет - редирект с ошибкой на начало комп-та
     if (!$data) {
         $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_RESULTS'), 'error');
-        $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article', false));
+        $app->redirect(Route::_('index.php?option=com_kunenatopic2article', false));
         return;
     }
 
-    // Удаляем служебное сообщение, чтобы оно не выводилось
-    $app->getMessageQueue(true); // Очищает все сообщения
-    
-    // Устанавливаем данные для отображения
-    $this->articles = $data['articles'];
-    $this->emailsSent = $data['emails']['sent'];
-    $this->emailsSentTo = $data['emails']['recipients'];
+    // 3. Устанавливаем данные для отображения
+    $this->articles = $data['articles'] ?? [];
+    $this->emailsSent = $data['emails']['sent'] ?? false;
+    $this->emailsSentTo = $data['emails']['recipients'] ?? [];
 
-    // Добавляем стандартное success-сообщение
-    $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESS'), 'success');
+    // 4. Очищаем ВСЕ сообщения, чтобы избежать дублирования
+    $app->getMessageQueue(true);
     
     parent::display($tpl);
 }
+
 }
