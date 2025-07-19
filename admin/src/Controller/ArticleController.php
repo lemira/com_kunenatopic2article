@@ -59,7 +59,10 @@ class ArticleController extends BaseController
             $app->enqueueMessage($e->getMessage(), 'warning');
             error_log('Mail error: ' . $e->getMessage());
         }
-        
+
+        // Устанавливаем флаг блокировки
+        $app->setUserState('com_kunenatopic2article.can_create', false);
+
          // Формируем данные для передачи для представления
         $resultData = [
              'articles' => $articleLinks,
@@ -68,19 +71,14 @@ class ArticleController extends BaseController
                 'recipients' => $mailResult['recipients']
             ]
         ];
-       // Заменяем setUserState на enqueueMessage (так как передача в сессии не работает)
+       // Отправляем flash-сообщение (так как передача в сессии не работает)
         $app->enqueueMessage(json_encode($resultData), 'kunena-result-data');
         error_log('Flash message prepared: ' . print_r($resultData, true));
 
-        // Устанавливаем флаг блокировки
-        $app->setUserState('com_kunenatopic2article.can_create', false);
-
-        // Редирект на страницу результатов с обычным сообщением
-        $this->setRedirect(
-            Route::_('index.php?option=com_kunenatopic2article&view=result', false),
-            Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESS'),
-            'success'
-        );
+        // Редирект на страницу результатов
+         $this->setRedirect(
+        Route::_('index.php?option=com_kunenatopic2article&view=result', false)
+    );
 
     } catch (\Exception $e) {
         // Обработка ошибок остаётся через setUserState (альтернативный вариант)
