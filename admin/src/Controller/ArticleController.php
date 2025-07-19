@@ -51,26 +51,16 @@ class ArticleController extends BaseController
         $articleLinks = $model->createArticlesFromTopic($params);
         error_log('createArticlesFromTopic completed: ' . print_r($articleLinks, true));
 
-
-        // Отправка писем
-   /**     try {
-            $mailResult = $this->sendLinksToAdministrator($articleLinks);
+  // Отправка писем (мок для тестирования)
+        try {
+            $mailResult = ['success' => true, 'recipients' => ['test@example.com']];  // $mailResult = $this->sendLinksToAdministrator($articleLinks);
         } catch (\Exception $e) {
             $mailResult = ['success' => false, 'recipients' => []];
             $app->enqueueMessage($e->getMessage(), 'warning');
+            error_log('Mail error: ' . $e->getMessage());
         }
-**/
-        // ОТЛАДКА Отправка писем (временно закомментировать)
-try {
-    // $mailResult = $this->sendLinksToAdministrator($articleLinks);
-    $mailResult = ['success' => true, 'recipients' => ['test@example.com']]; // Мок для тестирования
-} catch (\Exception $e) {
-    $mailResult = ['success' => false, 'recipients' => []];
-    $app->enqueueMessage($e->getMessage(), 'warning');
-    error_log('Mail error: ' . $e->getMessage());
-}
         
-        // Сохраняем данные для представления
+         // Формируем данные для передачи для представления
         $resultData = [
              'articles' => $articleLinks,
             'emails' => [
@@ -78,23 +68,22 @@ try {
                 'recipients' => $mailResult['recipients']
             ]
         ];
-        $app->setUserState('com_kunenatopic2article.result_data', $resultData);
-        error_log('Session data saved: ' . print_r($resultData, true));
+       // Заменяем setUserState на enqueueMessage (так как передача в сессии не работает)
+        $app->enqueueMessage(json_encode($resultData), 'kunena-result-data');
+        error_log('Flash message prepared: ' . print_r($resultData, true));
 
         // Устанавливаем флаг блокировки
         $app->setUserState('com_kunenatopic2article.can_create', false);
 
-        // Редирект на страницу результатов
-       error_log('Redirecting to view=result');
-       
-error_log('Redirecting to view=result with data: ' . print_r($resultData, true)); //дс
-$this->setRedirect(
-    Route::_('index.php?option=com_kunenatopic2article&view=result', false),
-    Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESS'),
-    'success'
-);
+        // Редирект на страницу результатов с обычным сообщением
+        $this->setRedirect(
+            Route::_('index.php?option=com_kunenatopic2article&view=result', false),
+            Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESS'),
+            'success'
+        );
 
     } catch (\Exception $e) {
+        // Обработка ошибок остаётся через setUserState (альтернативный вариант)
         $app->setUserState('com_kunenatopic2article.redirect_data', [
             'message' => $e->getMessage(),
             'type' => 'error'
