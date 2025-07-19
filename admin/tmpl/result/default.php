@@ -1,12 +1,20 @@
 <?php
 defined('_JEXEC') or die;
 
+use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 
 /** @var \Joomla\Component\KunenaTopic2Article\Administrator\View\Result\HtmlView $this */
+
+$app = Factory::getApplication();
 ?>
 <div class="container-fluid">
+    <!-- Success message -->
+    <div class="alert alert-success">
+        <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESS'); ?>
+    </div>
+
     <h2><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_RESULTS_TITLE'); ?></h2>
 
     <?php if (!empty($this->articles)) : ?>
@@ -43,13 +51,11 @@ use Joomla\CMS\Router\Route;
     <?php endif; ?>
 
     <div class="mt-4">
-        <!-- кнопка "Продолжить работу" -->
         <a href="<?php echo Route::_('index.php?option=com_kunenatopic2article'); ?>" 
            class="btn btn-primary">
             <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_CONTINUE_WORK'); ?>
         </a>
         
-        <!--кнопка "Завершить" -->
         <a href="<?php echo Route::_('index.php'); ?>" 
            class="btn btn-secondary ms-2">
             <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_FINISH_WORK'); ?>
