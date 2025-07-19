@@ -13,30 +13,38 @@ class HtmlView extends BaseHtmlView
     protected $emailsSent = false;
     protected $emailsSentTo = [];
 
-    public function display($tpl = null): void
+public function display($tpl = null): void
 {
     $app = Factory::getApplication();
     $data = null;
-
-    // Получаем данные из flash-сообщений
-    foreach ($app->getMessageQueue() as $message) {
+    
+    // Извлекаем данные из flash-сообщения
+    $messages = $app->getMessageQueue();
+    foreach ($messages as $message) {
         if ($message['type'] === 'kunena-result-data') {
             $data = json_decode($message['message'], true);
             break;
         }
     }
 
-    if (empty($data)) {
+    // Если данных нет - редирект из-за ошибки на начало ком-та
+    if (!$data) {
         $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_RESULTS'), 'error');
-        $app->redirect(Route::_('index.php?option=com_kunenatopic2article', false));
+        $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article', false));
         return;
     }
 
-    // Назначаем данные для представления
+    // Удаляем служебное сообщение, чтобы оно не выводилось
+    $app->getMessageQueue(true); // Очищает все сообщения
+    
+    // Устанавливаем данные для отображения
     $this->articles = $data['articles'];
     $this->emailsSent = $data['emails']['sent'];
     $this->emailsSentTo = $data['emails']['recipients'];
 
+    // Добавляем стандартное success-сообщение
+    $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESS'), 'success');
+    
     parent::display($tpl);
 }
 }
