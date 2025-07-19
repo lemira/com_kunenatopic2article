@@ -9,6 +9,9 @@ use Joomla\CMS\Router\Route;
 
 class HtmlView extends BaseHtmlView
 {
+$app = Factory::getApplication();
+error_log('All flash messages: '.print_r($app->getMessageQueue(), true));
+
     protected $articles = [];
     protected $emailsSent = false;
     protected $emailsSentTo = [];
@@ -17,33 +20,31 @@ public function display($tpl = null): void
 {
     $app = Factory::getApplication();
     
-    // 1. Извлекаем данные из flash-сообщения
-    $messages = $app->getMessageQueue();
-    $data = null;
-    
-    foreach ($messages as $message) {
-        if ($message['type'] === 'kunena-result-data') {
-            $data = json_decode($message['message'], true);
-            break;
+// 1. Логирование ОТЛАДКА
+        error_log('Debug: Reached Result View');
+        error_log('All messages: '.print_r($app->getMessageQueue(), true));
+
+// 2. Извлекаем данные из flash-сообщения
+      $data = null;
+        foreach ($app->getMessageQueue() as $message) {
+            if ($message['type'] === 'kunena-result-data') {
+                $data = json_decode($message['message'], true);
+                break;
         }
     }
 
-    // 2. Если данных нет - редирект с ошибкой на начало комп-та
+    // 3. Если данных нет - критическая ошибка
     if (!$data) {
-        $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_RESULTS'), 'error');
-        $app->redirect(Route::_('index.php?option=com_kunenatopic2article', false));
-        return;
+        throw new \RuntimeException('ViewResult data not found in flash messages');
     }
 
-    // 3. Устанавливаем данные для отображения
-    $this->articles = $data['articles'] ?? [];
-    $this->emailsSent = $data['emails']['sent'] ?? false;
-    $this->emailsSentTo = $data['emails']['recipients'] ?? [];
-
-    // 4. Очищаем ВСЕ сообщения, чтобы избежать дублирования
-    $app->getMessageQueue(true);
+    // 4. Устанавливаем данные для отображения
+    $this->articles = $resultData['articles'];
+    $this->emailsSent = $resultData['emails']['sent'];
+    $this->emailsSentTo = $resultData['emails']['recipients'];
     
     parent::display($tpl);
+   
 }
 
 }
