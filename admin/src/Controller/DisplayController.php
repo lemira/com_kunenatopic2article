@@ -13,7 +13,8 @@ use Joomla\CMS\Router\Route;
 class DisplayController extends BaseController
 {
     protected $default_view = 'topic';
-
+    
+/** ОТКАТ ИЗ_ЗА 404 Не удалось найти представление [name, type, prefix]: result, html, Administrator.
     public function display($cachable = false, $urlparams = array())
 {
      // Деактивируем кнопку create
@@ -31,7 +32,15 @@ class DisplayController extends BaseController
     
     return parent::display($cachable, $urlparams);
 }
-
+**/ 
+    public function display($cachable = false, $urlparams = array())
+{
+    // Всегда используем view по умолчанию ('topic')
+    $this->input->set('view', $this->default_view);
+    
+    return parent::display($cachable, $urlparams);
+}
+    
     public function getModel($name = '', $prefix = '', $config = [])
     {
         if (empty($name)) {
