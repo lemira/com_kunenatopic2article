@@ -81,7 +81,8 @@ class ArticleController extends BaseController
             $this->input->set('view', 'result');
 
         // Вызываем метод display родительского класса BaseController, который теперь загрузит и отобразит Result/HtmlView.php, вместо того, чтобы делать HTTP редирект.
-            parent::display(false);
+        $this->input->set('format', 'html'); // явно устанавливаем 'format' в Input
+        parent::display(false);
    
     } catch (\Exception $e) {
         $app->enqueueMessage($e->getMessage(), 'error');
