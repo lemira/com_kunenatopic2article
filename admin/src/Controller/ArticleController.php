@@ -37,6 +37,8 @@ class ArticleController extends BaseController
     $this->checkToken('post') or jexit(Text::_('JINVALID_TOKEN'));
 
     $app = Factory::getApplication();
+    $viewName = 'result'; // Имя представления для отображения
+    $viewFormat = 'html';
     
     try {
         $model = $this->getModel('Article', 'Administrator');
@@ -75,17 +77,14 @@ class ArticleController extends BaseController
        $app->setUserState('com_kunenatopic2article.result_data', $resultData);
         error_log('Art Contr: Данные для вью: ' . print_r($resultData, true));
 
-        // Редирект на страницу результатов
-         $this->setRedirect(
-        Route::_('index.php?option=com_kunenatopic2article&view=result', false)
-    );
+        // Вместо редиректа устанавливаем view для отображения, который хотим показать
+            $this->input->set('view', 'result');
 
+        // Вызываем метод display родительского класса BaseController, который теперь загрузит и отобразит Result/HtmlView.php, вместо того, чтобы делать HTTP редирект.
+            parent::display(false);
+   
     } catch (\Exception $e) {
-        // Обработка ошибок остаётся через setUserState (альтернативный вариант)
-        $app->setUserState('com_kunenatopic2article.redirect_data', [
-            'message' => $e->getMessage(),
-            'type' => 'error'
-        ]);
+        $app->enqueueMessage($e->getMessage(), 'error');
         error_log('Error in create: ' . $e->getMessage());
         $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article', false));
     }
