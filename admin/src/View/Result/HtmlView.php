@@ -20,62 +20,20 @@ public function display($tpl = null): void
 {
     $app = Factory::getApplication();
     
-    // Шаг 1: Извлечение сырой JSON-строки из flash-сообщения
-    $jsonString = $this->extractJsonFromMessages($app);
-    
-    // Шаг 2: Декодирование JSON в массив
-    $decodedData = $this->decodeJsonData($jsonString);
-    
-    // Шаг 3: Валидация и разбор данных
-    $this->validateAndAssignData($decodedData);
+   // Получаем данные из сессии
+    $data = $app->getUserState('com_kunenatopic2article.result_data');
+
+    if ($data) {
+        $app->setUserState('com_kunenatopic2article.result_data', null); // Если данные получены - очищаем хранилище
+    } else {
+        throw new RuntimeException('No result data found');
+    }
+
+    $this->articles = $data['articles'];
+    $this->emailsSent = $data['emails']['sent'];
+    $this->emailsSentTo = $data['emails']['recipients'];
     
     parent::display($tpl);
-}
-
-/**
- * Шаг 1: Извлекаем сырую JSON-строку из сообщений
- */
-private function extractJsonFromMessages($app): string
-{
-    foreach ($app->getMessageQueue() as $message) {
-        if ($message['type'] === 'kunena-result-data') {
-            error_log('Raw JSON extracted: ' . $message['message']);
-            return $message['message'];
-        }
-    }
-    throw new RuntimeException('No JSON data found in messages');
-}
-
-/**
- * Шаг 2: Декодируем JSON
- */
-private function decodeJsonData(string $jsonString): array
-{
-    $data = json_decode($jsonString, true);
-    
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        error_log('JSON decode failed: ' . json_last_error_msg());
-        throw new RuntimeException('Invalid JSON data');
-    }
-    
-    error_log('Decoded data: ' . print_r($data, true));
-    return $data;
-}
-
-/**
- * Шаг 3: Проверяем и распределяем данные
- */
-private function validateAndAssignData(array $data): void
-{
-    if (empty($data['articles'])) {
-        throw new RuntimeException('No articles found in data');
-    }
-    
-    $this->articles = $data['articles'];
-    $this->emailsSent = $data['emails']['sent'] ?? false;
-    $this->emailsSentTo = $data['emails']['recipients'] ?? [];
-    
-    error_log('Data assigned to view');
 }
 
 }
