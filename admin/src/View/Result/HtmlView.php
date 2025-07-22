@@ -24,15 +24,17 @@ public function display($tpl = null): void
     $data = $app->getUserState('com_kunenatopic2article.result_data');
 
     if ($data) {
-        $app->setUserState('com_kunenatopic2article.result_data', null); // Если данные получены - очищаем хранилище
-    } else {
-        throw new RuntimeException('No result data found');
-    }
+            // Если данные получены - присваиваем их и очищаем хранилище
+            $this->articles = $data['articles'] ?? [];
+            $this->emailsSent = $data['emails']['sent'] ?? false;
+            $this->emailsSentTo = $data['emails']['recipients'] ?? [];
+            
+            $app->setUserState('com_kunenatopic2article.result_data', null); 
+        } else {
+            // Если данных нет, показываем ошибку вместо перехода к началу (форма ввода)
+            $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_RESULTS'), 'error');
+        }
 
-    $this->articles = $data['articles'];
-    $this->emailsSent = $data['emails']['sent'];
-    $this->emailsSentTo = $data['emails']['recipients'];
-    
     parent::display($tpl);
 }
 
