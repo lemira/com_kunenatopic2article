@@ -90,11 +90,11 @@ class ArticleController extends BaseController
         );
     **/
          // Используем фабрику, встроенную в контроллер 
-        $view = $this->getView('result', 'html', 'Administrator');
+        $view = $this->getView('result', 'html');
+        if (!$view) {
+            throw new \RuntimeException('View object not created');
+        }
 
-            if (!$view) {            // ОТЛАДКА
-                  throw new \RuntimeException('View object not created');
-}
             $view->display();       // Отображаем представление
             
             return true;     // Возвращаем true для индикации успешного завершения
