@@ -78,13 +78,23 @@ class ArticleController extends BaseController
        $app->setUserState('com_kunenatopic2article.result_data', $resultData);
         error_log('Art Contr: Данные для вью: ' . print_r($resultData, true));
 
-       // Используем фабрику, встроенную в контроллер
-            $view = $this->factory->createView(
-                'Result',            // Имя представления (PascalCase)
-                'Administrator',     // Префикс (ищем в админке)
-                'html'   // Формат
-            );
+  /**      корректная сигнатура общего вызова фабрики
+           'use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
+            use Joomla\CMS\Dispatcher\AbstractController;
+            $factory = $this->factory;
+        $view = $factory->createView(
+            'result',                    // здесь имя view должно быть в lowercase!
+            'html',                      // Тип представления (html)
+            'administrator',            // Префикс (обычно 'Administrator')
+            ['name' => 'result']         // Важно: имя view
+        );
+    **/
+         // Используем фабрику, встроенную в контроллер 
+        $view = $this->getView('result', 'html', 'Administrator');
 
+            if (!$view) {            // ОТЛАДКА
+                  throw new \RuntimeException('View object not created');
+}
             $view->display();       // Отображаем представление
             
             return true;     // Возвращаем true для индикации успешного завершения
