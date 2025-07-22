@@ -37,9 +37,7 @@ class ArticleController extends BaseController
     $this->checkToken('post') or jexit(Text::_('JINVALID_TOKEN'));
 
     $app = Factory::getApplication();
-    $viewName = 'result'; // Имя представления для отображения
-    $viewFormat = 'html';
-    
+   
     try {
         $model = $this->getModel('Article', 'Administrator');
         $params = $this->getComponentParams();
@@ -63,7 +61,7 @@ class ArticleController extends BaseController
         }
 
         // Устанавливаем флаг блокировки
-        $app->setUserState('com_kunenatopic2article.can_create', false);
+        Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', false);
 
          // Формируем данные для передачи для представления
         $resultData = [
@@ -77,13 +75,11 @@ class ArticleController extends BaseController
        $app->setUserState('com_kunenatopic2article.result_data', $resultData);
         error_log('Art Contr: Данные для вью: ' . print_r($resultData, true));
 
-        // Вместо редиректа устанавливаем view для отображения, который хотим показать
-            $this->input->set('view', 'result');
-
-        // Вызываем метод display родительского класса BaseController, который теперь загрузит и отобразит Result/HtmlView.php, вместо того, чтобы делать HTTP редирект.
-        $this->input->set('format', 'html'); // явно устанавливаем 'format' в Input
-        parent::display(false);
-   
+   // Явно подключаем ResultView Вместо редиректа устанавливаем view для отображения
+        $view = $this->getView('Result', 'html');
+        $view->setModel($model, true); // опционально, если view использует модель
+        $view->display();
+        
     } catch (\Exception $e) {
         $app->enqueueMessage($e->getMessage(), 'error');
         error_log('Error in create: ' . $e->getMessage());
