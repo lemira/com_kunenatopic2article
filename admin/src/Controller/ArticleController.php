@@ -15,12 +15,12 @@ defined('_JEXEC') or die('Restricted access');
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
-use Joomla\CMS\Uri\Uri;
-use Joomla\CMS\Mail\Mailer;
-use Joomla\Component\Users\Administrator\Model\UsersModel;
 use RuntimeException;
 use Joomla\CMS\Router\Route;
-use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
+use Joomla\CMS\Uri\Uri; // ?
+use Joomla\CMS\Mail\Mailer; // ?
+use Joomla\Component\Users\Administrator\Model\UsersModel; // ?
+
 
 /**
  * Article Controller
@@ -62,7 +62,8 @@ class ArticleController extends BaseController
         }
 
         // Устанавливаем флаг блокировки
-        Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', false);
+       // ? Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', false);
+        $app->setUserState('com_kunenatopic2article.can_create', false);
 
          // Формируем данные для передачи для представления
         $resultData = [
@@ -72,25 +73,21 @@ class ArticleController extends BaseController
             'recipients' => $mailResult['recipients'] ?? []
             ]
         ];
+        
        // Отправляем данные через сессию
        $app->setUserState('com_kunenatopic2article.result_data', $resultData);
         error_log('Art Contr: Данные для вью: ' . print_r($resultData, true));
 
-   // Получаем фабрику MVC из контейнера зависимостей
-            $factory = $app->get('MVCFactory');
-            
-    // С помощью фабрики создаем экземпляр нашего Result View
-           $view = $factory->createView(   //    Указываем имя ('Result'), префикс ('Administrator'), тип ('Html')
-                'Result',
-                'Administrator',
-                ['name' => 'Html']
+       // Используем фабрику, встроенную в контроллер
+            $view = $this->factory->createView(
+                'Result',            // Имя представления (PascalCase)
+                'Administrator',     // Префикс (ищем в админке)
+                ['name' => 'Html']   // Формат
             );
 
-            // Явно вызываем метод display() этого вью. Joomla найдет его, так как фабрика знает все о правильной структуре.
-            $view->display();
-
-            // Возвращаем true для индикации успешного завершения
-            return true;
+            $view->display();       // Отображаем представление
+            
+            return true;     // Возвращаем true для индикации успешного завершения
         
     } catch (\Exception $e) {
         $app->enqueueMessage($e->getMessage(), 'error');
