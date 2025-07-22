@@ -67,13 +67,13 @@ class ArticleController extends BaseController
         $resultData = [
              'articles' => $articleLinks,
             'emails' => [
-                'sent' => $mailResult['success'],
-                'recipients' => $mailResult['recipients']
+                 'sent' => $mailResult['success'] ?? false, // Защита от undefined
+            'recipients' => $mailResult['recipients'] ?? []
             ]
         ];
-       // Отправляем flash-сообщение (так как передача в сессии не работает)
-        $app->enqueueMessage(json_encode($resultData), 'kunena-result-data');
-        error_log('Flash message prepared: ' . print_r($resultData, true));
+       // Отправляем данные через сессию
+       $app->setUserState('com_kunenatopic2article.result_data', $resultData);
+        error_log('Art Contr: Данные для вью: ' . print_r($resultData, true));
 
         // Редирект на страницу результатов
          $this->setRedirect(
