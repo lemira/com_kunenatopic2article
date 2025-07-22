@@ -69,7 +69,7 @@ class ArticleController extends BaseController
         $resultData = [
              'articles' => $articleLinks,
             'emails' => [
-                 'sent' => $mailResult['success'] ?? false, // Защита от undefined
+            'sent' => $mailResult['success'] ?? false, // Защита от undefined
             'recipients' => $mailResult['recipients'] ?? []
             ]
         ];
@@ -82,7 +82,7 @@ class ArticleController extends BaseController
             $view = $this->factory->createView(
                 'Result',            // Имя представления (PascalCase)
                 'Administrator',     // Префикс (ищем в админке)
-                ['name' => 'Html']   // Формат
+                'html'   // Формат
             );
 
             $view->display();       // Отображаем представление
