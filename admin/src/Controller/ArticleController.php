@@ -20,6 +20,7 @@ use Joomla\CMS\Mail\Mailer;
 use Joomla\Component\Users\Administrator\Model\UsersModel;
 use RuntimeException;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 
 /**
  * Article Controller
@@ -75,15 +76,27 @@ class ArticleController extends BaseController
        $app->setUserState('com_kunenatopic2article.result_data', $resultData);
         error_log('Art Contr: Данные для вью: ' . print_r($resultData, true));
 
-   // Явно подключаем ResultView Вместо редиректа устанавливаем view для отображения
-        $view = $this->getView('Result', 'html');
-        $view->setModel($model, true); // опционально, если view использует модель
-        $view->display();
+   // Получаем фабрику MVC из контейнера зависимостей
+            $factory = $app->get('MVCFactory');
+            
+    // С помощью фабрики создаем экземпляр нашего Result View
+           $view = $factory->createView(   //    Указываем имя ('Result'), префикс ('Administrator'), тип ('Html')
+                'Result',
+                'Administrator',
+                ['name' => 'Html']
+            );
+
+            // Явно вызываем метод display() этого вью. Joomla найдет его, так как фабрика знает все о правильной структуре.
+            $view->display();
+
+            // Возвращаем true для индикации успешного завершения
+            return true;
         
     } catch (\Exception $e) {
         $app->enqueueMessage($e->getMessage(), 'error');
         error_log('Error in create: ' . $e->getMessage());
         $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article', false));
+        return false;
     }
 }
 
