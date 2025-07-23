@@ -88,15 +88,19 @@ class ArticleController extends BaseController
             'administrator',            // Префикс (обычно 'Administrator')
             ['name' => 'result']         // Важно: имя view
         );
-    **/
+   
          // Используем фабрику, встроенную в контроллер 
         $view = $this->getView('result', 'html');
         if (!$view) {
             throw new \RuntimeException('View object not created');
         }
 
+
             $view->display();       // Отображаем представление
-            
+            **/ 
+        $this->setRedirect(
+            Route::_('index.php?option=com_kunenatopic2article&view=result', false)
+         );
             return true;     // Возвращаем true для индикации успешного завершения
         
     } catch (\Exception $e) {
