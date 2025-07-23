@@ -37,5 +37,9 @@
        <media destination="com_kunenatopic2article">
         <stylesheet file="media/com_kunenatopic2article/css/kun_p2a.css" />
        </media>
+
+        <services>
+    <file>admin/services/provider.php</file>
+        </services>
     </administration>
 </extension>
