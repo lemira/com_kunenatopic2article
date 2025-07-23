@@ -28,5 +28,24 @@ class KunenaTopic2ArticleServiceProvider implements ServiceProviderInterface
                 return $component;
             }
         );
+
+        // Сообщаем фабрике, где искать файлы View.
+        $container->set(
+            MVCFactoryInterface::class,
+            function (Container $container) {
+                // Получаем фабрику, которую мы зарегистрировали выше
+                $factory = $container->get(MVCFactory::class);
+
+                // ЯВНО УКАЗЫВАЕМ ЕЙ НАШИ ПУТИ!
+                $factory->addPaths(
+                    [
+                        'view'     => [JPATH_COMPONENT_ADMINISTRATOR . '/src/View'],
+                        'template' => [JPATH_COMPONENT_ADMINISTRATOR . '/tmpl'],
+                    ]
+                );
+
+                return $factory;
+            }
+        );
     }
 }
