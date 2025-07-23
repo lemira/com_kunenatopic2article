@@ -79,7 +79,7 @@ class ArticleController extends BaseController
         // Отправляем данные через сессию
        $app->setUserState('com_kunenatopic2article.result_data', $resultData);
         error_log('Art Contr: Данные для вью: ' . print_r($resultData, true));
-   
+   /** 
         $factory = $this->factory;
         $view = $factory->createView(
             'result',                    // здесь имя view должно быть в lowercase!
@@ -89,15 +89,15 @@ class ArticleController extends BaseController
 
         $view->display();  // Отображаем представление
             return true;
-  
-        /** 
+    */ 
+        
          // Используем фабрику, встроенную в контроллер 
         $view = $this->getView('result', 'html');
         if (!$view) {
             throw new \RuntimeException('View object not created');
         }
             $view->display();       // Отображаем представление
-  */ 
+             return true;
        /**     $this->setRedirect( // Redirect пропускает вывод результатов и показывает начальную форму ввода
             Route::_('index.php?option=com_kunenatopic2article&view=result', false)
          );
