@@ -33,19 +33,13 @@ class KunenaTopic2ArticleServiceProvider implements ServiceProviderInterface
             }
         );
 
-        // Сообщаем фабрике, где искать файлы View.
-       $container->extend(
+       // Регистрация путей для View и Template
+        $container->set(
             MVCFactoryInterface::class,
-            function (MVCFactoryInterface $factory, Container $container) {
-                // $factory — это уже готовый объект фабрики, созданный на шаге 1, добавляем в него пути к папкам нашего компонента.
-                $factory->addPaths(
-                    [
-                        'view'     => [JPATH_COMPONENT_ADMINISTRATOR . '/src/View'],
-                        'template' => [JPATH_COMPONENT_ADMINISTRATOR . '/tmpl'],
-                    ]
-                );
-
-                // Возвращаем измененную фабрику.
+            function (Container $container) {
+                $factory = new MVCFactory('\\Joomla\\Component\\KunenaTopic2Article');
+                $factory->addViewPath(JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/src/View');
+                $factory->addTemplatePath(JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/tmpl');
                 return $factory;
             }
         );
