@@ -107,9 +107,8 @@ class ArticleController extends BaseController
          $input->set('view', 'result');
          $input->set('format', 'html');
 
-        echo $app->bootComponent('com_kunenatopic2article')->render();
-
-        $app->close();
+        $app->dispatch(); // Запускаем диспетчер компонента — он вызовет нужный контроллер и представление пп
+        $app->close(); // Завершаем выполнение скрипта
         return true; // Возврат не нужен после close(), но если метод требует, можно написать
         
     } catch (\Exception $e) {
