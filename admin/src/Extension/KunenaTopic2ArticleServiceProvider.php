@@ -11,6 +11,10 @@ use Joomla\DI\ServiceProviderInterface;
 
 class KunenaTopic2ArticleServiceProvider implements ServiceProviderInterface
 {
+   /**
+     * Registers the service provider with a DI container.
+     * @param   Container  $container  The DI container.
+     */
     public function register(Container $container): void
     {
         $container->registerServiceProvider(new ComponentDispatcherFactory('\\Joomla\\Component\\KunenaTopic2Article'));
@@ -30,13 +34,10 @@ class KunenaTopic2ArticleServiceProvider implements ServiceProviderInterface
         );
 
         // Сообщаем фабрике, где искать файлы View.
-        $container->set(
+       $container->extend(
             MVCFactoryInterface::class,
-            function (Container $container) {
-                // Получаем фабрику, которую мы зарегистрировали выше
-                $factory = $container->get(MVCFactory::class);
-
-                // ЯВНО УКАЗЫВАЕМ ЕЙ НАШИ ПУТИ!
+            function (MVCFactoryInterface $factory, Container $container) {
+                // $factory — это уже готовый объект фабрики, созданный на шаге 1, добавляем в него пути к папкам нашего компонента.
                 $factory->addPaths(
                     [
                         'view'     => [JPATH_COMPONENT_ADMINISTRATOR . '/src/View'],
@@ -44,6 +45,7 @@ class KunenaTopic2ArticleServiceProvider implements ServiceProviderInterface
                     ]
                 );
 
+                // Возвращаем измененную фабрику.
                 return $factory;
             }
         );
