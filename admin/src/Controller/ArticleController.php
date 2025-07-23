@@ -20,6 +20,8 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri; // ?
 use Joomla\CMS\Mail\Mailer; // ?
 use Joomla\Component\Users\Administrator\Model\UsersModel; // ?
+use Joomla\CMS\MVC\Factory\MVCFactoryInterface; // ?
+use Joomla\CMS\Dispatcher\AbstractController;  // ?
 
 
 /**
@@ -78,18 +80,17 @@ class ArticleController extends BaseController
        $app->setUserState('com_kunenatopic2article.result_data', $resultData);
         error_log('Art Contr: Данные для вью: ' . print_r($resultData, true));
    
-  /**     Фабрика не работает (проверял встроенную в контроллер, но и общая не должна)
-  корректная сигнатура общего вызова фабрики
-           'use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
-            use Joomla\CMS\Dispatcher\AbstractController;
-            $factory = $this->factory;
+        $factory = $this->factory;
         $view = $factory->createView(
             'result',                    // здесь имя view должно быть в lowercase!
-            'html',                      // Тип представления (html)
             'Administrator',            // Префикс 
-            ['name' => 'result']         // Важно: имя view
+            ['name' => 'result', 'format' => 'html']    // Важно: имя view, format управляет типом 
         );
-       
+
+        $view->display();  // Отображаем представление
+            return true;
+  
+        /** 
          // Используем фабрику, встроенную в контроллер 
         $view = $this->getView('result', 'html');
         if (!$view) {
@@ -102,15 +103,7 @@ class ArticleController extends BaseController
          );
             return true;     // Возвращаем true для индикации успешного завершения
       */     
-        $input = $app->input;
-        $input->set('option', 'com_kunenatopic2article');
-         $input->set('view', 'result');
-         $input->set('format', 'html');
-
-        $app->dispatch(); // Запускаем диспетчер компонента — он вызовет нужный контроллер и представление пп
-        $app->close(); // Завершаем выполнение скрипта
-        return true; // Возврат не нужен после close(), но если метод требует, можно написать
-        
+      
     } catch (\Exception $e) {
         $app->enqueueMessage($e->getMessage(), 'error');
         error_log('Error in create: ' . $e->getMessage());
