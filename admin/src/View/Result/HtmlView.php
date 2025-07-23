@@ -1,3 +1,9 @@
+<?php
+/**
+ * @package     KunenaTopic2Article
+ * @subpackage  Administrator
+ */
+
 namespace Joomla\Component\KunenaTopic2Article\Administrator\View\Result;
 
 defined('_JEXEC') or die;
@@ -9,9 +15,6 @@ use Joomla\CMS\Router\Route;
 
 class HtmlView extends BaseHtmlView
 {
-$app = Factory::getApplication();
-error_log('All flash messages: '.print_r($app->getMessageQueue(), true));
-
     protected $articles = [];
     protected $emailsSent = false;
     protected $emailsSentTo = [];
@@ -33,6 +36,8 @@ public function display($tpl = null): void
         } else {
             // Если данных нет, показываем ошибку вместо перехода к началу (форма ввода)
             $app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_NO_RESULTS'), 'error');
+             $app->redirect(Route::_('index.php?option=com_kunenatopic2article', false));
+            return;
         }
 
     parent::display($tpl);
