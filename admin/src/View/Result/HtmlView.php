@@ -40,6 +40,9 @@ public function display($tpl = null): void
             return;
         }
 
+    // Сбрасываем can_create, чтобы кнопка была деактивирована
+        $app->setUserState('com_kunenatopic2article.can_create', false);
+    
     parent::display($tpl);
 }
 
