@@ -8,54 +8,31 @@ namespace Joomla\Component\KunenaTopic2Article\Administrator\Controller;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Language\Text;
-use Joomla\CMS\Router\Route;
 
 class DisplayController extends BaseController
 {
-    protected $default_view = 'topic';
-    
-/** ОТКАТ ИЗ_ЗА 404 Не удалось найти представление [name, type, prefix]: result, html, Administrator.
-    public function display($cachable = false, $urlparams = array())
-{
-     // Деактивируем кнопку create
-     Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', false);
-    
-   // Получаем запрошенный вид из input
-        $view = $this->input->get('view', $this->default_view, 'cmd');
+    /** @var \Joomla\CMS\MVC\Model\BaseDatabaseModel */
+    protected $model;
 
-        // Устанавливаем вид только если он не указан
-        if (!$this->input->get('view')) {
-            $this->input->set('view', $this->default_view);
-        }
-
-        error_log('DisplayController: Using view=' . $view);
-    
-    return parent::display($cachable, $urlparams);
-}
-**/ 
-    public function display($cachable = false, $urlparams = array())
-{
-    // Всегда используем view по умолчанию ('topic')
-    $this->input->set('view', $this->default_view);
-    
-    return parent::display($cachable, $urlparams);
-}
-    
-    public function getModel($name = '', $prefix = '', $config = [])
+    public function __construct($config = [])
     {
-        if (empty($name)) {
-            $name = $this->input->get('view', $this->default_view);
+        parent::__construct($config);
+        // Инициализация модели один раз для всех методов
+        $this->model = $this->getModel('Topic', 'Administrator');
+        if (!$this->model) {
+            throw new \RuntimeException('Model Topic not loaded');
         }
-        return parent::getModel($name, '', $config);
+        // Деактивируем кнопку Create при первоначальном вызове контроллера
+        Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', false);
     }
 
     public function save()
     {
- $this->checkToken();
-        $model = $this->getModel('Topic');
+        $this->checkToken();
         $data = $this->input->get('jform', [], 'array');
 
-        if ($model->save($data)) {
+        // Выполняем сохранение
+        if ($this->model->save($data)) {
             $message = Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_SAVED');
             $type = 'success';
             // Активируем кнопку Create после успешного сохранения
@@ -65,17 +42,25 @@ class DisplayController extends BaseController
             $type = 'error';
         }
 
-        $this->setRedirect(
-            Route::_('index.php?option=com_kunenatopic2article&view=topic', false),
-            $message,
-            $type
-        );
+        // Создаем представление topic напрямую
+        $view = $this->getView('topic', 'html');
+        if (!$view) {
+            throw new \RuntimeException('View object not created for topic');
+        }
+
+        // Передаем сообщение и тип в представление
+        $view->message = $message;
+        $view->messageType = $type;
+
+        // Отображаем представление
+        $view->display();
+        return true;
     }
 
     public function reset()
     {
-        $model = $this->getModel('Topic');
-        if ($model->reset()) {
+        // Выполняем сброс
+        if ($this->model->reset()) {
             $message = Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_RESET');
             $type = 'success';
         } else {
@@ -83,13 +68,24 @@ class DisplayController extends BaseController
             $type = 'error';
         }
 
-        $this->setRedirect(
-            Route::_('index.php?option=com_kunenatopic2article&view=topic', false),
-            $message,
-            $type
-        );
+        // Деактивируем кнопку Create после сброса параметров
+        Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', false);
+
+        // Создаем представление topic напрямую
+        $view = $this->getView('topic', 'html');
+        if (!$view) {
+            throw new \RuntimeException('View object not created for topic');
+        }
+
+        // Передаем сообщение и тип в представление
+        $view->message = $message;
+        $view->messageType = $type;
+
+        // Отображаем представление
+        $view->display();
+        return true;
     }
 
-// function create() в в ArticleController
+    // function create() в в ArticleController
 
 } // КОНЕЦ КЛАССА
