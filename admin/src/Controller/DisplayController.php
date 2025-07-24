@@ -18,7 +18,7 @@ class DisplayController extends BaseController
     {
         parent::__construct($config);
         // Инициализация модели один раз для всех методов
-        $this->model = $this->getModel('Topic', 'Administrator');
+        $this->model = $this->getModel('Topic');
         if (!$this->model) {
             throw new \RuntimeException('Model Topic not loaded');
         }
