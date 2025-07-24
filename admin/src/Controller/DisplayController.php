@@ -34,9 +34,10 @@ class DisplayController extends BaseController
             $type = 'error';
         }
 
-        $view = $this->getView('topic', 'html');
+        // Явно указываем представление
+        $view = $this->getView('topic', 'html', '', ['base_path' => JPATH_COMPONENT_ADMINISTRATOR . '/src/View']);
         if (!$view) {
-            throw new \RuntimeException('View object not created for topic');
+            throw new \RuntimeException('View topic not created');
         }
 
         $view->message = $message;
@@ -61,11 +62,10 @@ class DisplayController extends BaseController
             $type = 'error';
         }
 
-        Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', false);
-
-        $view = $this->getView('topic', 'html');
+        // Явно указываем представление
+        $view = $this->getView('topic', 'html', '', ['base_path' => JPATH_COMPONENT_ADMINISTRATOR . '/src/View']);
         if (!$view) {
-            throw new \RuntimeException('View object not created for topic');
+            throw new \RuntimeException('View topic not created');
         }
 
         $view->message = $message;
