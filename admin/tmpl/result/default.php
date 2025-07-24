@@ -10,12 +10,7 @@ use Joomla\CMS\Router\Route;
 $app = Factory::getApplication();
 ?>
 <div class="container-fluid">
-    <!-- Success message -->
-    <div class="alert alert-success">
-        <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATED_SUCCESS'); ?>
-    </div>
-
-    <h2><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_RESULTS_TITLE'); ?></h2>
+      <h2><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_RESULTS_TITLE'); ?></h2>
 
     <?php if (!empty($this->articles)) : ?>
         <div class="alert alert-success">
