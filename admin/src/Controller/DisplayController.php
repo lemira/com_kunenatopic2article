@@ -8,53 +8,74 @@ namespace Joomla\Component\KunenaTopic2Article\Administrator\Controller;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Router\Route;
 
 class DisplayController extends BaseController
 {
-    /** @var \Joomla\CMS\MVC\Model\BaseDatabaseModel */
-    protected $model;
+    protected $default_view = 'topic';
+    
+/** ОТКАТ ИЗ_ЗА 404 Не удалось найти представление [name, type, prefix]: result, html, Administrator.
+    public function display($cachable = false, $urlparams = array())
+{
+     // Деактивируем кнопку create
+     Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', false);
+    
+   // Получаем запрошенный вид из input
+        $view = $this->input->get('view', $this->default_view, 'cmd');
+
+        // Устанавливаем вид только если он не указан
+        if (!$this->input->get('view')) {
+            $this->input->set('view', $this->default_view);
+        }
+
+        error_log('DisplayController: Using view=' . $view);
+    
+    return parent::display($cachable, $urlparams);
+}
+**/ 
+    public function display($cachable = false, $urlparams = array())
+{
+    // Всегда используем view по умолчанию ('topic')
+    $this->input->set('view', $this->default_view);
+    
+    return parent::display($cachable, $urlparams);
+}
+    
+    public function getModel($name = '', $prefix = '', $config = [])
+    {
+        if (empty($name)) {
+            $name = $this->input->get('view', $this->default_view);
+        }
+        return parent::getModel($name, '', $config);
+    }
 
     public function save()
     {
-        $this->checkToken();
+ $this->checkToken();
+        $model = $this->getModel('Topic');
         $data = $this->input->get('jform', [], 'array');
 
-        // Загружаем модель динамически
-        $this->model = $this->getModel('Topic');
-        if (!$this->model) {
-            throw new \RuntimeException('Model Topic not loaded in save');
-        }
-
-        if ($this->model->save($data)) {
+        if ($model->save($data)) {
             $message = Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_SAVED');
             $type = 'success';
+            // Активируем кнопку Create после успешного сохранения
             Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', true);
         } else {
             $message = Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED');
             $type = 'error';
         }
 
-        // Явно указываем представление
-        $view = $this->getView('topic', 'html', '', ['base_path' => JPATH_COMPONENT_ADMINISTRATOR . '/src/View']);
-        if (!$view) {
-            throw new \RuntimeException('View topic not created');
-        }
-
-        $view->message = $message;
-        $view->messageType = $type;
-        $view->display();
-        return true;
+        $this->setRedirect(
+            Route::_('index.php?option=com_kunenatopic2article&view=topic', false),
+            $message,
+            $type
+        );
     }
 
     public function reset()
     {
-        // Загружаем модель динамически
-        $this->model = $this->getModel('Topic');
-        if (!$this->model) {
-            throw new \RuntimeException('Model Topic not loaded in reset');
-        }
-
-        if ($this->model->reset()) {
+        $model = $this->getModel('Topic');
+        if ($model->reset()) {
             $message = Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_RESET');
             $type = 'success';
         } else {
@@ -62,18 +83,13 @@ class DisplayController extends BaseController
             $type = 'error';
         }
 
-        // Явно указываем представление
-        $view = $this->getView('topic', 'html', '', ['base_path' => JPATH_COMPONENT_ADMINISTRATOR . '/src/View']);
-        if (!$view) {
-            throw new \RuntimeException('View topic not created');
-        }
-
-        $view->message = $message;
-        $view->messageType = $type;
-        $view->display();
-        return true;
+        $this->setRedirect(
+            Route::_('index.php?option=com_kunenatopic2article&view=topic', false),
+            $message,
+            $type
+        );
     }
 
-    // function create() в в ArticleController
+// function create() в в ArticleController
 
 } // КОНЕЦ КЛАССА
