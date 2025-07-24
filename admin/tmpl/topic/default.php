@@ -25,8 +25,8 @@ $paramsRemembered = $this->paramsRemembered ?? false; // Состояние кн
             <button type="button" class="btn btn-secondary me-2" onclick="Joomla.submitbutton('reset')">
                 <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_RESET'); ?>
             </button>
-            <button type="button" id="btn_create" class="btn btn-success" onclick="Joomla.submitbutton('article.create')" <?= $paramsRemembered ? '' : 'disabled'; ?>>
-                <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_CREATE'); ?>
+           <button type="button" id="btn_create" class="btn btn-success" onclick="Joomla.submitbutton('article.create')" <?= $this->canCreate ? '' : 'disabled'; ?>>
+                   <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_CREATE'); ?>
             </button>
      </div>
 
