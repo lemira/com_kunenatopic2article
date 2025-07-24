@@ -26,7 +26,7 @@ class HtmlView extends BaseHtmlView
         $model = $this->getModel();
         if ($model) {
             $this->params = $model->getParams();
-            $this->canCreate = Factory::getApplication()->getUserState('com_kunenatopic2article.save.success', false);
+            $this->canCreate = Factory::getApplication()->getUserState('com_kunenatopic2article.can_create', false);
         }
 
         // Проверяем на ошибки
