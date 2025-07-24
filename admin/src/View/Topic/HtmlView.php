@@ -14,7 +14,7 @@ class HtmlView extends BaseHtmlView
     protected $state;
     protected $form;
     protected $params;
-    protected $paramsRemembered;
+    protected $canCreate;
 
     public function display($tpl = null)
     {
@@ -26,7 +26,7 @@ class HtmlView extends BaseHtmlView
         $model = $this->getModel();
         if ($model) {
             $this->params = $model->getParams();
-            $this->paramsRemembered = Factory::getApplication()->getUserState('com_kunenatopic2article.save.success', false);
+            $this->canCreate = Factory::getApplication()->getUserState('com_kunenatopic2article.save.success', false);
         }
 
         // Проверяем на ошибки
