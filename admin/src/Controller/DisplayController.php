@@ -17,18 +17,14 @@ class DisplayController extends BaseController
 /** ОТКАТ ИЗ_ЗА 404 Не удалось найти представление [name, type, prefix]: result, html, Administrator.
     public function display($cachable = false, $urlparams = array())
 {
-     // Деактивируем кнопку create
-     Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', false);
-    
-   // Получаем запрошенный вид из input
-        $view = $this->input->get('view', $this->default_view, 'cmd');
-
-        // Устанавливаем вид только если он не указан
-        if (!$this->input->get('view')) {
-            $this->input->set('view', $this->default_view);
+      // Всегда используем view по умолчанию ('topic')
+        $this->input->set('view', $this->default_view);
+        
+        // Сбрасываем can_create на false только при первой загрузке или без указания task
+        $app = Factory::getApplication();
+        if ($app->input->get('task') === null) {
+            $app->setUserState('com_kunenatopic2article.can_create', false);
         }
-
-        error_log('DisplayController: Using view=' . $view);
     
     return parent::display($cachable, $urlparams);
 }
@@ -83,6 +79,9 @@ class DisplayController extends BaseController
             $type = 'error';
         }
 
+        // Деактивируем кнопку Create после сброса
+        Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', false);
+        
         $this->setRedirect(
             Route::_('index.php?option=com_kunenatopic2article&view=topic', false),
             $message,
