@@ -609,9 +609,6 @@ private function printHeadOfPost()
 private function convertBBCodeToHtml($text)
 {
     try {
-        // Сначала обрабатываем attachments
-        $text = $this->processAttachments($text);
-        
         // Подключаем библиотеку BBCode напрямую
         $bbcodePath = JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
         
@@ -625,6 +622,24 @@ private function convertBBCodeToHtml($text)
         require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
         
         $bbcode = new \ChrisKonnertz\BBCode\BBCode();
+        
+        // Отключаем стандартную обработку [center] чтобы не мешал изображениям
+        $bbcode->removeTag('center');
+        
+        // Добавляем кастомную обработку для attachment
+        $bbcode->addTag('attachment', function($openingTag, $content, $openingTagOnly) {
+            $attachmentId = $openingTag->getProperty('attachment');
+            $filename = $content;
+            
+            $imagePath = "media/kunena/attachments/{$attachmentId}/{$filename}";
+            $fullPath = JPATH_ROOT . '/' . $imagePath;
+            
+            if (!file_exists($fullPath)) {
+                return $filename;
+            }
+            
+            return '<img src="' . $imagePath . '" alt="' . htmlspecialchars($filename) . '" />';
+        });
         
         // Проверяем, как библиотека обрабатывает size по умолчанию
         // Если нужно изменить - раскомментируйте:
