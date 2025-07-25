@@ -606,9 +606,6 @@ private function printHeadOfPost()
      * @return  string  HTML-текст
      */
 // Простой самописный парсер кл
-<?php
-// Простой BBCode парсер для замены метода convertBBCodeToHtml
-
 private function convertBBCodeToHtml($text)
 {
     try {
