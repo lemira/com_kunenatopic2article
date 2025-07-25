@@ -605,78 +605,88 @@ private function printHeadOfPost()
      * @param   string  $text  Текст с BBCode
      * @return  string  HTML-текст
      */
+// BBCode парсер с использованием chriskonnertz/bbcode
 private function convertBBCodeToHtml($text)
 {
     try {
         // Сначала обрабатываем attachments
-     // ОТЛАДКА   $text = $this->processAttachments($text);
-        
-        // Подключаем BBCode парсер
-        require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
-        
-        $bbcode = new ChrisKonnertz\BBCode\BBCode();
-        
-        // Настраиваем размер в процентах, а не пикселях
-        $bbcode->addTag('size', function($openingTag, $content, $openingTagOnly) {
-            $size = $openingTag->getProperty('size');
-            return '<span style="font-size: ' . $size . '%;">' . $content . '</span>';
-        });
-        
-        return $bbcode->render($text);
-        
-    } catch (\Exception $e) {
-        // Fallback на простой парсер
-        return $this->simpleBBCodeToHtml($text);
-    }
-}
-    
-  /** ОТЛАДКА Пока оставлю, раб-т не очень, нет рисунков    
-// Простой самописный парсер кл
-private function convertBBCodeToHtml($text)
-{
-    try {
-        // Сначала обрабатываем attachments (до основных паттернов)
         $text = $this->processAttachments($text);
         
-        // Обрабатываем списки (до основных паттернов)
-        $text = $this->processLists($text);
+        // Подключаем библиотеку BBCode напрямую
+        $bbcodePath = JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
         
-        // Обрабатываем блоки кода (до основных паттернов, чтобы избежать обработки BBCode внутри кода)
-        $text = $this->processCodeBlocks($text);
+        if (!file_exists($bbcodePath)) {
+            // Fallback на простой парсер, если библиотеки нет
+            return $this->simpleBBCodeToHtml($text);
+        }
         
-        // Основные теги BBCode (убрали [img] - он обрабатывается отдельно)
-        $bbcode_patterns = [
-            '/\[b\](.*?)\[\/b\]/is' => '<strong>$1</strong>',
-            '/\[i\](.*?)\[\/i\]/is' => '<em>$1</em>',
-            '/\[u\](.*?)\[\/u\]/is' => '<u>$1</u>',
-            '/\[s\](.*?)\[\/s\]/is' => '<del>$1</del>',
-            '/~~(.*?)~~/is' => '<del>$1</del>', // Добавили поддержку ~~текст~~
-            '/\[url=(.*?)\](.*?)\[\/url\]/is' => '<a href="$1" target="_blank">$2</a>',
-            '/\[url\](.*?)\[\/url\]/is' => '<a href="$1" target="_blank">$1</a>',
-            '/\[quote\](.*?)\[\/quote\]/is' => '<blockquote>$1</blockquote>',
-            '/\[quote=(.*?)\](.*?)\[\/quote\]/is' => '<blockquote><cite>$1:</cite><br>$2</blockquote>',
-            '/\[color=(.*?)\](.*?)\[\/color\]/is' => '<span style="color: $1;">$2</span>',
-            '/\[size=(.*?)\](.*?)\[\/size\]/is' => '<span style="font-size: $1%;>$2</span>', // Изменили px на %
-            '/\[center\](.*?)\[\/center\]/is' => '<div style="text-align: center;">$1</div>',
-            '/\[left\](.*?)\[\/left\]/is' => '<div style="text-align: left;">$1</div>',
-            '/\[right\](.*?)\[\/right\]/is' => '<div style="text-align: right;">$1</div>',
-            // Если остались обычные [img] теги - обрабатываем их тоже
-            '/\[img\](.*?)\[\/img\]/is' => '<img src="$1" alt="" />',
-        ];
+        // Подключаем нужные файлы вручную
+        require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/Tag.php';
+        require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
         
-        // Применяем замены
-        $html = preg_replace(array_keys($bbcode_patterns), array_values($bbcode_patterns), $text);
+        $bbcode = new \ChrisKonnertz\BBCode\BBCode();
         
-        // Заменяем переносы строк
-        $html = nl2br($html);
+        // Проверяем, как библиотека обрабатывает size по умолчанию
+        // Если нужно изменить - раскомментируйте:
+        /*
+        $bbcode->addTag('size', function($openingTag, $content) {
+            $size = $openingTag->getProperty('size');
+            // Если size больше 100, считаем что это проценты, иначе - относительный размер
+            if ($size > 100) {
+                $size = $size . '%';
+            } else {
+                $size = ($size / 100 * 1.2) . 'em'; // Более разумный размер
+            }
+            return '<span style="font-size: ' . $size . ';">' . $content . '</span>';
+        });
+        */
         
-        return $html;
+        return $bbcode->render($text);
         
     } catch (\Exception $e) {
         $this->app->enqueueMessage(
             Text::_('COM_KUNENATOPIC2ARTICLE_BBCODE_PARSE_ERROR') . ': ' . $e->getMessage(),
             'warning'
         );
+        
+        // Fallback на простой парсер
+        return $this->simpleBBCodeToHtml($text);
+    }
+}
+
+// Простой парсер как fallback
+private function simpleBBCodeToHtml($text)
+{
+    try {
+        // Обрабатываем списки
+        $text = $this->processLists($text);
+        
+        // Обрабатываем блоки кода
+        $text = $this->processCodeBlocks($text);
+        
+        // Основные теги BBCode
+        $bbcode_patterns = [
+            '/\[b\](.*?)\[\/b\]/is' => '<strong>$1</strong>',
+            '/\[i\](.*?)\[\/i\]/is' => '<em>$1</em>',
+            '/\[u\](.*?)\[\/u\]/is' => '<u>$1</u>',
+            '/\[s\](.*?)\[\/s\]/is' => '<del>$1</del>',
+            '/~~(.*?)~~/is' => '<del>$1</del>',
+            '/\[url=(.*?)\](.*?)\[\/url\]/is' => '<a href="$1" target="_blank">$2</a>',
+            '/\[url\](.*?)\[\/url\]/is' => '<a href="$1" target="_blank">$1</a>',
+            '/\[quote\](.*?)\[\/quote\]/is' => '<blockquote>$1</blockquote>',
+            '/\[quote=(.*?)\](.*?)\[\/quote\]/is' => '<blockquote><cite>$1:</cite><br>$2</blockquote>',
+            '/\[color=(.*?)\](.*?)\[\/color\]/is' => '<span style="color: $1;">$2</span>',
+            '/\[size=(.*?)\](.*?)\[\/size\]/is' => '<span style="font-size: $1%;">$2</span>',
+            '/\[center\](.*?)\[\/center\]/is' => '<div style="text-align: center;">$1</div>',
+            '/\[left\](.*?)\[\/left\]/is' => '<div style="text-align: left;">$1</div>',
+            '/\[right\](.*?)\[\/right\]/is' => '<div style="text-align: right;">$1</div>',
+            '/\[img\](.*?)\[\/img\]/is' => '<img src="$1" alt="" />',
+        ];
+        
+        $html = preg_replace(array_keys($bbcode_patterns), array_values($bbcode_patterns), $text);
+        return nl2br($html);
+        
+    } catch (\Exception $e) {
         return $text;
     }
 }
@@ -684,26 +694,19 @@ private function convertBBCodeToHtml($text)
 // Обработка attachments Kunena
 private function processAttachments($text)
 {
-    // Паттерн для [attachment=945]Fomenko1.jpg[/attachment]
     $pattern = '/\[attachment=(\d+)\](.*?)\[\/attachment\]/i';
     
     return preg_replace_callback($pattern, function($matches) {
         $attachmentId = $matches[1];
         $filename = $matches[2];
         
-        // Строим путь к основному изображению
-        // Путь формируется как: media/kunena/attachments/{topic_id}/{filename}
-        // Но нам нужен attachment_id, поэтому используем более простой подход
         $imagePath = "media/kunena/attachments/{$attachmentId}/{$filename}";
         
-        // Проверяем, существует ли файл (опционально)
         $fullPath = JPATH_ROOT . '/' . $imagePath;
         if (!file_exists($fullPath)) {
-            // Если файл не найден, возвращаем просто название
             return $filename;
         }
         
-        // Возвращаем HTML для изображения (убираем center, он добавляется где-то еще)
         return '<img src="' . $imagePath . '" alt="' . htmlspecialchars($filename) . '" />';
         
     }, $text);
@@ -712,10 +715,9 @@ private function processAttachments($text)
 // Обработка списков BBCode
 private function processLists($text)
 {
-    // Нумерованные списки [list=1][*]item[*]item[/list]
+    // Нумерованные списки
     $text = preg_replace_callback('/\[list=1\](.*?)\[\/list\]/is', function($matches) {
         $content = $matches[1];
-        // Заменяем [*] на <li>, учитывая что после может быть [*] или конец списка
         $items = preg_split('/\[\*\]/', $content);
         $html = '<ol>';
         foreach($items as $item) {
@@ -728,7 +730,7 @@ private function processLists($text)
         return $html;
     }, $text);
     
-    // Маркированные списки [list][*]item[*]item[/list]
+    // Маркированные списки
     $text = preg_replace_callback('/\[list\](.*?)\[\/list\]/is', function($matches) {
         $content = $matches[1];
         $items = preg_split('/\[\*\]/', $content);
@@ -746,13 +748,11 @@ private function processLists($text)
     return $text;
 }
 
-// Обработка блоков кода с подсветкой
+// Обработка блоков кода
 private function processCodeBlocks($text)
 {
-    // Обрабатываем "Code:" заголовки (они часто идут перед [code])
     $text = preg_replace('/Code:\s*\n/i', '<div class="code-header">Code:</div>', $text);
     
-    // Блоки кода [code][/code] с подсветкой
     $text = preg_replace_callback('/\[code\](.*?)\[\/code\]/is', function($matches) {
         $code = htmlspecialchars(trim($matches[1]), ENT_QUOTES, 'UTF-8');
         return '<pre style="background: #f4f4f4; border: 1px solid #ddd; padding: 10px; overflow-x: auto;"><code style="color: #d14; font-family: monospace;">' . $code . '</code></pre>';
@@ -760,5 +760,5 @@ private function processCodeBlocks($text)
     
     return $text;
 }
-**/  
+    
 } // КОНЕЦ КЛАССА
