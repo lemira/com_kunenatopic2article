@@ -663,7 +663,7 @@ private function convertBBCodeToHtml($text)
         
         // Fallback на простой парсер
         return $this->simpleBBCodeToHtml($text);
-    }
+  }
 }
 
 // Простой парсер как fallback
@@ -703,27 +703,6 @@ private function simpleBBCodeToHtml($text)
     }
 }
 
-// Обработка attachments Kunena
-private function processAttachments($text)
-{
-    $pattern = '/\[attachment=(\d+)\](.*?)\[\/attachment\]/i';
-    
-    return preg_replace_callback($pattern, function($matches) {
-        $attachmentId = $matches[1];
-        $filename = $matches[2];
-        
-        $imagePath = "media/kunena/attachments/{$attachmentId}/{$filename}";
-        
-        $fullPath = JPATH_ROOT . '/' . $imagePath;
-        if (!file_exists($fullPath)) {
-            return $filename;
-        }
-        
-        return '<img src="' . $imagePath . '" alt="' . htmlspecialchars($filename) . '" />';
-        
-    }, $text);
-}
-
 // Обработка списков BBCode
 private function processLists($text)
 {
@@ -758,6 +737,40 @@ private function processLists($text)
     }, $text);
     
     return $text;
+}
+
+// Получение реального пути к attachment из базы данных
+private function getAttachmentPath($attachmentId)
+{
+    try {
+        $db = $this->getDatabase();
+        $query = $db->getQuery(true)
+            ->select(['folder', 'filename', 'filename_real'])
+            ->from('#__kunena_attachments')
+            ->where('id = ' . (int)$attachmentId);
+        
+        $db->setQuery($query);
+        $attachment = $db->loadObject();
+        
+        if ($attachment) {
+            // Путь к файлу формируется из folder + filename (системное имя)
+            $imagePath = $attachment->folder . '/' . $attachment->filename;
+            
+            // Проверяем существование файла
+            if (file_exists(JPATH_ROOT . '/' . $imagePath)) {
+                return $imagePath;
+            }
+            
+            // Для отладки - логируем что нашли // ОТЛАДКА
+            error_log("Attachment $attachmentId: path='$imagePath', exists=" . (file_exists(JPATH_ROOT . '/' . $imagePath) ? 'YES' : 'NO'));
+        }
+        
+        return null;
+        
+    } catch (\Exception $e) {
+        error_log('Error getting attachment path: ' . $e->getMessage());
+        return null;
+    }
 }
 
 // Обработка блоков кода
