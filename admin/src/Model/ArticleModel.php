@@ -606,6 +606,9 @@ private function printHeadOfPost()
      * @return  string  HTML-текст
      */
 // Простой самописный парсер кл
+<?php
+// Простой BBCode парсер для замены метода convertBBCodeToHtml
+
 private function convertBBCodeToHtml($text)
 {
     try {
@@ -630,7 +633,7 @@ private function convertBBCodeToHtml($text)
             '/\[quote\](.*?)\[\/quote\]/is' => '<blockquote>$1</blockquote>',
             '/\[quote=(.*?)\](.*?)\[\/quote\]/is' => '<blockquote><cite>$1:</cite><br>$2</blockquote>',
             '/\[color=(.*?)\](.*?)\[\/color\]/is' => '<span style="color: $1;">$2</span>',
-            '/\[size=(.*?)\](.*?)\[\/size\]/is' => '<span style="font-size: $1px;">$2</span>',
+            '/\[size=(.*?)\](.*?)\[\/size\]/is' => '<span style="font-size: $1%;>$2</span>', // Изменили px на %
             '/\[center\](.*?)\[\/center\]/is' => '<div style="text-align: center;">$1</div>',
             '/\[left\](.*?)\[\/left\]/is' => '<div style="text-align: left;">$1</div>',
             '/\[right\](.*?)\[\/right\]/is' => '<div style="text-align: right;">$1</div>',
@@ -677,7 +680,7 @@ private function processAttachments($text)
             return $filename;
         }
         
-        // Возвращаем HTML для изображения
+        // Возвращаем HTML для изображения (убираем center, он добавляется где-то еще)
         return '<img src="' . $imagePath . '" alt="' . htmlspecialchars($filename) . '" />';
         
     }, $text);
@@ -688,14 +691,33 @@ private function processLists($text)
 {
     // Нумерованные списки [list=1][*]item[*]item[/list]
     $text = preg_replace_callback('/\[list=1\](.*?)\[\/list\]/is', function($matches) {
-        $items = preg_replace('/\[\*\](.*?)(?=\[\*\]|\[\/list\])/is', '<li>$1</li>', $matches[1]);
-        return '<ol>' . $items . '</ol>';
+        $content = $matches[1];
+        // Заменяем [*] на <li>, учитывая что после может быть [*] или конец списка
+        $items = preg_split('/\[\*\]/', $content);
+        $html = '<ol>';
+        foreach($items as $item) {
+            $item = trim($item);
+            if (!empty($item)) {
+                $html .= '<li>' . $item . '</li>';
+            }
+        }
+        $html .= '</ol>';
+        return $html;
     }, $text);
     
     // Маркированные списки [list][*]item[*]item[/list]
     $text = preg_replace_callback('/\[list\](.*?)\[\/list\]/is', function($matches) {
-        $items = preg_replace('/\[\*\](.*?)(?=\[\*\]|\[\/list\])/is', '<li>$1</li>', $matches[1]);
-        return '<ul>' . $items . '</ul>';
+        $content = $matches[1];
+        $items = preg_split('/\[\*\]/', $content);
+        $html = '<ul>';
+        foreach($items as $item) {
+            $item = trim($item);
+            if (!empty($item)) {
+                $html .= '<li>' . $item . '</li>';
+            }
+        }
+        $html .= '</ul>';
+        return $html;
     }, $text);
     
     return $text;
