@@ -605,6 +605,32 @@ private function printHeadOfPost()
      * @param   string  $text  Текст с BBCode
      * @return  string  HTML-текст
      */
+private function convertBBCodeToHtml($text)
+{
+    try {
+        // Сначала обрабатываем attachments
+        $text = $this->processAttachments($text);
+        
+        // Подключаем BBCode парсер
+        require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/BBCode.php';
+        
+        $bbcode = new ChrisKonnertz\BBCode\BBCode();
+        
+        // Настраиваем размер в процентах, а не пикселях
+        $bbcode->addTag('size', function($openingTag, $content, $openingTagOnly) {
+            $size = $openingTag->getProperty('size');
+            return '<span style="font-size: ' . $size . '%;">' . $content . '</span>';
+        });
+        
+        return $bbcode->render($text);
+        
+    } catch (\Exception $e) {
+        // Fallback на простой парсер
+        return $this->simpleBBCodeToHtml($text);
+    }
+}
+    
+  /** ОТЛАДКА Пока оставлю, раб-т не очень, нет рисунков    
 // Простой самописный парсер кл
 private function convertBBCodeToHtml($text)
 {
@@ -734,5 +760,5 @@ private function processCodeBlocks($text)
     
     return $text;
 }
-  
+**/  
 } // КОНЕЦ КЛАССА
