@@ -612,17 +612,23 @@ private function convertBBCodeToHtml($text)
         // Сначала обрабатываем attachments (до основных паттернов)
         $text = $this->processAttachments($text);
         
+        // Сначала обрабатываем списки (до основных паттернов)
+        $text = $this->processLists($text);
+        
+        // Обрабатываем блоки кода (до основных паттернов, чтобы избежать обработки BBCode внутри кода)
+        $text = $this->processCodeBlocks($text);
+        
         // Основные теги BBCode (убрали [img] - он обрабатывается отдельно)
         $bbcode_patterns = [
             '/\[b\](.*?)\[\/b\]/is' => '<strong>$1</strong>',
             '/\[i\](.*?)\[\/i\]/is' => '<em>$1</em>',
             '/\[u\](.*?)\[\/u\]/is' => '<u>$1</u>',
             '/\[s\](.*?)\[\/s\]/is' => '<del>$1</del>',
+            '/~~(.*?)~~/is' => '<del>$1</del>', // Добавили поддержку ~~текст~~
             '/\[url=(.*?)\](.*?)\[\/url\]/is' => '<a href="$1" target="_blank">$2</a>',
             '/\[url\](.*?)\[\/url\]/is' => '<a href="$1" target="_blank">$1</a>',
             '/\[quote\](.*?)\[\/quote\]/is' => '<blockquote>$1</blockquote>',
             '/\[quote=(.*?)\](.*?)\[\/quote\]/is' => '<blockquote><cite>$1:</cite><br>$2</blockquote>',
-            '/\[code\](.*?)\[\/code\]/is' => '<pre><code>$1</code></pre>',
             '/\[color=(.*?)\](.*?)\[\/color\]/is' => '<span style="color: $1;">$2</span>',
             '/\[size=(.*?)\](.*?)\[\/size\]/is' => '<span style="font-size: $1px;">$2</span>',
             '/\[center\](.*?)\[\/center\]/is' => '<div style="text-align: center;">$1</div>',
@@ -649,8 +655,38 @@ private function convertBBCodeToHtml($text)
     }
 }
 
-// Обработка attachments Kunena
-private function processAttachments($text)
+// Обработка списков BBCode
+private function processLists($text)
+{
+    // Нумерованные списки [list=1][*]item[*]item[/list]
+    $text = preg_replace_callback('/\[list=1\](.*?)\[\/list\]/is', function($matches) {
+        $items = preg_replace('/\[\*\](.*?)(?=\[\*\]|\[\/list\])/is', '<li>$1</li>', $matches[1]);
+        return '<ol>' . $items . '</ol>';
+    }, $text);
+    
+    // Маркированные списки [list][*]item[*]item[/list]
+    $text = preg_replace_callback('/\[list\](.*?)\[\/list\]/is', function($matches) {
+        $items = preg_replace('/\[\*\](.*?)(?=\[\*\]|\[\/list\])/is', '<li>$1</li>', $matches[1]);
+        return '<ul>' . $items . '</ul>';
+    }, $text);
+    
+    return $text;
+}
+
+// Обработка блоков кода с подсветкой
+private function processCodeBlocks($text)
+{
+    // Обрабатываем "Code:" заголовки (они часто идут перед [code])
+    $text = preg_replace('/Code:\s*\n/i', '<div class="code-header">Code:</div>', $text);
+    
+    // Блоки кода [code][/code] с подсветкой
+    $text = preg_replace_callback('/\[code\](.*?)\[\/code\]/is', function($matches) {
+        $code = htmlspecialchars(trim($matches[1]), ENT_QUOTES, 'UTF-8');
+        return '<pre style="background: #f4f4f4; border: 1px solid #ddd; padding: 10px; overflow-x: auto;"><code style="color: #d14; font-family: monospace;">' . $code . '</code></pre>';
+    }, $text);
+    
+    return $text;
+}
 {
     // Паттерн для [attachment=945]Fomenko1.jpg[/attachment]
     $pattern = '/\[attachment=(\d+)\](.*?)\[\/attachment\]/i';
