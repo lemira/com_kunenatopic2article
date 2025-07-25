@@ -609,7 +609,7 @@ private function convertBBCodeToHtml($text)
 {
     try {
         // Сначала обрабатываем attachments
-        $text = $this->processAttachments($text);
+     // ОТЛАДКА   $text = $this->processAttachments($text);
         
         // Подключаем BBCode парсер
         require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/BBCode.php';
