@@ -621,42 +621,39 @@ private function convertBBCodeToHtml($text)
         require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/Tag.php';
         require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
         
+        // Заменяем attachment на временные маркеры (чтобы BBCode парсер их не трогал)
+        $attachments = [];
+        $text = preg_replace_callback('/\[attachment=(\d+)\](.*?)\[\/attachment\]/i', function($matches) use (&$attachments) {
+            $attachmentId = $matches[1];
+            $filename = $matches[2];
+            $marker = '###ATTACHMENT_' . count($attachments) . '###';
+            $attachments[$marker] = [$attachmentId, $filename];
+            return $marker;
+        }, $text);
+        
         $bbcode = new \ChrisKonnertz\BBCode\BBCode();
         
-        // Отключаем стандартную обработку [center] чтобы не мешал изображениям
-        $bbcode->removeTag('center');
+        // Применяем BBCode парсер
+        $html = $bbcode->render($text);
         
-        // Добавляем кастомную обработку для attachment
-        $bbcode->addTag('attachment', function($openingTag, $content, $openingTagOnly) {
-            $attachmentId = $openingTag->getProperty('attachment');
-            $filename = $content;
+        // Восстанавливаем изображения
+        foreach ($attachments as $marker => $data) {
+            $attachmentId = $data[0];
+            $filename = $data[1];
             
-            $imagePath = "media/kunena/attachments/{$attachmentId}/{$filename}";
-            $fullPath = JPATH_ROOT . '/' . $imagePath;
+            // Получаем реальный путь из базы данных
+            $imagePath = $this->getAttachmentPath($attachmentId);
             
-            if (!file_exists($fullPath)) {
-                return $filename;
-            }
-            
-            return '<img src="' . $imagePath . '" alt="' . htmlspecialchars($filename) . '" />';
-        });
-        
-        // Проверяем, как библиотека обрабатывает size по умолчанию
-        // Если нужно изменить - раскомментируйте:
-        /*
-        $bbcode->addTag('size', function($openingTag, $content) {
-            $size = $openingTag->getProperty('size');
-            // Если size больше 100, считаем что это проценты, иначе - относительный размер
-            if ($size > 100) {
-                $size = $size . '%';
+            if ($imagePath && file_exists(JPATH_ROOT . '/' . $imagePath)) {
+                $imageHtml = '<img src="' . $imagePath . '" alt="' . htmlspecialchars($filename) . '" />';
             } else {
-                $size = ($size / 100 * 1.2) . 'em'; // Более разумный размер
+                $imageHtml = $filename;
             }
-            return '<span style="font-size: ' . $size . ';">' . $content . '</span>';
-        });
-        */
+            
+            $html = str_replace($marker, $imageHtml, $html);
+        }
         
-        return $bbcode->render($text);
+        return $html;
         
     } catch (\Exception $e) {
         $this->app->enqueueMessage(
@@ -775,5 +772,5 @@ private function processCodeBlocks($text)
     
     return $text;
 }
-    
+
 } // КОНЕЦ КЛАССА
