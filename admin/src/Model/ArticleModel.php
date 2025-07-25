@@ -506,33 +506,6 @@ $query->order($this->db->quoteName('time') . ' ASC');
 
   // ----------------------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------------------------------   
    /**
-     * Преобразование BBCode в HTML
-     * @param   string  $text  Текст с BBCode
-     * @return  string  HTML-текст
-     */
-    private function convertBBCodeToHtml($text)
-{
-    try {
-        if (!class_exists('Kunena\Forum\Libraries\Bbcode\KunenaBbcode')) {
-            $this->app->enqueueMessage(
-                Text::_('COM_KUNENATOPIC2ARTICLE_BBCODE_PARSER_NOT_AVAILABLE'),
-                'warning'
-            );
-            return $text;
-        }
-
-        $bbcode = \Kunena\Forum\Libraries\Bbcode\KunenaBbcode::getInstance();
-        return $bbcode->parse($text);
-    } catch (\Exception $e) {
-        $this->app->enqueueMessage(
-            Text::_('COM_KUNENATOPIC2ARTICLE_BBCODE_PARSE_ERROR') . ': ' . $e->getMessage(),
-            'warning'
-        );
-        return $text;
-    }
-}
-
-   /**
      * Формирование информационной строки о посте
      * @return  string  Информационная строка
      */
@@ -626,5 +599,82 @@ private function printHeadOfPost()
                      
         // return;   в конце void-метода не нужен
  }
+
+       /**
+     * Преобразование BBCode в HTML
+     * @param   string  $text  Текст с BBCode
+     * @return  string  HTML-текст
+     */
+// Простой самописный парсер кл
+private function convertBBCodeToHtml($text)
+{
+    try {
+        // Сначала обрабатываем attachments (до основных паттернов)
+        $text = $this->processAttachments($text);
+        
+        // Основные теги BBCode (убрали [img] - он обрабатывается отдельно)
+        $bbcode_patterns = [
+            '/\[b\](.*?)\[\/b\]/is' => '<strong>$1</strong>',
+            '/\[i\](.*?)\[\/i\]/is' => '<em>$1</em>',
+            '/\[u\](.*?)\[\/u\]/is' => '<u>$1</u>',
+            '/\[s\](.*?)\[\/s\]/is' => '<del>$1</del>',
+            '/\[url=(.*?)\](.*?)\[\/url\]/is' => '<a href="$1" target="_blank">$2</a>',
+            '/\[url\](.*?)\[\/url\]/is' => '<a href="$1" target="_blank">$1</a>',
+            '/\[quote\](.*?)\[\/quote\]/is' => '<blockquote>$1</blockquote>',
+            '/\[quote=(.*?)\](.*?)\[\/quote\]/is' => '<blockquote><cite>$1:</cite><br>$2</blockquote>',
+            '/\[code\](.*?)\[\/code\]/is' => '<pre><code>$1</code></pre>',
+            '/\[color=(.*?)\](.*?)\[\/color\]/is' => '<span style="color: $1;">$2</span>',
+            '/\[size=(.*?)\](.*?)\[\/size\]/is' => '<span style="font-size: $1px;">$2</span>',
+            '/\[center\](.*?)\[\/center\]/is' => '<div style="text-align: center;">$1</div>',
+            '/\[left\](.*?)\[\/left\]/is' => '<div style="text-align: left;">$1</div>',
+            '/\[right\](.*?)\[\/right\]/is' => '<div style="text-align: right;">$1</div>',
+            // Если остались обычные [img] теги - обрабатываем их тоже
+            '/\[img\](.*?)\[\/img\]/is' => '<img src="$1" alt="" />',
+        ];
+        
+        // Применяем замены
+        $html = preg_replace(array_keys($bbcode_patterns), array_values($bbcode_patterns), $text);
+        
+        // Заменяем переносы строк
+        $html = nl2br($html);
+        
+        return $html;
+        
+    } catch (\Exception $e) {
+        $this->app->enqueueMessage(
+            Text::_('COM_KUNENATOPIC2ARTICLE_BBCODE_PARSE_ERROR') . ': ' . $e->getMessage(),
+            'warning'
+        );
+        return $text;
+    }
+}
+
+// Обработка attachments Kunena
+private function processAttachments($text)
+{
+    // Паттерн для [attachment=945]Fomenko1.jpg[/attachment]
+    $pattern = '/\[attachment=(\d+)\](.*?)\[\/attachment\]/i';
     
+    return preg_replace_callback($pattern, function($matches) {
+        $attachmentId = $matches[1];
+        $filename = $matches[2];
+        
+        // Строим путь к основному изображению
+        // Путь формируется как: media/kunena/attachments/{topic_id}/{filename}
+        // Но нам нужен attachment_id, поэтому используем более простой подход
+        $imagePath = "media/kunena/attachments/{$attachmentId}/{$filename}";
+        
+        // Проверяем, существует ли файл (опционально)
+        $fullPath = JPATH_ROOT . '/' . $imagePath;
+        if (!file_exists($fullPath)) {
+            // Если файл не найден, возвращаем просто название
+            return $filename;
+        }
+        
+        // Возвращаем HTML для изображения
+        return '<img src="' . $imagePath . '" alt="' . htmlspecialchars($filename) . '" />';
+        
+    }, $text);
+}
+  
 } // КОНЕЦ КЛАССА
