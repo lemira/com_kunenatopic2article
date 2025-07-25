@@ -612,7 +612,7 @@ private function convertBBCodeToHtml($text)
         // Сначала обрабатываем attachments (до основных паттернов)
         $text = $this->processAttachments($text);
         
-        // Сначала обрабатываем списки (до основных паттернов)
+        // Обрабатываем списки (до основных паттернов)
         $text = $this->processLists($text);
         
         // Обрабатываем блоки кода (до основных паттернов, чтобы избежать обработки BBCode внутри кода)
@@ -655,6 +655,34 @@ private function convertBBCodeToHtml($text)
     }
 }
 
+// Обработка attachments Kunena
+private function processAttachments($text)
+{
+    // Паттерн для [attachment=945]Fomenko1.jpg[/attachment]
+    $pattern = '/\[attachment=(\d+)\](.*?)\[\/attachment\]/i';
+    
+    return preg_replace_callback($pattern, function($matches) {
+        $attachmentId = $matches[1];
+        $filename = $matches[2];
+        
+        // Строим путь к основному изображению
+        // Путь формируется как: media/kunena/attachments/{topic_id}/{filename}
+        // Но нам нужен attachment_id, поэтому используем более простой подход
+        $imagePath = "media/kunena/attachments/{$attachmentId}/{$filename}";
+        
+        // Проверяем, существует ли файл (опционально)
+        $fullPath = JPATH_ROOT . '/' . $imagePath;
+        if (!file_exists($fullPath)) {
+            // Если файл не найден, возвращаем просто название
+            return $filename;
+        }
+        
+        // Возвращаем HTML для изображения
+        return '<img src="' . $imagePath . '" alt="' . htmlspecialchars($filename) . '" />';
+        
+    }, $text);
+}
+
 // Обработка списков BBCode
 private function processLists($text)
 {
@@ -686,31 +714,6 @@ private function processCodeBlocks($text)
     }, $text);
     
     return $text;
-}
-{
-    // Паттерн для [attachment=945]Fomenko1.jpg[/attachment]
-    $pattern = '/\[attachment=(\d+)\](.*?)\[\/attachment\]/i';
-    
-    return preg_replace_callback($pattern, function($matches) {
-        $attachmentId = $matches[1];
-        $filename = $matches[2];
-        
-        // Строим путь к основному изображению
-        // Путь формируется как: media/kunena/attachments/{topic_id}/{filename}
-        // Но нам нужен attachment_id, поэтому используем более простой подход
-        $imagePath = "media/kunena/attachments/{$attachmentId}/{$filename}";
-        
-        // Проверяем, существует ли файл (опционально)
-        $fullPath = JPATH_ROOT . '/' . $imagePath;
-        if (!file_exists($fullPath)) {
-            // Если файл не найден, возвращаем просто название
-            return $filename;
-        }
-        
-        // Возвращаем HTML для изображения
-        return '<img src="' . $imagePath . '" alt="' . htmlspecialchars($filename) . '" />';
-        
-    }, $text);
 }
   
 } // КОНЕЦ КЛАССА
