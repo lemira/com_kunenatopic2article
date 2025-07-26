@@ -609,16 +609,19 @@ private function printHeadOfPost()
 private function convertBBCodeToHtml($text)
 {
     try {
+        // Подключаем библиотеку BBCode напрямую
         $bbcodePath = JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
         
         if (!file_exists($bbcodePath)) {
+            // Fallback на простой парсер, если библиотеки нет
             return $this->simpleBBCodeToHtml($text);
         }
         
+        // Подключаем нужные файлы вручную
         require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/Tag.php';
         require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
         
-        // Обработка attachment
+        // Заменяем attachment на временные маркеры (чтобы BBCode парсер их не трогал)
         $attachments = [];
         $text = preg_replace_callback('/\[attachment=(\d+)\](.*?)\[\/attachment\]/i', function($matches) use (&$attachments) {
             $attachmentId = $matches[1];
@@ -629,11 +632,11 @@ private function convertBBCodeToHtml($text)
         }, $text);
         
         $bbcode = new \ChrisKonnertz\BBCode\BBCode();
+        
+        // Применяем BBCode парсер
         $html = $bbcode->render($text);
         
-        // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: конвертируем <br/> в абзацы <p>
-        // Это предотвратит удаление переводов строк редактором Joomla
-        
+        // Конвертируем <br/> в абзацы <p> для совместимости с WYSIWYG редакторами
         // Разбиваем HTML на части по <br/> и <br>
         $parts = preg_split('/\s*<br\s*\/?>\s*/i', $html);
         
@@ -658,13 +661,12 @@ private function convertBBCodeToHtml($text)
         
         $html = implode("\n", $paragraphs);
         
-        error_log("HTML после конвертации br в p: " . substr($html, 0, 500));
-        
-        // Восстановление изображений
+        // Восстанавливаем изображения
         foreach ($attachments as $marker => $data) {
             $attachmentId = $data[0];
             $filename = $data[1];
             
+            // Получаем реальный путь из базы данных
             $imagePath = $this->getAttachmentPath($attachmentId);
             
             if ($imagePath && file_exists(JPATH_ROOT . '/' . $imagePath)) {
@@ -684,6 +686,7 @@ private function convertBBCodeToHtml($text)
             'warning'
         );
         
+        // Fallback на простой парсер
         return $this->simpleBBCodeToHtml($text);
     }
 }
