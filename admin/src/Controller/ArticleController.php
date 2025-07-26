@@ -55,9 +55,9 @@ class ArticleController extends BaseController
 
         $this->resetTopicSelection();    // Сбрасываем Topic ID после успешного создания статей
 
-  // Отправка писем (мок для тестирования)
+  // Отправка писем 
         try {
-            $mailResult = ['success' => true, 'recipients' => ['test@example.com']];  // $mailResult = $this->sendLinksToAdministrator($articleLinks);
+            $mailResult = $this->sendLinksToAdministrator($articleLinks);  // мок для тестир-я: $mailResult = ['success' => true, 'recipients' => ['test@example.com']];
         } catch (\Exception $e) {
             $mailResult = ['success' => false, 'recipients' => []];
             $app->enqueueMessage($e->getMessage(), 'warning');
