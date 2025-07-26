@@ -50,9 +50,10 @@ class ArticleController extends BaseController
         }
 
         // Создание статей
-        error_log('Starting createArticlesFromTopic');
         $articleLinks = $model->createArticlesFromTopic($params);
         error_log('createArticlesFromTopic completed: ' . print_r($articleLinks, true));
+
+        $this->resetTopicSelection();    // Сбрасываем Topic ID после успешного создания статей
 
   // Отправка писем (мок для тестирования)
         try {
@@ -203,6 +204,26 @@ protected function sendLinksToAdministrator(array $articleLinks): array
     }
     
     return $result;
+}
+
+private function resetTopicSelection()
+{
+    try {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->getQuery(true)
+            ->update('#__kunenatopic2article_params')
+            ->set($db->quoteName('param_value') . ' = ' . $db->quote('0'))
+            ->where($db->quoteName('param_name') . ' = ' . $db->quote('topic_selection'));
+        
+        $db->setQuery($query);
+        $db->execute();
+        
+    } catch (\Exception $e) {
+        Factory::getApplication()->enqueueMessage(
+            'Ошибка сброса topic_selection: ' . $e->getMessage(), 
+            'error'
+        );
+    }
 }
 
 }
