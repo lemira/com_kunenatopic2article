@@ -621,6 +621,14 @@ private function convertBBCodeToHtml($text)
         require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/Tag.php';
         require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
         
+        // ПРЕДОБРАБОТКА: Обрабатываем переводы строк ПЕРЕД парсингом BBCode
+        // Нормализуем переводы строк
+        $text = preg_replace('/\r\n|\r/', "\n", $text);
+        
+        // Преобразуем одиночные переводы строк в двойные (для создания абзацев)
+        // Но НЕ внутри BBCode тегов
+        $text = preg_replace('/\n(?!\n)(?![^\[]*\])/', "\n\n", $text);
+        
         // Заменяем attachment на временные маркеры (чтобы BBCode парсер их не трогал)
         $attachments = [];
         $text = preg_replace_callback('/\[attachment=(\d+)\](.*?)\[\/attachment\]/i', function($matches) use (&$attachments) {
@@ -635,6 +643,10 @@ private function convertBBCodeToHtml($text)
         
         // Применяем BBCode парсер
         $html = $bbcode->render($text);
+        
+        // ПОСТОБРАБОТКА: Убираем лишние пустые параграфы, которые могли образоваться
+        $html = preg_replace('/<p><\/p>/', '', $html);
+        $html = preg_replace('/<p>\s*<\/p>/', '', $html);
         
         // Восстанавливаем изображения
         foreach ($attachments as $marker => $data) {
@@ -663,9 +675,9 @@ private function convertBBCodeToHtml($text)
         
         // Fallback на простой парсер
         return $this->simpleBBCodeToHtml($text);
-  }
+    }
 }
-
+    
 // Простой парсер как fallback
 private function simpleBBCodeToHtml($text)
 {
