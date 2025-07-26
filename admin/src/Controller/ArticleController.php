@@ -55,9 +55,9 @@ class ArticleController extends BaseController
 
         $this->resetTopicSelection();    // Сбрасываем Topic ID после успешного создания статей
 
-  // Отправка писем 
+  // Отправка писем в WAMP не работает !!!
         try {
-            $mailResult = $this->sendLinksToAdministrator($articleLinks);  // мок для тестир-я: $mailResult = ['success' => true, 'recipients' => ['test@example.com']];
+         $mailResult = ['success' => true, 'recipients' => ['test@example.com']]; // мок для тестир-я: $mailResult = $this->sendLinksToAdministrator($articleLinks);
         } catch (\Exception $e) {
             $mailResult = ['success' => false, 'recipients' => []];
             $app->enqueueMessage($e->getMessage(), 'warning');
