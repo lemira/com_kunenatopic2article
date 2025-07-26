@@ -606,7 +606,6 @@ private function printHeadOfPost()
      * @return  string  HTML-текст
      */
 // BBCode парсер с использованием chriskonnertz/bbcode
-// BBCode парсер с использованием chriskonnertz/bbcode
 private function convertBBCodeToHtml($text)
 {
     try {
@@ -618,19 +617,6 @@ private function convertBBCodeToHtml($text)
         
         require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/Tag.php';
         require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
-        
-        // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: преобразуем одинарные \n в двойные \n\n
-        // Это заставит BBCode парсер создавать абзацы <p> вместо <br/>
-        
-        // Сначала нормализуем переводы строк
-        $text = str_replace(["\r\n", "\r"], "\n", $text);
-        
-        // Теперь заменяем одинарные \n на двойные \n\n
-        // Но только если они не идут подряд (чтобы не делать из \n\n → \n\n\n\n)
-        $text = preg_replace('/(?<!\n)\n(?!\n)/', "\n\n", $text);
-        
-        // Временное логирование для проверки
-        error_log("После обработки переводов строк: " . substr(str_replace(["\n\n", "\n"], ["[NN]", "[N]"], $text), 0, 300));
         
         // Обработка attachment
         $attachments = [];
@@ -645,8 +631,34 @@ private function convertBBCodeToHtml($text)
         $bbcode = new \ChrisKonnertz\BBCode\BBCode();
         $html = $bbcode->render($text);
         
-        // Временное логирование результата
-        error_log("HTML после исправления: " . substr($html, 0, 300));
+        // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: конвертируем <br/> в абзацы <p>
+        // Это предотвратит удаление переводов строк редактором Joomla
+        
+        // Разбиваем HTML на части по <br/> и <br>
+        $parts = preg_split('/\s*<br\s*\/?>\s*/i', $html);
+        
+        // Очищаем пустые части
+        $parts = array_filter($parts, function($part) {
+            return trim($part) !== '';
+        });
+        
+        // Оборачиваем каждую часть в <p>, если она еще не обернута в блочный элемент
+        $paragraphs = [];
+        foreach ($parts as $part) {
+            $part = trim($part);
+            if ($part === '') continue;
+            
+            // Проверяем, не начинается ли уже с блочного элемента
+            if (!preg_match('/^\s*<(p|div|h[1-6]|ul|ol|li|blockquote|pre|table|tr|td|th)\b/i', $part)) {
+                $part = '<p>' . $part . '</p>';
+            }
+            
+            $paragraphs[] = $part;
+        }
+        
+        $html = implode("\n", $paragraphs);
+        
+        error_log("HTML после конвертации br в p: " . substr($html, 0, 500));
         
         // Восстановление изображений
         foreach ($attachments as $marker => $data) {
