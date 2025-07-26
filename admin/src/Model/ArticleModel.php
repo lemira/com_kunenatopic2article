@@ -606,19 +606,10 @@ private function printHeadOfPost()
      * @return  string  HTML-текст
      */
 // BBCode парсер с использованием chriskonnertz/bbcode
+// BBCode парсер с использованием chriskonnertz/bbcode
 private function convertBBCodeToHtml($text)
 {
     try {
-        // ОТЛАДОЧНЫЙ КОД - временно добавить для диагностики
-        error_log("=== ОТЛАДКА BBCode ===");
-        error_log("Исходный текст (первые 500 символов): " . substr($text, 0, 500));
-        error_log("Длина текста: " . strlen($text));
-        
-        // Посмотрим, какие символы переводов строк там есть
-        $debugText = str_replace(["\r\n", "\r", "\n"], ["[RSLASH-N]", "[RSLASH-R]", "[SLASH-N]"], $text);
-        error_log("Текст с видимыми переводами строк: " . substr($debugText, 0, 500));
-        
-        // Подключаем библиотеку BBCode напрямую
         $bbcodePath = JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
         
         if (!file_exists($bbcodePath)) {
@@ -627,6 +618,19 @@ private function convertBBCodeToHtml($text)
         
         require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/Tag.php';
         require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
+        
+        // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: преобразуем одинарные \n в двойные \n\n
+        // Это заставит BBCode парсер создавать абзацы <p> вместо <br/>
+        
+        // Сначала нормализуем переводы строк
+        $text = str_replace(["\r\n", "\r"], "\n", $text);
+        
+        // Теперь заменяем одинарные \n на двойные \n\n
+        // Но только если они не идут подряд (чтобы не делать из \n\n → \n\n\n\n)
+        $text = preg_replace('/(?<!\n)\n(?!\n)/', "\n\n", $text);
+        
+        // Временное логирование для проверки
+        error_log("После обработки переводов строк: " . substr(str_replace(["\n\n", "\n"], ["[NN]", "[N]"], $text), 0, 300));
         
         // Обработка attachment
         $attachments = [];
@@ -641,9 +645,8 @@ private function convertBBCodeToHtml($text)
         $bbcode = new \ChrisKonnertz\BBCode\BBCode();
         $html = $bbcode->render($text);
         
-        // ОТЛАДОЧНЫЙ КОД 
-        error_log("HTML после BBCode парсера: " . substr($html, 0, 500));
-        error_log("=== КОНЕЦ ОТЛАДКИ ===");
+        // Временное логирование результата
+        error_log("HTML после исправления: " . substr($html, 0, 300));
         
         // Восстановление изображений
         foreach ($attachments as $marker => $data) {
