@@ -212,8 +212,8 @@ private function resetTopicSelection()
         $db = Factory::getContainer()->get('DatabaseDriver');
         $query = $db->getQuery(true)
             ->update('#__kunenatopic2article_params')
-            ->set($db->quoteName('param_value') . ' = ' . $db->quote('0'))
-            ->where($db->quoteName('param_name') . ' = ' . $db->quote('topic_selection'));
+            ->set($db->quoteName('topic_selection') . ' = ' . $db->quote('0'))
+            ->where($db->quoteName('id') . ' = 1');
         
         $db->setQuery($query);
         $db->execute();
