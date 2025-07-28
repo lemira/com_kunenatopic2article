@@ -52,6 +52,8 @@ if (empty($params) || empty($params->topic_selection)) {
         
         // Создаем статьи
         $articleLinks = $model->createArticlesFromTopic($params);
+
+        $this->resetTopicSelection();    // Сбрасываем Topic ID после успешного создания статей
         
         // Отправляем уведомления
         $emailResult = $model->sendLinksToAdministrator($articleLinks);
