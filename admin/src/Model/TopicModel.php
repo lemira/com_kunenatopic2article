@@ -55,7 +55,7 @@ class TopicModel extends AdminModel
         // Если в сессии ничего нет (первая загрузка или после успешного сохранения)
         if (empty($data)) {
             // Загружаем последние сохраненные параметры из базы
-            $params = $this->getParams();
+            $params = $this->getTableParams();
             $data   = $params ? $params->getProperties() : [];
         }
 
