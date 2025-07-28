@@ -111,6 +111,12 @@ class ArticleModel extends BaseDatabaseModel
                     $this->closeArticle();     // закрываем её перед открытием новой
                     $this->openArticle();   // Открываем новую статью
                     }
+
+                if ($this->articleSize + $this->postSize > $this->params->max_article_size  // С новым постом превышен максимальный размер статьи
+                        && $this->articleSize != 0) {                                           // И статья не пустая = размер этого поста больше размера статьи
+                            $this->closeArticle();  // Закрываем текущую статью
+                            $this->openArticle();   // Открываем новую
+                }    
             
                 $this->transferPost(); // Переносим содержимое поста в статью
                 $this->nextPost(); // Переходим к следующему посту
