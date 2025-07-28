@@ -818,5 +818,73 @@ private function processCodeBlocks($text)
     return $text;
 }
  КОНЕЦ ВРЕМЕННОЙ ЗАМЕНЫ парсера **/
+
+    /**
+ * Отправка email-уведомлений о созданных статьях
+ * @param   array  $articleLinks  Массив ссылок на статьи
+ * @return  array  Результат отправки (success, recipients)
+ */
+public function sendLinksToAdministrator(array $articleLinks): array
+{
+    $app = Factory::getApplication();
+    $result = [
+        'success' => false,
+        'recipients' => [],
+    ];
+
+    try {
+        $config = Factory::getConfig();
+        $mailer = Factory::getMailer();
+
+        // Данные уже доступны в модели!
+        $adminEmail = $config->get('mailfrom');
+        $author = Factory::getUser($this->topicAuthorId);
+        $authorEmail = $author->email;
+
+        // Формируем письмо
+        $subject = Text::sprintf('COM_KUNENATOPIC2ARTICLE_MAIL_SUBJECT', $config->get('sitename'));
+        $body = Text::sprintf(
+            'COM_KUNENATOPIC2ARTICLE_MAIL_BODY',
+            $config->get('sitename'),
+            $this->subject,
+            Uri::root() . 'index.php?option=com_kunena&view=topic&postid=' . (int)$this->params->topic_selection,
+            $author->name,
+            implode("\n", array_map(
+                fn($link) => "- {$link['title']}: {$link['url']}",
+                $articleLinks
+            ))
+        );
+
+        // Настройка отправки
+        $mailer->setSender([$adminEmail, $config->get('sitename')]);
+        $mailer->setSubject($subject);
+        $mailer->setBody($body);
+        $mailer->isHtml(false);
+
+        // Фильтрация email-адресов
+        $recipients = array_filter([$adminEmail, $authorEmail], function($email) {
+            return filter_var($email, FILTER_VALIDATE_EMAIL);
+        });
+
+        foreach ($recipients as $email) {
+            $mailer->addRecipient($email);
+        }
+
+        // Временная заглушка для WAMP (реальная отправка на сервере)
+        $sendResult = true; // Заменить на  $sendResult = $mailer->Send();  // ОТЛАДКА
+
+        $result['success'] = $sendResult === true;
+        $result['recipients'] = $recipients;
+
+        // Сохраняем статус отправки в модели (для логирования) ??? 
+        $this->emailsSent = $result['success'];
+        $this->emailsSentTo = $result['recipients'];
+
+    } catch (\Exception $e) {
+        $app->enqueueMessage('Ошибка отправки почты: ' . $e->getMessage(), 'error');
+    }
+
+    return $result;
+}
     
 } // КОНЕЦ КЛАССА
