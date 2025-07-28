@@ -57,7 +57,7 @@ class ArticleController extends BaseController
 
   // Отправка писем в WAMP не работает !!!
         try {
-         $mailResult = ['success' => true, 'recipients' => ['test@example.com']]; // мок для тестир-я: $mailResult = $this->sendLinksToAdministrator($articleLinks);
+         $mailResult = $this->sendLinksToAdministrator($articleLinks); // мок для тестир-я:  $mailResult = ['success' => true, 'recipients' => ['test@example.com']];
         } catch (\Exception $e) {
             $mailResult = ['success' => false, 'recipients' => []];
             $app->enqueueMessage($e->getMessage(), 'warning');
@@ -193,8 +193,8 @@ protected function sendLinksToAdministrator(array $articleLinks): array
             $mailer->addRecipient($email);
         }
         
-        // Отправляем
-        $sendResult = $mailer->Send();
+        // Отправка писем       
+        // в WAMP не работает !!!    $sendResult = $mailer->Send();
         
         $result['success'] = $sendResult === true;
         $result['recipients'] = $recipients;
