@@ -34,69 +34,57 @@ class ArticleController extends BaseController
      * Создание статей из темы форума Kunena
      * @return  void
      */
-  public function create()
+public function create()
 {
     // Проверка токена
-    $this->checkToken('post') or jexit(Text::_('JINVALID_TOKEN'));
+    $this->checkToken();
 
     $app = Factory::getApplication();
-   
+       
     try {
         $model = $this->getModel('Article', 'Administrator');
-        $params = $this->getComponentParams();
-        
-        if (empty($params) || empty($params->topic_selection)) {
-            throw new \RuntimeException(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'));
-        }
+        // Получаем параметры
+        $params = $this->getComponentParams(); 
 
-        // Создание статей
+if (empty($params) || empty($params->topic_selection)) {
+    throw new \RuntimeException(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'));
+}
+        
+        // Создаем статьи
         $articleLinks = $model->createArticlesFromTopic($params);
-        error_log('createArticlesFromTopic completed: ' . print_r($articleLinks, true));
-
-        $this->resetTopicSelection();    // Сбрасываем Topic ID после успешного создания статей
-
-  // Отправка писем в WAMP не работает !!!
-        try {
-         $mailResult = $this->sendLinksToAdministrator($articleLinks); // мок для тестир-я:  $mailResult = ['success' => true, 'recipients' => ['test@example.com']];
-        } catch (\Exception $e) {
-            $mailResult = ['success' => false, 'recipients' => []];
-            $app->enqueueMessage($e->getMessage(), 'warning');
-            error_log('Mail error: ' . $e->getMessage());
-        }
-
+        
+        // Отправляем уведомления
+        $emailResult = $model->sendLinksToAdministrator($articleLinks);
+        
         // Устанавливаем флаг блокировки
-       // ? Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', false);
         $app->setUserState('com_kunenatopic2article.can_create', false);
-
-         // Формируем данные для передачи для представления
-        $resultData = [
-             'articles' => $articleLinks,
+        
+        // Сохраняем данные для отображения
+        $app->setUserState('com_kunenatopic2article.result_data', [
+            'articles' => $articleLinks,
             'emails' => [
-            'sent' => $mailResult['success'] ?? false, // Защита от undefined
-            'recipients' => $mailResult['recipients'] ?? []
+                'sent' => $emailResult['success'],
+                'recipients' => $emailResult['recipients']
             ]
-        ];
+        ]);
         
-        // Отправляем данные через сессию
-       $app->setUserState('com_kunenatopic2article.result_data', $resultData);
-        error_log('Art Contr: Данные для вью: ' . print_r($resultData, true));
-        
-         // Используем фабрику, встроенную в контроллер 
+        // Используем фабрику, встроенную в контроллер 
         $view = $this->getView('result', 'html');
         if (!$view) {
             throw new \RuntimeException('View object not created');
         }
             $view->display();       // Отображаем представление
              return true;
-  
+
     } catch (\Exception $e) {
         $app->enqueueMessage($e->getMessage(), 'error');
-        error_log('Error in create: ' . $e->getMessage());
-        $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article', false));
+        $this->setRedirect(
+            Route::_('index.php?option=com_kunenatopic2article', false)
+        );
         return false;
     }
 }
-
+    
     /**
      * Получение параметров компонента из таблиц
      * @return  object|null  Объект с параметрами компонента
@@ -127,85 +115,6 @@ class ArticleController extends BaseController
         }
     }
    
-     /**
-     * Отправка ссылок на созданные статьи администратору и автору
-     * @param   array  $articleLinks  Массив ссылок на статьи
-     * @return  boolean  True в случае успеха, False в случае ошибки
-     */
-protected function sendLinksToAdministrator(array $articleLinks): array
-{
-/**     // Временный код для тестирования в НАЧАЛО метода)
-    if (Factory::getApplication()->isClient('administrator')) {
-        $logData = [
-            'date' => date('Y-m-d H:i:s'),
-            'articles' => $articleLinks,
-            'subject' => $this->subject,
-            'author_id' => $this->topicAuthorId
-        ];
-        
-        file_put_contents(JPATH_ROOT.'/logs/kunena_mail_test.log', 
-            json_encode($logData, JSON_PRETTY_PRINT) . "\n\n", 
-            FILE_APPEND);
-            
-        return ['success' => true, 'recipients' => ['test_admin@example.com', 'test_author@example.com']];
-    }
-**/ 
-    // ОСНОВНОЙ КОД! (временный убрать!)
-    $app = Factory::getApplication();
-    $result = [
-        'success' => false,
-        'recipients' => []
-    ];
-
-    try {
-        $config = Factory::getConfig();
-        $mailer = Factory::getMailer();
-        
-        // Получаем email администратора
-        $adminEmail = $config->get('mailfrom');
-        
-        // Получаем email автора
-        $author = Factory::getUser($this->topicAuthorId);
-        $authorEmail = $author->email;
-        
-        // Формируем письмо
-        $subject = Text::sprintf('COM_KUNENATOPIC2ARTICLE_MAIL_SUBJECT', $config->get('sitename'));
-        $body = Text::sprintf(
-            'COM_KUNENATOPIC2ARTICLE_MAIL_BODY',
-            $config->get('sitename'),
-            $this->subject,
-            Uri::root() . 'index.php?option=com_kunena&view=topic&postid=' . (int)$this->params->topic_selection,
-            $author->name,
-            implode("\n", array_map(
-                fn($link) => "- {$link['title']}: {$link['url']}",
-                $articleLinks
-            ))
-        );
-
-        // Настраиваем отправку
-        $mailer->setSender([$adminEmail, $config->get('sitename')]);
-        $mailer->setSubject($subject);
-        $mailer->setBody($body);
-        
-        // Добавляем получателей
-        $recipients = array_filter([$adminEmail, $authorEmail], 'filter_var', FILTER_VALIDATE_EMAIL);
-        foreach ($recipients as $email) {
-            $mailer->addRecipient($email);
-        }
-        
-        // Отправка писем       
-        // в WAMP не работает !!!    $sendResult = $mailer->Send();
-        
-        $result['success'] = $sendResult === true;
-        $result['recipients'] = $recipients;
-        
-    } catch (\Exception $e) {
-        $app->enqueueMessage('Ошибка отправки почты: ' . $e->getMessage(), 'error');
-    }
-    
-    return $result;
-}
-
 private function resetTopicSelection()
 {
     try {
