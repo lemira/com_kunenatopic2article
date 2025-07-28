@@ -107,15 +107,11 @@ class ArticleModel extends BaseDatabaseModel
                    // Статья открыта
                     Factory::getApplication()->enqueueMessage('Основной цикл Размер статьи: ' . $this->articleSize, 'info'); // ОТЛАДКА  
                     Factory::getApplication()->enqueueMessage('Основной цикл Размер поста: ' . $this->postSize, 'info'); // ОТЛАДКА 
-                if ($this->articleSize + $this->postSize > $this->params->max_article_size) {
-                    $this->closeArticle();     // закрываем её перед открытием новой
-                    $this->openArticle();   // Открываем новую статью
-                    }
-
+               
                 if ($this->articleSize + $this->postSize > $this->params->max_article_size  // С новым постом превышен максимальный размер статьи
                         && $this->articleSize != 0) {                                           // И статья не пустая = размер этого поста больше размера статьи
-                            $this->closeArticle();  // Закрываем текущую статью
-                            $this->openArticle();   // Открываем новую
+                            $this->closeArticle();  // Закрываем текущую статью перед открытием новой
+                            $this->openArticle();   // Открываем новую статью
                 }    
             
                 $this->transferPost(); // Переносим содержимое поста в статью
