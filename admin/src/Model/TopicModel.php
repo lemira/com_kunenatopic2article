@@ -59,9 +59,7 @@ class TopicModel extends AdminModel
             $data   = $params ? $params->getProperties() : [];
         }
 
-        // ПОЯСНЕНИЕ: Теперь, когда у нас есть данные (из сессии или из базы),
-        // мы проверяем, есть ли там валидный ID темы, чтобы показать ее заголовок.
-        // Это более надежно, чем использовать отдельную переменную в сессии.
+        // проверяем, есть ли из сессии или из базы валидный ID темы
         $topicId = !empty($data['topic_selection']) ? (int) $data['topic_selection'] : 0;
 
         if ($topicId > 0) {
@@ -79,7 +77,7 @@ class TopicModel extends AdminModel
         return $data;
     }
 
-    public function getParams(): ?ParamsTable
+    public function getTableParams(): ?ParamsTable
     {
         $table = new ParamsTable($this->db);
 
@@ -125,7 +123,7 @@ class TopicModel extends AdminModel
 
   public function save($data)
     {
-        // Получаем ID из формы. Эта часть у вас была правильной.
+        // Получаем ID из формы
         $originalTopicId = !empty($data['topic_selection']) && is_numeric($data['topic_selection']) ? (int) $data['topic_selection'] : 0;
         
         if ($originalTopicId <= 0) {
@@ -133,14 +131,11 @@ class TopicModel extends AdminModel
             return false;
         }
     
-        // Пытаемся получить данные темы. Если темы нет, метод вернет null
-        // и добавит сообщение об ошибке.
-        if ($this->getTopicData($originalTopicId) === null) {
+        // Получаем данные темы
+        if ($this->getTopicData($originalTopicId) === null) {   // Если getTopicData успешно нашел тему, он заполнил $this->subject
             // Если getTopicData вернул ошибку, просто выходим
             return false;
         }
-        
-        // Если мы дошли сюда, значит getTopicData успешно нашел тему и заполнил $this->subject
         
         // Возвращаем ID в данные для сохранения в базу
         $data['topic_selection'] = $originalTopicId;
@@ -159,15 +154,7 @@ class TopicModel extends AdminModel
             return false;
         }
 
-        // ИСПРАВЛЕНО: Правильный способ завершения.
-        // Сначала устанавливаем состояние, потом четко возвращаем true.
-        $this->app->setUserState('com_kunenatopic2article.save.success', true);
-        
-        // ПОЯСНЕНИЕ: Мы больше не используем 'com_kunenatopic2article.topic_id',
-        // так как loadFormData теперь умнее и берет ID из сохраненных параметров.
-        // Это упрощает логику и делает ее надежнее.
-
-        return true;
+       return true;
     }
     
     public function reset()
@@ -201,8 +188,8 @@ class TopicModel extends AdminModel
             return false;
         }
 
-        $this->app->setUserState('com_kunenatopic2article.save.success', false);
-        $this->app->setUserState('com_kunenatopic2article.topic_id', 0);
+     // НЕ НУЖНО?! - УБРАТЬ   $this->app->setUserState('com_kunenatopic2article.save.success', false);
+     //   $this->app->setUserState('com_kunenatopic2article.topic_id', 0);
         return true;
     }
 }
