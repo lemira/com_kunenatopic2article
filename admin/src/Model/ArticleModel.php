@@ -55,7 +55,7 @@ class ArticleModel extends BaseDatabaseModel
     private string $htmlContent = '';   // Текс поста после BBCode
     public bool $emailsSent = false;
     public array $emailsSentTo = [];
-
+    private $allPosts = []; // Добавляем свойство для хранения всех постов
     
       public function __construct($config = [])
 {
@@ -503,9 +503,9 @@ $query->order($this->db->quoteName('time') . ' ASC');
 private function buildTreePostIdList($firstPostId)
 {
     try {
-        $posts = $this->getAllPostsInThread($firstPostId);
+        $this->allPosts = $this->getAllPostsInThread($firstPostId); // Сохраняем посты
         $tree = [];
-        $this->buildTree($firstPostId, $posts, $tree);
+        $this->buildTree($firstPostId, $this->allPosts, $tree);
         
         $this->postIdList = [];
         $this->postLevelList = [];
@@ -527,18 +527,16 @@ private function buildTreePostIdList($firstPostId)
 
 private function flattenTreeSeparateArrays($tree, $currentLevel)
 {
-    $this->postIdList[] = $tree['id'];
+    $this->postIdList[] = $tree['post']->id; // Исправлено: обращаемся к id через post
     $this->postLevelList[] = $currentLevel;
     
-    // Сортируем детей по времени перед обработкой
-    usort($tree['children'], function($a, $b) {
-        return $a['post']->time <=> $b['post']->time;
-    });
-    
-    foreach ($tree['children'] as $child) {
-        $this->flattenTreeSeparateArrays($child, $currentLevel + 1);
+    foreach ($tree['children'] as $childId) {
+        $this->flattenTreeSeparateArrays(
+            ['post' => $this->allPosts[$childId], // Передаем полные данные поста
+            $currentLevel + 1
+        );
     }
-} 
+}
 
     /**
  * Получаем все посты темы с информацией о родителях
@@ -550,11 +548,11 @@ private function getAllPostsInThread($firstPostId)
         ->select('id, parent, time')
         ->from('#__kunena_messages')
         ->where($db->quoteName('thread') . ' = ' . (int)$this->currentPost->thread)
-        ->where($db->quoteName('hold') . ' = 0');
+        ->where($db->quoteName('hold') . ' = 0')
+        ->order('time ASC'); // Сортировка на уровне SQL
     
     $posts = $db->setQuery($query)->loadObjectList('id');
 
-    // Сортируем детей по времени создания
     $structured = [];
     foreach ($posts as $post) {
         $structured[$post->id] = [
@@ -566,10 +564,7 @@ private function getAllPostsInThread($firstPostId)
     foreach ($posts as $post) {
         if ($post->parent != 0 && isset($structured[$post->parent])) {
             $structured[$post->parent]['children'][] = $post->id;
-            // Сортируем детей по времени
-            usort($structured[$post->parent]['children'], function($a, $b) use ($posts) {
-                return $posts[$a]->time <=> $posts[$b]->time;
-            });
+            // Дополнительная сортировка не нужна - уже отсортировано в SQL
         }
     }
     
