@@ -43,6 +43,7 @@ class ArticleModel extends BaseDatabaseModel
     private string $postText = ''; // Текст текущего поста 
     private int $postSize = 0; // Размер текущего поста var    int
     private $postIdList = []; // Список ID постов для обработки @var    array
+    private $postLevelList = []; // СоответствующиеID постов уровни вложенности
     private $currentPost = null;  // Текущий пост @var    object
     private string $subject = ''; // Переменная модели для хранения subject
     private $params = null; // Хранение параметров для доступа в других методах
@@ -86,6 +87,10 @@ class ArticleModel extends BaseDatabaseModel
            
               $this->postId = $firstPostId; // текущий id 
               $this->openPost($this->postId); // Открываем первый пост темы для доступа к его параметрам
+              $this->subject = $this->currentPost->subject;
+        //   Factory::getApplication()->enqueueMessage('createArticlesFromTopic $subject: ' . $this->subject, 'info'); // ОТЛАДКА 
+              $this->topicAuthorId = $this->currentPost->userid;
+
               $this->reminderLines = ""; // у первого поста нет строк напоминания
 
             // Формируем список ID постов в зависимости от схемы обхода; должно быть после открытия первого поста!
@@ -94,12 +99,10 @@ class ArticleModel extends BaseDatabaseModel
                 } else {
                 $this->postIdList = $this->buildTreePostIdList($firstPostId);
                 }
-
-              $this->subject = $this->currentPost->subject;
-        //   Factory::getApplication()->enqueueMessage('createArticlesFromTopic $subject: ' . $this->subject, 'info'); // ОТЛАДКА 
-              $this->topicAuthorId = $this->currentPost->userid;
-
-              $this->openArticle();     // Открываем первую статью
+             
+               $this->currentIndex = 0; // в nextPost() начинаем переход сразу к элементу (1), т.к. (0) = $topicId = $firstPostId
+                    
+               $this->openArticle();     // Открываем первую статью
                     
                // Основной цикл обработки постов
                 while ($this->postId != 0) {
@@ -481,7 +484,6 @@ $query->order($this->db->quoteName('time') . ' ASC');
          
             $postIds = $this->db->setQuery($query)->loadColumn();
             array_push($postIds, 0);    // добавляем элемент 0 в конец массива
-            $this->currentIndex = 0; // в nextPost() начинаем переход сразу к элементу (1), т.к. (0) = $topicId = $firstPostId
                 
     Factory::getApplication()->enqueueMessage('Массив ID постов: ' . print_r($postIds, true), 'info'); // ОТЛАДКА
          
