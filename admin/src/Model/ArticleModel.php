@@ -562,27 +562,29 @@ private function getAllPostsInThread($firstPostId)
  */
 private function buildTree($postId)
 {
-    // посты гарантированно существуют
     $node = [
         'id' => $postId,
         'time' => $this->allPosts[$postId]['time'],
         'children' => []
     ];
     
-    foreach ($this->allPosts[$postId]['children'] as $childId) {
-        $node['children'][] = $this->buildTree($childId);
+    $childrenWithTime = array_map(function($id) {
+        return [
+            'id' => $id,
+            'time' => $this->allPosts[$id]['time']
+        ];
+    }, $this->allPosts[$postId]['children']);
+    
+    // Стабильная сортировка по времени создания
+    array_multisort(
+        array_column($childrenWithTime, 'time'), SORT_ASC,
+        array_column($childrenWithTime, 'id'), SORT_ASC,
+        $childrenWithTime
+    );
+    
+    foreach ($childrenWithTime as $child) {
+        $node['children'][] = $this->buildTree($child['id']);
     }
-    
-    // Сортировка по времени
-    usort($node['children'], fn($a, $b) => $a['time'] <=> $b['time']);
-    
-    return $node;
-}
-    
-    // Сортируем детей по времени создания
-    usort($node['children'], function($a, $b) {
-        return $a['time'] <=> $b['time'];
-    });
     
     return $node;
 }
