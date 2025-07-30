@@ -530,10 +530,15 @@ private function flattenTreeSeparateArrays($tree, $currentLevel)
     $this->postIdList[] = $tree['id'];
     $this->postLevelList[] = $currentLevel;
     
+    // Сортируем детей по времени перед обработкой
+    usort($tree['children'], function($a, $b) {
+        return $a['post']->time <=> $b['post']->time;
+    });
+    
     foreach ($tree['children'] as $child) {
         $this->flattenTreeSeparateArrays($child, $currentLevel + 1);
     }
-}   
+} 
 
     /**
  * Получаем все посты темы с информацией о родителях
@@ -542,15 +547,14 @@ private function getAllPostsInThread($firstPostId)
 {
     $db = $this->getDatabase();
     $query = $db->getQuery(true)
-        ->select('*')
+        ->select('id, parent, time')
         ->from('#__kunena_messages')
         ->where($db->quoteName('thread') . ' = ' . (int)$this->currentPost->thread)
-        ->where($db->quoteName('hold') . ' = 0')
-        ->order('time ASC');
+        ->where($db->quoteName('hold') . ' = 0');
     
     $posts = $db->setQuery($query)->loadObjectList('id');
-    
-    // Строим связи parent → children
+
+    // Сортируем детей по времени создания
     $structured = [];
     foreach ($posts as $post) {
         $structured[$post->id] = [
@@ -562,8 +566,15 @@ private function getAllPostsInThread($firstPostId)
     foreach ($posts as $post) {
         if ($post->parent != 0 && isset($structured[$post->parent])) {
             $structured[$post->parent]['children'][] = $post->id;
+            // Сортируем детей по времени
+            usort($structured[$post->parent]['children'], function($a, $b) use ($posts) {
+                return $posts[$a]->time <=> $posts[$b]->time;
+            });
         }
     }
+    
+    return $structured;
+}
     
     return $structured;
 }
