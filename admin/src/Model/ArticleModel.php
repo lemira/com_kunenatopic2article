@@ -503,38 +503,49 @@ $query->order($this->db->quoteName('time') . ' ASC');
 private function buildTreePostIdList($firstPostId)
 {
     try {
-        $this->allPosts = $this->getAllPostsInThread($firstPostId); // Сохраняем посты
-        $tree = [];
+        $this->allPosts = $this->getAllPostsInThread($firstPostId);
+        $tree = [
+            'post' => $this->allPosts[$firstPostId],
+            'children' => []
+        ];
         $this->buildTree($firstPostId, $this->allPosts, $tree);
         
         $this->postIdList = [];
         $this->postLevelList = [];
         $this->flattenTreeSeparateArrays($tree, 0);
         
-        $this->postIdList[] = 0; // Конец списка
+        $this->postIdList[] = 0; // Маркер конца
         
-        // Логирование
-        error_log("Tree Post IDs: " . print_r($this->postIdList, true));
-        error_log("Tree Levels: " . print_r($this->postLevelList, true));
+        error_log("Final PostIdList: " . print_r($this->postIdList, true));
+        error_log("Final LevelList: " . print_r($this->postLevelList, true));
         
-        return $this->postIdList; // Явно возвращаем список
-        
+        return $this->postIdList;
     } catch (\Exception $e) {
         $this->app->enqueueMessage($e->getMessage(), 'error');
-        return [0]; // Возвращаем хотя бы маркер конца
+        return [0];
     }
 }
-
+    
 private function flattenTreeSeparateArrays($tree, $currentLevel)
 {
-    $this->postIdList[] = $tree['post']->id; // Исправлено: обращаемся к id через post
+    $this->postIdList[] = $tree['post']->id;
     $this->postLevelList[] = $currentLevel;
     
+    // Логирование текущего поста /// ОТЛАДКА
+    error_log(sprintf(
+        "Processing post: ID=%d, Parent=%d, Time=%s, Level=%d",
+        $tree['post']->id,
+        $tree['post']->parent,
+        $tree['post']->time,
+        $currentLevel
+    ));
+    
     foreach ($tree['children'] as $childId) {
-        $this->flattenTreeSeparateArrays(
-            ['post' => $this->allPosts[$childId], // Передаем полные данные поста
-            $currentLevel + 1
-        );
+        $childData = [
+            'post' => $this->allPosts[$childId],
+            'children' => $tree['children']
+        ];
+        $this->flattenTreeSeparateArrays($childData, $currentLevel + 1);
     }
 }
 
@@ -581,7 +592,7 @@ private function buildTree($postId, &$posts, &$tree)
 {
     if (!isset($posts[$postId])) return;
     
-    $tree['id'] = $postId;
+    $tree['post'] = $posts[$postId]['post'];
     $tree['children'] = [];
     
     foreach ($posts[$postId]['children'] as $childId) {
@@ -589,7 +600,7 @@ private function buildTree($postId, &$posts, &$tree)
         $this->buildTree($childId, $posts, $child);
         $tree['children'][] = $child;
     }
-}   
+} 
 
 public function getCurrentPostLevel()
 {
