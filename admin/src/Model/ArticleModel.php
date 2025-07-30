@@ -498,13 +498,83 @@ $query->order($this->db->quoteName('time') . ' ASC');
      * @param   int  $topicId  ID темы
      * @return  array  Список ID постов
      */
-    private function buildTreePostIdList($firstPostId)
-    {
-        // Заглушка: в реальной реализации здесь должен быть алгоритм обхода дерева
-        // На данный момент возвращаем плоский список как временное решение
-                 
-            return $this->buildFlatPostIdList($firstPostId);
-     }
+   private function buildTreePostIdList($firstPostId)
+{
+    $posts = $this->getAllPostsInThread($firstPostId);
+    $tree = [];
+    $this->buildTree($firstPostId, $posts, $tree);
+    
+    $this->postIdList = [];
+    $this->postLevelList = [];
+    $this->flattenTreeSeparateArrays($tree, 0);
+    
+    $this->postIdList[] = 0; // Конец списка
+}
+
+private function flattenTreeSeparateArrays($tree, $currentLevel)
+{
+    $this->postIdList[] = $tree['id'];
+    $this->postLevelList[] = $currentLevel;
+    
+    foreach ($tree['children'] as $child) {
+        $this->flattenTreeSeparateArrays($child, $currentLevel + 1);
+    }
+}   
+
+    /**
+ * Получаем все посты темы с информацией о родителях
+ */
+private function getAllPostsInThread($firstPostId)
+{
+    $db = $this->getDatabase();
+    $query = $db->getQuery(true)
+        ->select('*')
+        ->from('#__kunena_messages')
+        ->where($db->quoteName('thread') . ' = ' . (int)$this->currentPost->thread)
+        ->where($db->quoteName('hold') . ' = 0')
+        ->order('time ASC');
+    
+    $posts = $db->setQuery($query)->loadObjectList('id');
+    
+    // Строим связи parent → children
+    $structured = [];
+    foreach ($posts as $post) {
+        $structured[$post->id] = [
+            'post' => $post,
+            'children' => []
+        ];
+    }
+    
+    foreach ($posts as $post) {
+        if ($post->parent != 0 && isset($structured[$post->parent])) {
+            $structured[$post->parent]['children'][] = $post->id;
+        }
+    }
+    
+    return $structured;
+}
+    
+ /**
+ * Строим древовидную структуру
+ */
+private function buildTree($postId, &$posts, &$tree)
+{
+    if (!isset($posts[$postId])) return;
+    
+    $tree['id'] = $postId;
+    $tree['children'] = [];
+    
+    foreach ($posts[$postId]['children'] as $childId) {
+        $child = [];
+        $this->buildTree($childId, $posts, $child);
+        $tree['children'][] = $child;
+    }
+}   
+
+public function getCurrentPostLevel()
+{
+    return $this->postLevelList[$this->currentIndex] ?? -1;
+}
 
   // ----------------------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------------------------------   
    /**
