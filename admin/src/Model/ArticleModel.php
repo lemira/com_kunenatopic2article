@@ -502,53 +502,29 @@ $query->order($this->db->quoteName('time') . ' ASC');
      */
 private function buildTreePostIdList($firstPostId)
 {
-    try {
-        $this->allPosts = $this->getAllPostsInThread($firstPostId);
-        $tree = [
-            'post' => $this->allPosts[$firstPostId],
-            'children' => []
-        ];
-        $this->buildTree($firstPostId, $this->allPosts, $tree);
-        
-        $this->postIdList = [];
-        $this->postLevelList = [];
-        $this->flattenTreeSeparateArrays($tree, 0);
-        
-        $this->postIdList[] = 0; // Маркер конца
-        
-        error_log("Final PostIdList: " . print_r($this->postIdList, true));
-        error_log("Final LevelList: " . print_r($this->postLevelList, true));
-        
-        return $this->postIdList;
-    } catch (\Exception $e) {
-        $this->app->enqueueMessage($e->getMessage(), 'error');
-        return [0];
-    }
+    $this->allPosts = $this->getAllPostsInThread($firstPostId);
+    
+    $tree = $this->buildTree($firstPostId);
+    
+    $this->postIdList = [];
+    $this->postLevelList = [];
+    $this->flattenTree($tree, 0);
+    
+    $this->postIdList[] = 0; // Маркер конца
+    
+    return $this->postIdList;
 }
     
-private function flattenTreeSeparateArrays($tree, $currentLevel)
+private function flattenTree($node, $level)
 {
-    $this->postIdList[] = $tree['post']->id;
-    $this->postLevelList[] = $currentLevel;
+    $this->postIdList[] = $node['id'];
+    $this->postLevelList[] = $level;
     
-    // Логирование текущего поста /// ОТЛАДКА
-    error_log(sprintf(
-        "Processing post: ID=%d, Parent=%d, Time=%s, Level=%d",
-        $tree['post']->id,
-        $tree['post']->parent,
-        $tree['post']->time,
-        $currentLevel
-    ));
-    
-    foreach ($tree['children'] as $childId) {
-        $childData = [
-            'post' => $this->allPosts[$childId],
-            'children' => $tree['children']
-        ];
-        $this->flattenTreeSeparateArrays($childData, $currentLevel + 1);
+    foreach ($node['children'] as $child) {
+        $this->flattenTree($child, $level + 1);
     }
 }
-
+    
     /**
  * Получаем все посты темы с информацией о родителях
  */
@@ -556,26 +532,25 @@ private function getAllPostsInThread($firstPostId)
 {
     $db = $this->getDatabase();
     $query = $db->getQuery(true)
-        ->select('id, parent, time')
+        ->select('id, parent, time') // Только необходимые поля
         ->from('#__kunena_messages')
-        ->where($db->quoteName('thread') . ' = ' . (int)$this->currentPost->thread)
-        ->where($db->quoteName('hold') . ' = 0')
-        ->order('time ASC'); // Сортировка на уровне SQL
+        ->where('thread = ' . (int)$this->currentPost->thread)
+        ->where('hold = 0')
+        ->order('time ASC'); // Сортировка на уровне БД
     
     $posts = $db->setQuery($query)->loadObjectList('id');
-
+    
     $structured = [];
-    foreach ($posts as $post) {
-        $structured[$post->id] = [
-            'post' => $post,
+    foreach ($posts as $id => $post) {
+        $structured[$id] = [
+            'time' => $post->time,
             'children' => []
         ];
     }
     
-    foreach ($posts as $post) {
+    foreach ($posts as $id => $post) {
         if ($post->parent != 0 && isset($structured[$post->parent])) {
-            $structured[$post->parent]['children'][] = $post->id;
-            // Дополнительная сортировка не нужна - уже отсортировано в SQL
+            $structured[$post->parent]['children'][] = $id;
         }
     }
     
@@ -585,20 +560,33 @@ private function getAllPostsInThread($firstPostId)
  /**
  * Строим древовидную структуру
  */
-private function buildTree($postId, &$posts, &$tree)
+private function buildTree($postId)
 {
-    if (!isset($posts[$postId])) return;
+    // посты гарантированно существуют
+    $node = [
+        'id' => $postId,
+        'time' => $this->allPosts[$postId]['time'],
+        'children' => []
+    ];
     
-    $tree['post'] = $posts[$postId]['post'];
-    $tree['children'] = [];
-    
-    foreach ($posts[$postId]['children'] as $childId) {
-        $child = [];
-        $this->buildTree($childId, $posts, $child);
-        $tree['children'][] = $child;
+    foreach ($this->allPosts[$postId]['children'] as $childId) {
+        $node['children'][] = $this->buildTree($childId);
     }
-} 
-
+    
+    // Сортировка по времени
+    usort($node['children'], fn($a, $b) => $a['time'] <=> $b['time']);
+    
+    return $node;
+}
+    
+    // Сортируем детей по времени создания
+    usort($node['children'], function($a, $b) {
+        return $a['time'] <=> $b['time'];
+    });
+    
+    return $node;
+}
+    
 public function getCurrentPostLevel()
 {
     return $this->postLevelList[$this->currentIndex] ?? -1;
