@@ -500,17 +500,29 @@ $query->order($this->db->quoteName('time') . ' ASC');
      * @param   int  $topicId  ID темы
      * @return  array  Список ID постов
      */
-   private function buildTreePostIdList($firstPostId)
+private function buildTreePostIdList($firstPostId)
 {
-    $posts = $this->getAllPostsInThread($firstPostId);
-    $tree = [];
-    $this->buildTree($firstPostId, $posts, $tree);
-    
-    $this->postIdList = [];
-    $this->postLevelList = [];
-    $this->flattenTreeSeparateArrays($tree, 0);
-    
-    $this->postIdList[] = 0; // Конец списка
+    try {
+        $posts = $this->getAllPostsInThread($firstPostId);
+        $tree = [];
+        $this->buildTree($firstPostId, $posts, $tree);
+        
+        $this->postIdList = [];
+        $this->postLevelList = [];
+        $this->flattenTreeSeparateArrays($tree, 0);
+        
+        $this->postIdList[] = 0; // Конец списка
+        
+        // Логирование
+        error_log("Tree Post IDs: " . print_r($this->postIdList, true));
+        error_log("Tree Levels: " . print_r($this->postLevelList, true));
+        
+        return $this->postIdList; // Явно возвращаем список
+        
+    } catch (\Exception $e) {
+        $this->app->enqueueMessage($e->getMessage(), 'error');
+        return [0]; // Возвращаем хотя бы маркер конца
+    }
 }
 
 private function flattenTreeSeparateArrays($tree, $currentLevel)
