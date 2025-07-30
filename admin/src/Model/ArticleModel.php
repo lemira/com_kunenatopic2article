@@ -582,9 +582,6 @@ private function getAllPostsInThread($firstPostId)
     return $structured;
 }
     
-    return $structured;
-}
-    
  /**
  * Строим древовидную структуру
  */
