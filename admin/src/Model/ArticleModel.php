@@ -549,7 +549,7 @@ private function buildTreePostIdList($firstPostId)
         $this->traverseTree($firstPostId, 0, $children, $postIdList, $postLevelList);
         
         return [
-            'postIds' => $postIdList,
+           'postIds' => array_merge($postIdList, [0]), // Добавляем 0 в конец
             'levels' => $postLevelList
         ];
         
