@@ -40,6 +40,7 @@ class ArticleModel extends BaseDatabaseModel
     private int $articleSize = 0;    // Текущий размер статьи , @var    int 
     private $articleLinks = [];  // Массив ссылок на созданные статьи  @var array 
     private int $postId = 0;   // Текущий ID поста @var    int
+    private int $threadId = 0;  // Id темы
     private string $postText = ''; // Текст текущего поста 
     private int $postSize = 0; // Размер текущего поста var    int
     private $postIdList = []; // Список ID постов для обработки @var    array
@@ -88,6 +89,7 @@ class ArticleModel extends BaseDatabaseModel
               $this->postId = $firstPostId; // текущий id 
               $this->openPost($this->postId); // Открываем первый пост темы для доступа к его параметрам
               $this->subject = $this->currentPost->subject;
+              $this->threadId = (int) $this->currentPost->thread; // Получаем Id темы
         //   Factory::getApplication()->enqueueMessage('createArticlesFromTopic $subject: ' . $this->subject, 'info'); // ОТЛАДКА 
               $this->topicAuthorId = $this->currentPost->userid;
 
@@ -458,9 +460,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
      private function buildFlatPostIdList($firstPostId)
     {
     
-       $threadId = (int) $this->currentPost->thread; // Получаем Id темы
-      
-      $this->postIds = $this->getAllThreadPosts($threadId); // Получаем массив постов темы
+      $this->postIds = $this->getAllThreadPosts($this->threadId); // Получаем массив постов темы
         
       sort($this->postIds); // Сортируем массив постов по возрастанию id (= по времени создания)
       
@@ -476,7 +476,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
     $query = $this->db->getQuery(true)
     ->select($this->db->quoteName('id'))
     ->from($this->db->quoteName('#__kunena_messages'))
-    ->where($this->db->quoteName('thread') . ' = ' . $threadId) 
+    ->where($this->db->quoteName('thread') . ' = ' . $this->threadId) 
     ->where($this->db->quoteName('hold') . ' = 0');
 
    // --- НАЧАЛО БЛОКА ДЛЯ ИСКЛЮЧЕНИЯ АВТОРОВ дж --- 
