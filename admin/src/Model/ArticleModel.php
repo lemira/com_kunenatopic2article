@@ -498,100 +498,93 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             return $postIds;
   }
     
-    /**
-     * Построение списка ID постов для древовидной схемы обхода
-     * @param   int  $topicId  ID темы
-     * @return  array  Список ID постов
-     */
-private function buildTreePostIdList($firstPostId)
-{
-    $this->allPosts = $this->getAllPostsInThread($firstPostId);
-    
-    $tree = $this->buildTree($firstPostId);
-    
-    $this->postIdList = [];
-    $this->postLevelList = [];
-    $this->flattenTree($tree, 0);
-    
-    $this->postIdList[] = 0; // Маркер конца
-    
-    return $this->postIdList;
-}
-    
-private function flattenTree($node, $level)
-{
-    $this->postIdList[] = $node['id'];
-    $this->postLevelList[] = $level;
-    
-    foreach ($node['children'] as $child) {
-        $this->flattenTree($child, $level + 1);
-    }
-}
-    
-    /**
- * Получаем все посты темы с информацией о родителях
+<?php
+
+/**
+ * Построение списков ID постов и их уровней для древовидного обхода
+ * @param   int  $firstPostId  ID первого поста темы
+ * @return  array  Массив с двумя списками: ['postIds' => [...], 'levels' => [...]]
  */
-private function getAllPostsInThread($firstPostId)
+private function buildTreeTraversalLists($firstPostId)
 {
-    $db = $this->getDatabase();
-    $query = $db->getQuery(true)
-        ->select('id, parent, time') // Только необходимые поля
-        ->from('#__kunena_messages')
-        ->where('thread = ' . (int)$this->currentPost->thread)
-        ->where('hold = 0')
-        ->order('time ASC'); // Сортировка на уровне БД
-    
-    $posts = $db->setQuery($query)->loadObjectList('id');
-    
-    $structured = [];
-    foreach ($posts as $id => $post) {
-        $structured[$id] = [
-            'time' => $post->time,
-            'children' => []
+    try {
+        // Получаем все посты темы
+        $postIds = $this->getAllThreadPosts($this->threadId);
+        
+        // Получаем связи родитель-дети
+        $query = $this->db->getQuery(true)
+            ->select(['parent as id', 'id as child'])
+            ->from($this->db->quoteName('#__kunena_messages'))
+            ->where($this->db->quoteName('parent') . ' IN (' . implode(',', array_map('intval', $postIds)) . ')');
+        
+        $pairs = $this->db->setQuery($query)->loadObjectList();
+        
+        // Группируем по родителям
+        $children = [];
+        foreach ($pairs as $pair) {
+            $children[$pair->id][] = $pair->child;
+        }
+        
+        // Добавляем листовые узлы с нулями
+        foreach ($postIds as $postId) {
+            if (!isset($children[$postId])) {
+                $children[$postId] = [0];
+            }
+        }
+        
+        // Сортируем по ID родителей
+        ksort($children);
+        
+        // Сортируем детей каждого родителя по ID (= по времени)
+        foreach ($children as &$childList) {
+            if ($childList[0] !== 0) { // Не сортируем массивы только с нулем
+                sort($childList);
+            }
+        }
+        
+        // Выполняем обход дерева
+        $postIdList = [];
+        $postLevelList = [];
+        
+        $this->traverseTree($firstPostId, 0, $children, $postIdList, $postLevelList);
+        
+        return [
+            'postIds' => $postIdList,
+            'levels' => $postLevelList
+        ];
+        
+    } catch (\Exception $e) {
+        $this->app->enqueueMessage('Ошибка построения древовидного обхода: ' . $e->getMessage(), 'error');
+        return [
+            'postIds' => [$firstPostId, 0],
+            'levels' => [0, 0]
         ];
     }
+}
+
+/**
+ * Рекурсивный обход дерева в глубину
+ * @param   int    $postId         Текущий пост
+ * @param   int    $level          Текущий уровень
+ * @param   array  $children       Массив связей родитель-дети
+ * @param   array  &$postIdList    Результирующий список ID (по ссылке)
+ * @param   array  &$postLevelList Результирующий список уровней (по ссылке)
+ */
+private function traverseTree($postId, $level, $children, &$postIdList, &$postLevelList)
+{
+    // Добавляем текущий пост
+    $postIdList[] = $postId;
+    $postLevelList[] = $level;
     
-    foreach ($posts as $id => $post) {
-        if ($post->parent != 0 && isset($structured[$post->parent])) {
-            $structured[$post->parent]['children'][] = $id;
+    // Если у поста есть дети
+    if (isset($children[$postId]) && $children[$postId][0] !== 0) {
+        foreach ($children[$postId] as $childId) {
+            // Рекурсивно обходим каждого ребенка
+            $this->traverseTree($childId, $level + 1, $children, $postIdList, $postLevelList);
         }
     }
-    
-    return $structured;
 }
-    
- /**
- * Строим древовидную структуру
- */
-private function buildTree($postId)
-{
-    $node = [
-        'id' => $postId,
-        'time' => $this->allPosts[$postId]['time'],
-        'children' => []
-    ];
-    
-    $childrenWithTime = array_map(function($id) {
-        return [
-            'id' => $id,
-            'time' => $this->allPosts[$id]['time']
-        ];
-    }, $this->allPosts[$postId]['children']);
-    
-    // Стабильная сортировка по времени создания
-    array_multisort(
-        array_column($childrenWithTime, 'time'), SORT_ASC,
-        array_column($childrenWithTime, 'id'), SORT_ASC,
-        $childrenWithTime
-    );
-    
-    foreach ($childrenWithTime as $child) {
-        $node['children'][] = $this->buildTree($child['id']);
-    }
-    
-    return $node;
-}
-    
+
 public function getCurrentPostLevel()
 {
     return $this->postLevelList[$this->currentIndex] ?? -1;
