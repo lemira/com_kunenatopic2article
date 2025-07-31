@@ -455,46 +455,49 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
      * @param   int  $firstPostId  ID первого поста темы
      * @return  array  Список ID постов
      */
-    private function buildFlatPostIdList($firstPostId)
+     private function buildFlatPostIdList($firstPostId)
     {
-        try {
-      $threadId = (int) $this->currentPost->thread; // Получаем Id темы
+    
+       $threadId = (int) $this->currentPost->thread; // Получаем Id темы
+      
+      $this->postIds = $this->getAllThreadPosts($threadId); // Получаем массив постов темы
+        
+      sort($this->postIds); // Сортируем массив постов по возрастанию id (= по времени создания)
+      
+      array_push($this->postIds, 0);    // добавляем элемент 0 в конец массива
+      
+      return $this->postIds; 
+   
+    }
 
-            // Получаем все посты темы
+    private function getAllThreadPosts($threadId)           
+     {
+     // Получаем все посты темы
     $query = $this->db->getQuery(true)
     ->select($this->db->quoteName('id'))
     ->from($this->db->quoteName('#__kunena_messages'))
-    ->where($this->db->quoteName('thread') . ' = ' . $threadId) // Используем полученный ID
+    ->where($this->db->quoteName('thread') . ' = ' . $threadId) 
     ->where($this->db->quoteName('hold') . ' = 0');
 
-// --- НАЧАЛО БЛОКА ДЛЯ ИСКЛЮЧЕНИЯ АВТОРОВ --- дж
-$ignoredAuthors = trim($this->params->ignored_authors); // Получаем и обрабатываем список игнорируемых авторов
-if (!empty($ignoredAuthors)) { // Проверяем, что список не пустой
-    $ignoredAuthorsArray = array_filter(array_map('trim', explode(',', $ignoredAuthors)));  // Разбиваем строку на массив, очищаем от пробелов и удаляем пустые значения
-   if (!empty($ignoredAuthorsArray)) {     // Если после очистки в массиве остались имена, добавляем условие в запрос
+   // --- НАЧАЛО БЛОКА ДЛЯ ИСКЛЮЧЕНИЯ АВТОРОВ дж --- 
+        $ignoredAuthors = trim($this->params->ignored_authors); // Получаем и обрабатываем список игнорируемых авторов
+     if (!empty($ignoredAuthors)) { // Проверяем, что список не пустой
+         $ignoredAuthorsArray = array_filter(array_map('trim', explode(',', $ignoredAuthors)));  // Разбиваем строку на массив, очищаем от пробелов и удаляем пустые значения
+     if (!empty($ignoredAuthorsArray)) {     // Если после очистки в массиве остались имена, добавляем условие в запрос
        $quotedAuthors = array_map(array($this->db, 'quote'), $ignoredAuthorsArray);  // Безопасно квотируем каждое имя для использования в SQL-запросе
         // Добавляем условие NOT IN к запросу
         $query->where($this->db->quoteName('name') . ' NOT IN (' . implode(',', $quotedAuthors) . ')');
+      }
     }
-}
-// --- КОНЕЦ БЛОКА ИСКЛЮЧЕНИЯ АВТОРОВ ---
-
-// Добавляем сортировку в конце
-$query->order($this->db->quoteName('time') . ' ASC');
-         
+    // --- КОНЕЦ БЛОКА ИСКЛЮЧЕНИЯ АВТОРОВ ---
+        
             $postIds = $this->db->setQuery($query)->loadColumn();
-            array_push($postIds, 0);    // добавляем элемент 0 в конец массива
-                
+           
     Factory::getApplication()->enqueueMessage('Массив ID постов: ' . print_r($postIds, true), 'info'); // ОТЛАДКА
-         
+   
             return $postIds;
-            
-        } catch (\Exception $e) {
-            $this->app->enqueueMessage($e->getMessage(), 'error');
-            return []; // м. использовать: return null; // Вернуть null при ошибке
-        }
-    }
-
+  }
+    
     /**
      * Построение списка ID постов для древовидной схемы обхода
      * @param   int  $topicId  ID темы
