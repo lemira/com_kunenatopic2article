@@ -99,9 +99,9 @@ class ArticleModel extends BaseDatabaseModel
             if ($this->params->post_transfer_scheme != 1) {
                 $this->postIdList = $this->buildFlatPostIdList($firstPostId);
                 } else {
-                $result = $this->buildTreePostIdList($firstPostId);
-                $this->postIdList = $result['postIds'];
-                $this->postLevelList = $result['levels'];
+                $baum = $this->buildTreePostIdList($firstPostId);
+                $this->postIdList = $baum['postIds'];
+                $this->postLevelList = $baum['levels'];
                 }
              
                $this->currentIndex = 0; // в nextPost() начинаем переход сразу к элементу (1), т.к. (0) = $topicId = $firstPostId
