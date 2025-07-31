@@ -99,7 +99,9 @@ class ArticleModel extends BaseDatabaseModel
             if ($this->params->post_transfer_scheme != 1) {
                 $this->postIdList = $this->buildFlatPostIdList($firstPostId);
                 } else {
-                $this->postIdList = $this->buildTreePostIdList($firstPostId);
+                $result = $this->buildTreePostIdList($firstPostId);
+                $this->postIdList = $result['postIds'];
+                $this->postLevelList = $result['levels'];
                 }
              
                $this->currentIndex = 0; // в nextPost() начинаем переход сразу к элементу (1), т.к. (0) = $topicId = $firstPostId
@@ -503,7 +505,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
  * @param   int  $firstPostId  ID первого поста темы
  * @return  array  Массив с двумя списками: ['postIds' => [...], 'levels' => [...]]
  */
-private function buildTreeTraversalLists($firstPostId)
+private function buildTreePostIdList($firstPostId)
 {
     try {
         // Получаем все посты темы
