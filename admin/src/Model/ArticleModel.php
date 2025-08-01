@@ -717,25 +717,42 @@ private function convertBBCodeToHtml($text)
             return $marker;
         }, $text);
         
-        $bbcode = new \ChrisKonnertz\BBCode\BBCode();
-        
         // НОВАЯ ЛОГИКА ФОРМАТИРОВАНИЯ
-        // 1. Сначала нормализуем все переводы строк
-        // Заменяем все варианты <br> на единый маркер
-        $html = preg_replace('/\s*<br\s*\/?>\s*/i', '###LINEBREAK###', $html);
+        // Отладка - смотрим исходный текст
+        error_log("Original text: " . substr($text, 0, 500)); // ОТЛАДКА
         
-        // Также заменяем обычные переводы строк на тот же маркер
-        $html = str_replace(["\r\n", "\r", "\n"], '###LINEBREAK###', $html);
+        // 1. Предобработка исходного текста ДО BBCode парсера
+        $preprocessedText = $text;
         
-        // 2. Теперь обрабатываем последовательности переводов строк
-        // Заменяем 2 и более переводов строк подряд на маркер абзаца
-        $html = preg_replace('/(###LINEBREAK###){2,}/', '###PARAGRAPH###', $html);
+        // Нормализуем все варианты переводов строк к \n
+        $preprocessedText = str_replace(["\r\n", "\r"], "\n", $preprocessedText);
         
-        // 3. Оставшиеся одиночные переводы строк заменяем на наш кастомный br
-        $html = str_replace('###LINEBREAK###', '<span class="kun_p2a_br"></span>', $html);
+        // Заменяем последовательности из 2+ пустых строк на специальный маркер
+        // Ищем паттерн: \n + любое количество пробелов/табов + \n (повторяется 2+ раза)
+        $preprocessedText = preg_replace('/\n(\s*\n){2,}/', "\n###PARAGRAPH_BREAK###\n", $preprocessedText);
+        
+        // Оставшиеся одиночные переводы строк заменяем на маркер для br
+        $preprocessedText = str_replace("\n", "###LINE_BREAK###", $preprocessedText);
+        
+        // Отладка предобработанного текста
+        error_log("Preprocessed text: " . substr($preprocessedText, 0, 500)); // ОТЛАДКА
+        
+        // 2. Применяем BBCode парсер к предобработанному тексту
+        $bbcode = new \ChrisKonnertz\BBCode\BBCode();
+        $html = $bbcode->render($preprocessedText);
+        
+        // Отладка - смотрим что получили от BBCode парсера
+        error_log("BBCode output: " . substr($html, 0, 500)); // ОТЛАДКА
+        
+        // 3. Постобработка после BBCode парсера
+        // Заменяем наши маркеры на нужные HTML элементы
+        $html = str_replace('###LINE_BREAK###', '<span class="kun_p2a_br"></span>', $html);
+        
+        // Также обрабатываем любые <br> теги, которые мог создать BBCode парсер
+        $html = preg_replace('/\s*<br\s*\/?>\s*/i', '<span class="kun_p2a_br"></span>', $html);
         
         // 4. Разбиваем текст по маркерам абзацев
-        $parts = explode('###PARAGRAPH###', $html);
+        $parts = explode('###PARAGRAPH_BREAK###', $html);
         
         // Очищаем пустые части
         $parts = array_filter($parts, function($part) {
@@ -826,7 +843,8 @@ private function getAttachmentPath($attachmentId)
 private function simpleBBCodeToHtml($text)
 {
    return 'NO PARSER'; // СООБЩАЕМ, ЧТО С ОСНОВНЫМ ПАРСЕРОМ ПРОБЛЕМЫ
-}    
+}
+    
     /**
  * Отправка email-уведомлений о созданных статьях
  * @param   array  $articleLinks  Массив ссылок на статьи
