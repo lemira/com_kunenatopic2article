@@ -719,25 +719,22 @@ private function convertBBCodeToHtml($text)
         
         $bbcode = new \ChrisKonnertz\BBCode\BBCode();
         
-        // Применяем BBCode парсер
-        $html = $bbcode->render($text);
-        
-        // Конвертируем <br/>, "\n" и т.п. в кастомные "абзацы" компонента для совместимости с WYSIWYG редакторами
-        // Сначала нормализуем все переводы строк
+        // НОВАЯ ЛОГИКА ФОРМАТИРОВАНИЯ
+        // 1. Сначала нормализуем все переводы строк
         // Заменяем все варианты <br> на единый маркер
         $html = preg_replace('/\s*<br\s*\/?>\s*/i', '###LINEBREAK###', $html);
         
         // Также заменяем обычные переводы строк на тот же маркер
         $html = str_replace(["\r\n", "\r", "\n"], '###LINEBREAK###', $html);
         
-        // Теперь обрабатываем последовательности переводов строк
+        // 2. Теперь обрабатываем последовательности переводов строк
         // Заменяем 2 и более переводов строк подряд на маркер абзаца
         $html = preg_replace('/(###LINEBREAK###){2,}/', '###PARAGRAPH###', $html);
         
-        // Оставшиеся одиночные переводы строк заменяем на наш кастомный br
+        // 3. Оставшиеся одиночные переводы строк заменяем на наш кастомный br
         $html = str_replace('###LINEBREAK###', '<span class="kun_p2a_br"></span>', $html);
         
-        // Разбиваем текст по маркерам абзацев
+        // 4. Разбиваем текст по маркерам абзацев
         $parts = explode('###PARAGRAPH###', $html);
         
         // Очищаем пустые части
@@ -745,7 +742,7 @@ private function convertBBCodeToHtml($text)
             return trim($part) !== '';
         });
         
-        // Оборачиваем каждую часть в наш кастомный абзац, если она еще не обернута в блочный элемент
+        // 5. Оборачиваем каждую часть в наш кастомный абзац, если она еще не обернута в блочный элемент
         $paragraphs = [];
         foreach ($parts as $part) {
             $part = trim($part);
@@ -754,7 +751,7 @@ private function convertBBCodeToHtml($text)
             // Проверяем, не начинается ли уже с блочного элемента
             if (!preg_match('/^\s*<(div|h[1-6]|ul|ol|li|blockquote|pre|table|tr|td|th)\b/i', $part)) {
                 $part = '<div class="kun_p2a_p">' . $part . '</div>';
-            }     
+            }
             
             $paragraphs[] = $part;
         }
@@ -790,7 +787,8 @@ private function convertBBCodeToHtml($text)
         return $this->simpleBBCodeToHtml($text);
     }
 }
-    // Получение реального пути к attachment из базы данных
+
+// Получение реального пути к attachment из базы данных
 private function getAttachmentPath($attachmentId)
 {
     try {
@@ -824,13 +822,12 @@ private function getAttachmentPath($attachmentId)
     }
 }
 
-// Простой парсер как fallback (код удален, но его можно найти в файле от 31.07.2025)
+// Простой парсер как fallback
 private function simpleBBCodeToHtml($text)
 {
    return 'NO PARSER'; // СООБЩАЕМ, ЧТО С ОСНОВНЫМ ПАРСЕРОМ ПРОБЛЕМЫ
 }
-
-
+    
     /**
  * Отправка email-уведомлений о созданных статьях
  * @param   array  $articleLinks  Массив ссылок на статьи
