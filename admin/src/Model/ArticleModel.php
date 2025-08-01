@@ -727,9 +727,9 @@ private function convertBBCodeToHtml($text)
         // Нормализуем все варианты переводов строк к \n
         $preprocessedText = str_replace(["\r\n", "\r"], "\n", $preprocessedText);
         
-        // Заменяем последовательности из 2+ пустых строк на специальный маркер
-        // Ищем паттерн: \n + любое количество пробелов/табов + \n (повторяется 2+ раза)
-        $preprocessedText = preg_replace('/\n(\s*\n){2,}/', "\n###PARAGRAPH_BREAK###\n", $preprocessedText);
+        // Заменяем последовательности из 2+ переводов строк на специальный маркер
+        // Ищем паттерн: 2 или более переводов строки подряд (с возможными пробелами между ними)
+        $preprocessedText = preg_replace('/\n(\s*\n)+/', "\n###PARAGRAPH_BREAK###\n", $preprocessedText);
         
         // Оставшиеся одиночные переводы строк заменяем на маркер для br
         $preprocessedText = str_replace("\n", "###LINE_BREAK###", $preprocessedText);
@@ -843,7 +843,7 @@ private function getAttachmentPath($attachmentId)
 private function simpleBBCodeToHtml($text)
 {
    return 'NO PARSER'; // СООБЩАЕМ, ЧТО С ОСНОВНЫМ ПАРСЕРОМ ПРОБЛЕМЫ
-}
+}  
     
     /**
  * Отправка email-уведомлений о созданных статьях
