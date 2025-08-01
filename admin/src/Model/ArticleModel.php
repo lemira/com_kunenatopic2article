@@ -722,25 +722,39 @@ private function convertBBCodeToHtml($text)
         // Применяем BBCode парсер
         $html = $bbcode->render($text);
         
-        // Конвертируем <br/> в абзацы <p> для совместимости с WYSIWYG редакторами
-        // Разбиваем HTML на части по <br/> и <br>
-        $parts = preg_split('/\s*<br\s*\/?>\s*/i', $html);
+        // Конвертируем <br/>, "\n" и т.п. в кастомные "абзацы" компонента для совместимости с WYSIWYG редакторами
+        // Сначала нормализуем все переводы строк
+        // Заменяем все варианты <br> на единый маркер
+        $html = preg_replace('/\s*<br\s*\/?>\s*/i', '###LINEBREAK###', $html);
+        
+        // Также заменяем обычные переводы строк на тот же маркер
+        $html = str_replace(["\r\n", "\r", "\n"], '###LINEBREAK###', $html);
+        
+        // Теперь обрабатываем последовательности переводов строк
+        // Заменяем 2 и более переводов строк подряд на маркер абзаца
+        $html = preg_replace('/(###LINEBREAK###){2,}/', '###PARAGRAPH###', $html);
+        
+        // Оставшиеся одиночные переводы строк заменяем на наш кастомный br
+        $html = str_replace('###LINEBREAK###', '<span class="kun_p2a_br"></span>', $html);
+        
+        // Разбиваем текст по маркерам абзацев
+        $parts = explode('###PARAGRAPH###', $html);
         
         // Очищаем пустые части
         $parts = array_filter($parts, function($part) {
             return trim($part) !== '';
         });
         
-        // Оборачиваем каждую часть в <p>, если она еще не обернута в блочный элемент
+        // Оборачиваем каждую часть в наш кастомный абзац, если она еще не обернута в блочный элемент
         $paragraphs = [];
         foreach ($parts as $part) {
             $part = trim($part);
             if ($part === '') continue;
             
             // Проверяем, не начинается ли уже с блочного элемента
-            if (!preg_match('/^\s*<(p|div|h[1-6]|ul|ol|li|blockquote|pre|table|tr|td|th)\b/i', $part)) {
-                $part = '<p>' . $part . '</p>';
-            }
+            if (!preg_match('/^\s*<(div|h[1-6]|ul|ol|li|blockquote|pre|table|tr|td|th)\b/i', $part)) {
+                $part = '<div class="kun_p2a_p">' . $part . '</div>';
+            }     
             
             $paragraphs[] = $part;
         }
@@ -810,100 +824,12 @@ private function getAttachmentPath($attachmentId)
     }
 }
 
-
-// Простой парсер как fallback
+// Простой парсер как fallback (код удален, но его можно найти в файле от 31.07.2025)
 private function simpleBBCodeToHtml($text)
 {
    return 'NO PARSER'; // СООБЩАЕМ, ЧТО С ОСНОВНЫМ ПАРСЕРОМ ПРОБЛЕМЫ
 }
 
-/**  ВРЕМЕННО ОСТАВЛЯЕМ ЗАМЕНУ ПАРСЕРУ С ГИТХАБ   
-// Простой парсер как fallback
-private function simpleBBCodeToHtml($text)
-{
-    try {
-        // Обрабатываем списки
-        $text = $this->processLists($text);
-        
-        // Обрабатываем блоки кода
-        $text = $this->processCodeBlocks($text);
-        
-        // Основные теги BBCode
-        $bbcode_patterns = [
-            '/\[b\](.*?)\[\/b\]/is' => '<strong>$1</strong>',
-            '/\[i\](.*?)\[\/i\]/is' => '<em>$1</em>',
-            '/\[u\](.*?)\[\/u\]/is' => '<u>$1</u>',
-            '/\[s\](.*?)\[\/s\]/is' => '<del>$1</del>',
-            '/~~(.*?)~~/is' => '<del>$1</del>',
-            '/\[url=(.*?)\](.*?)\[\/url\]/is' => '<a href="$1" target="_blank">$2</a>',
-            '/\[url\](.*?)\[\/url\]/is' => '<a href="$1" target="_blank">$1</a>',
-            '/\[quote\](.*?)\[\/quote\]/is' => '<blockquote>$1</blockquote>',
-            '/\[quote=(.*?)\](.*?)\[\/quote\]/is' => '<blockquote><cite>$1:</cite><br>$2</blockquote>',
-            '/\[color=(.*?)\](.*?)\[\/color\]/is' => '<span style="color: $1;">$2</span>',
-            '/\[size=(.*?)\](.*?)\[\/size\]/is' => '<span style="font-size: $1%;">$2</span>',
-            '/\[center\](.*?)\[\/center\]/is' => '<div style="text-align: center;">$1</div>',
-            '/\[left\](.*?)\[\/left\]/is' => '<div style="text-align: left;">$1</div>',
-            '/\[right\](.*?)\[\/right\]/is' => '<div style="text-align: right;">$1</div>',
-            '/\[img\](.*?)\[\/img\]/is' => '<img src="$1" alt="" />',
-        ];
-        
-        $html = preg_replace(array_keys($bbcode_patterns), array_values($bbcode_patterns), $text);
-        return nl2br($html);
-        
-    } catch (\Exception $e) {
-        return $text;
-    }
-}
-
-// Обработка списков BBCode
-private function processLists($text)
-{
-    // Нумерованные списки
-    $text = preg_replace_callback('/\[list=1\](.*?)\[\/list\]/is', function($matches) {
-        $content = $matches[1];
-        $items = preg_split('/\[\*\]/', $content);
-        $html = '<ol>';
-        foreach($items as $item) {
-            $item = trim($item);
-            if (!empty($item)) {
-                $html .= '<li>' . $item . '</li>';
-            }
-        }
-        $html .= '</ol>';
-        return $html;
-    }, $text);
-    
-    // Маркированные списки
-    $text = preg_replace_callback('/\[list\](.*?)\[\/list\]/is', function($matches) {
-        $content = $matches[1];
-        $items = preg_split('/\[\*\]/', $content);
-        $html = '<ul>';
-        foreach($items as $item) {
-            $item = trim($item);
-            if (!empty($item)) {
-                $html .= '<li>' . $item . '</li>';
-            }
-        }
-        $html .= '</ul>';
-        return $html;
-    }, $text);
-    
-    return $text;
-}
-
-// Обработка блоков кода
-private function processCodeBlocks($text)
-{
-    $text = preg_replace('/Code:\s*\n/i', '<div class="code-header">Code:</div>', $text);
-    
-    $text = preg_replace_callback('/\[code\](.*?)\[\/code\]/is', function($matches) {
-        $code = htmlspecialchars(trim($matches[1]), ENT_QUOTES, 'UTF-8');
-        return '<pre style="background: #f4f4f4; border: 1px solid #ddd; padding: 10px; overflow-x: auto;"><code style="color: #d14; font-family: monospace;">' . $code . '</code></pre>';
-    }, $text);
-    
-    return $text;
-}
- КОНЕЦ ВРЕМЕННОЙ ЗАМЕНЫ парсера **/
 
     /**
  * Отправка email-уведомлений о созданных статьях
