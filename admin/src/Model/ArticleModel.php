@@ -826,8 +826,7 @@ private function getAttachmentPath($attachmentId)
 private function simpleBBCodeToHtml($text)
 {
    return 'NO PARSER'; // СООБЩАЕМ, ЧТО С ОСНОВНЫМ ПАРСЕРОМ ПРОБЛЕМЫ
-}
-    
+}    
     /**
  * Отправка email-уведомлений о созданных статьях
  * @param   array  $articleLinks  Массив ссылок на статьи
