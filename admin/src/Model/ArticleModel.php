@@ -769,6 +769,9 @@ private function convertBBCodeToHtml($text)
             
             $html = str_replace($marker, $imageHtml, $html);
         }
+
+         // ДОБАВЛЯЕМ ОБЕРТКУ КОНТЕЙНЕРА
+        $html = '<div class="kun_p2a_content">' . $html . '</div>';
         
         return $html;
         
