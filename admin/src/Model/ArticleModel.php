@@ -723,8 +723,8 @@ private function convertBBCodeToHtml($text)
         $html = $bbcode->render($text);
         
         // Обработка нескольких пустых строк. Заменяем последовательности из 2+ <br> на кастомный элемент
-        $html = preg_replace('/(<br\s*\/?>\s*){2,}/i', '<div class="kun_p2a_empty_line"></div>', $html);
-        
+       $html = preg_replace('/(<br\s*\/?>\s*){2,}/i', '###KUN_P2A_EMPTY_LINE###', $html);
+         
         // Разбиваем HTML на части по <br/> и <br>
         $parts = preg_split('/\s*<br\s*\/?>\s*/i', $html);
         
@@ -749,7 +749,10 @@ private function convertBBCodeToHtml($text)
         }
         
         $html = implode("\n", $paragraphs);
-        
+
+        // Заменяем маркеры пустых строк на div
+        $html = str_replace('###KUN_P2A_EMPTY_LINE###', '<div class="kun_p2a_empty_line"></div>', $html);
+
         // Восстанавливаем изображения
         foreach ($attachments as $marker => $data) {
             $attachmentId = $data[0];
