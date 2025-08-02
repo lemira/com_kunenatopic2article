@@ -5,20 +5,37 @@
     line-height: 1.6;
 }
 
-/* Переопределяем стили для всех <p> внутри контейнера */
+/* Переопределяем стили для всех <p> внутри контента */
 .kun_p2a_content p {
-    margin: 0 !important; /* Убираем все отступы у абзацев */
+    margin: 0 0 0.3em 0 !important; /* Только нижний отступ */
     padding: 0;
     line-height: inherit;
 }
 
-/* Стиль для пустых строк (замена нескольких <br>) */
+/* Стиль для пустых строк */
 .kun_p2a_empty_line {
-    height: 0.8em; /* Высота пустой строки */
+    height: 0.8em;
     margin: 0;
     padding: 0;
     content: "";
 }
+
+/* Дополнительные стили для форматирования 
+.kun_p2a_content img { 
+    max-width: 100%;  max-width: 100% и height: auto - стандартные свойства для адаптивности
+    height: auto;
+    display: block;
+    margin: 1em auto; * Центрируем изображения и добавляем отступы *
+}
+
+.kun_p2a_content a {
+    color: #0066cc;
+    text-decoration: underline;
+}
+
+.kun_p2a_content a:hover {
+    color: #004499;
+} */
 
 /* Стиль для информационной строки поста */
 .kun_p2a_infoPostString {
