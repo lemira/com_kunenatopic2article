@@ -1,3 +1,9 @@
+/* Основной контейнер для контента статьи */
+.kun_p2a_content {
+    font-family: inherit;
+    line-height: 1.6;
+}
+
 /* Кастомный аналог <br> - одиночный перевод строки */
 .kun_p2a_br {
     display: block;
@@ -5,6 +11,7 @@
     margin: 0 !important;
     padding: 0 !important;
     content: "";
+    clear: both;
 }
 
 /* Стиль для абзацев - два и более перевода строки */
@@ -12,6 +19,17 @@
     margin: 0 0 0.3em 0 !important; /* Только нижний отступ */
     padding: 0;
     line-height: inherit;
+}
+
+/* Дополнительные стили для форматирования */
+.kun_p2a_content p,
+.kun_p2a_content div {
+    margin: 0 0 0.3em 0;
+}
+
+.kun_p2a_content p:last-child,
+.kun_p2a_content div:last-child {
+    margin-bottom: 0;
 }
 
 /* Стиль для информационной строки поста */
