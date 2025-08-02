@@ -1,4 +1,4 @@
-/* 250802 1745 */
+/* 250802:1745 :1911*/
 /* Основной контейнер для контента статьи */
 .kun_p2a_content {
     font-family: inherit;
@@ -7,7 +7,7 @@
 
 /* Стиль для абзацев */
 .kun_p2a_p {
-    margin: 0 0 0.3em 0 !important; /* Только нижний отступ */
+    margin: 0 0 0.5em 0 !important; /* Нижний отступ между абзацами */
     padding: 0;
     line-height: inherit;
 }
@@ -17,28 +17,13 @@
     margin-bottom: 0 !important;
 }
 
-/* Кастомный аналог <br> - одиночный перевод строки */
+/* Кастомный перенос строки - используем span с псевдоэлементом */
 .kun_p2a_br {
-    display: block;
-    height: 0.8em; /* Небольшой вертикальный отступ */
-    margin: 0 !important;
-    padding: 0 !important;
+    display: inline-block;
+    width: 100%;
+    height: 0.8em; /* Высота переноса строки */
     content: "";
-}
-
-/* Дополнительные стили для форматирования */
-.kun_p2a_content img {
-    max-width: 100%;
-    height: auto;
-}
-
-.kun_p2a_content a {
-    color: #0066cc;
-    text-decoration: underline;
-}
-
-.kun_p2a_content a:hover {
-    color: #004499;
+    visibility: hidden;
 }
 
 /* Стиль для информационной строки поста */
