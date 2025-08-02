@@ -367,7 +367,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
                     }
             // Получаем данные поста из базы данных Kunena, фильтрация промодерированных постов сделана раньше
             $query = $this->db->getQuery(true)
-                ->select('*')        // Нужно сделать получение только используемых полей
+               ->select($this->db->quoteName([ 'id', 'subject', 'thread', 'userid', 'parent', 'name', 'time', 'catid' ])) // только используемые поля
                 ->from($this->db->quoteName('#__kunena_messages'))
                 ->where($this->db->quoteName('id') . ' = ' . (int)$postId);
 
@@ -383,7 +383,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
             // Получаем текст поста
             $this->postText = $this->db->setQuery($query)->loadResult();
 
-            // Проверяем, найден ли текст
+            // Проверяем, найден ли текст   // НЕ НУЖНО?
             if ($this->postText === null) {
                 throw new \Exception(Text::sprintf('COM_YOURCOMPONENT_POST_TEXT_NOT_FOUND', $postId));
             }
