@@ -723,21 +723,33 @@ private function convertBBCodeToHtml($text)
         $html = $bbcode->render($text);
         
         // Конвертируем <br/> в кастомные абзацы для совместимости с WYSIWYG редакторами ц
-         // 1. Заменяем все <br/> на временные маркеры переносов
+        // --- НОВАЯ ЛОГИКА ОБРАБОТКИ ПЕРЕНОСОВ СТРОК БЕЗ <br> ---
+        
+        // 1. Нормализуем HTML - убираем лишние пробелы и &nbsp;
+        $html = preg_replace('/&nbsp;/', ' ', $html);
+        $html = preg_replace('/\s+/', ' ', $html);
+        
+        // 2. Заменяем все <br/> на временные маркеры переносов
         $html = preg_replace('/<br\s*\/?>/i', '###KUN_P2A_LINEBREAK###', $html);
         
-        // 2. Обрабатываем множественные переносы строк (2+ = новый абзац)
-        $html = preg_replace('/(###KUN_P2A_LINEBREAK###\s*){2,}/', '</p><p class="kun_p2a_p">', $html);
+        // 3. Обрабатываем множественные переносы строк (2+ = новый абзац)
+        $html = preg_replace('/(###KUN_P2A_LINEBREAK###\s*){2,}/', '###KUN_P2A_PARAGRAPH###', $html);
         
-        // 3. Заменяем одиночные переносы на кастомные элементы
-        $html = str_replace('###KUN_P2A_LINEBREAK###', '<span class="kun_p2a_br"></span>', $html);
+        // 4. Заменяем одиночные переносы на специальный span (не будет удален редактором)
+        $html = str_replace('###KUN_P2A_LINEBREAK###', '<span class="kun_p2a_br">&nbsp;</span>', $html);
         
-        // 4. Оборачиваем весь контент в абзац
-        $html = '<p class="kun_p2a_p">' . $html . '</p>';
+        // 5. Разбиваем на абзацы по маркерам и пустым строкам
+        $paragraphs = explode('###KUN_P2A_PARAGRAPH###', $html);
         
-       // 5. Оборачиваем весь контент в основной контейнер
-        $html = '<div class="kun_p2a_content">' . $html . '</div>';
-        
+        // 6. Оборачиваем каждый абзац в тег <p>
+        $result = '<div class="kun_p2a_content">';
+        foreach ($paragraphs as $paragraph) {
+            $paragraph = trim($paragraph);
+            if (!empty($paragraph)) {
+                $result .= '<p class="kun_p2a_p">' . $paragraph . '</p>';
+            }
+        }
+        $result .= '</div>';        
         // Восстанавливаем изображения
         foreach ($attachments as $marker => $data) {
             $attachmentId = $data[0];
