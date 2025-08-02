@@ -4,32 +4,40 @@
     line-height: 1.6;
 }
 
-/* Кастомный аналог <br> - одиночный перевод строки */
-.kun_p2a_br {
-    display: block;
-    height: 0;
-    margin: 0 !important;
-    padding: 0 !important;
-    content: "";
-    clear: both;
-}
-
-/* Стиль для абзацев - два и более перевода строки */
+/* Стиль для абзацев */
 .kun_p2a_p {
     margin: 0 0 0.3em 0 !important; /* Только нижний отступ */
     padding: 0;
     line-height: inherit;
 }
 
-/* Дополнительные стили для форматирования */
-.kun_p2a_content p,
-.kun_p2a_content div {
-    margin: 0 0 0.3em 0;
+/* Убираем отступ у последнего абзаца */
+.kun_p2a_p:last-child {
+    margin-bottom: 0 !important;
 }
 
-.kun_p2a_content p:last-child,
-.kun_p2a_content div:last-child {
-    margin-bottom: 0;
+/* Кастомный аналог <br> - одиночный перевод строки */
+.kun_p2a_br {
+    display: block;
+    height: 0.8em; /* Небольшой вертикальный отступ */
+    margin: 0 !important;
+    padding: 0 !important;
+    content: "";
+}
+
+/* Дополнительные стили для форматирования */
+.kun_p2a_content img {
+    max-width: 100%;
+    height: auto;
+}
+
+.kun_p2a_content a {
+    color: #0066cc;
+    text-decoration: underline;
+}
+
+.kun_p2a_content a:hover {
+    color: #004499;
 }
 
 /* Стиль для информационной строки поста */
