@@ -722,30 +722,21 @@ private function convertBBCodeToHtml($text)
         // Применяем BBCode парсер
         $html = $bbcode->render($text);
         
-        // Конвертируем <br/> в абзацы <p> для совместимости с WYSIWYG редакторами
-        // Разбиваем HTML на части по <br/> и <br>
-        $parts = preg_split('/\s*<br\s*\/?>\s*/i', $html);
+        // Конвертируем <br/> в кастомные абзацы для совместимости с WYSIWYG редакторами ц
+        // 1. Заменяем все <br/> на временные маркеры
+        $html = preg_replace('/<br\s*\/?>/i', '###KUN_P2A_BR###', $html);
         
-        // Очищаем пустые части
-        $parts = array_filter($parts, function($part) {
-            return trim($part) !== '';
-        });
+        // 2. Обрабатываем множественные переносы строк
+        $html = preg_replace('/(###KUN_P2A_BR###\s*){2,}/', '###KUN_P2A_PARAGRAPH###', $html);
         
-        // Оборачиваем каждую часть в <p>, если она еще не обернута в блочный элемент
-        $paragraphs = [];
-        foreach ($parts as $part) {
-            $part = trim($part);
-            if ($part === '') continue;
-            
-            // Проверяем, не начинается ли уже с блочного элемента
-            if (!preg_match('/^\s*<(p|div|h[1-6]|ul|ol|li|blockquote|pre|table|tr|td|th)\b/i', $part)) {
-                $part = '<p>' . $part . '</p>';      
-            }
-            
-            $paragraphs[] = $part;
-        }
+        // 3. Заменяем одиночные переносы на кастомные элементы
+        $html = str_replace('###KUN_P2A_BR###', '<span class="kun_p2a_br"></span>', $html);
         
-        $html = implode("\n", $paragraphs);
+        // 4. Заменяем маркеры абзацев на кастомные блоки
+        $html = str_replace('###KUN_P2A_PARAGRAPH###', '</div><div class="kun_p2a_p">', $html);
+        
+        // 5. Оборачиваем весь контент в основной контейнер
+        $html = '<div class="kun_p2a_content">' . $html . '</div>';
         
         // Восстанавливаем изображения
         foreach ($attachments as $marker => $data) {
