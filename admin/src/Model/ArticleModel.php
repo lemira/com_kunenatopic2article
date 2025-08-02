@@ -717,57 +717,29 @@ private function convertBBCodeToHtml($text)
             return $marker;
         }, $text);
         
-        // НОВАЯ ЛОГИКА ФОРМАТИРОВАНИЯ
-        // Отладка - смотрим исходный текст
-        error_log("Original text: " . substr($text, 0, 500)); // ОТЛАДКА
-        
-        // 1. Предобработка исходного текста ДО BBCode парсера
-        $preprocessedText = $text;
-        
-        // Нормализуем все варианты переводов строк к \n
-        $preprocessedText = str_replace(["\r\n", "\r"], "\n", $preprocessedText);
-        
-        // Заменяем последовательности из 2+ переводов строк на специальный маркер
-        // Ищем паттерн: 2 или более переводов строки подряд (с возможными пробелами между ними)
-        $preprocessedText = preg_replace('/\n(\s*\n)+/', "\n###PARAGRAPH_BREAK###\n", $preprocessedText);
-        
-        // Оставшиеся одиночные переводы строк заменяем на маркер для br
-        $preprocessedText = str_replace("\n", "###LINE_BREAK###", $preprocessedText);
-        
-        // Отладка предобработанного текста
-        error_log("Preprocessed text: " . substr($preprocessedText, 0, 500)); // ОТЛАДКА
-        
-        // 2. Применяем BBCode парсер к предобработанному тексту
         $bbcode = new \ChrisKonnertz\BBCode\BBCode();
-        $html = $bbcode->render($preprocessedText);
         
-        // Отладка - смотрим что получили от BBCode парсера
-        error_log("BBCode output: " . substr($html, 0, 500)); // ОТЛАДКА
+        // Применяем BBCode парсер
+        $html = $bbcode->render($text);
         
-        // 3. Постобработка после BBCode парсера
-        // Заменяем наши маркеры на нужные HTML элементы
-        $html = str_replace('###LINE_BREAK###', '<span class="kun_p2a_br"></span>', $html);
-        
-        // Также обрабатываем любые <br> теги, которые мог создать BBCode парсер
-        $html = preg_replace('/\s*<br\s*\/?>\s*/i', '<span class="kun_p2a_br"></span>', $html);
-        
-        // 4. Разбиваем текст по маркерам абзацев
-        $parts = explode('###PARAGRAPH_BREAK###', $html);
+        // Конвертируем <br/> в абзацы <p> для совместимости с WYSIWYG редакторами
+        // Разбиваем HTML на части по <br/> и <br>
+        $parts = preg_split('/\s*<br\s*\/?>\s*/i', $html);
         
         // Очищаем пустые части
         $parts = array_filter($parts, function($part) {
             return trim($part) !== '';
         });
         
-        // 5. Оборачиваем каждую часть в наш кастомный абзац, если она еще не обернута в блочный элемент
+        // Оборачиваем каждую часть в <p>, если она еще не обернута в блочный элемент
         $paragraphs = [];
         foreach ($parts as $part) {
             $part = trim($part);
             if ($part === '') continue;
             
             // Проверяем, не начинается ли уже с блочного элемента
-            if (!preg_match('/^\s*<(div|h[1-6]|ul|ol|li|blockquote|pre|table|tr|td|th)\b/i', $part)) {
-                $part = '<div class="kun_p2a_p">' . $part . '</div>';
+            if (!preg_match('/^\s*<(p|div|h[1-6]|ul|ol|li|blockquote|pre|table|tr|td|th)\b/i', $part)) {
+                $part = '<p>' . $part . '</p>';      
             }
             
             $paragraphs[] = $part;
