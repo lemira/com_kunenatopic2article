@@ -723,19 +723,19 @@ private function convertBBCodeToHtml($text)
         $html = $bbcode->render($text);
         
         // Конвертируем <br/> в кастомные абзацы для совместимости с WYSIWYG редакторами ц
-        // 1. Заменяем все <br/> на временные маркеры
-        $html = preg_replace('/<br\s*\/?>/i', '###KUN_P2A_BR###', $html);
+         // 1. Заменяем все <br/> на временные маркеры переносов
+        $html = preg_replace('/<br\s*\/?>/i', '###KUN_P2A_LINEBREAK###', $html);
         
-        // 2. Обрабатываем множественные переносы строк
-        $html = preg_replace('/(###KUN_P2A_BR###\s*){2,}/', '###KUN_P2A_PARAGRAPH###', $html);
+        // 2. Обрабатываем множественные переносы строк (2+ = новый абзац)
+        $html = preg_replace('/(###KUN_P2A_LINEBREAK###\s*){2,}/', '</p><p class="kun_p2a_p">', $html);
         
         // 3. Заменяем одиночные переносы на кастомные элементы
-        $html = str_replace('###KUN_P2A_BR###', '<span class="kun_p2a_br"></span>', $html);
+        $html = str_replace('###KUN_P2A_LINEBREAK###', '<span class="kun_p2a_br"></span>', $html);
         
-        // 4. Заменяем маркеры абзацев на кастомные блоки
-        $html = str_replace('###KUN_P2A_PARAGRAPH###', '</div><div class="kun_p2a_p">', $html);
+        // 4. Оборачиваем весь контент в абзац
+        $html = '<p class="kun_p2a_p">' . $html . '</p>';
         
-        // 5. Оборачиваем весь контент в основной контейнер
+       // 5. Оборачиваем весь контент в основной контейнер
         $html = '<div class="kun_p2a_content">' . $html . '</div>';
         
         // Восстанавливаем изображения
