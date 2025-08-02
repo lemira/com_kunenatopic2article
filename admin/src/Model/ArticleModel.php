@@ -722,34 +722,34 @@ private function convertBBCodeToHtml($text)
         // Применяем BBCode парсер
         $html = $bbcode->render($text);
         
-        // Конвертируем <br/> в кастомные абзацы для совместимости с WYSIWYG редакторами ц
-        // --- НОВАЯ ЛОГИКА ОБРАБОТКИ ПЕРЕНОСОВ СТРОК БЕЗ <br> ---
+        // Обработка нескольких пустых строк. Заменяем последовательности из 2+ <br> на кастомный элемент
+        $html = preg_replace('/(<br\s*\/?>\s*){2,}/i', '<div class="kun_p2a_empty_line"></div>', $html);
         
-        // 1. Нормализуем HTML - убираем лишние пробелы и &nbsp;
-        $html = preg_replace('/&nbsp;/', ' ', $html);
-        $html = preg_replace('/\s+/', ' ', $html);
+        // Разбиваем HTML на части по <br/> и <br>
+        $parts = preg_split('/\s*<br\s*\/?>\s*/i', $html);
         
-        // 2. Заменяем все <br/> на временные маркеры переносов
-        $html = preg_replace('/<br\s*\/?>/i', '###KUN_P2A_LINEBREAK###', $html);
-        
-        // 3. Обрабатываем множественные переносы строк (2+ = новый абзац)
-        $html = preg_replace('/(###KUN_P2A_LINEBREAK###\s*){2,}/', '###KUN_P2A_PARAGRAPH###', $html);
-        
-        // 4. Заменяем одиночные переносы на специальный span (не будет удален редактором)
-        $html = str_replace('###KUN_P2A_LINEBREAK###', '<span class="kun_p2a_br">&nbsp;</span>', $html);
-        
-        // 5. Разбиваем на абзацы по маркерам и пустым строкам
-        $paragraphs = explode('###KUN_P2A_PARAGRAPH###', $html);
-        
-        // 6. Оборачиваем каждый абзац в тег <p>
-        $result = '<div class="kun_p2a_content">';
-        foreach ($paragraphs as $paragraph) {
-            $paragraph = trim($paragraph);
-            if (!empty($paragraph)) {
-                $result .= '<p class="kun_p2a_p">' . $paragraph . '</p>';
+        // Очищаем пустые части
+        $parts = array_filter($parts, function($part) {
+            return trim($part) !== '';
+        });
+
+        // Конвертируем <br/> в абзацы <p> для совместимости с WYSIWYG редакторами
+        // Оборачиваем каждую часть в <p>, если она еще не обернута в блочный элемент
+        $paragraphs = [];
+        foreach ($parts as $part) {
+            $part = trim($part);
+            if ($part === '') continue;
+            
+            // Проверяем, не начинается ли уже с блочного элемента
+            if (!preg_match('/^\s*<(p|div|h[1-6]|ul|ol|li|blockquote|pre|table|tr|td|th)\b/i', $part)) {
+                $part = '<p>' . $part . '</p>';      
             }
+            
+            $paragraphs[] = $part;
         }
-        $result .= '</div>';        
+        
+        $html = implode("\n", $paragraphs);
+        
         // Восстанавливаем изображения
         foreach ($attachments as $marker => $data) {
             $attachmentId = $data[0];
@@ -779,7 +779,7 @@ private function convertBBCodeToHtml($text)
         return $this->simpleBBCodeToHtml($text);
     }
 }
-
+    
 // Получение реального пути к attachment из базы данных
 private function getAttachmentPath($attachmentId)
 {
