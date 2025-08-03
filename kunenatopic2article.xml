@@ -1,23 +1,20 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.1" encoding="utf-8"?>
 <extension type="component" version="5.0" method="upgrade">
     <name>com_kunenatopic2article</name>
     <author>lr</author>
-    <creationDate>January 2025</creationDate>
+    <creationDate>Januar 2025</creationDate>
     <copyright>(C) 2025 lr. All rights reserved.</copyright>
     <license>GNU/GPL</license>
     <authorEmail>lemirat@gmail.com</authorEmail>
     <authorUrl>https://geschichte-chronologie.de</authorUrl>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <description>COM_KUNENATOPIC2ARTICLE_DESC</description>
     
-    <!-- Namespace обяз для Joomla 5)// path="src"?? -->
     <namespace path="src">Joomla\Component\KunenaTopic2Article</namespace>
     
-     <!-- Административная часть -->
     <administration>
         <menu link="option=com_kunenatopic2article">COM_KUNENATOPIC2ARTICLE</menu>
         
-        <!-- Файлы админки из папки admin/ -->
         <files folder="admin">
             <folder>services</folder>
             <folder>forms</folder>
@@ -27,20 +24,20 @@
             <folder>language</folder>
             <folder>assets/css</folder>
             <folder>libraries</folder>
-              </files>
+        </files>
         
-        <!-- Языковые файлы админки -->
         <languages folder="admin/language">
             <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.ini</language>
             <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.sys.ini</language>
         </languages>
 
-        <media destination="com_kunenatopic2article">
-             <folder>media/com_kunenatopic2article</folder>
-        </media>
-
         <services>
-    <file>admin/services/provider.php</file>
+            <file>admin/services/provider.php</file>
         </services>
     </administration>
+    
+    <media destination="com_kunenatopic2article">
+        <folder>media/com_kunenatopic2article</folder>
+    </media>
+    
 </extension>
