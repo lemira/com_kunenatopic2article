@@ -5,20 +5,37 @@
     line-height: 1.6;
 }
 
-/* Переопределяем стили для всех <p> внутри контента */
+/* Переопределяем стили для всех <p> внутри контейнера */
 .kun_p2a_content p {
-    margin: 0 0 0.3em 0 !important; /* Только нижний отступ */
-    padding: 0;
-    line-height: inherit;
+    margin: 0 0 0 0 !important; /* Только нижний отступ, на 3м месте 0.3em, минимальный */
+    padding: 0 !important;
+    line-height: inherit;    /* Наследуем интерлиньяж от контейнера */
 }
 
-/* Стиль для пустых строк */
-.kun_p2a_empty_line {
-    height: 0.8em;
-    margin: 0;
-    padding: 0;
-    content: "";
+/* Убираем отступ у последнего абзаца */
+.kun_p2a_p:last-child {
+    margin-bottom: 0 !important;
 }
+
+/* Стиль для нескольких пустых строк (2+ переводов строки в оригинале) */
+.kun_p2a_content .kun_p2a_empty_line {
+    display: block;
+    height: 1.2em; /* Увеличили высоту для более заметного отступа */
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 0;
+    font-size: 0;
+}
+
+/* Альтернативный вариант с отступами вместо высоты */
+/*
+.kun_p2a_content .kun_p2a_empty_line {
+    display: block;
+    height: 0;
+    margin: 0.8em 0 !important;
+    padding: 0 !important;
+}
+*/
 
 /* Дополнительные стили для форматирования 
 .kun_p2a_content img { 
