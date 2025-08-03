@@ -722,10 +722,10 @@ private function convertBBCodeToHtml($text)
         // Применяем BBCode парсер
         $html = $bbcode->render($text);
         
-        // Обработка нескольких пустых строк. Заменяем последовательности из 2+ <br> на кастомный элемент
+        // Замена нескольких пустых строк из 2+ <br> ДО разбивки на параграфы на специальный маркер
        $html = preg_replace('/(<br\s*\/?>\s*){2,}/i', '###KUN_P2A_EMPTY_LINE###', $html);
          
-        // Разбиваем HTML на части по <br/> и <br>
+        // Разбиваем HTML на части по оставшимся одиночным <br/>
         $parts = preg_split('/\s*<br\s*\/?>\s*/i', $html);
         
         // Очищаем пустые части
@@ -733,12 +733,17 @@ private function convertBBCodeToHtml($text)
             return trim($part) !== '';
         });
 
-        // Конвертируем <br/> в абзацы <p> для совместимости с WYSIWYG редакторами
-        // Оборачиваем каждую часть в <p>, если она еще не обернута в блочный элемент
+        // Конвертируем части в абзацы <p> для совместимости с WYSIWYG редакторами
         $paragraphs = [];
         foreach ($parts as $part) {
             $part = trim($part);
             if ($part === '') continue;
+
+            // Если это наш маркер пустой строки - оставляем как есть
+            if ($part === '###KUN_P2A_EMPTY_LINE###') {
+                $paragraphs[] = $part;
+                continue;
+            }
             
             // Проверяем, не начинается ли уже с блочного элемента
             if (!preg_match('/^\s*<(p|div|h[1-6]|ul|ol|li|blockquote|pre|table|tr|td|th)\b/i', $part)) {
@@ -750,7 +755,7 @@ private function convertBBCodeToHtml($text)
         
         $html = implode("\n", $paragraphs);
 
-        // Заменяем маркеры пустых строк на div
+        // заменяем маркеры пустых строк на div (они уже вне параграфов)
         $html = str_replace('###KUN_P2A_EMPTY_LINE###', '<div class="kun_p2a_empty_line"></div>', $html);
 
         // Восстанавливаем изображения
