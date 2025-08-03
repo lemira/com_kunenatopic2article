@@ -35,9 +35,9 @@
             <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.sys.ini</language>
         </languages>
 
-       <media destination="com_kunenatopic2article">
-        <stylesheet file="media/com_kunenatopic2article/css/kun_p2a.css" />
-       </media>
+        <media destination="com_kunenatopic2article">
+             <folder>media/com_kunenatopic2article</folder>
+        </media>
 
         <services>
     <file>admin/services/provider.php</file>
