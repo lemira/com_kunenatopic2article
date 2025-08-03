@@ -37,7 +37,7 @@
     </administration>
     
     <media destination="com_kunenatopic2article">
-        <folder>media/com_kunenatopic2article</folder>
+        <folder>css</folder>
     </media>
     
 </extension>
