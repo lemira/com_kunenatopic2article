@@ -112,9 +112,8 @@ class ArticleModel extends BaseDatabaseModel
                 while ($this->postId != 0) {
                 
                    // Статья открыта
-                    Factory::getApplication()->enqueueMessage('Основной цикл Размер статьи: ' . $this->articleSize, 'info'); // ОТЛАДКА  
-                    Factory::getApplication()->enqueueMessage('Основной цикл Размер поста: ' . $this->postSize, 'info'); // ОТЛАДКА 
-               
+                // ОТЛАДКА       Factory::getApplication()->enqueueMessage('Основной цикл Размер статьи: ' . $this->articleSize, 'info');
+                 // ОТЛАДКА      Factory::getApplication()->enqueueMessage('Основной цикл Размер поста: ' . $this->postSize, 'info');                
                 if ($this->articleSize + $this->postSize > $this->params->max_article_size  // С новым постом превышен максимальный размер статьи
                         && $this->articleSize != 0) {                                           // И статья не пустая = размер этого поста больше размера статьи
                             $this->closeArticle();  // Закрываем текущую статью перед открытием новой
@@ -171,8 +170,8 @@ class ArticleModel extends BaseDatabaseModel
             $uniqueAlias = $this->getUniqueAlias($baseAlias);
             $this->currentArticle->alias = $uniqueAlias;
               
-            // Отладка
-            $this->app->enqueueMessage('openArticle Статья открыта: ' . $this->title . ', категория: ' . $this->params->article_category . ', alias: ' . $uniqueAlias, 'notice');
+            
+          // Отладка  $this->app->enqueueMessage('openArticle Статья открыта: ' . $this->title . ', категория: ' . $this->params->article_category . ', alias: ' . $uniqueAlias, 'notice');
 
             return true;
          } catch (\Exception $e) {
@@ -192,15 +191,14 @@ class ArticleModel extends BaseDatabaseModel
         }
 
         try {
-Factory::getApplication()->enqueueMessage('closeArticle Сохранение статьи: ' . $this->currentArticle->title, 'info'); // ОТЛАДКА          
+    // ОТЛАДКА      Factory::getApplication()->enqueueMessage('closeArticle Сохранение статьи: ' . $this->currentArticle->title, 'info');     
    
             // 1. Фильтрация контента
             $filter = InputFilter::getInstance([], [], 1, 1);
             $filteredContent = $filter->clean($this->currentArticle->fulltext, 'html');
     
             // 2. Формирование ссылки на CSS
-            $cssUrl = Uri::root(true) . '/media/com_kunenatopic2article/css/kun_p2a.css';
-            $cssLink = '<link href="' . $cssUrl . '" rel="stylesheet">';
+           HTMLHelper::_('stylesheet', 'com_kunenatopic2article/css/kun_p2a.css', ['relative' => true]);
   
      //       Factory::getApplication()->enqueueMessage('closeArticle Добавление CSS:' . $cssLink, 'info'); // ОТЛАДКА 
             // 3. Сборка финального контента
@@ -397,7 +395,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
               + mb_strlen($this->postInfoString, 'UTF-8')
               + mb_strlen($this->reminderLines, 'UTF-8');
        //         Factory::getApplication()->enqueueMessage('openPost Размер reminderLines: ' . mb_strlen($this->reminderLines, 'UTF-8'), 'info'); // ОТЛАДКА 
-               Factory::getApplication()->enqueueMessage('openPost Размер поста: ' . $this->postSize, 'info'); // ОТЛАДКА 
+        // ОТЛАДКА        Factory::getApplication()->enqueueMessage('openPost Размер поста: ' . $this->postSize, 'info'); // ОТЛАДКА 
           } catch (\Throwable $e) {
                throw new \RuntimeException('Ошибка расчёта размера поста: ' . $e->getMessage());
           }
@@ -449,7 +447,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
 {
     $this->currentIndex += 1;
     $this->postId = $this->postIdList[$this->currentIndex];
-    Factory::getApplication()->enqueueMessage('nextPost Id: ' . $this->postId, 'info'); // ОТЛАДКА       
+  // ОТЛАДКА    Factory::getApplication()->enqueueMessage('nextPost Id: ' . $this->postId, 'info'); // ОТЛАДКА       
     return $this->postId; // Автоматически получим 0 в конце
 }
 
@@ -495,7 +493,7 @@ Factory::getApplication()->enqueueMessage('closeArticle Сохранение с�
         
             $postIds = $this->db->setQuery($query)->loadColumn();
            
-    Factory::getApplication()->enqueueMessage('Массив ID постов: ' . print_r($postIds, true), 'info'); // ОТЛАДКА
+  // ОТЛАДКА  Factory::getApplication()->enqueueMessage('Массив ID постов: ' . print_r($postIds, true), 'info'); 
    
             return $postIds;
   }
