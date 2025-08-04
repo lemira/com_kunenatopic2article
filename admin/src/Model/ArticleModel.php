@@ -722,41 +722,34 @@ private function convertBBCodeToHtml($text)
         // Применяем BBCode парсер
         $html = $bbcode->render($text);
         
-        // Замена нескольких пустых строк из 2+ <br> ДО разбивки на параграфы на специальный маркер
-       $html = preg_replace('/(<br\s*\/?>\s*){2,}/i', '###KUN_P2A_EMPTY_LINE###', $html);
+        // Заменяем ВСЕ <br> на маркеры пустых строк
+        $html = preg_replace('/\s*<br\s*\/?>\s*/i', '###KUN_P2A_EMPTY_LINE###', $html);
          
-        // Разбиваем HTML на части по оставшимся одиночным <br/>
-        $parts = preg_split('/\s*<br\s*\/?>\s*/i', $html);
+        // Разбиваем HTML на части по маркерам пустых строк
+        $parts = explode('###KUN_P2A_EMPTY_LINE###', $html);
         
-        // Очищаем пустые части
-        $parts = array_filter($parts, function($part) {
-            return trim($part) !== '';
-        });
-
         // Конвертируем части в абзацы <p> для совместимости с WYSIWYG редакторами
         $paragraphs = [];
-        foreach ($parts as $part) {
+        foreach ($parts as $i => $part) {
             $part = trim($part);
-            if ($part === '') continue;
-
-            // Если это наш маркер пустой строки - оставляем как есть
-            if ($part === '###KUN_P2A_EMPTY_LINE###') {
+            
+            // Если это не первая часть, значит перед ней была пустая строка
+            if ($i > 0) {
+                $paragraphs[] = '<p>&nbsp;</p>'; // Добавляем пустой параграф
+            }
+            
+            // Если часть не пустая, обрабатываем её
+            if ($part !== '') {
+                // Проверяем, не начинается ли уже с блочного элемента
+                if (!preg_match('/^\s*<(p|div|h[1-6]|ul|ol|li|blockquote|pre|table|tr|td|th)\b/i', $part)) {
+                    $part = '<p>' . $part . '</p>';      
+                }
+                
                 $paragraphs[] = $part;
-                continue;
             }
-            
-            // Проверяем, не начинается ли уже с блочного элемента
-            if (!preg_match('/^\s*<(p|div|h[1-6]|ul|ol|li|blockquote|pre|table|tr|td|th)\b/i', $part)) {
-                $part = '<p>' . $part . '</p>';      
-            }
-            
-            $paragraphs[] = $part;
         }
         
         $html = implode("\n", $paragraphs);
-
-        // заменяем маркеры пустых строк на div (они уже вне параграфов)
-        $html = str_replace('###KUN_P2A_EMPTY_LINE###', '<div class="kun_p2a_empty_line"></div>', $html);
 
         // Восстанавливаем изображения
         foreach ($attachments as $marker => $data) {
