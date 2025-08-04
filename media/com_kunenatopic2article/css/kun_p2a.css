@@ -4,16 +4,12 @@
     line-height: 1.6;
 }
 
-/* Убираем стандартные отступы у параграфов <p> внутри контейнера */
 .kun_p2a_content p {
-    margin: 0 0 0 0 !important; /* Только нижний отступ, на 3м месте 0.1em, минимальный */
+    all: unset; /* Сброс всех стилей */
+    margin: 0 !important;
     padding: 0 !important;
-    line-height: inherit;    /* Наследуем интерлиньяж от контейнера */
-}
-
-/* Убираем отступ у последнего абзаца */
-.kun_p2a_p:last-child {
-    margin-bottom: 0 !important;
+    line-height: inherit !important;
+    display: block; /* Чтобы <p> остался блочным элементом */
 }
 
 /* Дополнительные стили для форматирования 
