@@ -53,7 +53,7 @@ class ArticleModel extends BaseDatabaseModel
     private string $postInfoString = '';  // Информационная строка поста
     private string $reminderLines = '';  // строки напоминания поста
     private string $title = '';   // Заголовок статьи
-    private string $htmlContent = '';   // Текс поста после BBCode
+    private string $htmlContent = '';   // Текст поста после BBCode
     public bool $emailsSent = false;
     public array $emailsSentTo = [];
     private $allPosts = []; // Добавляем свойство для хранения всех постов
@@ -688,25 +688,40 @@ private function printHeadOfPost()
  * Отправка email-уведомлений о созданных статьях
  * @param   array  $articleLinks  Массив ссылок на статьи
  * @return  array  Результат отправки (success, recipients)
+* Пример ошибки: ['success' => false, 'recipients' => ['admin@site.com'], 'error' => 'SMTP Error...']
  */
 public function sendLinksToAdministrator(array $articleLinks): array
 {
     $app = Factory::getApplication();
     $result = [
-        'success' => false,
+        'success'    => false,
         'recipients' => [],
+        'error'      => null,
     ];
 
     try {
         $config = Factory::getConfig();
         $mailer = Factory::getMailer();
 
-        // Данные уже доступны в модели!
+        // 1. Получаем email-адреса
         $adminEmail = $config->get('mailfrom');
         $author = Factory::getUser($this->topicAuthorId);
         $authorEmail = $author->email;
 
-        // Формируем письмо
+        // 2. Фильтруем адреса, оставляя только валидные и непустые
+        $rawRecipients = [$adminEmail, $authorEmail];
+        $recipients = array_unique(array_filter($rawRecipients, function ($email) {
+            return filter_var($email, FILTER_VALIDATE_EMAIL);
+        }));
+
+        // Если после фильтрации не осталось ни одного получателя, прекращаем работу.
+        if (empty($recipients)) {
+            $result['error'] = 'Не найдены корректные email-адреса для отправки.';
+            // success остается false, так как отправка не производилась.
+            return $result;
+        }
+
+        // 3. Формируем тело и тему письма
         $subject = Text::sprintf('COM_KUNENATOPIC2ARTICLE_MAIL_SUBJECT', $config->get('sitename'));
         $body = Text::sprintf(
             'COM_KUNENATOPIC2ARTICLE_MAIL_BODY',
@@ -720,39 +735,61 @@ public function sendLinksToAdministrator(array $articleLinks): array
             ))
         );
 
-        // Настройка отправки
+        // 4. Настраиваем объект Mailer
         $mailer->setSender([$adminEmail, $config->get('sitename')]);
         $mailer->setSubject($subject);
         $mailer->setBody($body);
         $mailer->isHtml(false);
 
-        // Фильтрация email-адресов
-        $recipients = array_filter([$adminEmail, $authorEmail], function($email) {
-            return filter_var($email, FILTER_VALIDATE_EMAIL);
-        });
-
         foreach ($recipients as $email) {
             $mailer->addRecipient($email);
         }
 
-        // Временная заглушка для WAMP (реальная отправка на сервере)
-        $sendResult = true; // Заменить на  $sendResult = $mailer->Send();  // ОТЛАДКА
+        // 5. ПРОВЕРКА ОКРУЖЕНИЯ: Локальный сервер или реальный
+        $isLocalServer = in_array($_SERVER['SERVER_NAME'] ?? '', ['localhost', '127.0.0.1']);
 
-        $result['success'] = $sendResult === true;
+        if ($isLocalServer) {
+            // Мы на WAMP (или другом локальном сервере)
+            // Имитируем успешную отправку для отладки, но не отправляем письмо.
+            $app->enqueueMessage('Режим отладки: отправка почты пропущена (локальный сервер).', 'notice');
+            $result['success'] = true;
+        } else {
+            // Мы на реальном сервере. Пытаемся отправить письмо.
+            // Если здесь произойдет ошибка, выполнение перейдет в блок catch.
+            $mailer->Send();
+            $result['success'] = true; // Успех, если Send() не выбросил исключение
+        }
+
+        // Код ниже выполнится в случае успеха (реального или имитированного)
         $result['recipients'] = $recipients;
-
-        // Сохраняем статус отправки в модели (для логирования) ??? 
-        $this->emailsSent = $result['success'];
-        $this->emailsSentTo = $result['recipients'];
+        $this->emailsSent = true;
+        $this->emailsSentTo = $recipients;
 
     } catch (\Exception $e) {
-        $app->enqueueMessage('Ошибка отправки почты: ' . $e->getMessage(), 'error');
+        // Этот блок кода выполнится ТОЛЬКО в случае ошибки на РЕАЛЬНОМ сервере
+
+        // Формируем сообщение об ошибке для администратора
+        $errorMessage = Text::sprintf('COM_KUNENATOPIC2ARTICLE_MAIL_SEND_ERROR', $e->getMessage());
+        $app->enqueueMessage($errorMessage, 'error');
+
+        // Заполняем результат информацией о провале
+        $result['success'] = false;
+        $result['error'] = $e->getMessage(); // Сохраняем техническую информацию об ошибке
+        $result['recipients'] = $recipients; // Сохраняем, кому мы пытались отправить письмо
+
+        // Логируем ошибку для будущего анализа (рекомендуется)
+        // Factory::log($e->getTraceAsString(), 'error', 'com_kunenatopic2article');
+
+        // Обновляем состояние модели
+        $this->emailsSent = false;
+        $this->emailsSentTo = []; // или $recipients, в зависимости от вашей логики
     }
 
+    // Возвращаем итоговый массив с результатом операции
     return $result;
 }
 
-// ПАРСЕР
+    // ПАРСЕР
         // Получение реального пути к attachment из базы данных
     private function getAttachmentPath($attachmentId)
 {
@@ -775,8 +812,8 @@ public function sendLinksToAdministrator(array $articleLinks): array
                 return $imagePath;
             }
             
-            // Для отладки - логируем что нашли // ОТЛАДКА
-            error_log("Attachment $attachmentId: path='$imagePath', exists=" . (file_exists(JPATH_ROOT . '/' . $imagePath) ? 'YES' : 'NO'));
+            // Для отладки - логируем что нашли 
+    // ОТЛАДКА         error_log("Attachment $attachmentId: path='$imagePath', exists=" . (file_exists(JPATH_ROOT . '/' . $imagePath) ? 'YES' : 'NO'));
         }
         
         return null;
