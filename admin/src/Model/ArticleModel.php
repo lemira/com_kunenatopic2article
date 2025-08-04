@@ -199,7 +199,7 @@ class ArticleModel extends BaseDatabaseModel
     
             // 2. Формирование ссылки на CSS
            HTMLHelper::_('stylesheet', 'com_kunenatopic2article/css/kun_p2a.css', ['relative' => true]);
-  
+           $cssLink = '<link href="' . Uri::root(true) . '/media/com_kunenatopic2article/css/kun_p2a.css" rel="stylesheet">'; // для Сборки финального контента
      //       Factory::getApplication()->enqueueMessage('closeArticle Добавление CSS:' . $cssLink, 'info'); // ОТЛАДКА 
             // 3. Сборка финального контента
             $this->currentArticle->fulltext = $cssLink . $filteredContent;
