@@ -754,103 +754,7 @@ public function sendLinksToAdministrator(array $articleLinks): array
     return $result;
 }
 
-private function convertBBCodeToHtml($text)
-{
-    try {
-        // Подключаем библиотеку BBCode напрямую
-        $bbcodePath = JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
-        
-        if (!file_exists($bbcodePath)) {
-            // Fallback на простой парсер, если библиотеки нет
-            return $this->simpleBBCodeToHtml($text);
-        }
-        
-        // Подключаем нужные файлы вручную
-        require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/Tag.php';
-        require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
-        
-        // Заменяем attachment на временные маркеры (чтобы BBCode парсер их не трогал)
-        $attachments = [];
-        $text = preg_replace_callback('/\[attachment=(\d+)\](.*?)\[\/attachment\]/i', function($matches) use (&$attachments) {
-            $attachmentId = $matches[1];
-            $filename = $matches[2];
-            $marker = '###ATTACHMENT_' . count($attachments) . '###';
-            $attachments[$marker] = [$attachmentId, $filename];
-            return $marker;
-        }, $text);
-        
-        $bbcode = new \ChrisKonnertz\BBCode\BBCode();
-        
-        // Применяем BBCode парсер
-        $html = $bbcode->render($text);
-        
-        // Сначала нормализуем пробелы и переносы строк
-        $html = preg_replace('/\s+/', ' ', $html); // Заменяем множественные пробелы на одиночные
-        $html = preg_replace('/\s*<br\s*\/?>\s*/i', '<br>', $html); // Нормализуем br теги
-        
-        // Заменяем группы из 2+ <br> на маркер пустой строки (это реальные пустые строки)
-        $html = preg_replace('/(<br>){2,}/i', '###KUN_P2A_EMPTY_LINE###', $html);
-         
-        // Разбиваем HTML на части по оставшимся одиночным <br> (это обычные переносы строк)
-        $parts = explode('<br>', $html);
-        
-        // Конвертируем части в абзацы <p> для совместимости с WYSIWYG редакторами
-        $paragraphs = [];
-        foreach ($parts as $part) {
-            $part = trim($part);
-            
-            // Пропускаем совсем пустые части
-            if ($part === '') continue;
-
-            // Если это наш маркер пустой строки - создаем пустой параграф
-            if ($part === '###KUN_P2A_EMPTY_LINE###') {
-                $paragraphs[] = '<p>&nbsp;</p>'; // Пустой параграф
-                continue;
-            }
-            
-            // Проверяем, не начинается ли уже с блочного элемента
-            if (!preg_match('/^\s*<(p|div|h[1-6]|ul|ol|li|blockquote|pre|table|tr|td|th)\b/i', $part)) {
-                $part = '<p>' . $part . '</p>';      
-            }
-            
-            $paragraphs[] = $part;
-        }
-        
-        $html = implode("\n", $paragraphs);
-
-        // Восстанавливаем изображения
-        foreach ($attachments as $marker => $data) {
-            $attachmentId = $data[0];
-            $filename = $data[1];
-            
-            // Получаем реальный путь из базы данных
-            $imagePath = $this->getAttachmentPath($attachmentId);
-            
-            if ($imagePath && file_exists(JPATH_ROOT . '/' . $imagePath)) {
-                $imageHtml = '<img src="' . $imagePath . '" alt="' . htmlspecialchars($filename) . '" />';
-            } else {
-                $imageHtml = $filename;
-            }
-            
-            $html = str_replace($marker, $imageHtml, $html);
-        }
-
-         // ДОБАВЛЯЕМ ОБЕРТКУ КОНТЕЙНЕРА
-        $html = '<div class="kun_p2a_content">' . $html . '</div>';
-        
-        return $html;
-        
-    } catch (\Exception $e) {
-        $this->app->enqueueMessage(
-            Text::_('COM_KUNENATOPIC2ARTICLE_BBCODE_PARSE_ERROR') . ': ' . $e->getMessage(),
-            'warning'
-        );
-        
-        // Fallback на простой парсер
-        return $this->simpleBBCodeToHtml($text);
-    }
-}    
-
+// ПАРСЕР
         // Получение реального пути к attachment из базы данных
     private function getAttachmentPath($attachmentId)
 {
@@ -890,5 +794,101 @@ private function simpleBBCodeToHtml($text)
 {
    return 'NO PARSER'; // СООБЩАЕМ, ЧТО С ОСНОВНЫМ ПАРСЕРОМ ПРОБЛЕМЫ
 }
- 
+
+     /**
+     * Преобразование BBCode в HTML
+     * @param   string  $text  Текст с BBCode
+     * @return  string  HTML-текст
+     */
+// BBCode парсер с использованием chriskonnertz/bbcode
+private function convertBBCodeToHtml($text)
+{
+    try {
+        // Подключаем библиотеку BBCode напрямую
+        $bbcodePath = JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
+        
+        if (!file_exists($bbcodePath)) {
+            // Fallback на простой парсер, если библиотеки нет
+            return $this->simpleBBCodeToHtml($text);
+        }
+        
+        // Подключаем нужные файлы вручную
+        require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/Tag.php';
+        require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
+        
+        // Заменяем attachment на временные маркеры (чтобы BBCode парсер их не трогал)
+        $attachments = [];
+        $text = preg_replace_callback('/\[attachment=(\d+)\](.*?)\[\/attachment\]/i', function($matches) use (&$attachments) {
+            $attachmentId = $matches[1];
+            $filename = $matches[2];
+            $marker = '###ATTACHMENT_' . count($attachments) . '###';
+            $attachments[$marker] = [$attachmentId, $filename];
+            return $marker;
+        }, $text);
+        
+        $bbcode = new \ChrisKonnertz\BBCode\BBCode();
+        
+        // Применяем BBCode парсер
+        $html = $bbcode->render($text);
+        
+        // Нормализуем br теги
+        $html = preg_replace('/\s*<br\s*\/?>\s*/i', "\n", $html);
+        
+        // Разбиваем по переносам строк
+        $lines = explode("\n", $html);
+        
+        // Обрабатываем каждую строку
+        $paragraphs = [];
+        foreach ($lines as $line) {
+            $line = trim($line);
+            
+            // Если строка пустая - добавляем пустой параграф
+            if ($line === '') {
+                $paragraphs[] = '<p>&nbsp;</p>';
+                continue;
+            }
+            
+            // Если строка не пустая - оборачиваем в <p>, если нужно
+            if (!preg_match('/^\s*<(p|div|h[1-6]|ul|ol|li|blockquote|pre|table|tr|td|th)\b/i', $line)) {
+                $line = '<p>' . $line . '</p>';
+            }
+            
+            $paragraphs[] = $line;
+        }
+        
+        $html = implode("\n", $paragraphs);
+
+        // Восстанавливаем изображения
+        foreach ($attachments as $marker => $data) {
+            $attachmentId = $data[0];
+            $filename = $data[1];
+            
+            // Получаем реальный путь из базы данных
+            $imagePath = $this->getAttachmentPath($attachmentId);
+            
+            if ($imagePath && file_exists(JPATH_ROOT . '/' . $imagePath)) {
+                $imageHtml = '<img src="' . $imagePath . '" alt="' . htmlspecialchars($filename) . '" />';
+            } else {
+                $imageHtml = $filename;
+            }
+            
+            $html = str_replace($marker, $imageHtml, $html);
+        }
+
+         // ДОБАВЛЯЕМ ОБЕРТКУ КОНТЕЙНЕРА
+        $html = '<div class="kun_p2a_content">' . $html . '</div>';
+        
+        return $html;
+        
+    } catch (\Exception $e) {
+        $this->app->enqueueMessage(
+            Text::_('COM_KUNENATOPIC2ARTICLE_BBCODE_PARSE_ERROR') . ': ' . $e->getMessage(),
+            'warning'
+        );
+        
+        // Fallback на простой парсер
+        return $this->simpleBBCodeToHtml($text);
+    }
+}
+    
 } // КОНЕЦ КЛАССА
