@@ -18,7 +18,7 @@ $app = Factory::getApplication();
             <ul class="list-group">
                 <?php foreach ($this->articles as $article) : ?>
                     <li class="list-group-item">
-                        <strong>ID <?php echo $article['id']; ?>:</strong>  
+                       <span>ID <?php echo $article['id']; ?>: </span>
                         <a href="<?php echo $this->escape($article['url']); ?>" target="_blank">
                             <?php echo $this->escape($article['title']); ?>
                         </a>
