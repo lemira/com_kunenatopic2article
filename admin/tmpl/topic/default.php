@@ -28,6 +28,9 @@ $paramsRemembered = $this->paramsRemembered ?? false; // Состояние кн
            <button type="button" id="btn_create" class="btn btn-success" onclick="Joomla.submitbutton('article.create')" <?= $this->canCreate ? '' : 'disabled'; ?>>
                    <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_CREATE'); ?>
             </button>
+            <button type="button" id="btn_preview" class="btn btn-info" onclick="Joomla.submitbutton('article.create')">
+                   <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_PREVIEW'); ?>
+            </button>
      </div>
 
         <h3><?= Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_PARAMS'); ?></h3>
@@ -52,8 +55,22 @@ $paramsRemembered = $this->paramsRemembered ?? false; // Состояние кн
 <script>
     Joomla.submitbutton = function(task) {
         const form = document.getElementById('adminForm');
+        
+        // Обработка кнопки create (как для preview, так и для обычного создания)
+        if (task === 'article.create') {
+            // Определяем, какая кнопка была нажата
+            const isPreview = event && event.target && (event.target.id === 'btn_preview');
+            
+            // Добавляем скрытое поле в форму
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'is_preview';
+            input.value = isPreview ? '1' : '0';
+            form.appendChild(input);
+        }
+        
+        // существующая валидация
         if (task === 'save' && form.classList.contains('form-validate')) {
-            // Используем стандартную HTML5-валидацию
             if (form.reportValidity()) {
                 Joomla.submitform(task, form);
             } else {
