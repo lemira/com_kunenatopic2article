@@ -37,6 +37,7 @@ class ArticleModel extends BaseDatabaseModel
     protected $db; // @var \Joomla\Database\DatabaseInterface 
     protected $app; /** @var \Joomla\CMS\Application\CMSApplication */
     private $currentArticle = null;  
+    protected $articleId = 0;
     private int $articleSize = 0;    // Текущий размер статьи , @var    int 
     private $articleLinks = [];  // Массив ссылок на созданные статьи  @var array 
     private int $postId = 0;   // Текущий ID поста @var    int
@@ -76,16 +77,15 @@ class ArticleModel extends BaseDatabaseModel
      */
     public function createArticlesFromTopic($params)
     {   // Параметры $params получены в контроллере из таблицы kunenatopic2article_params; копию функции можно взять из контроллера
-        $this->params = $params; 
-        $this->articleLinks = []; // Инициализация массива ссылок
-        $this->currentArticle = null;     // статья не открыта 
-     
+         $this->params = $params; 
+         $this->articleLinks = []; // Инициализация массива ссылок
+         $this->currentArticle = null;     // статья не открыта 
+         $isPreview = $this->getState('is_preview', false);
+             
         try {
-              
             // Получаем ID первого поста
             $firstPostId = $params->topic_selection; // 3232
         //    Factory::getApplication()->enqueueMessage('ArticleModel $firstPostId: ' . $firstPostId, 'info'); // ОТЛАДКА          
-           
               $this->postId = $firstPostId; // текущий id 
               $this->openPost($this->postId); // Открываем первый пост темы для доступа к его параметрам
               $this->subject = $this->currentPost->subject;
@@ -103,7 +103,13 @@ class ArticleModel extends BaseDatabaseModel
                 $this->postIdList = $baum['postIds'];
                 $this->postLevelList = $baum['levels'];
                 }
-             
+
+                // В режиме preview ограничиваем 2 постами
+                if ($isPreview) {
+                    $this->postIdList = array_slice($this->postIdList, 0, 2);
+                    $this->postIdList[] = 0; // Гарантируем завершение цикла
+                }                
+            
                $this->currentIndex = 0; // в nextPost() начинаем переход сразу к элементу (1), т.к. (0) = $topicId = $firstPostId
                     
                $this->openArticle();     // Открываем первую статью
@@ -119,20 +125,24 @@ class ArticleModel extends BaseDatabaseModel
                             $this->closeArticle();  // Закрываем текущую статью перед открытием новой
                             $this->openArticle();   // Открываем новую статью
                 }    
-            
+
                 $this->transferPost(); // Переносим содержимое поста в статью
                 $this->nextPost(); // Переходим к следующему посту
                 $this->openPost($this->postId); // Открываем пост для доступа к его параметрам, не открываем пост после последнего
             }      // Конец основного цикла обработки постов
 
-       
             // Закрываем последнюю статью
             if ($this->currentArticle !== null) {
                 $this->closeArticle();
             }
-       //     Factory::getApplication()->enqueueMessage('createArticlesFromTopic: последняя статья' . $this->subject, 'info'); // ОТЛАДКА 
+            
+       // ОТЛАДКА   Factory::getApplication()->enqueueMessage('createArticlesFromTopic: последняя статья' . $this->subject, 'info');  
+        // В режиме preview сохраняем ID последней статьи
+            if ($isPreview) {
+            $this->setState('last_article_id', $this->articleId);
+        }
 
-            return $this->articleLinks;
+           return $this->articleLinks;
          } catch (\Exception $e) {
             $this->app->enqueueMessage($e->getMessage(), 'error');
             return $this->articleLinks;
@@ -145,9 +155,10 @@ class ArticleModel extends BaseDatabaseModel
      */
     private function openArticle()
     {
-          try {
+           try {
            $this->currentArticle = new \stdClass(); // Инициализируем $this->currentArticle как stdClass
            // Сбрасываем текущий размер статьи
+           $this->articleId = 0; // Сбрасываем при открытии новой статьи    
            $this->articleSize = 0;
            $this->currentArticle->fulltext = ''; // для возможного изменения строк предупреждения
            $this->currentArticle->fulltext .= '<div class="kunenatopic2article_marker" style="display:none;"></div>'; // для плагина подклюсения CSS
@@ -205,16 +216,16 @@ class ArticleModel extends BaseDatabaseModel
             $this->currentArticle->fulltext = $cssLink . $filteredContent;
     // Factory::getApplication()->enqueueMessage('closeArticle fulltext до createArt' . HTMLHelper::_('string.truncate', $this->currentArticle->fulltext, 100, true, false), 'info'); //ОТЛАДКА true-сохр целые слова, false-не доб многоточие          
             // 4. Создаем статью через Table
-            $articleId = $this->createArticleViaTable();
+            $this->articleId = $this->createArticleViaTable();
 
   // Factory::getApplication()->enqueueMessage('closeArticle fulltext после createArt' . HTMLHelper::_('string.truncate', $this->currentArticle->fulltext, 100, true, false),'info'); 
                          
-            if (!$articleId) {
+            if (!$this->articleId) {
                 throw new \Exception('Ошибка сохранения статьи.');
             }
 
             // Формируем URL для статьи
-            $link = 'index.php?option=com_content&view=article&id=' . $articleId . '&catid=' . $this->params->article_category;   // Формируем базовый маршрут
+            $link = 'index.php?option=com_content&view=article&id=' . $this->articleId . '&catid=' . $this->params->article_category;   // Формируем базовый маршрут
             $url = Route::link('site', $link, true, -1);  // Преобразуем в SEF-URL (если SEF включен) : 'site' — гарантирует, что URL будет сформирован для фронтенда
             // Если в глобальных настройках Joomla включены ЧПУ (SEF) и rewrite-правила (например, .htaccess), метод автоматически сгенерирует "красивый" URL, 
             // а если SEF выключен, получится стандартный URL: http://localhost/gchru/index.php?option=com_content&view=article&id=265&catid=57
@@ -223,11 +234,10 @@ class ArticleModel extends BaseDatabaseModel
             $this->articleLinks[] = [
                 'title' => $this->currentArticle->title,
                 'url' => $url,
-                'id' => $articleId
+                'id' => $this->articleId  Сохраняем ID в массиве ссылок
             ];
 
-            // ОТЛАДКА
-            $this->app->enqueueMessage('Статья успешно сохранена с ID: ' . $articleId, 'notice');
+            // ОТЛАДКА           $this->app->enqueueMessage('Статья успешно сохранена с ID: ' . $articleId, 'notice');
 
             // Сбрасываем текущую статью
             $this->currentArticle = null;
@@ -237,6 +247,11 @@ class ArticleModel extends BaseDatabaseModel
             $this->app->enqueueMessage('Ошибка сохранения статьи: ' . $e->getMessage(), 'error');
             return false;
         }
+    }
+
+    public function getLastArticleId()
+    {
+        return $this->articleId;
     }
  
     /**
