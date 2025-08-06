@@ -40,7 +40,7 @@ public function create()
     $this->checkToken();
 
     $app = Factory::getApplication();
-     $isPreview = $this->input->getBool('is_preview', false);
+    $isPreview = $this->input->getBool('is_preview', false);
     
     try {
         $model = $this->getModel('Article', 'Administrator');
@@ -58,12 +58,19 @@ if (empty($params) || empty($params->topic_selection)) {
 
        // Режим preview
         if ($isPreview && ($articleId = $model->getLastArticleId())) {
-        // Формируем URL для просмотра с возвратом в админку
-        $returnUrl = Route::_('index.php?option=com_kunenatopic2article&view=topic', false);
-        $previewUrl = Route::link(
-            'site', 
-            'index.php?option=com_content&view=article&id='.$articleId.'&tmpl=component&return='.urlencode($returnUrl)
-        );
+            $url = Route::link(
+                'site', 
+                'index.php?option=com_content&view=article&id='.$articleId.'&tmpl=component',
+                false
+            );
+            
+            // Возвращаем JSON-ответ для открытия в модальном окне
+            echo json_encode([
+                'status' => 'success',
+                'preview_url' => $url
+            ]);
+            $app->close();
+        }
         
         // Открываем в модальном окне
         echo "<script>
@@ -122,8 +129,7 @@ if (empty($params) || empty($params->topic_selection)) {
         Factory::getApplication()->enqueueMessage($e->getMessage(), 'error', true);
     }
 
-  // Возвращаем с флагом закрытия preview
-    $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topic&preview_closed=1', false));
+   Factory::getApplication()->close();
 }
     
     /**
