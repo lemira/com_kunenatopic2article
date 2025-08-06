@@ -40,9 +40,12 @@ public function create()
     $this->checkToken();
 
     $app = Factory::getApplication();
-       
+     $isPreview = $this->input->getBool('is_preview', false);
+    
     try {
         $model = $this->getModel('Article', 'Administrator');
+        $model->setState('is_preview', $isPreview);
+        
         // Получаем параметры
         $params = $this->getComponentParams(); 
 
@@ -53,10 +56,25 @@ if (empty($params) || empty($params->topic_selection)) {
         // Создаем статьи
         $articleLinks = $model->createArticlesFromTopic($params);
 
+       // Режим preview
+        if ($isPreview) {
+            $articleId = $model->getLastArticleId();
+            if ($articleId) {
+                $url = Route::link('site', 'index.php?option=com_content&view=article&id='.$articleId, false);
+                $this->setRedirect($url);
+                
+                // Сохраняем для последующего удаления
+                $app->setUserState('com_kunenatopic2article.preview_article_id', $articleId);
+                return true;
+            }
+        }
+
         $this->resetTopicSelection();    // Сбрасываем Topic ID после успешного создания статей
         
-        // Отправляем уведомления
-        $emailResult = $model->sendLinksToAdministrator($articleLinks);
+         // Отправляем уведомления (кроме preview)
+        if (!$isPreview) {
+            $emailResult = $model->sendLinksToAdministrator($articleLinks);
+        }
         
         // Устанавливаем флаг блокировки
         $app->setUserState('com_kunenatopic2article.can_create', false);
@@ -72,10 +90,7 @@ if (empty($params) || empty($params->topic_selection)) {
         
         // Используем фабрику, встроенную в контроллер 
         $view = $this->getView('result', 'html');
-        if (!$view) {
-            throw new \RuntimeException('View object not created');
-        }
-            $view->display();       // Отображаем представление
+        $view->display();       // Отображаем представление
              return true;
 
     } catch (\Exception $e) {
@@ -86,6 +101,28 @@ if (empty($params) || empty($params->topic_selection)) {
         return false;
     }
 }
+
+    // Метод удаления Preview в контроллере
+   public function deletePreview()
+{
+    // Проверка токена
+    $this->checkToken('request');
+
+    $articleId = $this->input->getInt('article_id');
+    $model = $this->getModel('Article');
+
+    if ($articleId && $articleId == $model->getLastArticleId()) {
+        $table = $model->getTable('Content');
+        $table->delete($articleId);
+    }
+
+    if ($this->input->get('format') == 'json') {
+        echo json_encode(['success' => true]);
+        jexit();
+    }
+
+    $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article', false));
+} 
     
     /**
      * Получение параметров компонента из таблиц
