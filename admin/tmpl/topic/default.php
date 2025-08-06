@@ -1,18 +1,18 @@
 <?php
-/**
- * @package     KunenaTopic2Article
- * @subpackage  Administrator
- */
-\defined('_JEXEC') or die;
+defined('_JEXEC') or die;
 
+use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Session\Session;
 
 HTMLHelper::_('behavior.formvalidator');
 
+$app = Factory::getApplication();
+$input = $app->getInput(); // Joomla 5
 $form = $this->form;
-$paramsRemembered = $this->paramsRemembered ?? false; // Состояние кнопки Create Articles
+$paramsRemembered = $this->paramsRemembered ?? false;
 ?>
 
 <form action="<?= Route::_('index.php?option=com_kunenatopic2article'); ?>" method="post" name="adminForm" id="adminForm" class="form-validate">
@@ -52,10 +52,10 @@ $paramsRemembered = $this->paramsRemembered ?? false; // Состояние кн
     </div>
 </form>
 
-<?php if ($this->input->get('preview_closed')) : ?>
+<?php if ($input->getBool('preview_closed')) : ?>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    fetch('<?= Route::_("index.php?option=com_kunenatopic2article&task=article.deletePreviewArticle&".JSession::getFormToken()."=1") ?>');
+    fetch('<?= Route::_("index.php?option=com_kunenatopic2article&task=article.deletePreviewArticle&".Session::getFormToken()."=1") ?>');
 });
 </script>
 <?php endif; ?>
@@ -64,7 +64,6 @@ document.addEventListener('DOMContentLoaded', function() {
 Joomla.submitbutton = function(task) {
     const form = document.getElementById('adminForm');
     
-    // Обработка кнопки create/preview
     if (task === 'article.create') {
         const input = document.createElement('input');
         input.type = 'hidden';
@@ -73,7 +72,6 @@ Joomla.submitbutton = function(task) {
         form.appendChild(input);
     }
     
-    // Валидация формы
     if (task === 'save' && form.classList.contains('form-validate')) {
         if (!form.reportValidity()) {
             alert('<?= Text::_('JGLOBAL_VALIDATION_FORM_FAILED'); ?>');
