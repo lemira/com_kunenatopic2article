@@ -9,11 +9,6 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Router\Route;
 
-<?php
-// Подключение скрипта для preview ( начале файла, после use-объявлений)
-HTMLHelper::_('script', 'com_kunenatopic2article/preview.js', ['version' => 'auto', 'relative' => true]);
-?>
-
 HTMLHelper::_('behavior.formvalidator');
 
 $form = $this->form;
@@ -85,9 +80,3 @@ $paramsRemembered = $this->paramsRemembered ?? false; // Состояние кн
             Joomla.submitform(task, form);
         }
     };
-
-   if (task === 'article.create' && isPreview) {
-    // Очистка предыдущего preview при новом запуске
-    fetch('<?php echo Route::_("index.php?option=com_kunenatopic2article&task=article.cleanPreview") ?>');
-}
-</script>
