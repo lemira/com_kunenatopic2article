@@ -80,4 +80,9 @@ $paramsRemembered = $this->paramsRemembered ?? false; // Состояние кн
             Joomla.submitform(task, form);
         }
     };
+
+   if (task === 'article.create' && isPreview) {
+    // Очистка предыдущего preview при новом запуске
+    fetch('<?php echo Route::_("index.php?option=com_kunenatopic2article&task=article.cleanPreview") ?>');
+}
 </script>
