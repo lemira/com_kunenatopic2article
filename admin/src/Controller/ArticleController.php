@@ -57,17 +57,21 @@ if (empty($params) || empty($params->topic_selection)) {
         $articleLinks = $model->createArticlesFromTopic($params);
 
        // Режим preview
-        if ($isPreview) {
-            $articleId = $model->getLastArticleId();
-            if ($articleId) {
-                $url = Route::link('site', 'index.php?option=com_content&view=article&id='.$articleId, false);
-                $this->setRedirect($url);
-                
-                // Сохраняем для последующего удаления
-                $app->setUserState('com_kunenatopic2article.preview_article_id', $articleId);
-                return true;
-            }
-        }
+        if ($isPreview && ($articleId = $model->getLastArticleId())) {
+        // Добавляем параметр для идентификации preview
+        $url = Route::link('site', 'index.php?option=com_content&view=article&id='.$articleId.'&kunena_preview=1', false);
+        
+        // Открываем в новом окне с JS для закрытия
+        echo "<script>
+            var previewWindow = window.open('".$url."','_blank');
+            window.addEventListener('focus', function() {
+                if (previewWindow.closed) {
+                    window.location.href = '".Route::_('index.php?option=com_kunenatopic2article&task=article.cleanPreview')."';
+                }
+            });
+        </script>";
+        return true;
+    }
 
         $this->resetTopicSelection();    // Сбрасываем Topic ID после успешного создания статей
         
@@ -103,26 +107,23 @@ if (empty($params) || empty($params->topic_selection)) {
 }
 
     // Метод удаления Preview в контроллере
-   public function deletePreview()
+ public function deletePreview()
 {
-    // Проверка токена
-    $this->checkToken('request');
+    $this->checkToken(); // Обязательная проверка токена
 
-    $articleId = $this->input->getInt('article_id');
-    $model = $this->getModel('Article');
-
-    if ($articleId && $articleId == $model->getLastArticleId()) {
-        $table = $model->getTable('Content');
-        $table->delete($articleId);
-    }
-
-    if ($this->input->get('format') == 'json') {
-        echo json_encode(['success' => true]);
-        jexit();
+    try {
+        $model = $this->getModel('Article');
+        if ($articleId = $model->getLastArticleId()) {
+            $table = $model->getTable('Content');
+            $table->delete($articleId);
+        }
+    } catch (Exception $e) {
+        // Логируем ошибку, но не показываем пользователю
+        Factory::getApplication()->enqueueMessage($e->getMessage(), 'error', true);
     }
 
     $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article', false));
-} 
+}
     
     /**
      * Получение параметров компонента из таблиц
