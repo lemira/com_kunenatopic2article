@@ -234,7 +234,7 @@ class ArticleModel extends BaseDatabaseModel
             $this->articleLinks[] = [
                 'title' => $this->currentArticle->title,
                 'url' => $url,
-                'id' => $this->articleId  Сохраняем ID в массиве ссылок
+                'id' => $this->articleId  // Сохраняем ID в массиве ссылок
             ];
 
            // ОТЛАДКА           $this->app->enqueueMessage('Статья успешно сохранена с ID: ' . $this->articleId, 'notice');
