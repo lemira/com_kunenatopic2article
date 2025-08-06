@@ -37,7 +37,7 @@ class ArticleModel extends BaseDatabaseModel
     protected $db; // @var \Joomla\Database\DatabaseInterface 
     protected $app; /** @var \Joomla\CMS\Application\CMSApplication */
     private $currentArticle = null;  
-    protected $articleId = 0;
+    protected $articleId = 0; // Свойство модели
     private int $articleSize = 0;    // Текущий размер статьи , @var    int 
     private $articleLinks = [];  // Массив ссылок на созданные статьи  @var array 
     private int $postId = 0;   // Текущий ID поста @var    int
@@ -92,7 +92,6 @@ class ArticleModel extends BaseDatabaseModel
               $this->threadId = (int) $this->currentPost->thread; // Получаем Id темы
         //   Factory::getApplication()->enqueueMessage('createArticlesFromTopic $subject: ' . $this->subject, 'info'); // ОТЛАДКА 
               $this->topicAuthorId = $this->currentPost->userid;
-
               $this->reminderLines = ""; // у первого поста нет строк напоминания
 
             // Формируем список ID постов в зависимости от схемы обхода; должно быть после открытия первого поста!
@@ -104,7 +103,7 @@ class ArticleModel extends BaseDatabaseModel
                 $this->postLevelList = $baum['levels'];
                 }
 
-                // В режиме preview ограничиваем 2 постами
+                // В режиме preview ограничиваемся 2 постами
                 if ($isPreview) {
                     $this->postIdList = array_slice($this->postIdList, 0, 2);
                     $this->postIdList[] = 0; // Гарантируем завершение цикла
@@ -137,17 +136,18 @@ class ArticleModel extends BaseDatabaseModel
             }
             
        // ОТЛАДКА   Factory::getApplication()->enqueueMessage('createArticlesFromTopic: последняя статья' . $this->subject, 'info');  
-        // В режиме preview сохраняем ID последней статьи
-            if ($isPreview) {
-            $this->setState('last_article_id', $this->articleId);
-        }
-
+        
            return $this->articleLinks;
          } catch (\Exception $e) {
             $this->app->enqueueMessage($e->getMessage(), 'error');
             return $this->articleLinks;
         }
     }
+
+    public function getLastArticleId()
+{
+    return $this->articleId;
+}
 
     /**
      * Открытие статьи для её заполнения
@@ -237,8 +237,9 @@ class ArticleModel extends BaseDatabaseModel
                 'id' => $this->articleId  Сохраняем ID в массиве ссылок
             ];
 
-            // ОТЛАДКА           $this->app->enqueueMessage('Статья успешно сохранена с ID: ' . $articleId, 'notice');
+           // ОТЛАДКА           $this->app->enqueueMessage('Статья успешно сохранена с ID: ' . $this->articleId, 'notice');
 
+            
             // Сбрасываем текущую статью
             $this->currentArticle = null;
 
@@ -249,12 +250,7 @@ class ArticleModel extends BaseDatabaseModel
         }
     }
 
-    public function getLastArticleId()
-    {
-        return $this->articleId;
-    }
- 
-    /**
+      /**
      * Генерация уникального алиаса для статьи
      * @param   string  $baseAlias  Базовый алиас
      * @return  string  Уникальный алиас
