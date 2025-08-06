@@ -64,21 +64,11 @@ if (empty($params) || empty($params->topic_selection)) {
                 false
             );
             
-            // Возвращаем JSON-ответ для открытия в модальном окне
             echo json_encode([
-                'status' => 'success',
-                'preview_url' => $url
+                'redirect' => $url
             ]);
             $app->close();
         }
-        
-        // Открываем в модальном окне
-        echo "<script>
-            window.open('".$previewUrl."', 'previewWindow', 'width=1200,height=800,resizable=1');
-            window.location.href = '".$returnUrl."';
-        </script>";
-        exit;
-    }
         
         $this->resetTopicSelection();    // Сбрасываем Topic ID после успешного создания статей
         
@@ -113,7 +103,7 @@ if (empty($params) || empty($params->topic_selection)) {
     }
 }
 
-    // Метод удаления Preview в контроллере
+    // Метод удаления статьи Preview 
  public function deletePreviewArticle()
 {
     $this->checkToken();
@@ -126,10 +116,11 @@ if (empty($params) || empty($params->topic_selection)) {
         }
     } catch (Exception $e) {
         // Логирование ошибки
-        Factory::getApplication()->enqueueMessage($e->getMessage(), 'error', true);
+        Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
     }
 
-   Factory::getApplication()->close();
+   // Возврат как в com_content
+    $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topic', false));
 }
     
     /**
