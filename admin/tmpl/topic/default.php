@@ -52,6 +52,14 @@ $paramsRemembered = $this->paramsRemembered ?? false; // Состояние кн
     </div>
 </form>
 
+<?php if ($this->input->get('preview_closed')) : ?>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('<?= Route::_("index.php?option=com_kunenatopic2article&task=article.deletePreviewArticle&".JSession::getFormToken()."=1") ?>');
+});
+</script>
+<?php endif; ?>
+
 <script>
 Joomla.submitbutton = function(task) {
     const form = document.getElementById('adminForm');
