@@ -56,18 +56,17 @@ if (empty($params) || empty($params->topic_selection)) {
         // Создаем статьи
         $articleLinks = $model->createArticlesFromTopic($params);
 
-       // Режим preview
-        if ($isPreview && ($articleId = $model->getLastArticleId())) {
-            $url = Route::link(
-                'site', 
-                'index.php?option=com_content&view=article&id='.$articleId.'&tmpl=component',
-                false
+       if ($isPreview && ($articleId = $model->getLastArticleId())) {
+            $this->setRedirect(
+                Route::link(
+                    'site', 
+                    'index.php?option=com_content&view=article&id='.$articleId.'&tmpl=component&return='.urlencode(
+                        Route::_('index.php?option=com_kunenatopic2article&task=article.deletePreviewArticle', false)
+                    ),
+                    false
+                )
             );
-            
-            echo json_encode([
-                'redirect' => $url
-            ]);
-            $app->close();
+            return true;
         }
         
         $this->resetTopicSelection();    // Сбрасываем Topic ID после успешного создания статей
