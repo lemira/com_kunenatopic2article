@@ -57,21 +57,11 @@ if (empty($params) || empty($params->topic_selection)) {
         $articleLinks = $model->createArticlesFromTopic($params);
 
        // Режим preview
-        if ($isPreview && ($articleId = $model->getLastArticleId())) {
-        // Добавляем параметр для идентификации preview
-        $url = Route::link('site', 'index.php?option=com_content&view=article&id='.$articleId.'&kunena_preview=1', false);
-        
-        // Открываем в новом окне с JS для закрытия
-        echo "<script>
-            var previewWindow = window.open('".$url."','_blank');
-            window.addEventListener('focus', function() {
-                if (previewWindow.closed) {
-                    window.location.href = '".Route::_('index.php?option=com_kunenatopic2article&task=article.cleanPreview')."';
-                }
-            });
-        </script>";
-        return true;
-    }
+       if ($isPreview && ($articleId = $model->getLastArticleId())) {
+            $url = Route::link('site', 'index.php?option=com_content&view=article&id='.$articleId.'&kunena_preview=1');
+            $this->setRedirect($url);
+            return true;
+        }
 
         $this->resetTopicSelection();    // Сбрасываем Topic ID после успешного создания статей
         
@@ -107,9 +97,9 @@ if (empty($params) || empty($params->topic_selection)) {
 }
 
     // Метод удаления Preview в контроллере
- public function deletePreview()
+ public function deletePreviewArticle()
 {
-    $this->checkToken(); // Обязательная проверка токена
+    $this->checkToken();
 
     try {
         $model = $this->getModel('Article');
@@ -118,7 +108,7 @@ if (empty($params) || empty($params->topic_selection)) {
             $table->delete($articleId);
         }
     } catch (Exception $e) {
-        // Логируем ошибку, но не показываем пользователю
+        // Логирование ошибки
         Factory::getApplication()->enqueueMessage($e->getMessage(), 'error', true);
     }
 
