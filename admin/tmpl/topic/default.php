@@ -64,7 +64,6 @@ document.addEventListener('DOMContentLoaded', function() {
 Joomla.submitbutton = function(task) {
     const form = document.getElementById('adminForm');
     
-    // Обработка preview
     if (task === 'article.create') {
         const isPreview = event?.target?.id === 'btn_preview';
         const input = document.createElement('input');
@@ -72,22 +71,6 @@ Joomla.submitbutton = function(task) {
         input.name = 'is_preview';
         input.value = isPreview ? '1' : '0';
         form.appendChild(input);
-
-        if (isPreview) {
-            // Стандартный Joomla-подход
-            Joomla.request({
-                url: form.action,
-                method: 'POST',
-                data: new FormData(form),
-                onSuccess: function(response) {
-                    const res = JSON.parse(response);
-                    if (res.redirect) {
-                        window.open(res.redirect, 'previewWindow', 'width=1200,height=800');
-                    }
-                }
-            });
-            return;
-        }
     }
     
     // Валидация и стандартная отправка
