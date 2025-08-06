@@ -73,54 +73,24 @@ Joomla.submitbutton = function(task) {
         input.value = isPreview ? '1' : '0';
         form.appendChild(input);
 
-        // Валидация для preview
-        if (isPreview && form.classList.contains('form-validate')) {
-            if (!form.reportValidity()) {
-                alert('<?= Text::_('JGLOBAL_VALIDATION_FORM_FAILED'); ?>');
-                return false;
-            }
-        }
-
         if (isPreview) {
-            // AJAX-запрос для preview
-            fetch(form.action, {
+            // Стандартный Joomla-подход
+            Joomla.request({
+                url: form.action,
                 method: 'POST',
-                body: new FormData(form),
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    // Открываем модальное окно
-                    const modal = new bootstrap.Modal(document.createElement('div'));
-                    modal._element.innerHTML = `
-                        <div class="modal-dialog modal-xl">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title"><?= Text::_('COM_KUNENATOPIC2ARTICLE_PREVIEW') ?></h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <iframe src="${data.preview_url}" style="width:100%; height:80vh; border:none;"></iframe>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    modal.show();
-                    
-                    // Удаление статьи при закрытии
-                    modal._element.addEventListener('hidden.bs.modal', function() {
-                        fetch('<?= Route::_("index.php?option=com_kunenatopic2article&task=article.deletePreviewArticle&".JSession::getFormToken()."=1") ?>');
-                    });
+                data: new FormData(form),
+                onSuccess: function(response) {
+                    const res = JSON.parse(response);
+                    if (res.redirect) {
+                        window.open(res.redirect, 'previewWindow', 'width=1200,height=800');
+                    }
                 }
             });
             return;
         }
     }
     
-    // Стандартная валидация для сохранения
+    // Валидация и стандартная отправка
     if (task === 'save' && form.classList.contains('form-validate')) {
         if (!form.reportValidity()) {
             alert('<?= Text::_('JGLOBAL_VALIDATION_FORM_FAILED'); ?>');
@@ -128,7 +98,6 @@ Joomla.submitbutton = function(task) {
         }
     }
     
-    // Отправка формы для не-preview действий
     Joomla.submitform(task, form);
 };
 </script>
