@@ -57,16 +57,21 @@ if (empty($params) || empty($params->topic_selection)) {
         $articleLinks = $model->createArticlesFromTopic($params);
 
        // Режим preview
-       if ($isPreview && ($articleId = $model->getLastArticleId())) {
-            // Сохраняем ID статьи в сессии для последующего удаления
-            $app->setUserState('com_kunenatopic2article.preview_article_id', $articleId);
-            
-            // Перенаправляем на просмотр с return-URL
-            $returnUrl = Route::_('index.php?option=com_kunenatopic2article&task=article.deletePreviewArticle', false);
-            $url = Route::link('site', 'index.php?option=com_content&view=article&id='.$articleId.'&return='.urlencode($returnUrl));
-            $this->setRedirect($url);
-            return true;
-        }
+        if ($isPreview && ($articleId = $model->getLastArticleId())) {
+        // Формируем URL для просмотра с возвратом в админку
+        $returnUrl = Route::_('index.php?option=com_kunenatopic2article&view=topic', false);
+        $previewUrl = Route::link(
+            'site', 
+            'index.php?option=com_content&view=article&id='.$articleId.'&tmpl=component&return='.urlencode($returnUrl)
+        );
+        
+        // Открываем в модальном окне
+        echo "<script>
+            window.open('".$previewUrl."', 'previewWindow', 'width=1200,height=800,resizable=1');
+            window.location.href = '".$returnUrl."';
+        </script>";
+        exit;
+    }
         
         $this->resetTopicSelection();    // Сбрасываем Topic ID после успешного создания статей
         
