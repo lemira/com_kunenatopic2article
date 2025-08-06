@@ -28,7 +28,7 @@ $paramsRemembered = $this->paramsRemembered ?? false; // Состояние кн
            <button type="button" id="btn_create" class="btn btn-success" onclick="Joomla.submitbutton('article.create')" <?= $this->canCreate ? '' : 'disabled'; ?>>
                    <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_CREATE'); ?>
             </button>
-            <button type="button" id="btn_preview" class="btn btn-info" onclick="Joomla.submitbutton('article.create')">
+            <button type="button" id="btn_preview" class="btn btn-info" onclick="Joomla.submitbutton('article.create')"> <?= $this->canCreate ? '' : 'disabled'; ?>
                    <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_PREVIEW'); ?>
             </button>
      </div>
@@ -53,30 +53,26 @@ $paramsRemembered = $this->paramsRemembered ?? false; // Состояние кн
 </form>
 
 <script>
-    Joomla.submitbutton = function(task) {
-        const form = document.getElementById('adminForm');
-        
-        // Обработка кнопки create (как для preview, так и для обычного создания)
-        if (task === 'article.create') {
-            // Определяем, какая кнопка была нажата
-            const isPreview = event && event.target && (event.target.id === 'btn_preview');
-            
-            // Добавляем скрытое поле в форму
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'is_preview';
-            input.value = isPreview ? '1' : '0';
-            form.appendChild(input);
+Joomla.submitbutton = function(task) {
+    const form = document.getElementById('adminForm');
+    
+    // Обработка кнопки create/preview
+    if (task === 'article.create') {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'is_preview';
+        input.value = (event?.target?.id === 'btn_preview') ? '1' : '0';
+        form.appendChild(input);
+    }
+    
+    // Валидация формы
+    if (task === 'save' && form.classList.contains('form-validate')) {
+        if (!form.reportValidity()) {
+            alert('<?= Text::_('JGLOBAL_VALIDATION_FORM_FAILED'); ?>');
+            return false;
         }
-        
-        // существующая валидация
-        if (task === 'save' && form.classList.contains('form-validate')) {
-            if (form.reportValidity()) {
-                Joomla.submitform(task, form);
-            } else {
-                alert('<?= Text::_('JGLOBAL_VALIDATION_FORM_FAILED'); ?>');
-            }
-        } else {
-            Joomla.submitform(task, form);
-        }
-    };
+    }
+    
+    Joomla.submitform(task, form);
+};
+</script>
