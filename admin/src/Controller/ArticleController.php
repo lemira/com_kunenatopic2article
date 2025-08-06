@@ -122,7 +122,8 @@ if (empty($params) || empty($params->topic_selection)) {
         Factory::getApplication()->enqueueMessage($e->getMessage(), 'error', true);
     }
 
-  $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article', false)); 
+  // Возвращаем с флагом закрытия preview
+    $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topic&preview_closed=1', false));
 }
     
     /**
