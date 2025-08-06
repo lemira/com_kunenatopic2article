@@ -57,8 +57,8 @@ if (empty($params) || empty($params->topic_selection)) {
         $articleLinks = $model->createArticlesFromTopic($params);
 
        // Режим preview
-       if ($isPreview && ($articleId = $model->getLastArticleId())) {
-            $url = Route::link('site', 'index.php?option=com_content&view=article&id='.$articleId.'&kunena_preview=1');
+      if ($isPreview && ($articleId = $model->getLastArticleId())) {
+            $url = Route::link('site', 'index.php?option=com_content&view=article&id='.$articleId);
             $this->setRedirect($url);
             return true;
         }
@@ -112,7 +112,7 @@ if (empty($params) || empty($params->topic_selection)) {
         Factory::getApplication()->enqueueMessage($e->getMessage(), 'error', true);
     }
 
-    $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article', false));
+  $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article', false)); 
 }
     
     /**
