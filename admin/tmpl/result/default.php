@@ -10,6 +10,15 @@ use Joomla\CMS\Router\Route;
 $app = Factory::getApplication();
 ?>
 <div class="container-fluid">
+
+      <?php if ($this->isPreview): ?>
+    <div class="alert alert-info kunena-preview-notice" style="position:relative;padding-right:3rem;">
+        <button type="button" class="btn-close" 
+                style="position:absolute;right:1rem;top:1.25rem;"
+                onclick="Joomla.submitbutton('article.deletePreview')"></button>
+    </div>
+    <?php endif; ?>
+      
       <h2><?php echo Text::_('COM_KUNENATOPIC2ARTICLE_RESULTS_TITLE'); ?></h2>
 
     <?php if (!empty($this->articles)) : ?>
