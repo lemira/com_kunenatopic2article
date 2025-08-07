@@ -113,10 +113,14 @@ if (empty($params) || empty($params->topic_selection)) {
         $app = Factory::getApplication();
         $data = $app->input->post->get('jform', [], 'array');
 
-        /** @var \MyNamespace\Component\Kunenatopic2article\Administrator\Model\ArticleModel $model */
+        // Читаем флаг из запроса
+         $isPreview = $app->input->getBool('is_preview', false);
+
+        /** @var \Joomla\Component\KunenaTopic2Article\Administrator\Model\ArticleModel $model */
         $model = $this->getModel('Article');
         
-        $articleData = $model->createPreviewArticle($data);
+        // Вызываем основную функцию createArticle, передавая ей данные и флаг
+        $articleData = $model->createArticlesFromTopic($data, $isPreview);
 
         if ($articleData) {
             $previewUrl = Route::_(
