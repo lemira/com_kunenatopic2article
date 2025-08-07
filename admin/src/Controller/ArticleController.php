@@ -22,6 +22,8 @@ use Joomla\CMS\Mail\Mailer; // ?
 use Joomla\Component\Users\Administrator\Model\UsersModel; // ?
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface; // ?
 use Joomla\CMS\Dispatcher\AbstractController;  // ?
+use Joomla\CMS\MVC\Controller\FormController;
+use Joomla\CMS\Response\Json\JsonResponse;
 
 
 /**
@@ -102,26 +104,55 @@ if (empty($params) || empty($params->topic_selection)) {
     }
 }
 
-    // Метод удаления статьи Preview 
- public function deletePreviewArticle()
-{
-    $this->checkToken();
+/**
+     * Метод для создания временной статьи и возврата URL.
+     */
+    public function preview(): void
+    {
+        $this->checkToken('POST');
+        $app = Factory::getApplication();
+        $data = $app->input->post->get('jform', [], 'array');
 
-    try {
+        /** @var \MyNamespace\Component\Kunenatopic2article\Administrator\Model\ArticleModel $model */
         $model = $this->getModel('Article');
-        if ($articleId = $model->getLastArticleId()) {
-            $table = $model->getTable('Content');
-            $table->delete($articleId);
+        
+        $articleData = $model->createPreviewArticle($data);
+
+        if ($articleData) {
+            $previewUrl = Route::_(
+                'index.php?option=com_content&view=article&id=' . $articleData['id'] . ':' . $articleData['alias'] . '&catid=' . $articleData['catid'] . '&tmpl=component',
+                false
+            );
+
+            $app->enqueueMessage(new JsonResponse(['success' => true, 'data' => ['url' => $previewUrl, 'id' => $articleData['id']]]));
+        } else {
+            $app->enqueueMessage(new JsonResponse(['success' => false, 'message' => $model->getError()], 500));
         }
-    } catch (Exception $e) {
-        // Логирование ошибки
-        Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
     }
 
-   // Возврат как в com_content
-    $this->setRedirect(Route::_('index.php?option=com_kunenatopic2article&view=topic', false));
-}
-    
+    /**
+     * Метод для удаления временной статьи.
+     */
+    public function deletePreview(): void
+    {
+        $this->checkToken('POST');
+        $app = Factory::getApplication();
+        $id = $app->input->getInt('id');
+
+        if ($id) {
+            /** @var \YourNamespace\Component\Kunenatopic2article\Administrator\Model\ArticleModel $model */
+            $model = $this->getModel('Article');
+            if ($model->delete($id)) {
+                 $app->enqueueMessage(new JsonResponse(['success' => true]));
+            } else {
+                 $app->enqueueMessage(new JsonResponse(['success' => false, 'message' => $model->getError()], 500));
+            }
+        } else {
+            $app->enqueueMessage(new JsonResponse(['success' => false, 'message' => 'No article ID provided'], 400));
+        }
+    }
+}    
+      
     /**
      * Получение параметров компонента из таблиц
      * @return  object|null  Объект с параметрами компонента
