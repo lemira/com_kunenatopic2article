@@ -936,5 +936,51 @@ private function convertBBCodeToHtml($text)
         return $this->simpleBBCodeToHtml($text);
     }
 }
+
+    // РАБОТА С Preview
+    public function createPreviewArticle(array $data): ?array
+    {
+        // ... Ваша логика по формированию текста статьи из постов ...
+        $previewText = 'Это текст вашей временной статьи, собранный из постов.'; 
+
+        // Получаем объект таблицы контента
+        $table = $this->getTable('Article', 'Administrator\\Table\\');
+        
+        $articleData = [
+            'title'   => $data['title'],
+            'alias'   => Factory::getApplication()->stringURLSafe($data['title']),
+            'introtext' => $previewText, // <--- ИСПРАВЛЕНО: Используем introtext
+            'catid'   => (int) $data['catid'],
+            'state'   => 0, // Важно: статья не опубликована
+            'access'  => 1,
+            'language' => '*',
+        ];
+
+        if (!$table->save($articleData)) {
+            $this->setError($table->getError());
+            return null;
+        }
+
+        return [
+            'id' => $table->id,
+            'alias' => $table->alias,
+            'catid' => $table->catid
+        ];
+    }
+    
+    public function delete($pks): bool
+    {
+        if (empty($pks)) {
+            return false;
+        }
+
+        $table = $this->getTable('Article', 'Administrator\\Table\\');
+        return $table->delete((int) $pks);
+    }
+    
+    public function getTable($name = 'Article', $prefix = 'Administrator\\Table\\', $options = [])
+    {
+        return parent::getTable($name, $prefix, $options);
+    }
     
 } // КОНЕЦ КЛАССА
