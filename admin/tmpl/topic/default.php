@@ -62,29 +62,21 @@ document.addEventListener('DOMContentLoaded', function() {
 <?php endif; ?>
 
 <script>
-Joomla.submitbutton = function(task) {
-    const form = document.getElementById('adminForm');
-    
-    if (task === 'article.create') {
-        const isPreview = event?.target?.id === 'btn_preview';
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'is_preview';
-        input.value = isPreview ? '1' : '0';
-        form.appendChild(input);
-    }
-    
-    // Валидация и стандартная отправка
-    if (task === 'save' && form.classList.contains('form-validate')) {
-        if (!form.reportValidity()) {
-            alert('<?= Text::_('JGLOBAL_VALIDATION_FORM_FAILED'); ?>');
-            return false;
+ Joomla.submitbutton = function(task) {
+        const form = document.getElementById('adminForm');
+        if (task === 'save' && form.classList.contains('form-validate')) {
+            // Используем стандартную HTML5-валидацию
+            if (form.reportValidity()) {
+                Joomla.submitform(task, form);
+            } else {
+                alert('<?= Text::_('JGLOBAL_VALIDATION_FORM_FAILED'); ?>');
+            }
+        } else {
+            Joomla.submitform(task, form);
         }
-    }
-    
-    Joomla.submitform(task, form);
-};
+    };
 
+   // Обр превью дж 
    document.addEventListener('DOMContentLoaded', function() {
     const previewButton = document.getElementById('btn_preview');
     if (!previewButton) {
