@@ -647,9 +647,12 @@ $infoString .= $idsString;
     }
     
     // Заголовок поста
-    if ($this->params->post_title) {
-        $infoString .= ' / ' . htmlspecialchars($this->currentPost->subject, ENT_QUOTES, 'UTF-8');
-    }
+     if ($this->params->post_title) {
+    $infoString .= ' / <span class="kun_p2a_post_subject">' . htmlspecialchars($this->currentPost->subject, ENT_QUOTES, 'UTF-8') . '</span>';
+      if ($this->params->post_transfer_scheme == 1) { // если работаем с деревом
+        $infoString .= ' / ' . htmlspecialchars("\u{1F332}", ENT_QUOTES, 'UTF-8') . $this->postLevelList[$this->currentIndex];
+     }    
+    } 
     
     // Дата и время
     if ($this->params->post_creation_date) {
