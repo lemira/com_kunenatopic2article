@@ -89,6 +89,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('adminForm');
         const formData = new FormData(form);
 
+       formData.append('is_preview', '1');  // Добавляем флаг, который PHP сможет прочитать
+
         try {
             // Отправляем AJAX-запрос с помощью Joomla.fetch
             const response = await Joomla.fetch('index.php?option=com_kunenatopic2article&task=article.preview&format=json', {
