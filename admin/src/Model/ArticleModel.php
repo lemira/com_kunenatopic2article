@@ -75,13 +75,12 @@ class ArticleModel extends BaseDatabaseModel
      * @param   array  $params  Настройки для создания статей
      * @return  array  Массив ссылок на созданные статьи
      */
-    public function createArticlesFromTopic($params)
+    public function createArticlesFromTopic($params, $isPreview = false) 
     {   // Параметры $params получены в контроллере из таблицы kunenatopic2article_params; копию функции можно взять из контроллера
          $this->params = $params; 
          $this->articleLinks = []; // Инициализация массива ссылок
          $this->currentArticle = null;     // статья не открыта 
-         $isPreview = $this->getState('is_preview', false);
-             
+                      
         try {
             // Получаем ID первого поста
             $firstPostId = $params->topic_selection; // 3232
