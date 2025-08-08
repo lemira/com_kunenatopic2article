@@ -42,12 +42,10 @@ public function create()
     $this->checkToken();
 
     $app = Factory::getApplication();
-    $isPreview = $this->input->getBool('is_preview', false);
     
     try {
         $model = $this->getModel('Article', 'Administrator');
-        $model->setState('is_preview', $isPreview);
-        
+             
         // Получаем параметры
         $params = $this->getComponentParams(); 
 
@@ -56,27 +54,14 @@ if (empty($params) || empty($params->topic_selection)) {
 }
         
         // Создаем статьи
-        $articleLinks = $model->createArticlesFromTopic($params);
+        $articleLinks = $model->createArticlesFromTopic($data, false); // $isPreview = false, работает схема создания статей 
 
-       if ($isPreview && ($articleId = $model->getLastArticleId())) {
-            $this->setRedirect(
-                Route::link(
-                    'site', 
-                    'index.php?option=com_content&view=article&id='.$articleId.'&tmpl=component&return='.urlencode(
-                        Route::_('index.php?option=com_kunenatopic2article&task=article.deletePreviewArticle', false)
-                    ),
-                    false
-                )
-            );
-            return true;
-        }
-        
         $this->resetTopicSelection();    // Сбрасываем Topic ID после успешного создания статей
         
          // Отправляем уведомления (кроме preview)
-        if (!$isPreview) {
-            $emailResult = $model->sendLinksToAdministrator($articleLinks);
-        }
+       // БОЛЬШЕ НЕ НУЖНО, ТАК КАК ПРЕВЬЮ СОЗДАЕТСЯ В ДРУГОМ МЕСТЕ if (!$isPreview) {
+              $emailResult = $model->sendLinksToAdministrator($articleLinks);
+        // }
         
         // Устанавливаем флаг блокировки
         $app->setUserState('com_kunenatopic2article.can_create', false);
@@ -117,17 +102,21 @@ if (empty($params) || empty($params->topic_selection)) {
          $isPreview = $app->input->getBool('is_preview', false);
 
         /** @var \Joomla\Component\KunenaTopic2Article\Administrator\Model\ArticleModel $model */
-        $model = $this->getModel('Article');
+        $model = $this->getModel('Article'); // в create() $model = $this->getModel('Article', 'Administrator');, а здесь только ('Article') !!
         
+        // Получаем параметры для основной функции createArticle
+        $params = $this->getComponentParams();  для осн функции createArticle
         // Вызываем основную функцию createArticle, передавая ей данные и флаг
-        $articleData = $model->createArticlesFromTopic($data, $isPreview);
-
+         $articleData = $model->createArticlesFromTopic($params, $isPreview); // готовит текст тестовой статьи и возвращается сюда 
+      
+        // вызываем новую функцию createPreviewArticle() с уже подготовленным в  closeArticle() текстом статьи 
+        $articleData = $model->createPreviewArticle($data);
+        
         if ($articleData) {
             $previewUrl = Route::_(
                 'index.php?option=com_content&view=article&id=' . $articleData['id'] . ':' . $articleData['alias'] . '&catid=' . $articleData['catid'] . '&tmpl=component',
                 false
-            );
-
+           
             $app->enqueueMessage(new JsonResponse(['success' => true, 'data' => ['url' => $previewUrl, 'id' => $articleData['id']]]));
         } else {
             $app->enqueueMessage(new JsonResponse(['success' => false, 'message' => $model->getError()], 500));
