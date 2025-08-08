@@ -36,7 +36,7 @@ class ArticleModel extends BaseDatabaseModel
 {
     protected $db; // @var \Joomla\Database\DatabaseInterface 
     protected $app; /** @var \Joomla\CMS\Application\CMSApplication */
-    private $currentArticle = null;  
+    protected $currentArticle = null;  
     protected $articleId = 0; // Свойство модели
     private int $articleSize = 0;    // Текущий размер статьи , @var    int 
     private $articleLinks = [];  // Массив ссылок на созданные статьи  @var array 
@@ -58,7 +58,7 @@ class ArticleModel extends BaseDatabaseModel
     public bool $emailsSent = false;
     public array $emailsSentTo = [];
     private $allPosts = []; // Добавляем свойство для хранения всех постов
-    private bool $isPreview = false;
+    protected $isPreview;
     
       public function __construct($config = [])
 {
@@ -76,7 +76,7 @@ class ArticleModel extends BaseDatabaseModel
      * @param   array  $params  Настройки для создания статей
      * @return  array  Массив ссылок на созданные статьи
      */
-    public function createArticlesFromTopic($params, $isPreview = false) 
+    public function createArticlesFromTopic($params, bool $isPreview = false)
     {   // Параметры $params получены в контроллере из таблицы kunenatopic2article_params; копию функции можно взять из контроллера
          $this->params = $params; 
          $this->articleLinks = []; // Инициализация массива ссылок
@@ -948,15 +948,14 @@ private function convertBBCodeToHtml($text)
     // РАБОТА С Preview
     public function createPreviewArticle(array $data): ?array
     {
-        $previewText = $this->currentArticle->fulltext; //  текста статьи из 2х постов
-
-        // Получаем объект таблицы контента
+       try {
+     // Получаем объект таблицы контента
         $table = $this->getTable('Article', 'Administrator\\Table\\');
         
         $articleData = [
-            'title'   => $data['title'],
-            'alias'   => Factory::getApplication()->stringURLSafe($data['title']),
-            'introtext' => $previewText, // <--- ИСПРАВЛЕНО: Используем introtext
+            'title'   => $data['title'] ?? ($this->currentArticle->title ?? 'Preview Article'),
+            'alias'   => Factory::getApplication()->stringURLSafe($data['title'] ?? 'preview-article'),
+            'introtext' => $this->currentArticle->fulltext, // получен в основном createArticle
             'catid'   => (int) $data['catid'],
             'state'   => 0, // Важно: статья не опубликована
             'access'  => 1,
@@ -968,12 +967,17 @@ private function convertBBCodeToHtml($text)
             return null;
         }
 
-        return [
+            return [
             'id' => $table->id,
             'alias' => $table->alias,
-            'catid' => $table->catid
+            'catid' => $table->catid,
+            'url' => Route::_('index.php?option=com_content&view=article&id=' . $table->id . '&catid=' . $table->catid, true, Route::TLS_IGNORE)
         ];
+    } catch (Exception $e) {
+        $this->setError($e->getMessage());
+        return null;
     }
+}
     
     public function delete($pks): bool
     {
@@ -982,7 +986,12 @@ private function convertBBCodeToHtml($text)
         }
 
         $table = $this->getTable('Article', 'Administrator\\Table\\');
-        return $table->delete((int) $pks);
+        try {
+            return $table->delete((int) $pks);
+        } catch (Exception $e) {
+            $this->setError($e->getMessage());
+            return false;
+        }
     }
     
     public function getTable($name = 'Article', $prefix = 'Administrator\\Table\\', $options = [])
