@@ -8,15 +8,17 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 
 HTMLHelper::_('behavior.formvalidator');
+HTMLHelper::_('bootstrap.framework'); // Подключает Bootstrap 5
+HTMLHelper::_('behavior.core'); // Подключает Joomla.request и другие утилиты
 
 $app = Factory::getApplication();
-$input = $app->getInput(); // Joomla 5
+$input = $app->getInput();
 $form = $this->form;
 $paramsRemembered = $this->paramsRemembered ?? false;
 ?>
 
 <form action="<?= Route::_('index.php?option=com_kunenatopic2article'); ?>" method="post" name="adminForm" id="adminForm" class="form-validate">
-   <div class="container-fluid">
+    <div class="container-fluid">
         <h1><?= Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_TITLE'); ?></h1>
         <div class="btn-toolbar mb-3">
             <button type="button" class="btn btn-primary me-2" onclick="Joomla.submitbutton('save')">
@@ -25,14 +27,14 @@ $paramsRemembered = $this->paramsRemembered ?? false;
             <button type="button" class="btn btn-secondary me-2" onclick="Joomla.submitbutton('reset')">
                 <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_RESET'); ?>
             </button>
-           <button type="button" id="btn_create" class="btn btn-success" onclick="Joomla.submitbutton('article.create')" <?= $this->canCreate ? '' : 'disabled'; ?>>
-                   <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_CREATE'); ?>
+            <button type="button" id="btn_create" class="btn btn-success" onclick="Joomla.submitbutton('article.create')" <?= $this->canCreate ? '' : 'disabled'; ?>>
+                <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_CREATE'); ?>
             </button>
             <button type="button" id="btn_preview" class="btn btn-info">
-             <span class="icon-eye" aria-hidden="true"></span>
+                <span class="icon-eye" aria-hidden="true"></span>
                 <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_PREVIEW'); ?>
             </button>
-     </div>
+        </div>
 
         <h3><?= Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_PARAMS'); ?></h3>
         <?php if ($form): ?>
@@ -55,29 +57,46 @@ $paramsRemembered = $this->paramsRemembered ?? false;
 
 <?php if ($input->getBool('preview_closed')) : ?>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    fetch('<?= Route::_("index.php?option=com_kunenatopic2article&task=article.deletePreviewArticle&".Session::getFormToken()."=1") ?>');
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        const token = '<?= Session::getFormToken() ?>';
+        const response = await fetch('<?= Route::_("index.php?option=com_kunenatopic2article&task=article.deletePreviewArticle&format=json") ?>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRF-Token': token
+            },
+            body: new URLSearchParams({
+                [token]: '1'
+            })
+        });
+
+        const result = await response.json();
+        if (!result.success) {
+            Joomla.renderMessages({ 'error': [result.message || 'Error deleting preview article'] });
+        }
+    } catch (error) {
+        Joomla.renderMessages({ 'error': [error.message] });
+    }
 });
 </script>
 <?php endif; ?>
 
 <script>
- Joomla.submitbutton = function(task) {
-        const form = document.getElementById('adminForm');
-        if (task === 'save' && form.classList.contains('form-validate')) {
-            // Используем стандартную HTML5-валидацию
-            if (form.reportValidity()) {
-                Joomla.submitform(task, form);
-            } else {
-                alert('<?= Text::_('JGLOBAL_VALIDATION_FORM_FAILED'); ?>');
-            }
-        } else {
+Joomla.submitbutton = function(task) {
+    const form = document.getElementById('adminForm');
+    if (task === 'save' && form.classList.contains('form-validate')) {
+        if (form.reportValidity()) {
             Joomla.submitform(task, form);
+        } else {
+            alert('<?= Text::_('JGLOBAL_VALIDATION_FORM_FAILED'); ?>');
         }
-    };
+    } else {
+        Joomla.submitform(task, form);
+    }
+};
 
-   // Обр превью дж 
-   document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {
     const previewButton = document.getElementById('btn_preview');
     if (!previewButton) {
         return;
@@ -88,14 +107,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const form = document.getElementById('adminForm');
         const formData = new FormData(form);
+        const token = '<?= Session::getFormToken() ?>';
 
-       formData.append('is_preview', '1');  // Добавляем флаг, который PHP сможет прочитать
+        formData.append('is_preview', '1');
+        formData.append(token, '1');
 
         try {
-            // Отправляем AJAX-запрос с помощью Joomla.fetch
-            const response = await Joomla.fetch('index.php?option=com_kunenatopic2article&task=article.preview&format=json', {
+            const response = await fetch('<?= Route::_("index.php?option=com_kunenatopic2article&task=article.preview&format=json") ?>', {
                 method: 'POST',
-                body: formData,
+                headers: {
+                    'X-CSRF-Token': token
+                },
+                body: formData
             });
 
             if (!response.ok) {
@@ -105,7 +128,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await response.json();
 
             if (result.success) {
-                // Создаем iframe для модального окна
                 const iframe = Joomla.Modal.createIframe({
                     src: result.data.url,
                     title: '<?= Text::_('COM_KUNENATOPIC2ARTICLE_PREVIEW_TITLE', true); ?>',
@@ -113,24 +135,32 @@ document.addEventListener('DOMContentLoaded', function() {
                     height: '80%'
                 });
                 
-                // Открываем модальное окно Bootstrap
-                const modal = Joomla.Bootstrap.Modal.open(iframe, {
-                    // Опции модального окна, если нужны
-                });
+                const modal = Joomla.Bootstrap.Modal.open(iframe, {});
                 
-                // Обработчик закрытия модального окна для удаления статьи
                 modal.addEventListener('hidden.bs.modal', async () => {
                     const deleteData = new FormData();
                     deleteData.append('id', result.data.id);
-                    
-                    await Joomla.fetch('index.php?option=com_kunenatopic2article&task=article.deletePreview&format=json', {
-                        method: 'POST',
-                        body: deleteData,
-                    });
-                    
-                    modal.remove(); // Удаляем элемент модального окна из DOM
-                });
+                    deleteData.append(token, '1');
 
+                    try {
+                        const deleteResponse = await fetch('<?= Route::_("index.php?option=com_kunenatopic2article&task=article.deletePreview&format=json") ?>', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-Token': token
+                            },
+                            body: deleteData
+                        });
+
+                        const deleteResult = await deleteResponse.json();
+                        if (!deleteResult.success) {
+                            Joomla.renderMessages({ 'error': [deleteResult.message || 'Error deleting preview article'] });
+                        }
+                    } catch (error) {
+                        Joomla.renderMessages({ 'error': [error.message] });
+                    }
+                    
+                    modal.remove();
+                });
             } else {
                 Joomla.renderMessages({ 'error': [result.message] });
             }
@@ -139,5 +169,4 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
-   
 </script>
