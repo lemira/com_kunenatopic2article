@@ -8,8 +8,8 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 
 HTMLHelper::_('behavior.formvalidator');
-HTMLHelper::_('bootstrap.framework'); // Подключает Bootstrap 5
-HTMLHelper::_('behavior.core'); // Подключает Joomla.request и другие утилиты
+HTMLHelper::_('bootstrap.framework');
+HTMLHelper::_('behavior.core');
 
 $app = Factory::getApplication();
 $input = $app->getInput();
@@ -60,7 +60,8 @@ $paramsRemembered = $this->paramsRemembered ?? false;
 document.addEventListener('DOMContentLoaded', async function() {
     try {
         const token = '<?= Session::getFormToken() ?>';
-        const response = await fetch('<?= Route::_("index.php?option=com_kunenatopic2article&task=article.deletePreviewArticle&format=json") ?>', {
+        console.log('Delete Preview URL:', '<?= Route::_("index.php?option=com_kunenatopic2article&task=article.deletePreview&format=json") ?>');
+        const response = await fetch('<?= Route::_("index.php?option=com_kunenatopic2article&task=article.deletePreview&format=json") ?>', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -71,9 +72,12 @@ document.addEventListener('DOMContentLoaded', async function() {
             })
         });
 
-        const result = await response.json();
+        const text = await response.text();
+        console.log('Delete Preview Raw Response:', text);
+        const result = JSON.parse(text);
+
         if (!result.success) {
-            Joomla.renderMessages({ 'error': [result.message || 'Error deleting preview article'] });
+            Joomla.renderMessages({ 'error': [result.message || 'Ошибка при удалении статьи предварительного просмотра'] });
         }
     } catch (error) {
         Joomla.renderMessages({ 'error': [error.message] });
@@ -104,15 +108,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     previewButton.addEventListener('click', async function(event) {
         event.preventDefault();
-
         const form = document.getElementById('adminForm');
         const formData = new FormData(form);
         const token = '<?= Session::getFormToken() ?>';
-
         formData.append('is_preview', '1');
         formData.append(token, '1');
 
         try {
+            console.log('Preview URL:', '<?= Route::_("index.php?option=com_kunenatopic2article&task=article.preview&format=json") ?>');
+            console.log('FormData:', Object.fromEntries(formData));
             const response = await fetch('<?= Route::_("index.php?option=com_kunenatopic2article&task=article.preview&format=json") ?>', {
                 method: 'POST',
                 headers: {
@@ -121,11 +125,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: formData
             });
 
-            if (!response.ok) {
-                throw new Error(response.statusText);
-            }
-
-            const result = await response.json();
+            const text = await response.text();
+            console.log('Preview Raw Response:', text);
+            const result = JSON.parse(text);
 
             if (result.success) {
                 const iframe = Joomla.Modal.createIframe({
@@ -143,6 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     deleteData.append(token, '1');
 
                     try {
+                        console.log('Delete Preview URL:', '<?= Route::_("index.php?option=com_kunenatopic2article&task=article.deletePreview&format=json") ?>');
                         const deleteResponse = await fetch('<?= Route::_("index.php?option=com_kunenatopic2article&task=article.deletePreview&format=json") ?>', {
                             method: 'POST',
                             headers: {
@@ -151,9 +154,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             body: deleteData
                         });
 
-                        const deleteResult = await deleteResponse.json();
+                        const deleteText = await deleteResponse.text();
+                        console.log('Delete Preview Raw Response:', deleteText);
+                        const deleteResult = JSON.parse(deleteText);
+
                         if (!deleteResult.success) {
-                            Joomla.renderMessages({ 'error': [deleteResult.message || 'Error deleting preview article'] });
+                            Joomla.renderMessages({ 'error': [deleteResult.message || 'Ошибка при удалении статьи предварительного просмотра'] });
                         }
                     } catch (error) {
                         Joomla.renderMessages({ 'error': [error.message] });
