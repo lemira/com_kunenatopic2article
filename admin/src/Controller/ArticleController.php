@@ -102,6 +102,10 @@ if (empty($params) || empty($params->topic_selection)) {
         // Читаем флаг из запроса
          $isPreview = $app->input->getBool('is_preview', false);
 
+         // Отладка входных данных
+         error_log('Preview input: ' . print_r($data, true));
+        error_log('is_preview: ' . ($isPreview ? 'true' : 'false'));
+
         /** @var \Joomla\Component\KunenaTopic2Article\Administrator\Model\ArticleModel $model */
        $model = $this->getModel('Article', 'Administrator');
         
@@ -110,10 +114,17 @@ if (empty($params) || empty($params->topic_selection)) {
             $params = $this->getComponentParams(); // для осн функции createArticle
             // Вызываем основную функцию createArticle, передавая ей данные и флаг
             $articleData = $model->createArticlesFromTopic($params, $isPreview); // готовит текст тестовой статьи и возвращается сюда 
-            
+
+            // Отладка результата createArticlesFromTopic
+            error_log('createArticlesFromTopic result: ' . print_r($articleData, true));
+
             // вызываем новую функцию createPreviewArticle() с уже подготовленным в closeArticle() текстом статьи 
             $articleData = $model->createPreviewArticle($data);
-            
+
+          
+            // Отладка результата createPreviewArticle
+            error_log('createPreviewArticle result: ' . print_r($articleData, true));
+
             if ($articleData) {
                 $previewUrl = Route::_(
                     'index.php?option=com_content&view=article&id=' . $articleData['id'] . ':' . $articleData['alias'] . '&catid=' . $articleData['catid'] . '&tmpl=component',
@@ -139,6 +150,7 @@ if (empty($params) || empty($params->topic_selection)) {
                 'success' => false,
                 'message' => $e->getMessage()
             ];
+             error_log('Preview exception: ' . $e->getMessage()); // ОТЛАДКА
         }
 
         echo new JoomlaSerializer('json')->toString($response);
@@ -150,9 +162,14 @@ if (empty($params) || empty($params->topic_selection)) {
      */
     public function deletePreview(): void
     {
-        $this->checkToken('POST');
+       // замена в сл стр $this->checkToken('POST');
+          $this->checkToken('POST') or jexit(json_encode(['success' => false, 'message' => Text::_('JINVALID_TOKEN')]));
+
         $app = Factory::getApplication();
         $id = $app->input->getInt('id');
+  
+        // Отладка входных данных
+        error_log('DeletePreview input ID: ' . $id);
 
        try {
             if (!$id) {
@@ -178,6 +195,7 @@ if (empty($params) || empty($params->topic_selection)) {
                 'success' => false,
                 'message' => $e->getMessage()
             ];
+               error_log('DeletePreview exception: ' . $e->getMessage());
         }
 
         echo new JoomlaSerializer('json')->toString($response);
