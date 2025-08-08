@@ -144,8 +144,7 @@ if (empty($params) || empty($params->topic_selection)) {
         } else {
             $app->enqueueMessage(new JsonResponse(['success' => false, 'message' => 'No article ID provided'], 400));
         }
-    }
-}    
+    }   
       
     /**
      * Получение параметров компонента из таблиц
