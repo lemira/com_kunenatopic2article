@@ -112,10 +112,11 @@ if (empty($params) || empty($params->topic_selection)) {
         // вызываем новую функцию createPreviewArticle() с уже подготовленным в  closeArticle() текстом статьи 
         $articleData = $model->createPreviewArticle($data);
         
-        if ($articleData) {
+       if ($articleData) {
             $previewUrl = Route::_(
                 'index.php?option=com_content&view=article&id=' . $articleData['id'] . ':' . $articleData['alias'] . '&catid=' . $articleData['catid'] . '&tmpl=component',
                 false
+            );
            
             $app->enqueueMessage(new JsonResponse(['success' => true, 'data' => ['url' => $previewUrl, 'id' => $articleData['id']]]));
         } else {
