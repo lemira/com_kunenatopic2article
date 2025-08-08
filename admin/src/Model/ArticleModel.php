@@ -58,6 +58,7 @@ class ArticleModel extends BaseDatabaseModel
     public bool $emailsSent = false;
     public array $emailsSentTo = [];
     private $allPosts = []; // Добавляем свойство для хранения всех постов
+    private bool $isPreview = false;
     
       public function __construct($config = [])
 {
@@ -80,7 +81,8 @@ class ArticleModel extends BaseDatabaseModel
          $this->params = $params; 
          $this->articleLinks = []; // Инициализация массива ссылок
          $this->currentArticle = null;     // статья не открыта 
-                      
+         $this->isPreview = $isPreview;
+     
         try {
             // Получаем ID первого поста
             $firstPostId = $params->topic_selection; // 3232
@@ -103,7 +105,7 @@ class ArticleModel extends BaseDatabaseModel
                 }
 
                 // В режиме preview ограничиваемся 2 постами
-                if ($isPreview) {
+                if ($this->isPreview) {
                     $this->postIdList = array_slice($this->postIdList, 0, 2);
                     $this->postIdList[] = 0; // Гарантируем завершение цикла
                 }                
@@ -214,6 +216,10 @@ class ArticleModel extends BaseDatabaseModel
             // 3. Сборка финального контента
             $this->currentArticle->fulltext = $cssLink . $filteredContent;
     // Factory::getApplication()->enqueueMessage('closeArticle fulltext до createArt' . HTMLHelper::_('string.truncate', $this->currentArticle->fulltext, 100, true, false), 'info'); //ОТЛАДКА true-сохр целые слова, false-не доб многоточие          
+            if ($this->isPreview) {
+                return;         // $this->currentArticle->fulltext;    // текст временной статьи готов
+                } 
+            
             // 4. Создаем статью через Table
             $this->articleId = $this->createArticleViaTable();
 
@@ -942,8 +948,7 @@ private function convertBBCodeToHtml($text)
     // РАБОТА С Preview
     public function createPreviewArticle(array $data): ?array
     {
-        // ... Ваша логика по формированию текста статьи из постов ...
-        $previewText = 'Это текст вашей временной статьи, собранный из постов.'; 
+        $previewText = $this->currentArticle->fulltext; //  текста статьи из 2х постов
 
         // Получаем объект таблицы контента
         $table = $this->getTable('Article', 'Administrator\\Table\\');
