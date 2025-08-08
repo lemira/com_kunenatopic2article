@@ -54,7 +54,7 @@ if (empty($params) || empty($params->topic_selection)) {
 }
         
         // Создаем статьи
-        $articleLinks = $model->createArticlesFromTopic($data, false); // $isPreview = false, работает схема создания статей 
+        $articleLinks = $model->createArticlesFromTopic($params, false); // $isPreview = false, работает схема создания статей 
 
         $this->resetTopicSelection();    // Сбрасываем Topic ID после успешного создания статей
         
