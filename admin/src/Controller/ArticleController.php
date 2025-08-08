@@ -24,7 +24,8 @@ use Joomla\CMS\MVC\Factory\MVCFactoryInterface; // ?
 use Joomla\CMS\Dispatcher\AbstractController;  // ?
 use Joomla\CMS\MVC\Controller\FormController;
 use Joomla\CMS\Response\Json\JsonResponse;
-
+use Joomla\CMS\Serializer\JoomlaSerializer;
+use Joomla\CMS\MVC\Controller\AdminController;
 
 /**
  * Article Controller
@@ -102,26 +103,46 @@ if (empty($params) || empty($params->topic_selection)) {
          $isPreview = $app->input->getBool('is_preview', false);
 
         /** @var \Joomla\Component\KunenaTopic2Article\Administrator\Model\ArticleModel $model */
-        $model = $this->getModel('Article'); // в create() $model = $this->getModel('Article', 'Administrator');, а здесь только ('Article') !!
+       $model = $this->getModel('Article', 'Administrator');
         
-        // Получаем параметры для основной функции createArticle
-        $params = $this->getComponentParams(); // для осн функции createArticle
-        // Вызываем основную функцию createArticle, передавая ей данные и флаг
-         $articleData = $model->createArticlesFromTopic($params, $isPreview); // готовит текст тестовой статьи и возвращается сюда 
-      
-        // вызываем новую функцию createPreviewArticle() с уже подготовленным в  closeArticle() текстом статьи 
-        $articleData = $model->createPreviewArticle($data);
-        
-       if ($articleData) {
-            $previewUrl = Route::_(
-                'index.php?option=com_content&view=article&id=' . $articleData['id'] . ':' . $articleData['alias'] . '&catid=' . $articleData['catid'] . '&tmpl=component',
-                false
-            );
-           
-            $app->enqueueMessage(new JsonResponse(['success' => true, 'data' => ['url' => $previewUrl, 'id' => $articleData['id']]]));
-        } else {
-            $app->enqueueMessage(new JsonResponse(['success' => false, 'message' => $model->getError()], 500));
+      try {
+            // Получаем параметры для основной функции createArticle
+            $params = $this->getComponentParams(); // для осн функции createArticle
+            // Вызываем основную функцию createArticle, передавая ей данные и флаг
+            $articleData = $model->createArticlesFromTopic($params, $isPreview); // готовит текст тестовой статьи и возвращается сюда 
+            
+            // вызываем новую функцию createPreviewArticle() с уже подготовленным в closeArticle() текстом статьи 
+            $articleData = $model->createPreviewArticle($data);
+            
+            if ($articleData) {
+                $previewUrl = Route::_(
+                    'index.php?option=com_content&view=article&id=' . $articleData['id'] . ':' . $articleData['alias'] . '&catid=' . $articleData['catid'] . '&tmpl=component',
+                    false
+                );
+
+                $response = [
+                    'success' => true,
+                    'data' => [
+                        'url' => $previewUrl,
+                        'id' => $articleData['id']
+                    ],
+                    'message' => Text::_('COM_KUNENATOPIC2ARTICLE_PREVIEW_SUCCESS')
+                ];
+            } else {
+                $response = [
+                    'success' => false,
+                    'message' => $model->getError() ?: 'Не удалось создать статью предварительного просмотра'
+                ];
+            }
+        } catch (Exception $e) {
+            $response = [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
         }
+
+        echo new JoomlaSerializer('json')->toString($response);
+        $app->close();
     }
 
     /**
@@ -133,19 +154,36 @@ if (empty($params) || empty($params->topic_selection)) {
         $app = Factory::getApplication();
         $id = $app->input->getInt('id');
 
-        if ($id) {
-            /** @var \YourNamespace\Component\Kunenatopic2article\Administrator\Model\ArticleModel $model */
-            $model = $this->getModel('Article');
-            if ($model->delete($id)) {
-                 $app->enqueueMessage(new JsonResponse(['success' => true]));
-            } else {
-                 $app->enqueueMessage(new JsonResponse(['success' => false, 'message' => $model->getError()], 500));
+       try {
+            if (!$id) {
+                throw new Exception(Text::_('COM_KUNENATOPIC2ARTICLE_NO_ID_PROVIDED'), 400);
             }
-        } else {
-            $app->enqueueMessage(new JsonResponse(['success' => false, 'message' => 'No article ID provided'], 400));
+
+            /** @var \Joomla\Component\KunenaTopic2Article\Administrator\Model\ArticleModel $model */
+            $model = $this->getModel('Article', 'Administrator');
+
+            if ($model->delete($id)) {
+                $response = [
+                    'success' => true,
+                    'message' => Text::_('COM_KUNENATOPIC2ARTICLE_DELETE_PREVIEW_SUCCESS')
+                ];
+            } else {
+                $response = [
+                    'success' => false,
+                    'message' => $model->getError() ?: 'Не удалось удалить статью'
+                ];
+            }
+        } catch (Exception $e) {
+            $response = [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
         }
-    }   
-      
+
+        echo new JoomlaSerializer('json')->toString($response);
+        $app->close();
+    }
+
     /**
      * Получение параметров компонента из таблиц
      * @return  object|null  Объект с параметрами компонента
