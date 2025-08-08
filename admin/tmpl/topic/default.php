@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     try {
         const token = '<?= Session::getFormToken() ?>';
         console.log('Delete Preview URL:', '<?= Route::_("index.php?option=com_kunenatopic2article&task=article.deletePreview&format=json") ?>');
-        const response = await fetch('<?= Route::_("index.php?option=com_kunenatopic2article&task=article.deletePreview&format=json") ?>', {
+        const response = await fetch('index.php?option=com_kunenatopic2article&task=article.deletePreview&format=json', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             console.log('Preview URL:', '<?= Route::_("index.php?option=com_kunenatopic2article&task=article.preview&format=json") ?>');
             console.log('FormData:', Object.fromEntries(formData));
-            const response = await fetch('<?= Route::_("index.php?option=com_kunenatopic2article&task=article.preview&format=json") ?>', {
+            const response = await fetch('index.php?option=com_kunenatopic2article&task=article.preview&format=json', {
                 method: 'POST',
                 headers: {
                     'X-CSRF-Token': token
@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     try {
                         console.log('Delete Preview URL:', '<?= Route::_("index.php?option=com_kunenatopic2article&task=article.deletePreview&format=json") ?>');
-                        const deleteResponse = await fetch('<?= Route::_("index.php?option=com_kunenatopic2article&task=article.deletePreview&format=json") ?>', {
+                        const deleteResponse = await fetch('index.php?option=com_kunenatopic2article&task=article.deletePreview&format=json', {
                             method: 'POST',
                             headers: {
                                 'X-CSRF-Token': token
