@@ -105,7 +105,7 @@ if (empty($params) || empty($params->topic_selection)) {
         $model = $this->getModel('Article'); // в create() $model = $this->getModel('Article', 'Administrator');, а здесь только ('Article') !!
         
         // Получаем параметры для основной функции createArticle
-        $params = $this->getComponentParams();  для осн функции createArticle
+        $params = $this->getComponentParams(); // для осн функции createArticle
         // Вызываем основную функцию createArticle, передавая ей данные и флаг
          $articleData = $model->createArticlesFromTopic($params, $isPreview); // готовит текст тестовой статьи и возвращается сюда 
       
