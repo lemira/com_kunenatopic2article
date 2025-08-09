@@ -945,7 +945,7 @@ private function convertBBCodeToHtml($text)
             'title'   => $this->title,
             'alias'   => Factory::getApplication()->stringURLSafe($data['title'] ?? 'preview-article'),
             'introtext' => $previewText,
-            'catid'   => ((int) $this->params->article_category,
+            'catid'   => (int) $this->params->article_category,
             'state'   => 0, // Важно: статья не опубликована
           ];
 
