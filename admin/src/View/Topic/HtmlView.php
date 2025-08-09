@@ -20,6 +20,9 @@ class HtmlView extends BaseHtmlView
     {
 // Чтобы Joomla.getToken() и Joomla.Bootstrap.Modal в скрипте гарантированно работали
 $wa = $this->document->getWebAssetManager();
+// СНАЧАЛА загружаем главный JS-фреймворк Joomla. Это регистрирует все дочерние ассеты типа "joomla.token".
+$wa->useScript('core');
+// ТЕПЕРЬ Joomla знает, что такое эти вызовы
 $wa->useScript('joomla.token');
 $wa->useScript('joomla.bootstrap');
         
