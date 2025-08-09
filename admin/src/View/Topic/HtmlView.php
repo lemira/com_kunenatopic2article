@@ -18,6 +18,11 @@ class HtmlView extends BaseHtmlView
 
     public function display($tpl = null)
     {
+// Чтобы Joomla.getToken() и Joomla.Bootstrap.Modal в скрипте гарантированно работали
+$wa = $this->document->getWebAssetManager();
+$wa->useScript('joomla.token');
+$wa->useScript('joomla.bootstrap');
+        
         // Получаем данные из модели
         $this->form = $this->get('Form');
         $this->state = $this->get('State');
