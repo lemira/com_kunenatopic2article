@@ -46,24 +46,15 @@ public function create()
     
     try {
         $model = $this->getModel('Article', 'Administrator');
-             
-        // Получаем параметры
-        $params = $this->getComponentParams(); 
-
-if (empty($params) || empty($params->topic_selection)) {
-    throw new \RuntimeException(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'));
-}
-        
+      
         // Создаем статьи
-        $articleLinks = $model->createArticlesFromTopic($params, false); // $isPreview = false, работает схема создания статей 
+        $articleLinks = $model->createArticlesFromTopic();
 
         $this->resetTopicSelection();    // Сбрасываем Topic ID после успешного создания статей
         
-         // Отправляем уведомления (кроме preview)
-       // БОЛЬШЕ НЕ НУЖНО, ТАК КАК ПРЕВЬЮ СОЗДАЕТСЯ В ДРУГОМ МЕСТЕ if (!$isPreview) {
+         // Отправляем уведомления 
               $emailResult = $model->sendLinksToAdministrator($articleLinks);
-        // }
-        
+            
         // Устанавливаем флаг блокировки
         $app->setUserState('com_kunenatopic2article.can_create', false);
         
@@ -93,70 +84,45 @@ if (empty($params) || empty($params->topic_selection)) {
 /**
      * Метод для создания временной статьи и возврата URL.
      */
-    public function preview(): void
+   public function preview(): void
     {
         $this->checkToken('POST');
         $app = Factory::getApplication();
-        $data = $app->input->post->get('jform', [], 'array');
-
-        // Читаем флаг из запроса
-         $isPreview = $app->input->getBool('is_preview', false);
-
-         // Отладка входных данных
-         error_log('Preview input: ' . print_r($data, true));
-        error_log('is_preview: ' . ($isPreview ? 'true' : 'false'));
-
+    
         /** @var \Joomla\Component\KunenaTopic2Article\Administrator\Model\ArticleModel $model */
-       $model = $this->getModel('Article', 'Administrator');
+       $model = $this->getModel('Article', 'Administrator');        // или $model = $this->getModel('Article'); ?
         
       try {
-            // Получаем параметры для основной функции createArticle
-            $params = $this->getComponentParams(); // для осн функции createArticle
-            // Вызываем основную функцию createArticle, передавая ей данные и флаг
-            $articleData = $model->createArticlesFromTopic($params, $isPreview); // готовит текст тестовой статьи и возвращается сюда 
-
-            // Отладка результата createArticlesFromTopic
-            error_log('createArticlesFromTopic result: ' . print_r($articleData, true));
-
-            // вызываем новую функцию createPreviewArticle() с уже подготовленным в closeArticle() текстом статьи 
-            $articleData = $model->createPreviewArticle($data);
-
-          
+            // вызываем новую функцию createPreviewArticle() 
+            $articleData = $model->createPreviewArticle();
+                  
             // Отладка результата createPreviewArticle
             error_log('createPreviewArticle result: ' . print_r($articleData, true));
 
-            if ($articleData) {
-                $previewUrl = Route::_(
-                    'index.php?option=com_content&view=article&id=' . $articleData['id'] . ':' . $articleData['alias'] . '&catid=' . $articleData['catid'] . '&tmpl=component',
-                    false
-                );
+           if ($articleData) {
+            $previewUrl = Route::_(
+                'index.php?option=com_content&view=article&id=' . $articleData['id'] . ':' . $articleData['alias'] . '&catid=' . $articleData['catid'] . '&tmpl=component',
+                false
+            );
 
-                $response = [
-                    'success' => true,
-                    'data' => [
-                        'url' => $previewUrl,
-                        'id' => $articleData['id']
-                    ],
-                    'message' => Text::_('COM_KUNENATOPIC2ARTICLE_PREVIEW_SUCCESS')
-                ];
-            } else {
-                $response = [
-                    'success' => false,
-                    'message' => $model->getError() ?: 'Не удалось создать статью предварительного просмотра'
-                ];
-            }
-        } catch (Exception $e) {
             $response = [
-                'success' => false,
-                'message' => $e->getMessage()
+                'success' => true,
+                'data' => ['url' => $previewUrl, 'id' => $articleData['id']]
             ];
-             error_log('Preview exception: ' . $e->getMessage()); // ОТЛАДКА
+        } else {
+            throw new Exception($model->getError() ?: 'Не удалось создать статью предварительного просмотра');
         }
-
-        echo new JoomlaSerializer('json')->toString($response);
-        $app->close();
+    } catch (Exception $e) {
+        $response = ['success' => false, 'message' => $e->getMessage()];
+        // Логирование ошибки для отладки
+        error_log('Preview exception: ' . $e->getMessage());
     }
 
+    // Отправляем JSON-ответ // Используем новый класс JsonResponse - это стандарт для Joomla 5
+    echo new \Joomla\CMS\Response\Json\JsonResponse($response);
+    $app->close();
+}
+    
     /**
      * Метод для удаления временной статьи.
      */
@@ -200,36 +166,6 @@ if (empty($params) || empty($params->topic_selection)) {
 
         echo new JoomlaSerializer('json')->toString($response);
         $app->close();
-    }
-
-    /**
-     * Получение параметров компонента из таблиц
-     * @return  object|null  Объект с параметрами компонента
-     */
-    private function getComponentParams()
-    {
-        try {
-            $db = Factory::getContainer()->get('DatabaseDriver');
-            $query = $db->getQuery(true)
-                ->select('*')
-                ->from($db->quoteName('#__kunenatopic2article_params'))
-                ->where($db->quoteName('id') . ' = 1');
-            
-            $params = $db->setQuery($query)->loadObject();
-            
-            if (!$params) {
-                Factory::getApplication()->enqueueMessage(
-                    Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_NOT_FOUND'), 
-                    'error'
-                );
-                return null;
-            }
-            
-            return $params;
-        } catch (\Exception $e) {
-            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
-            return null;
-        }
     }
    
 private function resetTopicSelection()
