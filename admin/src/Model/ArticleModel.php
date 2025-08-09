@@ -78,7 +78,7 @@ class ArticleModel extends BaseDatabaseModel
     public function createArticlesFromTopic()
     {   // Параметры $params получаем из таблицы kunenatopic2article_params
          $this->params = $this->getComponentParams(); 
-         if (empty($params) || empty($params->topic_selection)) {
+         if (empty($this->params) || empty($this->params->topic_selection)) {
             throw new \RuntimeException(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'));
           }
         $this->articleLinks = []; // Инициализация массива ссылок
@@ -985,7 +985,7 @@ private function convertBBCodeToHtml($text)
      public function buildArticleTextFromTopic()        // из createArticlesFromTopic(), openArticle(), closeArticle()
     {   // Параметры $params получаем из таблицы kunenatopic2article_params
          $this->params = $this->getComponentParams(); 
-         if (empty($params) || empty($params->topic_selection)) {
+         if (empty($this->params) || empty($this->params->topic_selection)) {
     throw new \RuntimeException(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'));
           }
        //?  $this->articleLinks = []; // Инициализация массива ссылок
