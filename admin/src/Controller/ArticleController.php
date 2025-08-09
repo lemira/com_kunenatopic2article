@@ -90,7 +90,7 @@ public function create()
         $app = Factory::getApplication();
     
         /** @var \Joomla\Component\KunenaTopic2Article\Administrator\Model\ArticleModel $model */
-       $model = $this->getModel('Article', 'Administrator');        // или $model = $this->getModel('Article'); ?
+       $model = $this->getModel('Article', 'Administrator');    
         
       try {
             // вызываем новую функцию createPreviewArticle() 
@@ -99,72 +99,54 @@ public function create()
             // Отладка результата createPreviewArticle
             error_log('createPreviewArticle result: ' . print_r($articleData, true));
 
-           if ($articleData) {
+   if (!$articleData) {
+                throw new Exception($model->getError() ?: 'Модель не вернула данные для превью.');
+            }
+
             $previewUrl = Route::_(
                 'index.php?option=com_content&view=article&id=' . $articleData['id'] . ':' . $articleData['alias'] . '&catid=' . $articleData['catid'] . '&tmpl=component',
                 false
             );
 
-            $response = [
-                'success' => true,
-                'data' => ['url' => $previewUrl, 'id' => $articleData['id']]
-            ];
-        } else {
-            throw new Exception($model->getError() ?: 'Не удалось создать статью предварительного просмотра');
-        }
-    } catch (Exception $e) {
-        $response = ['success' => false, 'message' => $e->getMessage()];
-        // Логирование ошибки для отладки
-        error_log('Preview exception: ' . $e->getMessage());
-    }
+            $response = ['success' => true, 'data' => ['url' => $previewUrl, 'id' => $articleData['id']]];
 
-    // Отправляем JSON-ответ // Используем новый класс JsonResponse - это стандарт для Joomla 5
-    echo new \Joomla\CMS\Response\Json\JsonResponse($response);
-    $app->close();
-}
+        } catch (Exception $e) {
+            $response = ['success' => false, 'message' => $e->getMessage()];
+            error_log('Preview exception: ' . $e->getMessage());
+        }
+
+        echo new JsonResponse($response);
+        $app->close();
+    }
     
     /**
      * Метод для удаления временной статьи.
      */
     public function deletePreview(): void
     {
-       // замена в сл стр $this->checkToken('POST');
-          $this->checkToken('POST') or jexit(json_encode(['success' => false, 'message' => Text::_('JINVALID_TOKEN')]));
-
+        $this->checkToken();
         $app = Factory::getApplication();
         $id = $app->input->getInt('id');
-  
-        // Отладка входных данных
-        error_log('DeletePreview input ID: ' . $id);
 
-       try {
+        try {
             if (!$id) {
-                throw new Exception(Text::_('COM_KUNENATOPIC2ARTICLE_NO_ID_PROVIDED'), 400);
+                throw new Exception('ID статьи для удаления не предоставлен.');
             }
 
-            /** @var \Joomla\Component\KunenaTopic2Article\Administrator\Model\ArticleModel $model */
             $model = $this->getModel('Article', 'Administrator');
 
-            if ($model->delete($id)) {
-                $response = [
-                    'success' => true,
-                    'message' => Text::_('COM_KUNENATOPIC2ARTICLE_DELETE_PREVIEW_SUCCESS')
-                ];
-            } else {
-                $response = [
-                    'success' => false,
-                    'message' => $model->getError() ?: 'Не удалось удалить статью'
-                ];
+            if (!$model->delete($id)) {
+                throw new Exception($model->getError() ?: 'Ошибка при удалении статьи из модели.');
             }
+
+            $response = ['success' => true];
+
         } catch (Exception $e) {
-            $response = [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-               error_log('DeletePreview exception: ' . $e->getMessage());
+            $response = ['success' => false, 'message' => $e->getMessage()];
+            error_log('DeletePreview exception: ' . $e->getMessage());
         }
 
-       echo new \Joomla\CMS\Response\Json\JsonResponse($response);
+        echo new JsonResponse($response);
         $app->close();
     }
    
