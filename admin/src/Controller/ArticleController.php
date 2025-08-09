@@ -164,7 +164,7 @@ public function create()
                error_log('DeletePreview exception: ' . $e->getMessage());
         }
 
-        echo new JoomlaSerializer('json')->toString($response);
+       echo new \Joomla\CMS\Response\Json\JsonResponse($response);
         $app->close();
     }
    
