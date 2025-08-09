@@ -58,8 +58,7 @@ class ArticleModel extends BaseDatabaseModel
     public bool $emailsSent = false;
     public array $emailsSentTo = [];
     private $allPosts = []; // Добавляем свойство для хранения всех постов
-    protected $isPreview;
-    
+      
       public function __construct($config = [])
 {
     parent::__construct($config);
@@ -76,13 +75,15 @@ class ArticleModel extends BaseDatabaseModel
      * @param   array  $params  Настройки для создания статей
      * @return  array  Массив ссылок на созданные статьи
      */
-    public function createArticlesFromTopic($params, bool $isPreview = false)
-    {   // Параметры $params получены в контроллере из таблицы kunenatopic2article_params; копию функции можно взять из контроллера
-         $this->params = $params; 
-         $this->articleLinks = []; // Инициализация массива ссылок
+    public function createArticlesFromTopic()
+    {   // Параметры $params получаем из таблицы kunenatopic2article_params
+         $this->params = $this->getComponentParams(); 
+         if (empty($params) || empty($params->topic_selection)) {
+            throw new \RuntimeException(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'));
+          }
+        $this->articleLinks = []; // Инициализация массива ссылок
          $this->currentArticle = null;     // статья не открыта 
-         $this->isPreview = $isPreview;
-     
+       
         try {
             // Получаем ID первого поста
             $firstPostId = $params->topic_selection; // 3232
@@ -104,12 +105,6 @@ class ArticleModel extends BaseDatabaseModel
                 $this->postLevelList = $baum['levels'];
                 }
 
-                // В режиме preview ограничиваемся 2 постами
-                if ($this->isPreview) {
-                    $this->postIdList = array_slice($this->postIdList, 0, 2);
-                    $this->postIdList[] = 0; // Гарантируем завершение цикла
-                }                
-            
                $this->currentIndex = 0; // в nextPost() начинаем переход сразу к элементу (1), т.к. (0) = $topicId = $firstPostId
                     
                $this->openArticle();     // Открываем первую статью
@@ -144,11 +139,6 @@ class ArticleModel extends BaseDatabaseModel
             return $this->articleLinks;
         }
     }
-
-    public function getLastArticleId()
-{
-    return $this->articleId;
-}
 
     /**
      * Открытие статьи для её заполнения
@@ -216,10 +206,7 @@ class ArticleModel extends BaseDatabaseModel
             // 3. Сборка финального контента
             $this->currentArticle->fulltext = $cssLink . $filteredContent;
     // Factory::getApplication()->enqueueMessage('closeArticle fulltext до createArt' . HTMLHelper::_('string.truncate', $this->currentArticle->fulltext, 100, true, false), 'info'); //ОТЛАДКА true-сохр целые слова, false-не доб многоточие          
-            if ($this->isPreview) {
-                return;         // $this->currentArticle->fulltext;    // текст временной статьи готов
-                } 
-            
+          
             // 4. Создаем статью через Table
             $this->articleId = $this->createArticleViaTable();
 
@@ -946,21 +933,21 @@ private function convertBBCodeToHtml($text)
 }
 
     // РАБОТА С Preview
-    public function createPreviewArticle(array $data): ?array
+   public function createPreviewArticle()
     {
-       try {
-     // Получаем объект таблицы контента
+        // получаем текст для превью
+        $previewText = $this->buildArticleTextFromTopic();
+    
+        // Получаем объект таблицы контента
         $table = $this->getTable('Article', 'Administrator\\Table\\');
         
         $articleData = [
-            'title'   => $data['title'] ?? ($this->currentArticle->title ?? 'Preview Article'),
+            'title'   => $this->title,
             'alias'   => Factory::getApplication()->stringURLSafe($data['title'] ?? 'preview-article'),
-            'introtext' => $this->currentArticle->fulltext, // получен в основном createArticle
-            'catid'   => (int) $data['catid'],
+            'introtext' => $previewText,
+            'catid'   => ((int) $this->params->article_category,
             'state'   => 0, // Важно: статья не опубликована
-            'access'  => 1,
-            'language' => '*',
-        ];
+          ];
 
         if (!$table->save($articleData)) {
             $this->setError($table->getError());
@@ -971,13 +958,8 @@ private function convertBBCodeToHtml($text)
             'id' => $table->id,
             'alias' => $table->alias,
             'catid' => $table->catid,
-            'url' => Route::_('index.php?option=com_content&view=article&id=' . $table->id . '&catid=' . $table->catid, true, Route::TLS_IGNORE)
         ];
-    } catch (Exception $e) {
-        $this->setError($e->getMessage());
-        return null;
-    }
-}
+  }
     
     public function delete($pks): bool
     {
@@ -994,9 +976,128 @@ private function convertBBCodeToHtml($text)
         }
     }
     
-    public function getTable($name = 'Article', $prefix = 'Administrator\\Table\\', $options = [])
+    public function getTable($name = 'Article', $prefix = 'Administrator\\Table\\', $options = []) // Табл для статьи превью
+  
     {
         return parent::getTable($name, $prefix, $options);
+    }
+
+     public function buildArticleTextFromTopic()        // из createArticlesFromTopic(), openArticle(), closeArticle()
+    {   // Параметры $params получаем из таблицы kunenatopic2article_params
+         $this->params = $this->getComponentParams(); 
+         if (empty($params) || empty($params->topic_selection)) {
+    throw new \RuntimeException(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'));
+          }
+       //?  $this->articleLinks = []; // Инициализация массива ссылок
+       //?  $this->currentArticle = null;     // статья не открыта 
+         // из openArticle()
+       //?    $this->articleSize = 0;
+           $this->currentArticle->fulltext = ''; // для возможного изменения строк предупреждения
+           $this->currentArticle->fulltext .= '<div class="kunenatopic2article_marker" style="display:none;"></div>'; // для плагина подклюсения CSS
+           
+           $this->currentArticle->fulltext .=  Text::_('COM_KUNENATOPIC2ARTICLE_INFORMATION_SIGN') . '<br />'    // ?? не учтена длина!
+                 . Text::_('COM_KUNENATOPIC2ARTICLE_WARNING_SIGN') 
+                 . '<div class="kun_p2a_divider-shadow"></div>'; //  Линия с тенью (эффект углубления)
+                 
+           try {
+            // Получаем ID первого поста
+            $firstPostId = $params->topic_selection; // 3232
+        //    Factory::getApplication()->enqueueMessage('ArticleModel $firstPostId: ' . $firstPostId, 'info'); // ОТЛАДКА          
+              $this->postId = $firstPostId; // текущий id 
+              $this->openPost($this->postId); // Открываем первый пост темы для доступа к его параметрам
+              $this->title = $this->currentPost->subject;   // базовый заголовок статьи
+              $this->subject = $this->currentPost->subject;
+              $this->threadId = (int) $this->currentPost->thread; // Получаем Id темы
+        //   Factory::getApplication()->enqueueMessage('createArticlesFromTopic $subject: ' . $this->subject, 'info'); // ОТЛАДКА 
+              $this->topicAuthorId = $this->currentPost->userid;
+              $this->reminderLines = ""; // у первого поста нет строк напоминания
+
+            // Формируем список ID постов в зависимости от схемы обхода; должно быть после открытия первого поста!
+            if ($this->params->post_transfer_scheme != 1) {
+                $this->postIdList = $this->buildFlatPostIdList($firstPostId);
+                } else {
+                $baum = $this->buildTreePostIdList($firstPostId);
+                $this->postIdList = $baum['postIds'];
+                $this->postLevelList = $baum['levels'];
+                }
+
+                // В режиме preview ограничиваемся 2 постами
+                    $this->postIdList = array_slice($this->postIdList, 0, 2);
+                    $this->postIdList[] = 0; // Гарантируем завершение цикла
+            
+               $this->currentIndex = 0; // в nextPost() начинаем переход сразу к элементу (1), т.к. (0) = $topicId = $firstPostId
+                    
+//?               $this->openArticle();     // Открываем первую статью
+                    
+               // Основной цикл обработки постов
+                while ($this->postId != 0) {
+                
+                   // Статья открыта
+                // ОТЛАДКА       Factory::getApplication()->enqueueMessage('Основной цикл Размер статьи: ' . $this->articleSize, 'info');
+                 // ОТЛАДКА      Factory::getApplication()->enqueueMessage('Основной цикл Размер поста: ' . $this->postSize, 'info');                
+   //?             if ($this->articleSize + $this->postSize > $this->params->max_article_size  // С новым постом превышен максимальный размер статьи
+     //?                      && $this->articleSize != 0) {                                           // И статья не пустая = размер этого поста больше размера статьи
+      //?                         $this->closeArticle();  // Закрываем текущую статью перед открытием новой
+       //?                        $this->openArticle();   // Открываем новую статью
+         //?          }    
+
+                $this->transferPost(); // Переносим содержимое поста в статью
+                $this->nextPost(); // Переходим к следующему посту
+                $this->openPost($this->postId); // Открываем пост для доступа к его параметрам, не открываем пост после последнего
+            }      // Конец основного цикла обработки постов
+
+        //?    // Закрываем последнюю статью
+       //?        if ($this->currentArticle !== null) {
+           //?        $this->closeArticle();
+           //?    }
+                // Из closeArticle()
+            // Фильтрация контента
+            $filter = InputFilter::getInstance([], [], 1, 1);
+            $filteredContent = $filter->clean($this->currentArticle->fulltext, 'html');
+    
+            // Формирование ссылки на CSS
+           HTMLHelper::_('stylesheet', 'com_kunenatopic2article/css/kun_p2a.css', ['relative' => true]);
+           $cssLink = '<link href="' . Uri::root(true) . '/media/com_kunenatopic2article/css/kun_p2a.css" rel="stylesheet">'; // для Сборки финального контента
+            // Сборка финального контента
+            $this->currentArticle->fulltext = $cssLink . $filteredContent;
+             Factory::getApplication()->enqueueMessage('Preview: '. $this->currentArticle->fulltext, 'info'); // ОТЛАДКА 
+       
+           return $this->currentArticle->fulltext;
+           
+         } catch (\Exception $e) {
+            $this->app->enqueueMessage($e->getMessage(), 'error');
+            return $this->articleLinks;
+        }
+    }
+    
+      /**
+     * Получение параметров компонента из таблиц
+     * @return  object|null  Объект с параметрами компонента
+     */
+    private function getComponentParams()
+    {
+        try {
+            $db = Factory::getContainer()->get('DatabaseDriver');
+            $query = $db->getQuery(true)
+                ->select('*')
+                ->from($db->quoteName('#__kunenatopic2article_params'))
+                ->where($db->quoteName('id') . ' = 1');
+            
+            $params = $db->setQuery($query)->loadObject();
+            
+            if (!$params) {
+                Factory::getApplication()->enqueueMessage(
+                    Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_NOT_FOUND'), 
+                    'error'
+                );
+                return null;
+            }
+            
+            return $params;
+        } catch (\Exception $e) {
+            Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+            return null;
+        }
     }
     
 } // КОНЕЦ КЛАССА
