@@ -86,7 +86,7 @@ class ArticleModel extends BaseDatabaseModel
        
         try {
             // Получаем ID первого поста
-            $firstPostId = $params->topic_selection; // 3232
+            $firstPostId = $this->params->topic_selection; // 3232
         //    Factory::getApplication()->enqueueMessage('ArticleModel $firstPostId: ' . $firstPostId, 'info'); // ОТЛАДКА          
               $this->postId = $firstPostId; // текущий id 
               $this->openPost($this->postId); // Открываем первый пост темы для доступа к его параметрам
@@ -1001,7 +1001,7 @@ private function convertBBCodeToHtml($text)
                  
            try {
             // Получаем ID первого поста
-            $firstPostId = $params->topic_selection; // 3232
+             $firstPostId = $this->params->topic_selection; // 3232
         //    Factory::getApplication()->enqueueMessage('ArticleModel $firstPostId: ' . $firstPostId, 'info'); // ОТЛАДКА          
               $this->postId = $firstPostId; // текущий id 
               $this->openPost($this->postId); // Открываем первый пост темы для доступа к его параметрам
