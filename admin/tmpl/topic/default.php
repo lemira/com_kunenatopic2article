@@ -113,8 +113,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 modal.addEventListener('hidden.bs.modal', async () => {
                     
                     try {
-                        // Отправляем запрос на удаление временной статьи
-                        await fetch('index.php?option=com_kunenatopic2article&view=article&task=article.deletePreview&format=json', {
+                        // Отправляем запрос на удаление временной статьи                       
+               const deleteResponse = await fetch('index.php?option=com_kunenatopic2article&view=article&task=article.deletePreview&format=json', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/x-www-form-urlencoded',
