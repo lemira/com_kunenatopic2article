@@ -935,6 +935,7 @@ private function convertBBCodeToHtml($text)
     // РАБОТА С Preview
    public function createPreviewArticle()
     {
+        $this->openArticle();     // Открываем временную статью для доступа к $this->currentArticle
         // получаем текст для превью
         $previewText = $this->buildArticleTextFromTopic();
     
@@ -943,7 +944,7 @@ private function convertBBCodeToHtml($text)
         
         $articleData = [
             'title'   => $this->title,
-            'alias'   => Factory::getApplication()->stringURLSafe($data['title'] ?? 'preview-article'),
+            'alias'   => Factory::getApplication()->stringURLSafe($this->title ?? 'preview-article'),
             'introtext' => $previewText,
             'catid'   => (int) $this->params->article_category,
             'state'   => 0, // Важно: статья не опубликована
