@@ -944,96 +944,51 @@ public function createPreviewArticle()
         $previewText = $this->buildArticleTextFromTopic();
         error_log('Step 3: buildArticleTextFromTopic() completed, text length: ' . strlen($previewText));
     
-        try {
-    error_log('Step 4: Attempting to get table...');
-    
-    // Способ 1: Через фабрику компонента
-    $table = Factory::getApplication()
-        ->bootComponent('com_content')
-        ->getMVCFactory()
-        ->createTable('Content', 'Administrator');
+        // Используем тот же способ, что и в createArticleViaTable()
+        $table = Table::getInstance('Content');
+        error_log('Step 4: getTable completed, table type: ' . (is_object($table) ? get_class($table) : 'NOT OBJECT'));
         
-    if (!$table) {
-        error_log('Method 1 failed, trying method 2...');
-        
-        // Способ 2: Прямое создание объекта
-        $table = new \Joomla\Component\Content\Administrator\Table\ContentTable(Factory::getDbo());
-    }
-    
-    if (!$table) {
-        error_log('Method 2 failed, trying method 3...');
-        
-        // Способ 3: Через getInstance с другими параметрами
-        $table = \Joomla\CMS\Table\Table::getInstance('Content');
-    }
-    
-    error_log('Step 4.1: getTable completed, table type: ' . (is_object($table) ? get_class($table) : 'NOT OBJECT'));
-    
-} catch (\Exception $e) {
-    error_log('Exception getting table: ' . $e->getMessage());
-    throw new \Exception('Не удалось получить таблицу Content: ' . $e->getMessage());
-}
-        
-        // Добавим проверки данных
-        error_log('Step 4.1: title = ' . ($this->title ?? 'NULL'));
-        error_log('Step 4.2: article_category = ' . ($this->params->article_category ?? 'NULL'));
-        error_log('Step 4.3: About to prepare articleData');
-   try {
-    error_log('Step 4.3.1: title = ' . $this->title);
-    error_log('Step 4.3.2: topicAuthorId = ' . $this->topicAuthorId);
-    error_log('Step 4.3.3: article_category = ' . $this->params->article_category);
-    
-    $now = Factory::getDate()->toSql();
-    error_log('Step 4.3.4: now = ' . $now);
-    
-   // $alias = Factory::getApplication()->stringURLSafe($this->title ?? 'preview-article');
-    // Формируем уникальный алиас
-            $baseAlias = OutputFilter::stringURLSafe($this->title);
-            $uniqueAlias = $this->getUniqueAlias($baseAlias);
-            $alias = $uniqueAlias;
-       error_log('Step 4.3.5: alias = ' . $alias);
-    
-    // Проверим длину текста
-    error_log('Step 4.3.6: previewText length = ' . strlen($previewText));
-    
-    $articleData = [
-        'title'     => $this->title,
-        'alias'     => $alias,
-        'introtext' => $previewText,
-        'fulltext'  => '',
-        'catid'     => (int) $this->params->article_category,
-        'state'     => 0,
-        'created'   => $now,
-        'created_by' => $this->topicAuthorId,
-        'modified'  => $now,
-        'modified_by' => $this->topicAuthorId,
-        'access'    => 1,
-        'language'  => '*',
-        'featured'  => 0,
-        'metadesc'  => '',
-        'metakey'   => '',
-    ];
-    
-    error_log('Step 5: articleData prepared successfully');
-    
-} catch (\Exception $e) {
-    error_log('Exception during articleData preparation: ' . $e->getMessage());
-    error_log('Exception trace: ' . $e->getTraceAsString());
-    throw $e;
-}
-        
-        // Проверим, что таблица действительно загружена
         if (!$table) {
-            error_log('ERROR: Table is null!');
             throw new \Exception('Не удалось загрузить таблицу Content');
         }
         
+        error_log('Step 4.3: About to prepare articleData');
+        
+        $now = Factory::getDate()->toSql();
+        // Формируем уникальный алиас
+            $baseAlias = OutputFilter::stringURLSafe($this->title);
+            $uniqueAlias = $this->getUniqueAlias($baseAlias);
+            $alias = $uniqueAlias;
+        
+        $articleData = [
+            'title'     => $this->title,
+            'alias'     => $alias,
+            'introtext' => $previewText,
+            'fulltext'  => '',
+            'catid'     => (int) $this->params->article_category,
+            'state'     => 0, // Неопубликованная статья для preview
+            'created'   => $now,
+            'created_by' => $this->topicAuthorId,
+            'modified'  => $now,
+            'modified_by' => $this->topicAuthorId,
+            'publish_up' => $now,
+            'access'    => 1,
+            'language'  => '*',
+            'attribs'   => '{"show_title":"","link_titles":"","show_tags":""}',
+            'metakey'   => '',
+            'metadesc'  => '',
+            'metadata'  => '{"robots":"","author":"","rights":""}',
+        ];
+        
+        error_log('Step 5: articleData prepared successfully');
         error_log('Step 6: About to call table->save()');
+        
         if (!$table->save($articleData)) {
             error_log('Step 6: table->save() failed: ' . $table->getError());
             $this->setError($table->getError());
             return null;
         }
+        
         error_log('Step 7: table->save() success, id: ' . $table->id);
         
         return [
