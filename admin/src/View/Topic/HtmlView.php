@@ -18,9 +18,6 @@ class HtmlView extends BaseHtmlView
 
     public function display($tpl = null)
     {
-// Гарантируем загрузку JavaScript
-\Joomla\CMS\HTML\HTMLHelper::_('behavior.core');
-\Joomla\CMS\HTML\HTMLHelper::_('bootstrap.renderModal'); // Для надежности
         
         // Получаем данные из модели
         $this->form = $this->get('Form');
