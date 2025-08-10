@@ -60,7 +60,6 @@ $paramsRemembered = $this->paramsRemembered ?? false;
 Joomla.submitbutton = function(task) {
     const form = document.getElementById('adminForm');
     
-    // Валидация для кнопки "Сохранить"
     if (task === 'save' && !document.formvalidator.isValid(form)) {
         alert('<?= Text::_('JGLOBAL_VALIDATION_FORM_FAILED', true); ?>');
         return false;
@@ -71,8 +70,10 @@ Joomla.submitbutton = function(task) {
 
 // Навешиваем события после полной загрузки страницы
 document.addEventListener('DOMContentLoaded', function() {
+    // 1. Получаем токен напрямую из PHP. Это самый надежный способ.
+    const csrfToken = '<?= \Joomla\CMS\Session\Session::getFormToken(); ?>';
+
     const previewButton = document.getElementById('btn_preview');
-    
     if (!previewButton) {
         return;
     }
@@ -82,24 +83,24 @@ document.addEventListener('DOMContentLoaded', function() {
         event.preventDefault();
 
         try {
-            // Отправляем запрос на создание превью.
-            // URL содержит view=article, чтобы избежать ошибки "представление не найдено".
-            // Тело запроса (body) пустое, т.к. модель возьмет параметры из настроек.
+            // 2. Отправляем запрос с view=article, чтобы избежать ошибки "представление не найдено".
             const response = await fetch('index.php?option=com_kunenatopic2article&view=article&task=article.preview&format=json', {
                 method: 'POST',
                 headers: {
-                    'X-CSRF-Token': Joomla.getToken()
+                    // 3. Используем нашу надежную переменную с токеном.
+                    'X-CSRF-Token': csrfToken
                 }
+                // Тело запроса (body) не нужно, так как модель берет параметры из настроек.
             });
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error(`HTTP error! status: ${response.status} ${response.statusText}`);
             }
             
             const result = await response.json();
 
             if (result.success && result.data.url) {
-                // Создаем и открываем модальное окно с превью
+                // Создаем и открываем модальное окно
                 const iframe = Joomla.Modal.createIframe({
                     src: result.data.url,
                     title: '<?= Text::_('COM_KUNENATOPIC2ARTICLE_PREVIEW_TITLE', true); ?>',
@@ -109,25 +110,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const modal = Joomla.Bootstrap.Modal.open(iframe);
                 
-                // Навешиваем событие на закрытие модального окна
+                // Событие на закрытие модального окна
                 modal.addEventListener('hidden.bs.modal', async () => {
-                    
                     try {
-                        // Отправляем запрос на удаление временной статьи                       
-               const deleteResponse = await fetch('index.php?option=com_kunenatopic2article&view=article&task=article.deletePreview&format=json', {
+                        // Запрос на удаление временной статьи
+                        await fetch('index.php?option=com_kunenatopic2article&view=article&task=article.deletePreview&format=json', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/x-www-form-urlencoded',
-                                'X-CSRF-Token': Joomla.getToken()
+                                'X-CSRF-Token': csrfToken
                             },
                             body: new URLSearchParams({ 'id': result.data.id })
                         });
                     } catch (deleteError) {
-                        // Ошибку удаления можно просто записать в консоль, чтобы не беспокоить пользователя
                         console.error('Ошибка при удалении статьи предварительного просмотра:', deleteError);
                     }
                     
-                    modal.remove(); // Очищаем DOM от элемента модального окна
+                    modal.remove();
                 });
 
             } else {
