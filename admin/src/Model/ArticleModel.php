@@ -946,7 +946,7 @@ public function createPreviewArticle()
         error_log('Step 3: buildArticleTextFromTopic() completed, text length: ' . strlen($previewText));
     
         // Получаем объект таблицы контента Joomla
-        $table = Factory::getTable('Content', 'Joomla\\Component\\Content\\Administrator\\Table\\');
+         $table = \Joomla\CMS\Table\Table::getInstance('Content', 'Joomla\\Component\\Content\\Administrator\\Table\\');
         error_log('Step 4: getTable completed');
         
         $articleData = [
@@ -994,12 +994,6 @@ public function createPreviewArticle()
         }
     }
     
-    public function getTable($name = 'Article', $prefix = 'Administrator\\Table\\', $options = []) // Табл для статьи превью
-  
-    {
-        return parent::getTable($name, $prefix, $options);
-    }
-
      public function buildArticleTextFromTopic()        // из createArticlesFromTopic(), openArticle(), closeArticle()
     {   // Параметры $params получаем из таблицы kunenatopic2article_params
          $this->params = $this->getComponentParams(); 
