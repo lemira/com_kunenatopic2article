@@ -960,9 +960,9 @@ public function createPreviewArticle()
     'catid'     => (int) $this->params->article_category,
     'state'     => 0,
     'created'   => Factory::getDate()->toSql(),
-    'created_by' => Factory::getUser()->id,
+    'created_by' => $this->topicAuthorId,
     'modified'  => Factory::getDate()->toSql(),
-    'modified_by' => Factory::getUser()->id,
+    'modified_by' => $this->topicAuthorId,
     'access'    => 1, // Public access
     'language'  => '*', // All languages
     'featured'  => 0,
