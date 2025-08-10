@@ -951,26 +951,45 @@ public function createPreviewArticle()
         error_log('Step 4.1: title = ' . ($this->title ?? 'NULL'));
         error_log('Step 4.2: article_category = ' . ($this->params->article_category ?? 'NULL'));
         error_log('Step 4.3: About to prepare articleData');
-        
-        $articleData = [
-    'title'     => $this->title,
-    'alias'     => Factory::getApplication()->stringURLSafe($this->title ?? 'preview-article'),
-    'introtext' => $previewText,
-    'fulltext'  => '', // Обязательное поле
-    'catid'     => (int) $this->params->article_category,
-    'state'     => 0,
-    'created'   => Factory::getDate()->toSql(),
-    'created_by' => $this->topicAuthorId,
-    'modified'  => Factory::getDate()->toSql(),
-    'modified_by' => $this->topicAuthorId,
-    'access'    => 1, // Public access
-    'language'  => '*', // All languages
-    'featured'  => 0,
-    'metadesc'  => '',
-    'metakey'   => '',
-];
-error_log('Step 5: articleData prepared successfully');
-error_log('Step 5.1: articleData dump: ' . print_r($articleData, true));
+   try {
+    error_log('Step 4.3.1: title = ' . $this->title);
+    error_log('Step 4.3.2: topicAuthorId = ' . $this->topicAuthorId);
+    error_log('Step 4.3.3: article_category = ' . $this->params->article_category);
+    
+    $now = Factory::getDate()->toSql();
+    error_log('Step 4.3.4: now = ' . $now);
+    
+    $alias = Factory::getApplication()->stringURLSafe($this->title ?? 'preview-article');
+    error_log('Step 4.3.5: alias = ' . $alias);
+    
+    // Проверим длину текста
+    error_log('Step 4.3.6: previewText length = ' . strlen($previewText));
+    
+    $articleData = [
+        'title'     => $this->title,
+        'alias'     => $alias,
+        'introtext' => $previewText,
+        'fulltext'  => '',
+        'catid'     => (int) $this->params->article_category,
+        'state'     => 0,
+        'created'   => $now,
+        'created_by' => $this->topicAuthorId,
+        'modified'  => $now,
+        'modified_by' => $this->topicAuthorId,
+        'access'    => 1,
+        'language'  => '*',
+        'featured'  => 0,
+        'metadesc'  => '',
+        'metakey'   => '',
+    ];
+    
+    error_log('Step 5: articleData prepared successfully');
+    
+} catch (\Exception $e) {
+    error_log('Exception during articleData preparation: ' . $e->getMessage());
+    error_log('Exception trace: ' . $e->getTraceAsString());
+    throw $e;
+}
         
         // Проверим, что таблица действительно загружена
         if (!$table) {
