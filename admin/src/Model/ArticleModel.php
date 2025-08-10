@@ -933,34 +933,50 @@ private function convertBBCodeToHtml($text)
 }
 
     // РАБОТА С Preview
-   public function createPreviewArticle()
-    {
+ public function createPreviewArticle()
+{
+    try {
+        error_log('Step 1: Starting createPreviewArticle');
+        
         $this->openArticle();     // Открываем временную статью для доступа к $this->currentArticle
+        error_log('Step 2: openArticle() completed');
+        
         // получаем текст для превью
         $previewText = $this->buildArticleTextFromTopic();
+        error_log('Step 3: buildArticleTextFromTopic() completed, text length: ' . strlen($previewText));
     
         // Получаем объект таблицы контента
         $table = $this->getTable('Article', 'Administrator\\Table\\');
+        error_log('Step 4: getTable completed');
         
         $articleData = [
-            'title'   => $this->title,
-            'alias'   => Factory::getApplication()->stringURLSafe($this->title ?? 'preview-article'),
+            'title'     => $this->title,
+            'alias'     => Factory::getApplication()->stringURLSafe($this->title ?? 'preview-article'),
             'introtext' => $previewText,
-            'catid'   => (int) $this->params->article_category,
-            'state'   => 0, // Важно: статья не опубликована
-          ];
-
+            'catid'     => (int) $this->params->article_category,
+            'state'     => 0, // Важно: статья не опубликована
+        ];
+        error_log('Step 5: articleData prepared: ' . print_r($articleData, true));
+        
         if (!$table->save($articleData)) {
+            error_log('Step 6: table->save() failed: ' . $table->getError());
             $this->setError($table->getError());
             return null;
         }
-
-            return [
+        error_log('Step 7: table->save() success, id: ' . $table->id);
+        
+        return [
             'id' => $table->id,
             'alias' => $table->alias,
             'catid' => $table->catid,
         ];
-  }
+        
+    } catch (\Exception $e) {
+        error_log('Exception in createPreviewArticle: ' . $e->getMessage());
+        error_log('Exception trace: ' . $e->getTraceAsString());
+        throw $e;
+    }
+}
     
     public function delete($pks): bool
     {
