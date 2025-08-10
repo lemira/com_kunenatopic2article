@@ -938,28 +938,37 @@ public function createPreviewArticle()
     try {
         error_log('Step 1: Starting createPreviewArticle');
         
-        $this->openArticle();     // Открываем временную статью для доступа к $this->currentArticle
+        $this->openArticle();
         error_log('Step 2: openArticle() completed');
         
-        // получаем текст для превью
         $previewText = $this->buildArticleTextFromTopic();
         error_log('Step 3: buildArticleTextFromTopic() completed, text length: ' . strlen($previewText));
     
-        // Получаем объект таблицы контента Joomla
-         $table = \Joomla\CMS\Table\Table::getInstance('Content', 'Joomla\\Component\\Content\\Administrator\\Table\\');
+        $table = \Joomla\CMS\Table\Table::getInstance('Content', 'Joomla\\Component\\Content\\Administrator\\Table\\');
         error_log('Step 4: getTable completed');
+        
+        // Добавим проверки данных
+        error_log('Step 4.1: title = ' . ($this->title ?? 'NULL'));
+        error_log('Step 4.2: article_category = ' . ($this->params->article_category ?? 'NULL'));
         
         $articleData = [
             'title'     => $this->title,
             'alias'     => Factory::getApplication()->stringURLSafe($this->title ?? 'preview-article'),
             'introtext' => $previewText,
             'catid'     => (int) $this->params->article_category,
-            'state'     => 0, // Важно: статья не опубликована
+            'state'     => 0,
             'created'   => Factory::getDate()->toSql(),
             'created_by' => Factory::getUser()->id,
         ];
         error_log('Step 5: articleData prepared: ' . print_r($articleData, true));
         
+        // Проверим, что таблица действительно загружена
+        if (!$table) {
+            error_log('ERROR: Table is null!');
+            throw new \Exception('Не удалось загрузить таблицу Content');
+        }
+        
+        error_log('Step 6: About to call table->save()');
         if (!$table->save($articleData)) {
             error_log('Step 6: table->save() failed: ' . $table->getError());
             $this->setError($table->getError());
@@ -978,7 +987,8 @@ public function createPreviewArticle()
         error_log('Exception trace: ' . $e->getTraceAsString());
         throw $e;
     }
-}    
+}
+    
     public function delete($pks): bool
     {
         if (empty($pks)) {
