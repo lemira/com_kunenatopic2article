@@ -933,7 +933,7 @@ private function convertBBCodeToHtml($text)
 }
 
     // РАБОТА С Preview
- public function createPreviewArticle()
+public function createPreviewArticle()
 {
     try {
         error_log('Step 1: Starting createPreviewArticle');
@@ -945,8 +945,8 @@ private function convertBBCodeToHtml($text)
         $previewText = $this->buildArticleTextFromTopic();
         error_log('Step 3: buildArticleTextFromTopic() completed, text length: ' . strlen($previewText));
     
-        // Получаем объект таблицы контента
-        $table = $this->getTable('Article', 'Administrator\\Table\\');
+        // Получаем объект таблицы контента Joomla
+        $table = Factory::getTable('Content', 'Joomla\\Component\\Content\\Administrator\\Table\\');
         error_log('Step 4: getTable completed');
         
         $articleData = [
@@ -955,6 +955,8 @@ private function convertBBCodeToHtml($text)
             'introtext' => $previewText,
             'catid'     => (int) $this->params->article_category,
             'state'     => 0, // Важно: статья не опубликована
+            'created'   => Factory::getDate()->toSql(),
+            'created_by' => Factory::getUser()->id,
         ];
         error_log('Step 5: articleData prepared: ' . print_r($articleData, true));
         
@@ -976,8 +978,7 @@ private function convertBBCodeToHtml($text)
         error_log('Exception trace: ' . $e->getTraceAsString());
         throw $e;
     }
-}
-    
+}    
     public function delete($pks): bool
     {
         if (empty($pks)) {
