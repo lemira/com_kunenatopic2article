@@ -944,8 +944,35 @@ public function createPreviewArticle()
         $previewText = $this->buildArticleTextFromTopic();
         error_log('Step 3: buildArticleTextFromTopic() completed, text length: ' . strlen($previewText));
     
-        $table = \Joomla\CMS\Table\Table::getInstance('Content', 'Joomla\\Component\\Content\\Administrator\\Table\\');
-        error_log('Step 4: getTable completed');
+        try {
+    error_log('Step 4: Attempting to get table...');
+    
+    // Способ 1: Через фабрику компонента
+    $table = Factory::getApplication()
+        ->bootComponent('com_content')
+        ->getMVCFactory()
+        ->createTable('Content', 'Administrator');
+        
+    if (!$table) {
+        error_log('Method 1 failed, trying method 2...');
+        
+        // Способ 2: Прямое создание объекта
+        $table = new \Joomla\Component\Content\Administrator\Table\ContentTable(Factory::getDbo());
+    }
+    
+    if (!$table) {
+        error_log('Method 2 failed, trying method 3...');
+        
+        // Способ 3: Через getInstance с другими параметрами
+        $table = \Joomla\CMS\Table\Table::getInstance('Content');
+    }
+    
+    error_log('Step 4.1: getTable completed, table type: ' . (is_object($table) ? get_class($table) : 'NOT OBJECT'));
+    
+} catch (\Exception $e) {
+    error_log('Exception getting table: ' . $e->getMessage());
+    throw new \Exception('Не удалось получить таблицу Content: ' . $e->getMessage());
+}
         
         // Добавим проверки данных
         error_log('Step 4.1: title = ' . ($this->title ?? 'NULL'));
