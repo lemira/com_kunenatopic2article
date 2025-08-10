@@ -950,17 +950,27 @@ public function createPreviewArticle()
         // Добавим проверки данных
         error_log('Step 4.1: title = ' . ($this->title ?? 'NULL'));
         error_log('Step 4.2: article_category = ' . ($this->params->article_category ?? 'NULL'));
+        error_log('Step 4.3: About to prepare articleData');
         
         $articleData = [
-            'title'     => $this->title,
-            'alias'     => Factory::getApplication()->stringURLSafe($this->title ?? 'preview-article'),
-            'introtext' => $previewText,
-            'catid'     => (int) $this->params->article_category,
-            'state'     => 0,
-            'created'   => Factory::getDate()->toSql(),
-            'created_by' => Factory::getUser()->id,
-        ];
-        error_log('Step 5: articleData prepared: ' . print_r($articleData, true));
+    'title'     => $this->title,
+    'alias'     => Factory::getApplication()->stringURLSafe($this->title ?? 'preview-article'),
+    'introtext' => $previewText,
+    'fulltext'  => '', // Обязательное поле
+    'catid'     => (int) $this->params->article_category,
+    'state'     => 0,
+    'created'   => Factory::getDate()->toSql(),
+    'created_by' => Factory::getUser()->id,
+    'modified'  => Factory::getDate()->toSql(),
+    'modified_by' => Factory::getUser()->id,
+    'access'    => 1, // Public access
+    'language'  => '*', // All languages
+    'featured'  => 0,
+    'metadesc'  => '',
+    'metakey'   => '',
+];
+error_log('Step 5: articleData prepared successfully');
+error_log('Step 5.1: articleData dump: ' . print_r($articleData, true));
         
         // Проверим, что таблица действительно загружена
         if (!$table) {
