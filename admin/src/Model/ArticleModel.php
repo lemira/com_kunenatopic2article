@@ -988,11 +988,7 @@ private function convertBBCodeToHtml($text)
          if (empty($this->params) || empty($this->params->topic_selection)) {
     throw new \RuntimeException(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'));
           }
-       //?  $this->articleLinks = []; // Инициализация массива ссылок
-       //?  $this->currentArticle = null;     // статья не открыта 
-         // из openArticle()
-       //?    $this->articleSize = 0;
-           $this->currentArticle->fulltext = ''; // для возможного изменения строк предупреждения
+          $this->currentArticle->fulltext = ''; // для возможного изменения строк предупреждения
            $this->currentArticle->fulltext .= '<div class="kunenatopic2article_marker" style="display:none;"></div>'; // для плагина подклюсения CSS
            
            $this->currentArticle->fulltext .=  Text::_('COM_KUNENATOPIC2ARTICLE_INFORMATION_SIGN') . '<br />'    // ?? не учтена длина!
@@ -1032,25 +1028,11 @@ private function convertBBCodeToHtml($text)
                // Основной цикл обработки постов
                 while ($this->postId != 0) {
                 
-                   // Статья открыта
-                // ОТЛАДКА       Factory::getApplication()->enqueueMessage('Основной цикл Размер статьи: ' . $this->articleSize, 'info');
-                 // ОТЛАДКА      Factory::getApplication()->enqueueMessage('Основной цикл Размер поста: ' . $this->postSize, 'info');                
-   //?             if ($this->articleSize + $this->postSize > $this->params->max_article_size  // С новым постом превышен максимальный размер статьи
-     //?                      && $this->articleSize != 0) {                                           // И статья не пустая = размер этого поста больше размера статьи
-      //?                         $this->closeArticle();  // Закрываем текущую статью перед открытием новой
-       //?                        $this->openArticle();   // Открываем новую статью
-         //?          }    
-
                 $this->transferPost(); // Переносим содержимое поста в статью
                 $this->nextPost(); // Переходим к следующему посту
                 $this->openPost($this->postId); // Открываем пост для доступа к его параметрам, не открываем пост после последнего
             }      // Конец основного цикла обработки постов
 
-        //?    // Закрываем последнюю статью
-       //?        if ($this->currentArticle !== null) {
-           //?        $this->closeArticle();
-           //?    }
-                // Из closeArticle()
             // Фильтрация контента
             $filter = InputFilter::getInstance([], [], 1, 1);
             $filteredContent = $filter->clean($this->currentArticle->fulltext, 'html');
