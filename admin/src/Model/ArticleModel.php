@@ -959,8 +959,12 @@ public function createPreviewArticle()
     $now = Factory::getDate()->toSql();
     error_log('Step 4.3.4: now = ' . $now);
     
-    $alias = Factory::getApplication()->stringURLSafe($this->title ?? 'preview-article');
-    error_log('Step 4.3.5: alias = ' . $alias);
+   // $alias = Factory::getApplication()->stringURLSafe($this->title ?? 'preview-article');
+    // Формируем уникальный алиас
+            $baseAlias = OutputFilter::stringURLSafe($this->title);
+            $uniqueAlias = $this->getUniqueAlias($baseAlias);
+            $alias = $uniqueAlias;
+       error_log('Step 4.3.5: alias = ' . $alias);
     
     // Проверим длину текста
     error_log('Step 4.3.6: previewText length = ' . strlen($previewText));
