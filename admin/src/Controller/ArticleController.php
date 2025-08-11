@@ -85,39 +85,47 @@ public function create()
      * Метод для создания временной статьи и возврата URL.
      */
    public function preview(): void
-    {
-        $this->checkToken('POST');
-        $app = Factory::getApplication();
-    
-        /** @var \Joomla\Component\KunenaTopic2Article\Administrator\Model\ArticleModel $model */
-       $model = $this->getModel('Article', 'Administrator');    
+{
+    $this->checkToken('POST');
+    $app = Factory::getApplication();
+
+    /** @var \Joomla\Component\KunenaTopic2Article\Administrator\Model\ArticleModel $model */
+    $model = $this->getModel('Article', 'Administrator');    
+
+    try {
+        error_log('Controller: Starting preview method');
         
-      try {
-            // вызываем новую функцию createPreviewArticle() 
-            $articleData = $model->createPreviewArticle();
-                  
-            // Отладка результата createPreviewArticle
-            error_log('createPreviewArticle result: ' . print_r($articleData, true));
-
-   if (!$articleData) {
-                throw new Exception($model->getError() ?: 'Модель не вернула данные для превью.');
-            }
-
-            $previewUrl = Route::_(
-                'index.php?option=com_content&view=article&id=' . $articleData['id'] . ':' . $articleData['alias'] . '&catid=' . $articleData['catid'] . '&tmpl=component',
-                false
-            );
-
-            $response = ['success' => true, 'data' => ['url' => $previewUrl, 'id' => $articleData['id']]];
-
-        } catch (Exception $e) {
-            $response = ['success' => false, 'message' => $e->getMessage()];
-            error_log('Preview exception: ' . $e->getMessage());
+        // вызываем новую функцию createPreviewArticle() 
+        $articleData = $model->createPreviewArticle();
+        
+        // Отладка результата createPreviewArticle
+        error_log('createPreviewArticle result: ' . print_r($articleData, true));
+        
+        if (!$articleData) {
+            throw new Exception($model->getError() ?: 'Модель не вернула данные для превью.');
         }
-
-        echo new JsonResponse($response);
-        $app->close();
+        
+        error_log('Controller: About to create preview URL');
+        
+        $previewUrl = Route::_(
+            'index.php?option=com_content&view=article&id=' . $articleData['id'] . ':' . $articleData['alias'] . '&catid=' . $articleData['catid'] . '&tmpl=component',
+            false
+        );
+        
+        error_log('Controller: Preview URL created: ' . $previewUrl);
+        
+        $response = ['success' => true, 'data' => ['url' => $previewUrl, 'id' => $articleData['id']]];
+        
+        error_log('Controller: About to send JSON response');
+        
+    } catch (Exception $e) {
+        $response = ['success' => false, 'message' => $e->getMessage()];
+        error_log('Preview exception: ' . $e->getMessage());
     }
+    
+    echo new JsonResponse($response);
+    $app->close();
+}
     
     /**
      * Метод для удаления временной статьи.
