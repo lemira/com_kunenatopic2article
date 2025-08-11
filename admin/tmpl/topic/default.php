@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result.success && result.data.url) {
                 // Создаем модальное окно для Joomla 4+
                 const modalId = 'previewModal';
-                const modalHtml = `
+        const modalHtml = `
     <div class="modal fade" id="${modalId}" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
@@ -105,7 +105,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-0">
-                    <iframe src="${result.data.url}" style="width:100%; height:600px; border:none; background:white;"></iframe>
+                    <iframe 
+                        src="${result.data.url}" 
+                        style="
+                            width: 100%; 
+                            height: 600px; 
+                            border: none; 
+                            background: white;
+                            display: block;
+                        "
+                        allowfullscreen
+                    ></iframe>
                 </div>
             </div>
         </div>
