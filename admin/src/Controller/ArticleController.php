@@ -134,33 +134,31 @@ public function create()
      * Метод для удаления временной статьи.
      */
     public function deletePreview(): void
-    {
-        $this->checkToken();
-        $app = Factory::getApplication();
-        $id = $app->input->getInt('id');
-
-        try {
-            if (!$id) {
-                throw new Exception('ID статьи для удаления не предоставлен.');
+{
+    $this->checkToken('POST');
+    $app = Factory::getApplication();
+    $input = $app->getInput();
+    
+    $id = $input->getInt('id');
+    
+    try {
+        if ($id) {
+            $table = \Joomla\CMS\Table\Table::getInstance('Content');
+            if ($table->load($id) && $table->state == 0) { // Удаляем только неопубликованные
+                $table->delete($id);
             }
-
-            $model = $this->getModel('Article', 'Administrator');
-
-            if (!$model->delete($id)) {
-                throw new Exception($model->getError() ?: 'Ошибка при удалении статьи из модели.');
-            }
-
-            $response = ['success' => true];
-
-        } catch (Exception $e) {
-            $response = ['success' => false, 'message' => $e->getMessage()];
-            error_log('DeletePreview exception: ' . $e->getMessage());
         }
-
-        echo new JsonResponse($response);
-        $app->close();
+        
+        $response = ['success' => true];
+    } catch (\Exception $e) {
+        $response = ['success' => false, 'message' => $e->getMessage()];
     }
-   
+    
+    header('Content-Type: application/json');
+    echo json_encode($response);
+    $app->close();
+}
+    
 private function resetTopicSelection()
 {
     try {
