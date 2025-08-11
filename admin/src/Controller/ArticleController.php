@@ -116,14 +116,26 @@ public function create()
         
         $response = ['success' => true, 'data' => ['url' => $previewUrl, 'id' => $articleData['id']]];
         
-        error_log('Controller: About to send JSON response');
-        
-    } catch (Exception $e) {
-        $response = ['success' => false, 'message' => $e->getMessage()];
-        error_log('Preview exception: ' . $e->getMessage());
-    }
+      error_log('Controller: About to send JSON response');
+error_log('Controller: Response data: ' . print_r($response, true));
+
+try {
+    $jsonResponse = new JsonResponse($response);
+    error_log('Controller: JsonResponse created successfully');
     
-    echo new JsonResponse($response);
+    echo $jsonResponse;
+    error_log('Controller: JSON echoed successfully');
+    
+    $app->close();
+    error_log('Controller: App closed successfully');
+    
+} catch (\Exception $e) {
+    error_log('Controller: Exception during JSON response: ' . $e->getMessage());
+    error_log('Controller: Exception trace: ' . $e->getTraceAsString());
+    
+    // Fallback - отправим простой JSON
+    header('Content-Type: application/json');
+    echo json_encode($response);
     $app->close();
 }
     
