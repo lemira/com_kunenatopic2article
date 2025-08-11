@@ -107,10 +107,13 @@ public function create()
         
         error_log('Controller: About to create preview URL');
         
-        $previewUrl = Route::_(
-            'index.php?option=com_content&view=article&id=' . $articleData['id'] . ':' . $articleData['alias'] . '&catid=' . $articleData['catid'] . '&tmpl=component',
-            false
-        );
+        // URL для админки
+       // $previewUrl = Route::_(
+         //   'index.php?option=com_content&view=article&id=' . $articleData['id'] . ':' . $articleData['alias'] . '&catid=' . $articleData['catid'] . '&tmpl=component',
+           // false
+       // );
+        // URL для фронтенда сайта
+$previewUrl = Uri::root() . 'index.php?option=com_content&view=article&id=' . $articleData['id'] . ':' . $articleData['alias'] . '&catid=' . $articleData['catid'] . '&tmpl=component';
         
         error_log('Controller: Preview URL created: ' . $previewUrl);
         
