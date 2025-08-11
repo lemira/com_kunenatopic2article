@@ -68,29 +68,23 @@ Joomla.submitbutton = function(task) {
     Joomla.submitform(task, form);
 };
 
-// Навешиваем события после полной загрузки страницы
 document.addEventListener('DOMContentLoaded', function() {
-    // 1. Получаем токен напрямую из PHP. Это самый надежный способ.
     const csrfToken = '<?= \Joomla\CMS\Session\Session::getFormToken(); ?>';
-
     const previewButton = document.getElementById('btn_preview');
+    
     if (!previewButton) {
         return;
     }
 
-    // Обработчик для кнопки "Посмотреть"
     previewButton.addEventListener('click', async function(event) {
         event.preventDefault();
 
         try {
-            // 2. Отправляем запрос с view=article, чтобы избежать ошибки "представление не найдено".
             const response = await fetch('index.php?option=com_kunenatopic2article&view=article&task=article.preview&format=json', {
                 method: 'POST',
                 headers: {
-                    // 3. Используем нашу надежную переменную с токеном.
                     'X-CSRF-Token': csrfToken
                 }
-                // Тело запроса (body) не нужно, так как модель берет параметры из настроек.
             });
 
             if (!response.ok) {
@@ -100,18 +94,33 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await response.json();
 
             if (result.success && result.data.url) {
-                // Создаем и открываем модальное окно
-                const iframe = Joomla.Modal.createIframe({
-                    src: result.data.url,
-                    title: '<?= Text::_('COM_KUNENATOPIC2ARTICLE_PREVIEW_TITLE', true); ?>',
-                    width: '80%',
-                    height: '80%'
-                });
+                // Создаем модальное окно для Joomla 4+
+                const modalId = 'previewModal';
+                const modalHtml = `
+                    <div class="modal fade" id="${modalId}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-xl">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title"><?= Text::_('COM_KUNENATOPIC2ARTICLE_PREVIEW_TITLE', true); ?></h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body p-0">
+                                    <iframe src="${result.data.url}" style="width:100%; height:600px; border:none;"></iframe>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
                 
-                const modal = Joomla.Bootstrap.Modal.open(iframe);
+                // Добавляем модальное окно в DOM
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                
+                // Открываем модальное окно
+                const modal = new bootstrap.Modal(document.getElementById(modalId));
+                modal.show();
                 
                 // Событие на закрытие модального окна
-                modal.addEventListener('hidden.bs.modal', async () => {
+                document.getElementById(modalId).addEventListener('hidden.bs.modal', async () => {
                     try {
                         // Запрос на удаление временной статьи
                         await fetch('index.php?option=com_kunenatopic2article&view=article&task=article.deletePreview&format=json', {
@@ -126,16 +135,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         console.error('Ошибка при удалении статьи предварительного просмотра:', deleteError);
                     }
                     
-                    modal.remove();
+                    // Удаляем модальное окно из DOM
+                    document.getElementById(modalId).remove();
                 });
 
             } else {
-                Joomla.renderMessages({ 'error': [result.message || 'Не удалось получить данные для предварительного просмотра.'] });
+                alert('Не удалось получить данные для предварительного просмотра: ' + (result.message || 'Неизвестная ошибка'));
             }
         } catch (error) {
             console.error('Ошибка при создании предварительного просмотра:', error);
-            Joomla.renderMessages({ 'error': [error.message] });
+            alert('Ошибка: ' + error.message);
         }
     });
 });
+
 </script>
