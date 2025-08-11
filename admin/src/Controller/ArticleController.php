@@ -84,7 +84,7 @@ public function create()
 /**
      * Метод для создания временной статьи и возврата URL.
      */
-   public function preview(): void
+  public function preview(): void
 {
     $this->checkToken('POST');
     $app = Factory::getApplication();
@@ -93,52 +93,40 @@ public function create()
     $model = $this->getModel('Article', 'Administrator');    
 
     try {
-        error_log('Controller: Starting preview method');
-        
-        // вызываем новую функцию createPreviewArticle() 
+        // Создаем временную статью для preview
         $articleData = $model->createPreviewArticle();
-        
-        // Отладка результата createPreviewArticle
-        error_log('createPreviewArticle result: ' . print_r($articleData, true));
         
         if (!$articleData) {
             throw new Exception($model->getError() ?: 'Модель не вернула данные для превью.');
         }
         
-        error_log('Controller: About to create preview URL');
+        // Формируем URL для фронтенда (не админки)
+        $previewUrl = Uri::root() . 'index.php?option=com_content&view=article&id=' . $articleData['id'] . ':' . $articleData['alias'] . '&catid=' . $articleData['catid'] . '&tmpl=component';
         
-        // URL для админки
-       // $previewUrl = Route::_(
-         //   'index.php?option=com_content&view=article&id=' . $articleData['id'] . ':' . $articleData['alias'] . '&catid=' . $articleData['catid'] . '&tmpl=component',
-           // false
-       // );
-        // URL для фронтенда сайта
-$previewUrl = Uri::root() . 'index.php?option=com_content&view=article&id=' . $articleData['id'] . ':' . $articleData['alias'] . '&catid=' . $articleData['catid'] . '&tmpl=component';
+        $response = [
+            'success' => true, 
+            'data' => [
+                'url' => $previewUrl, 
+                'id' => $articleData['id']
+            ]
+        ];
         
-        error_log('Controller: Preview URL created: ' . $previewUrl);
-        
-        $response = ['success' => true, 'data' => ['url' => $previewUrl, 'id' => $articleData['id']]];
-        
-      error_log('Controller: About to send JSON response');
-error_log('Controller: Response data: ' . print_r($response, true));
-
-try {
-    $jsonResponse = new JsonResponse($response);
-    error_log('Controller: JsonResponse created successfully');
+    } catch (Exception $e) {
+        $response = [
+            'success' => false, 
+            'message' => $e->getMessage()
+        ];
+    }
     
-    echo $jsonResponse;
-    error_log('Controller: JSON echoed successfully');
+    // Отправляем JSON ответ
+    try {
+        header('Content-Type: application/json');
+        echo json_encode($response);
+    } catch (\Exception $e) {
+        // Fallback на случай ошибки
+        echo '{"success":false,"message":"JSON encode error"}';
+    }
     
-    $app->close();
-    error_log('Controller: App closed successfully');
-    
-} catch (\Exception $e) {
-    error_log('Controller: Exception during JSON response: ' . $e->getMessage());
-    error_log('Controller: Exception trace: ' . $e->getTraceAsString());
-    
-    // Fallback - отправим простой JSON
-    header('Content-Type: application/json');
-    echo json_encode($response);
     $app->close();
 }
     
