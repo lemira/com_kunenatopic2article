@@ -133,30 +133,24 @@ public function create()
     /**
      * Метод для удаления временной статьи.
      */
-    public function deletePreview(): void
+   public function deletePreview()
 {
-    $this->checkToken('POST');
-    $app = Factory::getApplication();
-    $input = $app->getInput();
-    
-    $id = $input->getInt('id');
+    $this->checkToken();
+    $model = $this->getModel();
     
     try {
-        if ($id) {
-            $table = \Joomla\CMS\Table\Table::getInstance('Content');
-            if ($table->load($id) && $table->state == 0) { // Удаляем только неопубликованные
-                $table->delete($id);
-            }
+        if ($model->deletePreviewArticle()) {
+            // Возвращаем успешный JSON-ответ
+            echo new JsonResponse(['success' => true, 'message' => 'Preview article successfully deleted.']);
+        } else {
+            throw new \Exception('Failed to delete preview article.');
         }
-        
-        $response = ['success' => true];
     } catch (\Exception $e) {
-        $response = ['success' => false, 'message' => $e->getMessage()];
+        // Возвращаем JSON с ошибкой
+        echo new JsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
     }
-    
-    header('Content-Type: application/json');
-    echo json_encode($response);
-    $app->close();
+
+    $this->app->close(); // Завершаем выполнение приложения
 }
     
 private function resetTopicSelection()
