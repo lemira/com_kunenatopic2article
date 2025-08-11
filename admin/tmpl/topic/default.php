@@ -8,18 +8,15 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 
-// Подключаем JS/CSS для модальных окон Joomla.
-HTMLHelper::_('behavior.modal');
+// Больше не нужен HTMLHelper::_('behavior.modal');
+// Оставляем только нужные для формы хелперы
 HTMLHelper::_('behavior.formvalidator');
 HTMLHelper::_('bootstrap.framework');
 
 $app = Factory::getApplication();
-$input = $app->getInput();
 $form = $this->form;
-$paramsRemembered = $this->paramsRemembered ?? false;
 
-// PHP-код для формирования URL-адресов.
-// лучшее место - ЭТОТ БЛОК ПРЯМО ПЕРЕД ТЕГОМ <form>
+// PHP-код для формирования URL-адресов. Он остается без изменений.
 $previewUrl = Route::_('index.php?option=com_kunenatopic2article&task=article.preview&id=' . $this->item->id . '&' . Session::getFormToken() . '=1&tmpl=component');
 $deleteUrl = Route::_('index.php?option=com_kunenatopic2article&task=article.deletePreview&' . Session::getFormToken() . '=1');
 ?>
@@ -38,9 +35,7 @@ $deleteUrl = Route::_('index.php?option=com_kunenatopic2article&task=article.del
                 <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_CREATE'); ?>
             </button>
             
-            <a class="btn btn-info modal"
-               href="<?php echo $previewUrl; ?>"
-               rel="{handler: 'iframe', size: {x: 950, y: 600}, onClose: joomlaModalCloseCallback}">
+            <a id="previewButton" class="btn btn-info" href="#">
                <span class="icon-eye" aria-hidden="true"></span>
                <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_PREVIEW'); ?>
             </a>
@@ -49,15 +44,11 @@ $deleteUrl = Route::_('index.php?option=com_kunenatopic2article&task=article.del
         <h3><?= Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_PARAMS'); ?></h3>
         <?php if ($form): ?>
             <?= $form->renderFieldset('article_params'); ?>
-        <?php else: ?>
-            <div class="alert alert-danger"><?= Text::_('COM_KUNENATOPIC2ARTICLE_FORM_IS_EMPTY'); ?></div>
         <?php endif; ?>
 
         <h3><?= Text::_('COM_KUNENATOPIC2ARTICLE_POST_INFO'); ?></h3>
         <?php if ($form): ?>
             <?= $form->renderFieldset('post_info'); ?>
-        <?php else: ?>
-            <div class="alert alert-danger"><?= Text::_('COM_KUNENATOPIC2ARTICLE_FORM_IS_EMPTY'); ?></div>
         <?php endif; ?>
 
         <input type="hidden" name="task" value="" />
@@ -66,31 +57,38 @@ $deleteUrl = Route::_('index.php?option=com_kunenatopic2article&task=article.del
 </form>
 
 <script>
-// Функция, которая будет вызвана при закрытии модального окна
-function joomlaModalCloseCallback() {
-    // Асинхронно вызываем задачу удаления без перезагрузки страницы
-    fetch('<?php echo $deleteUrl; ?>')
-        .then(response => response.json())
-        .then(data => {
-            console.log('Preview deleted:', data);
-        })
-        .catch(error => console.error('Error deleting preview:', error));
-}
+document.addEventListener('DOMContentLoaded', () => {
+    const previewButton = document.getElementById('previewButton');
 
-// Стандартный обработчик для других кнопок остался без изменений
-Joomla.submitbutton = function(task) {
-    // Проверяем, если задача не предпросмотр
-    if (task === 'article.preview') {
-        return; // Ничего не делаем, так как модальное окно обрабатывается автоматически
+    if (previewButton) {
+        previewButton.addEventListener('click', (event) => {
+            event.preventDefault();
+
+            Joomla.Modal.iframe(
+                '<?php echo $previewUrl; ?>', // URL для содержимого модального окна
+                { // Опции
+                    title: '<?= Text::_('COM_KUNENATOPIC2ARTICLE_PREVIEW_TITLE', true); ?>',
+                    width: 950,
+                    height: 600,
+                    onClose: () => {
+                        // Эта функция выполнится при закрытии окна
+                        fetch('<?php echo $deleteUrl; ?>')
+                            .then(response => response.json())
+                            .then(data => {
+                                console.log('Preview deleted:', data);
+                            })
+                            .catch(error => console.error('Error deleting preview:', error));
+                    }
+                }
+            );
+        });
     }
-    
-    const form = document.getElementById('adminForm');
-    
-    if (task === 'save' && !document.formvalidator.isValid(form)) {
-        alert('<?= Text::_('JGLOBAL_VALIDATION_FORM_FAILED', true); ?>');
-        return false;
+
+    // Стандартный обработчик для других кнопок
+    if (typeof Joomla.submitbutton === 'undefined') {
+        Joomla.submitbutton = function(task) {
+            Joomla.submitform(task, document.getElementById('adminForm'));
+        }
     }
-    
-    Joomla.submitform(task, form);
-};
+});
 </script>
