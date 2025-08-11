@@ -96,3 +96,11 @@ hr.kun_p2a-hr-gray {
     margin: 1em auto !important;
     border: none !important;
 }
+
+/* Стили для iframe в модальном окне предпросмотра */
+#previewModal iframe {
+    width: 100%;
+    height: 600px;
+    border: none;
+    background: white;
+}
