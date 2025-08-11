@@ -963,8 +963,8 @@ public function createPreviewArticle()
         $articleData = [
             'title'     => $this->title,
             'alias'     => $alias,
-            'introtext' => $previewText,
-            'fulltext'  => '',
+            'introtext' => '',
+            'fulltext'  => $previewText,
             'catid'     => (int) $this->params->article_category,
             'state'     => 0, // Неопубликованная статья для preview
             'created'   => $now,
