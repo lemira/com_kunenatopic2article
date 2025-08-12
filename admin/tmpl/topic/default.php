@@ -14,13 +14,17 @@ HTMLHelper::_('bootstrap.framework');
 $app = Factory::getApplication();
 $form = $this->form;
 
-// Формируем базовые URL для AJAX-запросов. ID здесь еще нет.
-$previewTaskUrl = Route::_('index.php?option=com_kunenatopic2article&task=article.preview&format=json');
-$deleteTaskBaseUrl = Route::_('index.php?option=com_kunenatopic2article&task=article.deletePreview&format=json');
-
-// Получаем токен
-$token = Session::getFormToken();
-$tokenName = Session::getFormToken();
+// Декодируем HTML-сущности в URL для правильной работы AJAX
+$previewTaskUrl = html_entity_decode(
+    Route::_('index.php?option=com_kunenatopic2article&task=article.preview&format=json'),
+    ENT_QUOTES,
+    'UTF-8'
+);
+$deleteTaskBaseUrl = html_entity_decode(
+    Route::_('index.php?option=com_kunenatopic2article&task=article.deletePreview&format=json'),
+    ENT_QUOTES,
+    'UTF-8'
+);
 ?>
 
 <form action="<?= Route::_('index.php?option=com_kunenatopic2article'); ?>" method="post" name="adminForm" id="adminForm" class="form-validate">
@@ -68,26 +72,12 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault();
 
             try {
-                // Собираем данные формы
-                const formData = new FormData();
-                const form = document.getElementById('adminForm');
-                
-                // Добавляем все поля формы
-                const formElements = form.elements;
-                for (let i = 0; i < formElements.length; i++) {
-                    const element = formElements[i];
-                    if (element.name && element.value) {
-                        formData.append(element.name, element.value);
-                    }
-                }
-                
-                // Добавляем токен
-                formData.append('<?= $tokenName; ?>', '1');
-
-                // ШАГ 2: Отправляем POST-запрос на создание статьи
+                // ШАГ 2: Отправляем POST-запрос на создание статьи (как в оригинале)
                 const response = await fetch('<?= $previewTaskUrl; ?>', {
                     method: 'POST',
-                     body: formData
+                    headers: {
+                        'X-CSRF-Token': '<?= Session::getFormToken(); ?>'
+                    }
                 });
 
                 if (!response.ok) {
@@ -106,16 +96,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             width: 950,
                             height: 600,
                             onClose: () => {
-                                  // ШАГ 5: При закрытии отправляем запрос на удаление
-                                const deleteFormData = new FormData();
-                                deleteFormData.append('<?= $tokenName; ?>', '1');
-                                deleteFormData.append('id', result.data.id);
-                              
-                                fetch('<?= $deleteTaskBaseUrl; ?>', {
+                                // ШАГ 5: При закрытии отправляем запрос на удаление
+                                // Формируем URL для удаления, добавляя ID статьи
+                                const deleteUrl = '<?= $deleteTaskBaseUrl; ?>' + '&id=' + result.data.id;
+                                
+                                fetch(deleteUrl, {
                                     method: 'POST',
-                                    body: deleteFormData
-                                }
-                            )
+                                    headers: { 'X-CSRF-Token': '<?= Session::getFormToken(); ?>' }
+                                })
                                 .then(res => res.json())
                                 .then(delData => console.log('Delete status:', delData))
                                 .catch(err => console.error('Delete error:', err));
