@@ -14,7 +14,7 @@ HTMLHelper::_('bootstrap.framework');
 $app = Factory::getApplication();
 $form = $this->form;
 
-// Декодируем HTML-сущности в URL для правильной работы AJAX
+// ИСПРАВЛЕНИЕ: Декодируем HTML-сущности в URL для правильной работы AJAX
 $previewTaskUrl = html_entity_decode(
     Route::_('index.php?option=com_kunenatopic2article&task=article.preview&format=json'),
     ENT_QUOTES,
@@ -88,28 +88,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 const result = await response.json();
 
                 if (result.success && result.data.url) {
-                    // ШАГ 4: Открываем модальное окно с полученным URL
-                    Joomla.Modal.iframe(
-                        result.data.url, // URL из ответа сервера
-                        { // Опции
-                            title: '<?= Text::_('COM_KUNENATOPIC2ARTICLE_PREVIEW_TITLE', true); ?>',
-                            width: 950,
-                            height: 600,
-                            onClose: () => {
-                                // ШАГ 5: При закрытии отправляем запрос на удаление
-                                // Формируем URL для удаления, добавляя ID статьи
-                                const deleteUrl = '<?= $deleteTaskBaseUrl; ?>' + '&id=' + result.data.id;
-                                
-                                fetch(deleteUrl, {
-                                    method: 'POST',
-                                    headers: { 'X-CSRF-Token': '<?= Session::getFormToken(); ?>' }
-                                })
-                                .then(res => res.json())
-                                .then(delData => console.log('Delete status:', delData))
-                                .catch(err => console.error('Delete error:', err));
-                            }
+                    console.log('Server response:', result);
+                    console.log('Preview URL:', result.data.url);
+                    
+                    // Временно используем обычное окно вместо модального для отладки
+                    const previewWindow = window.open(result.data.url, 'preview', 'width=950,height=600,scrollbars=yes');
+                    
+                    // Проверяем закрытие окна
+                    const checkClosed = setInterval(() => {
+                        if (previewWindow.closed) {
+                            clearInterval(checkClosed);
+                            console.log('Preview window closed, deleting article...');
+                            
+                            // При закрытии отправляем запрос на удаление
+                            const deleteUrl = '<?= $deleteTaskBaseUrl; ?>' + '&id=' + result.data.id;
+                            
+                            fetch(deleteUrl, {
+                                method: 'POST',
+                                headers: { 'X-CSRF-Token': '<?= Session::getFormToken(); ?>' }
+                            })
+                            .then(res => res.json())
+                            .then(delData => console.log('Delete status:', delData))
+                            .catch(err => console.error('Delete error:', err));
                         }
-                    );
+                    }, 1000);
+                    
                 } else {
                     // Показываем сообщение об ошибке, если сервер вернул success: false
                     alert('Error creating preview: ' + (result.message || 'Unknown error'));
