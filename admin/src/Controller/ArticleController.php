@@ -82,76 +82,90 @@ public function create()
 }
 
 /**
-     * Метод для создания временной статьи и возврата URL.
+     * Создает временную статью, возвращает URL для предпросмотра в формате JSON.
+     *
+     * @return void
+     * @since  1.0.0
      */
-  public function preview(): void
-{
-    $this->checkToken('POST');
-    $app = Factory::getApplication();
+    public function preview(): void
+    {
+        // Проверка токена безопасности
+        $this->checkToken('POST');
 
-    /** @var \Joomla\Component\KunenaTopic2Article\Administrator\Model\ArticleModel $model */
-    $model = $this->getModel('Article', 'Administrator');    
+        try {
+            /** @var \Joomla\Component\KunenaTopic2Article\Administrator\Model\ArticleModel $model */
+            $model = $this->getModel('Article', 'Administrator');
 
-    try {
-        // Создаем временную статью для preview
-        $articleData = $model->createPreviewArticle();
-        
-        if (!$articleData) {
-            throw new Exception($model->getError() ?: 'Модель не вернула данные для превью.');
+            // Создаем временную статью для preview
+            $articleData = $model->createPreviewArticle();
+
+            if (!$articleData || !isset($articleData['id'])) {
+                // Если модель не смогла создать статью, генерируем ошибку
+                throw new \Exception(Text::_('COM_KUNENATOPIC2ARTICLE_ERROR_PREVIEW_ARTICLE_CREATION_FAILED'));
+            }
+
+            // Формируем URL для фронтенда (не админки), используя Joomla API
+            $previewUrl = Uri::root() . 'index.php?option=com_content&view=article&id='
+                . $articleData['id'] . ':' . $articleData['alias']
+                . '&catid=' . $articleData['catid']
+                . '&tmpl=component'; // tmpl=component убирает все лишнее с сайта
+
+            // Формируем успешный ответ
+            $response = [
+                'success' => true,
+                'data'    => [
+                    'url' => $previewUrl,
+                    'id'  => $articleData['id']
+                ]
+            ];
+
+            // Отправляем успешный JSON-ответ и завершаем работу
+            echo new JsonResponse($response);
+
+        } catch (\Exception $e) {
+            // Если в блоке try произошла любая ошибка, мы ее ловим здесь
+            // Формируем JSON-ответ с сообщением об ошибке
+            $errorResponse = [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
+
+            // Отправляем JSON с ошибкой и HTTP-статусом 500 (внутренняя ошибка сервера)
+            echo new JsonResponse($errorResponse, 500);
         }
-        
-        // Формируем URL для фронтенда (не админки)
-        $previewUrl = Uri::root() . 'index.php?option=com_content&view=article&id=' . $articleData['id'] . ':' . $articleData['alias'] . '&catid=' . $articleData['catid'] . '&tmpl=component';
-        
-        $response = [
-            'success' => true, 
-            'data' => [
-                'url' => $previewUrl, 
-                'id' => $articleData['id']
-            ]
-        ];
-        
-    } catch (Exception $e) {
-        $response = [
-            'success' => false, 
-            'message' => $e->getMessage()
-        ];
-    }
-    
-    // Отправляем JSON ответ
-    try {
-        header('Content-Type: application/json');
-        echo json_encode($response);
-    } catch (\Exception $e) {
-        // Fallback на случай ошибки
-        echo '{"success":false,"message":"JSON encode error"}';
-    }
-    
-    $app->close();
-}
-    
-    /**
-     * Метод для удаления временной статьи.
-     */
-   public function deletePreview()
-{
-    $this->checkToken();
-    $model = $this->getModel();
-    
-    try {
-        if ($model->deletePreviewArticle()) {
-            // Возвращаем успешный JSON-ответ
-            echo new JsonResponse(['success' => true, 'message' => 'Preview article successfully deleted.']);
-        } else {
-            throw new \Exception('Failed to delete preview article.');
-        }
-    } catch (\Exception $e) {
-        // Возвращаем JSON с ошибкой
-        echo new JsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
-    }
 
-    $this->app->close(); // Завершаем выполнение приложения
-}
+        // В любом случае завершаем приложение, чтобы Joomla не пыталась рендерить HTML
+        Factory::getApplication()->close();
+    }
+    
+     public function deletePreview(): void
+    {
+        $this->checkToken('POST'); // Или GET, если метод запроса другой
+
+        try {
+            $id = $this->input->getInt('id');
+            if (!$id) {
+                throw new \Exception(Text::_('COM_KUNENATOPIC2ARTICLE_ERROR_PREVIEW_NO_ID_PROVIDED'));
+            }
+
+            /** @var \Joomla\Component\KunenaTopic2Article\Administrator\Model\ArticleModel $model */
+            $model = $this->getModel('Article', 'Administrator');
+
+            // Передаем ID в модель для удаления
+            if (!$model->deletePreviewArticleById($id)) {
+                 throw new \Exception(Text::_('COM_KUNENATOPIC2ARTICLE_ERROR_PREVIEW_DELETE_FAILED'));
+            }
+            
+            // Если все прошло успешно
+            echo new JsonResponse(['success' => true, 'message' => 'Preview deleted.']);
+
+        } catch (\Exception $e) {
+            // Если что-то пошло не так
+            echo new JsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+
+        Factory::getApplication()->close();
+    }
     
 private function resetTopicSelection()
 {
