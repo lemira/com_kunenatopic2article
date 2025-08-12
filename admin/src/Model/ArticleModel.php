@@ -1010,22 +1010,47 @@ public function createPreviewArticle()
  * @param int $id ID статьи для удаления
  * @return bool True при успешном удалении, false при ошибке
  */
-public function deletePreviewArticleById(int $id): bool
+/**
+ * Удаляет статью по ID (для preview)
+ * @param int $id ID статьи для удаления
+ * @return bool
+ */
+public function deletePreviewArticleById($id)
 {
-    if ($id <= 0) {
-        $this->setError('Неверный ID статьи');
-        return false;
-    }
-
     try {
-        $table = $this->getTable('Article', 'Administrator\\Table\\');
-        return $table->delete($id);
-    } catch (Exception $e) {
-        $this->setError($e->getMessage());
+        // Используем модель com_content для удаления статьи
+        \JLoader::register('ContentModelArticle', JPATH_ADMINISTRATOR . '/components/com_content/src/Model/ArticleModel.php');
+        
+        $contentModel = new \Joomla\Component\Content\Administrator\Model\ArticleModel();
+        
+        // Проверяем, что статья существует
+        $item = $contentModel->getItem($id);
+        
+        if (!$item || !$item->id) {
+            error_log('Article not found with ID: ' . $id);
+            return false;
+        }
+        
+        // Проверяем, что это preview-статья
+        if (strpos($item->alias, 'test-bbcode') === false) {
+            error_log('Article is not a preview article (alias: ' . $item->alias . ')');
+            return false;
+        }
+        
+        // Удаляем статью
+        if (!$contentModel->delete($id)) {
+            error_log('Failed to delete article: ' . $contentModel->getError());
+            return false;
+        }
+        
+        error_log('Successfully deleted preview article with ID: ' . $id);
+        return true;
+        
+    } catch (\Exception $e) {
+        error_log('Exception in deletePreviewArticleById: ' . $e->getMessage());
         return false;
     }
-}
-    
+}    
      public function buildArticleTextFromTopic()        // из createArticlesFromTopic(), openArticle(), closeArticle()
     {   // Параметры $params получаем из таблицы kunenatopic2article_params
          $this->params = $this->getComponentParams(); 
