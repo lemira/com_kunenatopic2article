@@ -91,27 +91,49 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('Server response:', result);
                     console.log('Preview URL:', result.data.url);
                     
-                    // Временно используем обычное окно вместо модального для отладки
-                    const previewWindow = window.open(result.data.url, 'preview', 'width=950,height=600,scrollbars=yes');
+                    // Создаем модальное окно с iframe
+                    const modal = document.createElement('div');
+                    modal.className = 'modal fade';
+                    modal.id = 'previewModal';
+                    modal.tabIndex = -1;
+                    modal.innerHTML = `
+                        <div class="modal-dialog modal-xl">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Preview Article</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body p-0">
+                                    <iframe src="${result.data.url}" width="100%" height="600px" frameborder="0"></iframe>
+                                </div>
+                            </div>
+                        </div>
+                    `;
                     
-                    // Проверяем закрытие окна
-                    const checkClosed = setInterval(() => {
-                        if (previewWindow.closed) {
-                            clearInterval(checkClosed);
-                            console.log('Preview window closed, deleting article...');
-                            
-                            // При закрытии отправляем запрос на удаление
-                            const deleteUrl = '<?= $deleteTaskBaseUrl; ?>' + '&id=' + result.data.id;
-                            
-                            fetch(deleteUrl, {
-                                method: 'POST',
-                                headers: { 'X-CSRF-Token': '<?= Session::getFormToken(); ?>' }
-                            })
-                            .then(res => res.json())
-                            .then(delData => console.log('Delete status:', delData))
-                            .catch(err => console.error('Delete error:', err));
-                        }
-                    }, 1000);
+                    document.body.appendChild(modal);
+                    
+                    // Показываем модальное окно
+                    const bootstrapModal = new bootstrap.Modal(modal);
+                    bootstrapModal.show();
+                    
+                    // Обработчик закрытия модального окна
+                    modal.addEventListener('hidden.bs.modal', () => {
+                        console.log('Preview modal closed, deleting article...');
+                        
+                        // При закрытии отправляем запрос на удаление
+                        const deleteUrl = '<?= $deleteTaskBaseUrl; ?>' + '&id=' + result.data.id;
+                        
+                        fetch(deleteUrl, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-Token': '<?= Session::getFormToken(); ?>' }
+                        })
+                        .then(res => res.json())
+                        .then(delData => console.log('Delete status:', delData))
+                        .catch(err => console.error('Delete error:', err));
+                        
+                        // Удаляем модальное окно из DOM
+                        document.body.removeChild(modal);
+                    });
                     
                 } else {
                     // Показываем сообщение об ошибке, если сервер вернул success: false
