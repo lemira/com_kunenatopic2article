@@ -110,6 +110,9 @@ public function create()
                 . '&catid=' . $articleData['catid']
                 . '&tmpl=component'; // tmpl=component убирает все лишнее с сайта
 
+              // Декодируем HTML-сущности перед отправкой, чтобы избежать проблем сзаменой & на &amp; в URL
+        $previewUrl = html_entity_decode($previewUrl, ENT_QUOTES, 'UTF-8');
+
             // Формируем успешный ответ
             $response = [
                 'success' => true,
