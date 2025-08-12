@@ -88,66 +88,89 @@ public function create()
      * @since  1.0.0
      */
     public function preview(): void
-    {
-       // Проверка токена безопасности - используем более мягкую проверку для AJAX
+{
+    // Устанавливаем заголовки для JSON сразу
+    header('Content-Type: application/json');
+    
     try {
-        $this->checkToken('POST');
-    } catch (\Exception $e) {
-        // Если стандартная проверка не прошла, попробуем альтернативный способ
-        $token = $this->input->get(Session::getFormToken(), '', 'alnum');
-        if (empty($token)) {
-            throw new \Exception('Invalid token');
-        }
-    }
+        // Отладка: логируем начало работы метода
+        error_log('Preview method started');
         
+        // Проверка токена безопасности
         try {
-            /** @var \Joomla\Component\KunenaTopic2Article\Administrator\Model\ArticleModel $model */
-            $model = $this->getModel('Article', 'Administrator');
-
-            // Создаем временную статью для preview
-            $articleData = $model->createPreviewArticle();
-
-            if (!$articleData || !isset($articleData['id'])) {
-                // Если модель не смогла создать статью, генерируем ошибку
-                throw new \Exception(Text::_('COM_KUNENATOPIC2ARTICLE_ERROR_PREVIEW_ARTICLE_CREATION_FAILED'));
-            }
-
-            // Формируем URL для фронтенда (не админки), используя Joomla API
-            $previewUrl = Uri::root() . 'index.php?option=com_content&view=article&id='
-                . $articleData['id'] . ':' . $articleData['alias']
-                . '&catid=' . $articleData['catid']
-                . '&tmpl=component'; // tmpl=component убирает все лишнее с сайта
-
-              // Декодируем HTML-сущности перед отправкой, чтобы избежать проблем сзаменой & на &amp; в URL
-        $previewUrl = html_entity_decode($previewUrl, ENT_QUOTES, 'UTF-8');
-
-            // Формируем успешный ответ
-            $response = [
-                'success' => true,
-                'data'    => [
-                    'url' => $previewUrl,
-                    'id'  => $articleData['id']
-                ]
-            ];
-
-            // Отправляем успешный JSON-ответ и завершаем работу
-            echo new JsonResponse($response);
-
+            $this->checkToken('POST');
+            error_log('Token check passed');
         } catch (\Exception $e) {
-            // Если в блоке try произошла любая ошибка, мы ее ловим здесь
-            // Формируем JSON-ответ с сообщением об ошибке
-            $errorResponse = [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-
-            // Отправляем JSON с ошибкой и HTTP-статусом 500 (внутренняя ошибка сервера)
-            echo new JsonResponse($errorResponse, 500);
+            error_log('Token check failed: ' . $e->getMessage());
+            // Если стандартная проверка не прошла, попробуем альтернативный способ
+            $token = $this->input->get(Session::getFormToken(), '', 'alnum');
+            if (empty($token)) {
+                throw new \Exception('Invalid token: ' . $e->getMessage());
+            }
+            error_log('Alternative token check passed');
         }
-
-        // В любом случае завершаем приложение, чтобы Joomla не пыталась рендерить HTML
-        Factory::getApplication()->close();
+        
+        error_log('Getting model...');
+        /** @var \Joomla\Component\KunenaTopic2Article\Administrator\Model\ArticleModel $model */
+        $model = $this->getModel('Article', 'Administrator');
+        
+        if (!$model) {
+            throw new \Exception('Could not get Article model');
+        }
+        
+        error_log('Creating preview article...');
+        // Создаем временную статью для preview
+        $articleData = $model->createPreviewArticle();
+        
+        error_log('Article data: ' . print_r($articleData, true));
+        
+        if (!$articleData || !isset($articleData['id'])) {
+            // Если модель не смогла создать статью, генерируем ошибку
+            throw new \Exception(Text::_('COM_KUNENATOPIC2ARTICLE_ERROR_PREVIEW_ARTICLE_CREATION_FAILED'));
+        }
+        
+        // Формируем URL для фронтенда (не админки), используя Joomla API
+        $previewUrl = Uri::root() . 'index.php?option=com_content&view=article&id='
+            . $articleData['id'] . ':' . $articleData['alias']
+            . '&catid=' . $articleData['catid']
+            . '&tmpl=component'; // tmpl=component убирает все лишнее с сайта
+            
+        // Декодируем HTML-сущности перед отправкой, чтобы избежать проблем с заменой & на &amp; в URL
+        $previewUrl = html_entity_decode($previewUrl, ENT_QUOTES, 'UTF-8');
+        
+        error_log('Preview URL: ' . $previewUrl);
+        
+        // Формируем успешный ответ
+        $response = [
+            'success' => true,
+            'data'    => [
+                'url' => $previewUrl,
+                'id'  => $articleData['id']
+            ]
+        ];
+        
+        error_log('Sending response: ' . json_encode($response));
+        
+        // Отправляем успешный JSON-ответ
+        echo json_encode($response);
+        
+    } catch (\Exception $e) {
+        error_log('Preview error: ' . $e->getMessage());
+        error_log('Preview error trace: ' . $e->getTraceAsString());
+        
+        // Формируем JSON-ответ с сообщением об ошибке
+        $errorResponse = [
+            'success' => false,
+            'message' => $e->getMessage()
+        ];
+        
+        http_response_code(500);
+        echo json_encode($errorResponse);
     }
+    
+    // В любом случае завершаем приложение
+    Factory::getApplication()->close();
+}
     
      public function deletePreview(): void
     {
