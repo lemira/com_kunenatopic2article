@@ -8,17 +8,15 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 
-// Больше не нужен HTMLHelper::_('behavior.modal');
-// Оставляем только нужные для формы хелперы
 HTMLHelper::_('behavior.formvalidator');
 HTMLHelper::_('bootstrap.framework');
 
 $app = Factory::getApplication();
 $form = $this->form;
 
-// PHP-код для формирования URL-адресов. Он остается без изменений.
-$previewUrl = Route::_('index.php?option=com_kunenatopic2article&task=article.preview&id=' . $this->item->id . '&' . Session::getFormToken() . '=1&tmpl=component');
-$deleteUrl = Route::_('index.php?option=com_kunenatopic2article&task=article.deletePreview&' . Session::getFormToken() . '=1');
+// Формируем базовые URL для AJAX-запросов. ID здесь еще нет.
+$previewTaskUrl = Route::_('index.php?option=com_kunenatopic2article&task=article.preview&format=json');
+$deleteTaskBaseUrl = Route::_('index.php?option=com_kunenatopic2article&task=article.deletePreview&format=json');
 ?>
 
 <form action="<?= Route::_('index.php?option=com_kunenatopic2article'); ?>" method="post" name="adminForm" id="adminForm" class="form-validate">
@@ -35,7 +33,7 @@ $deleteUrl = Route::_('index.php?option=com_kunenatopic2article&task=article.del
                 <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_CREATE'); ?>
             </button>
             
-            <a id="previewButton" class="btn btn-info" href="#">
+             <a id="previewButton" class="btn btn-info" href="#">
                <span class="icon-eye" aria-hidden="true"></span>
                <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_PREVIEW'); ?>
             </a>
@@ -61,34 +59,64 @@ document.addEventListener('DOMContentLoaded', () => {
     const previewButton = document.getElementById('previewButton');
 
     if (previewButton) {
-        previewButton.addEventListener('click', (event) => {
+        // Используем async/await для более чистого кода
+        previewButton.addEventListener('click', async (event) => {
             event.preventDefault();
 
-            Joomla.Modal.iframe(
-                '<?php echo $previewUrl; ?>', // URL для содержимого модального окна
-                { // Опции
-                    title: '<?= Text::_('COM_KUNENATOPIC2ARTICLE_PREVIEW_TITLE', true); ?>',
-                    width: 950,
-                    height: 600,
-                    onClose: () => {
-                        // Эта функция выполнится при закрытии окна
-                        fetch('<?php echo $deleteUrl; ?>')
-                            .then(response => response.json())
-                            .then(data => {
-                                console.log('Preview deleted:', data);
-                            })
-                            .catch(error => console.error('Error deleting preview:', error));
+            try {
+                // ШАГ 2: Отправляем POST-запрос на создание статьи
+                const response = await fetch('<?= $previewTaskUrl; ?>', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-Token': '<?= Session::getFormToken(); ?>'
                     }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-            );
+                
+                // ШАГ 3: Получаем JSON с URL и ID
+                const result = await response.json();
+
+                if (result.success && result.data.url) {
+                    // ШАГ 4: Открываем модальное окно с полученным URL
+                    Joomla.Modal.iframe(
+                        result.data.url, // URL из ответа сервера
+                        { // Опции
+                            title: '<?= Text::_('COM_KUNENATOPIC2ARTICLE_PREVIEW_TITLE', true); ?>',
+                            width: 950,
+                            height: 600,
+                            onClose: () => {
+                                // ШАГ 5: При закрытии отправляем запрос на удаление
+                                // Формируем URL для удаления, добавляя ID статьи
+                                const deleteUrl = '<?= $deleteTaskBaseUrl; ?>' + '&id=' + result.data.id;
+                                
+                                fetch(deleteUrl, {
+                                    method: 'POST', // или GET, в зависимости от вашей реализации
+                                    headers: { 'X-CSRF-Token': '<?= Session::getFormToken(); ?>' }
+                                })
+                                .then(res => res.json())
+                                .then(delData => console.log('Delete status:', delData))
+                                .catch(err => console.error('Delete error:', err));
+                            }
+                        }
+                    );
+                } else {
+                    // Показываем сообщение об ошибке, если сервер вернул success: false
+                    alert('Error creating preview: ' + (result.message || 'Unknown error'));
+                }
+
+            } catch (error) {
+                console.error('Preview request failed:', error);
+                alert('Preview request failed: ' + error.message);
+            }
         });
     }
-
-    // Стандартный обработчик для других кнопок
-    if (typeof Joomla.submitbutton === 'undefined') {
-        Joomla.submitbutton = function(task) {
+    
+      // Стандартный обработчик для других кнопок
+            Joomla.submitbutton = function(task) {
             Joomla.submitform(task, document.getElementById('adminForm'));
-        }
-    }
+      }
 });
 </script>
