@@ -1004,53 +1004,58 @@ public function createPreviewArticle()
     }
 }
     
-    /**
+/**
  * Удаляет статью предпросмотра по ID
  * 
  * @param int $id ID статьи для удаления
  * @return bool True при успешном удалении, false при ошибке
  */
-/**
- * Удаляет статью по ID (для preview)
- * @param int $id ID статьи для удаления
- * @return bool
- */
 public function deletePreviewArticleById($id)
 {
     try {
-        // Используем модель com_content для удаления статьи
-        \JLoader::register('ContentModelArticle', JPATH_ADMINISTRATOR . '/components/com_content/src/Model/ArticleModel.php');
+        $db = $this->getDatabase();
         
-        $contentModel = new \Joomla\Component\Content\Administrator\Model\ArticleModel();
+        // Сначала проверяем, что статья существует и это preview
+        $query = $db->getQuery(true)
+            ->select(['id', 'alias'])
+            ->from('#__content')
+            ->where('id = ' . (int) $id);
         
-        // Проверяем, что статья существует
-        $item = $contentModel->getItem($id);
+        $db->setQuery($query);
+        $article = $db->loadObject();
         
-        if (!$item || !$item->id) {
+        if (!$article) {
             error_log('Article not found with ID: ' . $id);
             return false;
         }
         
         // Проверяем, что это preview-статья
-        if (strpos($item->alias, 'test-bbcode') === false) {
-            error_log('Article is not a preview article (alias: ' . $item->alias . ')');
+        if (strpos($article->alias, 'test-bbcode') === false) {
+            error_log('Article is not a preview article (alias: ' . $article->alias . ')');
             return false;
         }
         
         // Удаляем статью
-        if (!$contentModel->delete($id)) {
-            error_log('Failed to delete article: ' . $contentModel->getError());
+        $query = $db->getQuery(true)
+            ->delete('#__content')
+            ->where('id = ' . (int) $id);
+        
+        $db->setQuery($query);
+        $result = $db->execute();
+        
+        if ($result) {
+            error_log('Successfully deleted preview article with ID: ' . $id);
+            return true;
+        } else {
+            error_log('Failed to delete article with ID: ' . $id);
             return false;
         }
-        
-        error_log('Successfully deleted preview article with ID: ' . $id);
-        return true;
         
     } catch (\Exception $e) {
         error_log('Exception in deletePreviewArticleById: ' . $e->getMessage());
         return false;
     }
-}    
+}
      public function buildArticleTextFromTopic()        // из createArticlesFromTopic(), openArticle(), closeArticle()
     {   // Параметры $params получаем из таблицы kunenatopic2article_params
          $this->params = $this->getComponentParams(); 
