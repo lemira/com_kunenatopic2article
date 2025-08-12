@@ -936,23 +936,23 @@ private function convertBBCodeToHtml($text)
 public function createPreviewArticle()
 {
     try {
-        error_log('Step 1: Starting createPreviewArticle');
+   //     error_log('Step 1: Starting createPreviewArticle');
         
         $this->openArticle();
-        error_log('Step 2: openArticle() completed');
+   //     error_log('Step 2: openArticle() completed');
         
         $previewText = $this->buildArticleTextFromTopic();
-        error_log('Step 3: buildArticleTextFromTopic() completed, text length: ' . strlen($previewText));
+   //     error_log('Step 3: buildArticleTextFromTopic() completed, text length: ' . strlen($previewText));
     
         // Используем тот же способ, что и в createArticleViaTable()
         $table = Table::getInstance('Content');
-        error_log('Step 4: getTable completed, table type: ' . (is_object($table) ? get_class($table) : 'NOT OBJECT'));
+   //     error_log('Step 4: getTable completed, table type: ' . (is_object($table) ? get_class($table) : 'NOT OBJECT'));
         
         if (!$table) {
             throw new \Exception('Не удалось загрузить таблицу Content');
         }
         
-        error_log('Step 4.3: About to prepare articleData');
+     //   error_log('Step 4.3: About to prepare articleData');
         
         $now = Factory::getDate()->toSql();
         // Формируем уникальный алиас
@@ -980,16 +980,16 @@ public function createPreviewArticle()
             'metadata'  => '{"robots":"","author":"","rights":""}',
         ];
         
-        error_log('Step 5: articleData prepared successfully');
-        error_log('Step 6: About to call table->save()');
+  //      error_log('Step 5: articleData prepared successfully');
+   //     error_log('Step 6: About to call table->save()');
         
         if (!$table->save($articleData)) {
-            error_log('Step 6: table->save() failed: ' . $table->getError());
+//            error_log('Step 6: table->save() failed: ' . $table->getError());
             $this->setError($table->getError());
             return null;
         }
         
-        error_log('Step 7: table->save() success, id: ' . $table->id);
+ //       error_log('Step 7: table->save() success, id: ' . $table->id);
         
         return [
             'id' => $table->id,
