@@ -1004,20 +1004,27 @@ public function createPreviewArticle()
     }
 }
     
-    public function delete($pks): bool
-    {
-        if (empty($pks)) {
-            return false;
-        }
-
-        $table = $this->getTable('Article', 'Administrator\\Table\\');
-        try {
-            return $table->delete((int) $pks);
-        } catch (Exception $e) {
-            $this->setError($e->getMessage());
-            return false;
-        }
+    /**
+ * Удаляет статью предпросмотра по ID
+ * 
+ * @param int $id ID статьи для удаления
+ * @return bool True при успешном удалении, false при ошибке
+ */
+public function deletePreviewArticleById(int $id): bool
+{
+    if ($id <= 0) {
+        $this->setError('Неверный ID статьи');
+        return false;
     }
+
+    try {
+        $table = $this->getTable('Article', 'Administrator\\Table\\');
+        return $table->delete($id);
+    } catch (Exception $e) {
+        $this->setError($e->getMessage());
+        return false;
+    }
+}
     
      public function buildArticleTextFromTopic()        // из createArticlesFromTopic(), openArticle(), closeArticle()
     {   // Параметры $params получаем из таблицы kunenatopic2article_params
