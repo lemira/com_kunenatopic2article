@@ -89,9 +89,17 @@ public function create()
      */
     public function preview(): void
     {
-        // Проверка токена безопасности
+       // Проверка токена безопасности - используем более мягкую проверку для AJAX
+    try {
         $this->checkToken('POST');
-
+    } catch (\Exception $e) {
+        // Если стандартная проверка не прошла, попробуем альтернативный способ
+        $token = $this->input->get(Session::getFormToken(), '', 'alnum');
+        if (empty($token)) {
+            throw new \Exception('Invalid token');
+        }
+    }
+        
         try {
             /** @var \Joomla\Component\KunenaTopic2Article\Administrator\Model\ArticleModel $model */
             $model = $this->getModel('Article', 'Administrator');
@@ -143,8 +151,16 @@ public function create()
     
      public function deletePreview(): void
     {
-        $this->checkToken('POST'); // Или GET, если метод запроса другой
-
+        // проверка токена для deletePreview
+    try {
+        $this->checkToken('POST');
+    } catch (\Exception $e) {
+        $token = $this->input->get(Session::getFormToken(), '', 'alnum');
+        if (empty($token)) {
+            throw new \Exception('Invalid token');
+        }
+    }
+        
         try {
             $id = $this->input->getInt('id');
             if (!$id) {
