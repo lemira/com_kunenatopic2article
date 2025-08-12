@@ -172,42 +172,69 @@ public function create()
     Factory::getApplication()->close();
 }
     
-     public function deletePreview(): void
-    {
-        // проверка токена для deletePreview
+  public function deletePreview(): void
+{
+    // Устанавливаем заголовки для JSON сразу
+    header('Content-Type: application/json');
+    
     try {
-        $this->checkToken('POST');
-    } catch (\Exception $e) {
-        $token = $this->input->get(Session::getFormToken(), '', 'alnum');
-        if (empty($token)) {
-            throw new \Exception('Invalid token');
-        }
-    }
+        error_log('DeletePreview method started');
         
+        // Проверка токена
         try {
-            $id = $this->input->getInt('id');
-            if (!$id) {
-                throw new \Exception(Text::_('COM_KUNENATOPIC2ARTICLE_ERROR_PREVIEW_NO_ID_PROVIDED'));
-            }
-
-            /** @var \Joomla\Component\KunenaTopic2Article\Administrator\Model\ArticleModel $model */
-            $model = $this->getModel('Article', 'Administrator');
-
-            // Передаем ID в модель для удаления
-            if (!$model->deletePreviewArticleById($id)) {
-                 throw new \Exception(Text::_('COM_KUNENATOPIC2ARTICLE_ERROR_PREVIEW_DELETE_FAILED'));
-            }
-            
-            // Если все прошло успешно
-            echo new JsonResponse(['success' => true, 'message' => 'Preview deleted.']);
-
+            $this->checkToken('POST');
+            error_log('Delete token check passed');
         } catch (\Exception $e) {
-            // Если что-то пошло не так
-            echo new JsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
+            error_log('Delete token check failed: ' . $e->getMessage());
+            $token = $this->input->get(Session::getFormToken(), '', 'alnum');
+            if (empty($token)) {
+                throw new \Exception('Invalid delete token: ' . $e->getMessage());
+            }
+            error_log('Delete alternative token check passed');
         }
-
-        Factory::getApplication()->close();
+        
+        $id = $this->input->getInt('id');
+        error_log('Delete ID received: ' . $id);
+        
+        if (!$id) {
+            throw new \Exception(Text::_('COM_KUNENATOPIC2ARTICLE_ERROR_PREVIEW_NO_ID_PROVIDED'));
+        }
+        
+        error_log('Getting model for delete...');
+        /** @var \Joomla\Component\KunenaTopic2Article\Administrator\Model\ArticleModel $model */
+        $model = $this->getModel('Article', 'Administrator');
+        
+        if (!$model) {
+            throw new \Exception('Could not get Article model for delete');
+        }
+        
+        error_log('Calling deletePreviewArticleById...');
+        // Передаем ID в модель для удаления
+        $deleteResult = $model->deletePreviewArticleById($id);
+        
+        error_log('Delete result: ' . ($deleteResult ? 'success' : 'failed'));
+        
+        if (!$deleteResult) {
+            throw new \Exception(Text::_('COM_KUNENATOPIC2ARTICLE_ERROR_PREVIEW_DELETE_FAILED'));
+        }
+        
+        // Если все прошло успешно
+        $response = ['success' => true, 'message' => 'Preview deleted.'];
+        error_log('Delete response: ' . json_encode($response));
+        
+        echo json_encode($response);
+        
+    } catch (\Exception $e) {
+        error_log('Delete error: ' . $e->getMessage());
+        error_log('Delete error trace: ' . $e->getTraceAsString());
+        
+        $errorResponse = ['success' => false, 'message' => $e->getMessage()];
+        http_response_code(500);
+        echo json_encode($errorResponse);
     }
+    
+    Factory::getApplication()->close();
+}
     
 private function resetTopicSelection()
 {
