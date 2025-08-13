@@ -1211,7 +1211,7 @@ private function createParamsTable()
 
 /**
  * Создание таблицы параметров
- */
+ОТЛАДКА
 private function createParamsTable()
 {
     try {
@@ -1251,5 +1251,6 @@ private function createParamsTable()
         throw new \Exception('Ошибка создания таблицы параметров: ' . $e->getMessage());
     }
 }
+     */
     
 } // КОНЕЦ КЛАССА
