@@ -1,2 +1,2 @@
--- unInstall script for com_kunenatopic2article
+DROP TABLE IF EXISTS `#__kunenatopic2article_params`;
 
