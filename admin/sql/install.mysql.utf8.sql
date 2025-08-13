@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS `#__kt2a_params` (
+CREATE TABLE IF NOT EXISTS `#__kunenatopic2article_params` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `topic_selection` int(11) NOT NULL DEFAULT 0,
     `article_category` int(11) NOT NULL DEFAULT 0,
@@ -17,3 +17,9 @@ CREATE TABLE IF NOT EXISTS `#__kt2a_params` (
 
 INSERT IGNORE INTO `#__kt2a_params` (`id`, `topic_selection`, `article_category`, `post_transfer_scheme`, `max_article_size`, `post_author`, `post_creation_date`, `post_creation_time`, `post_ids`, `post_title`, `kunena_post_link`, `reminder_lines`, `ignored_authors`)
 VALUES (1, 0, 0, 1, 40000, 1, 0, 0, 0, 0, 0, 0, '');
+
+CREATE TABLE IF NOT EXISTS `#__test_kt2a` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `test_field` varchar(50),
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
