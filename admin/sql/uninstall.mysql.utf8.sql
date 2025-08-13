@@ -1,2 +1,2 @@
-DROP TABLE IF EXISTS `#__kt2a_params`;
+DROP TABLE IF EXISTS `#__kunenatopic2article_params`;
 
