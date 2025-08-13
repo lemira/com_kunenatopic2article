@@ -14,19 +14,7 @@
     
     <administration>
         <menu link="option=com_kunenatopic2article">COM_KUNENATOPIC2ARTICLE</menu>
-
-        <install>
-        <sql>
-            <file driver="mysql" charset="utf8">admin/sql/install.mysql.utf8.sql</file>
-        </sql>
-    </install>
-    
-    <uninstall>
-        <sql>
-            <file driver="mysql" charset="utf8">admin/sql/uninstall.mysql.utf8.sql</file>
-        </sql>
-    </uninstall>
-        
+      
         <files folder="admin">
             <folder>services</folder>
             <folder>forms</folder>
@@ -36,6 +24,11 @@
             <folder>language</folder>
             <folder>assets/css</folder>
             <folder>libraries</folder>
+    <sql>
+        <file driver="mysql" charset="utf8">sql/install.mysql.utf8.sql</file>
+        <file driver="mysql" charset="utf8">sql/uninstall.mysql.utf8.sql</file>
+    </sql>
+            
         </files>
         
         <languages folder="admin/language">
