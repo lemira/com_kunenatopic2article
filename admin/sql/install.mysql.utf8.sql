@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS `#__kunenatopic2article_params` (
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT IGNORE INTO `#__kt2a_params` (`id`, `topic_selection`, `article_category`, `post_transfer_scheme`, `max_article_size`, `post_author`, `post_creation_date`, `post_creation_time`, `post_ids`, `post_title`, `kunena_post_link`, `reminder_lines`, `ignored_authors`)
+INSERT IGNORE INTO `#__kunenatopic2article_params` (`id`, `topic_selection`, `article_category`, `post_transfer_scheme`, `max_article_size`, `post_author`, `post_creation_date`, `post_creation_time`, `post_ids`, `post_title`, `kunena_post_link`, `reminder_lines`, `ignored_authors`)
 VALUES (1, 0, 0, 1, 40000, 1, 0, 0, 0, 0, 0, 0, '');
 
 CREATE TABLE IF NOT EXISTS `#__test_kt2a` (
