@@ -91,49 +91,57 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('Server response:', result);
                     console.log('Preview URL:', result.data.url);
                     
-                    // Создаем модальное окно с iframe
-                    const modal = document.createElement('div');
-                    modal.className = 'modal fade';
-                    modal.id = 'previewModal';
-                    modal.tabIndex = -1;
-                    modal.innerHTML = `
-                        <div class="modal-dialog modal-xl">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Preview Article</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <div class="modal-body p-0">
-                                    <iframe src="${result.data.url}" width="100%" height="600px" frameborder="0"></iframe>
-                                </div>
+                          // Проверяем, доступен ли Joomla.Modal
+                    if (typeof Joomla !== 'undefined' && Joomla.Modal) {
+                        // Используем встроенный Joomla Modal
+                        Joomla.Modal.show({
+                            title: 'Preview Article',
+                            body: `<iframe src="${result.data.url}" width="100%" height="600px" style="border: none;"></iframe>`,
+                            width: '90%',
+                            height: '80%',
+                            onClose: () => {
+                                console.log('Joomla modal closed, deleting article...');
+                                deletePreviewArticle(result.data.id);
+                            }
+                        });
+                    } else {
+                        // Fallback: создаем простое модальное окно без Bootstrap
+                        const modalOverlay = document.createElement('div');
+                        modalOverlay.style.cssText = `
+                            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                            background: rgba(0,0,0,0.5); z-index: 9999; display: flex;
+                            align-items: center; justify-content: center;
+                        `;
+                        
+                        const modalContent = document.createElement('div');
+                        modalContent.style.cssText = `
+                            background: white; width: 90%; height: 80%; border-radius: 8px;
+                            position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                        `;
+                        
+                        modalContent.innerHTML = `
+                            <div style="padding: 15px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
+                                <h5 style="margin: 0;">Preview Article</h5>
+                                <button id="closeModal" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
                             </div>
-                        </div>
-                    `;
-                    
-                    document.body.appendChild(modal);
-                    
-                    // Показываем модальное окно
-                    const bootstrapModal = new bootstrap.Modal(modal);
-                    bootstrapModal.show();
-                    
-                    // Обработчик закрытия модального окна
-                    modal.addEventListener('hidden.bs.modal', () => {
-                        console.log('Preview modal closed, deleting article...');
+                            <iframe src="${result.data.url}" width="100%" height="calc(100% - 60px)" style="border: none;"></iframe>
+                        `;
                         
-                        // При закрытии отправляем запрос на удаление
-                        const deleteUrl = '<?= $deleteTaskBaseUrl; ?>' + '&id=' + result.data.id;
+                        modalOverlay.appendChild(modalContent);
+                        document.body.appendChild(modalOverlay);
                         
-                        fetch(deleteUrl, {
-                            method: 'POST',
-                            headers: { 'X-CSRF-Token': '<?= Session::getFormToken(); ?>' }
-                        })
-                        .then(res => res.json())
-                        .then(delData => console.log('Delete status:', delData))
-                        .catch(err => console.error('Delete error:', err));
+                        // Обработчик закрытия
+                        const closeModal = () => {
+                            console.log('Custom modal closed, deleting article...');
+                            document.body.removeChild(modalOverlay);
+                            deletePreviewArticle(result.data.id);
+                        };
                         
-                        // Удаляем модальное окно из DOM
-                        document.body.removeChild(modal);
-                    });
+                        document.getElementById('closeModal').onclick = closeModal;
+                        modalOverlay.onclick = (e) => {
+                            if (e.target === modalOverlay) closeModal();
+                        };
+                    }
                     
                 } else {
                     // Показываем сообщение об ошибке, если сервер вернул success: false
