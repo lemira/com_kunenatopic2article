@@ -225,7 +225,12 @@ class ArticleModel extends BaseDatabaseModel
             }
 
             if ($this->isPreview) {
-              return true;     // в createArticlesFromTopic() извлечем id, alias и catid, так как текущая статья открыта
+            // Для preview возвращаем в createArticlesFromTopic() данные статьи, НЕ сбрасывая currentArticle
+                return [
+                'id' => $this->currentArticle->id,
+                'alias' => $this->currentArticle->alias,
+                'catid' => $this->currentArticle->catid,
+                 ];
             }
             
             // Формируем URL для статьи
