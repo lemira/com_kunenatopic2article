@@ -58,6 +58,7 @@ class ArticleModel extends BaseDatabaseModel
     public bool $emailsSent = false;
     public array $emailsSentTo = [];
     private $allPosts = []; // Добавляем свойство для хранения всех постов
+    public bool $isPreview = false;
       
       public function __construct($config = [])
 {
@@ -75,8 +76,10 @@ class ArticleModel extends BaseDatabaseModel
      * @param   array  $params  Настройки для создания статей
      * @return  array  Массив ссылок на созданные статьи
      */
-    public function createArticlesFromTopic()
-    {   // Параметры $params получаем из таблицы kunenatopic2article_params
+   public function createArticlesFromTopic($isPreview = false)
+        {  
+        $this->isPreview = $isPreview;   // для closeArticle()
+         // Параметры $params получаем из таблицы kunenatopic2article_params
          $this->params = $this->getComponentParams(); 
          if (empty($this->params) || empty($this->params->topic_selection)) {
             throw new \RuntimeException(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'));
@@ -105,6 +108,12 @@ class ArticleModel extends BaseDatabaseModel
                 $this->postLevelList = $baum['levels'];
                 }
 
+               // для preview - ограничиваем 2 постами 
+            if ($isPreview) {
+                $this->postIdList = array_slice($this->postIdList, 0, 2);
+                $this->postIdList[] = 0; // Гарантируем завершение цикла
+            }
+
                $this->currentIndex = 0; // в nextPost() начинаем переход сразу к элементу (1), т.к. (0) = $topicId = $firstPostId
                     
                $this->openArticle();     // Открываем первую статью
@@ -112,11 +121,10 @@ class ArticleModel extends BaseDatabaseModel
                // Основной цикл обработки постов
                 while ($this->postId != 0) {
                 
-                   // Статья открыта
-                // ОТЛАДКА       Factory::getApplication()->enqueueMessage('Основной цикл Размер статьи: ' . $this->articleSize, 'info');
-                 // ОТЛАДКА      Factory::getApplication()->enqueueMessage('Основной цикл Размер поста: ' . $this->postSize, 'info');                
-                if ($this->articleSize + $this->postSize > $this->params->max_article_size  // С новым постом превышен максимальный размер статьи
-                        && $this->articleSize != 0) {                                           // И статья не пустая = размер этого поста больше размера статьи
+                // Статья открыта
+               if (!$isPreview &&    // в preview пропускаем проверку размера
+                            $this->articleSize + $this->postSize > $this->params->max_article_size &&  // С новым постом превышен максимальный размер статьи
+                            $this->articleSize != 0) {                                           // И статья не пустая = размер этого поста больше размера статьи
                             $this->closeArticle();  // Закрываем текущую статью перед открытием новой
                             $this->openArticle();   // Открываем новую статью
                 }    
@@ -186,7 +194,7 @@ class ArticleModel extends BaseDatabaseModel
      * Закрытие и сохранение статьи
      * @return  boolean  True в случае успеха
      */
-    private function closeArticle()
+  private function closeArticle()
     {
         if ($this->currentArticle === null) {
             return false;
@@ -216,6 +224,10 @@ class ArticleModel extends BaseDatabaseModel
                 throw new \Exception('Ошибка сохранения статьи.');
             }
 
+            if ($this->isPreview) {
+              return true;     // в createArticlesFromTopic() извлечем id, alias и catid, так как текущая статья открыта
+            }
+            
             // Формируем URL для статьи
             $link = 'index.php?option=com_content&view=article&id=' . $this->articleId . '&catid=' . $this->params->article_category;   // Формируем базовый маршрут
             $url = Route::link('site', $link, true, -1);  // Преобразуем в SEF-URL (если SEF включен) : 'site' — гарантирует, что URL будет сформирован для фронтенда
@@ -228,10 +240,8 @@ class ArticleModel extends BaseDatabaseModel
                 'url' => $url,
                 'id' => $this->articleId  // Сохраняем ID в массиве ссылок
             ];
-
            // ОТЛАДКА           $this->app->enqueueMessage('Статья успешно сохранена с ID: ' . $this->articleId, 'notice');
 
-            
             // Сбрасываем текущую статью
             $this->currentArticle = null;
 
@@ -301,7 +311,7 @@ class ArticleModel extends BaseDatabaseModel
                 'catid' => (int) $this->params->article_category,
                 'created' => (new Date())->toSql(),
                 'publish_up' => (new Date())->toSql(),
-                'state' => 1, // Published
+                'state' => 0, // Unpublished
                 'language' => '*',
                 'access' => 1,
                 'attribs' => '{"show_title":"","link_titles":"","show_tags":""}',
@@ -931,78 +941,6 @@ private function convertBBCodeToHtml($text)
         return $this->simpleBBCodeToHtml($text);
     }
 }
-
-    // РАБОТА С Preview
-public function createPreviewArticle()
-{
-    try {
-   //     error_log('Step 1: Starting createPreviewArticle');
-        
-        $this->openArticle();
-   //     error_log('Step 2: openArticle() completed');
-        
-        $previewText = $this->buildArticleTextFromTopic();
-   //     error_log('Step 3: buildArticleTextFromTopic() completed, text length: ' . strlen($previewText));
-    
-        // Используем тот же способ, что и в createArticleViaTable()
-        $table = Table::getInstance('Content');
-   //     error_log('Step 4: getTable completed, table type: ' . (is_object($table) ? get_class($table) : 'NOT OBJECT'));
-        
-        if (!$table) {
-            throw new \Exception('Не удалось загрузить таблицу Content');
-        }
-        
-     //   error_log('Step 4.3: About to prepare articleData');
-        
-        $now = Factory::getDate()->toSql();
-        // Формируем уникальный алиас
-            $baseAlias = OutputFilter::stringURLSafe($this->title);
-            $uniqueAlias = $this->getUniqueAlias($baseAlias);
-            $alias = $uniqueAlias;
-        
-        $articleData = [
-            'title'     => $this->title,
-            'alias'     => $alias,
-            'introtext' => '',
-            'fulltext'  => $previewText,
-            'catid'     => (int) $this->params->article_category,
-            'state'     => 0, // Неопубликованная статья для preview
-            'created'   => $now,
-            'created_by' => $this->topicAuthorId,
-            'modified'  => $now,
-            'modified_by' => $this->topicAuthorId,
-            'publish_up' => $now,
-            'access'    => 1,
-            'language'  => '*',
-            'attribs'   => '{"show_title":"","link_titles":"","show_tags":""}',
-            'metakey'   => '',
-            'metadesc'  => '',
-            'metadata'  => '{"robots":"","author":"","rights":""}',
-        ];
-        
-  //      error_log('Step 5: articleData prepared successfully');
-   //     error_log('Step 6: About to call table->save()');
-        
-        if (!$table->save($articleData)) {
-//            error_log('Step 6: table->save() failed: ' . $table->getError());
-            $this->setError($table->getError());
-            return null;
-        }
-        
- //       error_log('Step 7: table->save() success, id: ' . $table->id);
-        
-        return [
-            'id' => $table->id,
-            'alias' => $table->alias,
-            'catid' => $table->catid,
-        ];
-        
-    } catch (\Exception $e) {
-        error_log('Exception in createPreviewArticle: ' . $e->getMessage());
-        error_log('Exception trace: ' . $e->getTraceAsString());
-        throw $e;
-    }
-}
     
 /**
  * Удаляет статью предпросмотра по ID
@@ -1056,75 +994,6 @@ public function deletePreviewArticleById($id)
         return false;
     }
 }
-     public function buildArticleTextFromTopic()        // из createArticlesFromTopic(), openArticle(), closeArticle()
-    {   // Параметры $params получаем из таблицы kunenatopic2article_params
-         $this->params = $this->getComponentParams(); 
-         if (empty($this->params) || empty($this->params->topic_selection)) {
-    throw new \RuntimeException(Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED'));
-          }
-          $this->currentArticle->fulltext = ''; // для возможного изменения строк предупреждения
-           $this->currentArticle->fulltext .= '<div class="kunenatopic2article_marker" style="display:none;"></div>'; // для плагина подклюсения CSS
-           
-           $this->currentArticle->fulltext .=  Text::_('COM_KUNENATOPIC2ARTICLE_INFORMATION_SIGN') . '<br />'    // ?? не учтена длина!
-                 . Text::_('COM_KUNENATOPIC2ARTICLE_WARNING_SIGN') 
-                 . '<div class="kun_p2a_divider-shadow"></div>'; //  Линия с тенью (эффект углубления)
-                 
-           try {
-            // Получаем ID первого поста
-             $firstPostId = $this->params->topic_selection; // 3232
-        //    Factory::getApplication()->enqueueMessage('ArticleModel $firstPostId: ' . $firstPostId, 'info'); // ОТЛАДКА          
-              $this->postId = $firstPostId; // текущий id 
-              $this->openPost($this->postId); // Открываем первый пост темы для доступа к его параметрам
-              $this->title = $this->currentPost->subject;   // базовый заголовок статьи
-              $this->subject = $this->currentPost->subject;
-              $this->threadId = (int) $this->currentPost->thread; // Получаем Id темы
-        //   Factory::getApplication()->enqueueMessage('createArticlesFromTopic $subject: ' . $this->subject, 'info'); // ОТЛАДКА 
-              $this->topicAuthorId = $this->currentPost->userid;
-              $this->reminderLines = ""; // у первого поста нет строк напоминания
-
-            // Формируем список ID постов в зависимости от схемы обхода; должно быть после открытия первого поста!
-            if ($this->params->post_transfer_scheme != 1) {
-                $this->postIdList = $this->buildFlatPostIdList($firstPostId);
-                } else {
-                $baum = $this->buildTreePostIdList($firstPostId);
-                $this->postIdList = $baum['postIds'];
-                $this->postLevelList = $baum['levels'];
-                }
-
-                // В режиме preview ограничиваемся 2 постами
-                    $this->postIdList = array_slice($this->postIdList, 0, 2);
-                    $this->postIdList[] = 0; // Гарантируем завершение цикла
-            
-               $this->currentIndex = 0; // в nextPost() начинаем переход сразу к элементу (1), т.к. (0) = $topicId = $firstPostId
-                    
-//?               $this->openArticle();     // Открываем первую статью
-                    
-               // Основной цикл обработки постов
-                while ($this->postId != 0) {
-                
-                $this->transferPost(); // Переносим содержимое поста в статью
-                $this->nextPost(); // Переходим к следующему посту
-                $this->openPost($this->postId); // Открываем пост для доступа к его параметрам, не открываем пост после последнего
-            }      // Конец основного цикла обработки постов
-
-            // Фильтрация контента
-            $filter = InputFilter::getInstance([], [], 1, 1);
-            $filteredContent = $filter->clean($this->currentArticle->fulltext, 'html');
-    
-            // Формирование ссылки на CSS
-           HTMLHelper::_('stylesheet', 'com_kunenatopic2article/css/kun_p2a.css', ['relative' => true]);
-           $cssLink = '<link href="' . Uri::root(true) . '/media/com_kunenatopic2article/css/kun_p2a.css" rel="stylesheet">'; // для Сборки финального контента
-            // Сборка финального контента
-            $this->currentArticle->fulltext = $cssLink . $filteredContent;
-             Factory::getApplication()->enqueueMessage('Preview: '. $this->currentArticle->fulltext, 'info'); // ОТЛАДКА 
-       
-           return $this->currentArticle->fulltext;
-           
-         } catch (\Exception $e) {
-            $this->app->enqueueMessage($e->getMessage(), 'error');
-            return $this->articleLinks;
-        }
-    }
     
       /**
      * Получение параметров компонента из таблиц
