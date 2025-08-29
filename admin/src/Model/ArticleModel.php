@@ -135,13 +135,19 @@ class ArticleModel extends BaseDatabaseModel
             }      // Конец основного цикла обработки постов
 
             // Закрываем последнюю статью
+           $previewData = null;
             if ($this->currentArticle !== null) {
-                $this->closeArticle();
+                $result = $this->closeArticle();
+                    if ($this->isPreview && is_array($result)) {
+                        $previewData = $result;
+                    }
             }
-            
-       // ОТЛАДКА   Factory::getApplication()->enqueueMessage('createArticlesFromTopic: последняя статья' . $this->subject, 'info');  
-        
-           return $this->articleLinks;
+            // ОТЛАДКА   Factory::getApplication()->enqueueMessage('createArticlesFromTopic: последняя статья' . $this->subject, 'info');  
+           
+            if ($this->isPreview) {
+                return $previewData ?: []; // возвращаем данные или пустой массив
+            }
+            return $this->articleLinks;
          } catch (\Exception $e) {
             $this->app->enqueueMessage($e->getMessage(), 'error');
             return $this->articleLinks;
