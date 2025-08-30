@@ -72,7 +72,11 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault();
 
             try {
-                // ШАГ 2: Отправляем POST-запрос на создание статьи (как в оригинале)
+                // Показываем индикатор загрузки
+                previewButton.disabled = true;
+                previewButton.innerHTML = '<span class="icon-spinner icon-spin"></span> <?= Text::_("COM_KUNENATOPIC2ARTICLE_LOADING"); ?>';
+
+                // ШАГ 2: Отправляем POST-запрос на создание статьи
                 const response = await fetch('<?= $previewTaskUrl; ?>', {
                     method: 'POST',
                     headers: {
@@ -89,22 +93,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (result.success && result.data.url) {
                     console.log('Server response:', result);
-                    console.log('Preview URL:', result.data.url);
                     
-                    // Создаем модальное окно с iframe
+                    // ДОБАВЛЯЕМ ПАРАМЕТР PREVIEW К URL
+                    const previewUrl = result.data.url + (result.data.url.includes('?') ? '&' : '?') + 'preview=1';
+                    console.log('Preview URL:', previewUrl);
+                    
+                    // СОЗДАЕМ ПОЛНОЭКРАННОЕ МОДАЛЬНОЕ ОКНО
                     const modal = document.createElement('div');
                     modal.className = 'modal fade';
                     modal.id = 'previewModal';
                     modal.tabIndex = -1;
                     modal.innerHTML = `
-                        <div class="modal-dialog modal-xl">
+                        <div class="modal-dialog modal-fullscreen">
                             <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Preview Article</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                <div class="modal-header bg-light">
+                                    <h5 class="modal-title">
+                                        <span class="icon-eye"></span>
+                                        <?= Text::_('COM_KUNENATOPIC2ARTICLE_PREVIEW_TITLE'); ?>
+                                    </h5>
+                                    <div class="modal-toolbar">
+                                        <button type="button" class="btn btn-sm btn-outline-primary me-2" 
+                                                onclick="window.open('${previewUrl}', '_blank')">
+                                            <span class="icon-new-tab"></span>
+                                            <?= Text::_('COM_KUNENATOPIC2ARTICLE_OPEN_NEW_TAB'); ?>
+                                        </button>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
                                 </div>
                                 <div class="modal-body p-0">
-                                    <iframe src="${result.data.url}" width="100%" height="600px" frameborder="0"></iframe>
+                                    <iframe src="${previewUrl}" 
+                                            width="100%" 
+                                            height="100%" 
+                                            frameborder="0"
+                                            style="border: none;"
+                                            onload="document.getElementById('previewButton').disabled = false; document.getElementById('previewButton').innerHTML = '<span class=\'icon-eye\'></span> <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_PREVIEW'); ?>';">
+                                    </iframe>
+                                </div>
+                                <div class="modal-footer bg-light">
+                                    <small class="text-muted">
+                                        <?= Text::_('COM_KUNENATOPIC2ARTICLE_PREVIEW_FOOTER'); ?>
+                                    </small>
+                                    <button type="button" class="btn btn-danger btn-sm" data-bs-dismiss="modal">
+                                        <span class="icon-times"></span>
+                                        <?= Text::_('JCLOSE'); ?>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -128,28 +160,38 @@ document.addEventListener('DOMContentLoaded', () => {
                             headers: { 'X-CSRF-Token': '<?= Session::getFormToken(); ?>' }
                         })
                         .then(res => res.json())
-                        .then(delData => console.log('Delete status:', delData))
-                        .catch(err => console.error('Delete error:', err));
-                        
-                        // Удаляем модальное окно из DOM
-                        document.body.removeChild(modal);
+                        .then(delData => {
+                            console.log('Delete status:', delData);
+                            if (!delData.success) {
+                                console.warn('Failed to delete preview article:', delData.message);
+                            }
+                        })
+                        .catch(err => console.error('Delete error:', err))
+                        .finally(() => {
+                            // Удаляем модальное окно из DOM
+                            document.body.removeChild(modal);
+                        });
                     });
                     
                 } else {
-                    // Показываем сообщение об ошибке, если сервер вернул success: false
+                    // Показываем сообщение об ошибке
                     alert('Error creating preview: ' + (result.message || 'Unknown error'));
+                    previewButton.disabled = false;
+                    previewButton.innerHTML = '<span class="icon-eye"></span> <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_PREVIEW'); ?>';
                 }
 
             } catch (error) {
                 console.error('Preview request failed:', error);
                 alert('Preview request failed: ' + error.message);
+                previewButton.disabled = false;
+                previewButton.innerHTML = '<span class="icon-eye"></span> <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_PREVIEW'); ?>';
             }
         });
     }
     
-      // Стандартный обработчик для других кнопок
-            Joomla.submitbutton = function(task) {
-            Joomla.submitform(task, document.getElementById('adminForm'));
-      }
+    // Стандартный обработчик для других кнопок
+    Joomla.submitbutton = function(task) {
+        Joomla.submitform(task, document.getElementById('adminForm'));
+    }
 });
 </script>
