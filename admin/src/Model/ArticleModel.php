@@ -231,11 +231,11 @@ class ArticleModel extends BaseDatabaseModel
             }
 
             if ($this->isPreview) {
-            // Для preview возвращаем в createArticlesFromTopic() данные статьи, НЕ сбрасывая currentArticle
+            // Для preview возвращаем в createArticlesFromTopic() данные из URL статьи ниже
                 return [
-                'id' => $this->currentArticle->id,
+                'id' => $this->articleId,
                 'alias' => $this->currentArticle->alias,
-                'catid' => $this->currentArticle->catid,
+                'catid' => $this->params->article_category,
                  ];
             }
             
