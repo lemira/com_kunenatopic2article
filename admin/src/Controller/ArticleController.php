@@ -114,8 +114,7 @@ class ArticleController extends BaseController
             $previewUrl = Uri::root() . 'index.php?option=com_content&view=article&id='
                 . $articleData['id'] . ':' . $articleData['alias']
                 . '&catid=' . $articleData['catid']
-                . '&preview=1'  // разрешает смотреть неопубликованную статью
-                . '&tmpl=component';
+                . '&preview=1';  // разрешает смотреть неопубликованную статью, .'&tmpl=component' - мешал (дс)
                 
             // Декодируем HTML-сущности
             $previewUrl = html_entity_decode($previewUrl, ENT_QUOTES, 'UTF-8');
