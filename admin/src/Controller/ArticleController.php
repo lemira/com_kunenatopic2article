@@ -111,10 +111,11 @@ class ArticleController extends BaseController
             }
             
             // Формируем URL для фронтенда
-            $previewUrl = Uri::root() . 'index.php?option=com_content&view=article&id='
-                . $articleData['id'] . ':' . $articleData['alias']
-                . '&catid=' . $articleData['catid']
-                . '&preview=1';  // разрешает смотреть неопубликованную статью, .'&tmpl=component' - мешал (дс)
+            $previewUrl = Uri::root() . 'index.php?option=com_kunenatopic2article&task=preview.display&id=' . $articleData['id']; // разр-т смотреть неопубл статью, дс
+       //  рудимент от state=1    $previewUrl = Uri::root() . 'index.php?option=com_content&view=article&id='
+         //       . $articleData['id'] . ':' . $articleData['alias']
+          //      . '&catid=' . $articleData['catid']
+          //      . '&preview=1';  // разрешает смотреть неопубликованную статью, .'&tmpl=component' - мешал (дс)
                 
             // Декодируем HTML-сущности
             $previewUrl = html_entity_decode($previewUrl, ENT_QUOTES, 'UTF-8');
