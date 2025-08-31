@@ -1,7 +1,7 @@
 <?php
 defined('_JEXEC') or die;
-
-// Необходимые классы
+// ТЕСТ
+// Необходимые классы 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\HTML\HTMLHelper;
