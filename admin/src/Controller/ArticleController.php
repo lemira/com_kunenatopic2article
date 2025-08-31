@@ -111,7 +111,7 @@ class ArticleController extends BaseController
             }
             
             // Формируем URL для фронтенда
-            $previewUrl = Uri::root() . 'index.php?option=com_kunenatopic2article&task=preview.display&id=' . $articleData['id']; // разр-т смотреть неопубл статью, дс
+ $previewUrl = Uri::root() . 'index.php?option=com_kunenatopic2article&task=article.displayPreview&id=' . $articleData['id']; // разр-т смотреть неопубл статью, дс
        //  рудимент от state=1    $previewUrl = Uri::root() . 'index.php?option=com_content&view=article&id='
          //       . $articleData['id'] . ':' . $articleData['alias']
           //      . '&catid=' . $articleData['catid']
@@ -149,6 +149,39 @@ class ArticleController extends BaseController
         
         Factory::getApplication()->close();
     }
+
+    /**
+ * Отображает статью для предпросмотра (frontend)
+ * @return void
+ */
+public function displayPreview(): void
+{
+    $app = Factory::getApplication();
+    $id = $app->input->getInt('id');
+    
+    if (!$id) {
+        throw new \Exception('Article ID not specified');
+    }
+    
+    // Получаем статью напрямую из БД, игнорируя состояние
+    $db = Factory::getDbo();
+    $query = $db->getQuery(true)
+        ->select('*')
+        ->from('#__content')
+        ->where('id = ' . (int)$id);
+    
+    $db->setQuery($query);
+    $article = $db->loadObject();
+    
+    if (!$article) {
+        throw new \Exception('Article not found');
+    }
+    
+    // Просто рендерим статью
+    header('Content-Type: text/html; charset=utf-8');
+    echo $article->introtext . $article->fulltext;
+    $app->close();
+}
     
     public function deletePreview(): void
     {
