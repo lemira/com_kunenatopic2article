@@ -14,7 +14,7 @@ HTMLHelper::_('bootstrap.framework');
 $app = Factory::getApplication();
 $form = $this->form;
 
-// ИСПРАВЛЕНИЕ: Декодируем HTML-сущности в URL для правильной работы AJAX
+// Декодируем HTML-сущности в URL для правильной работы AJAX
 $previewTaskUrl = html_entity_decode(
     Route::_('index.php?option=com_kunenatopic2article&task=article.preview&format=json'),
     ENT_QUOTES,
