@@ -123,7 +123,25 @@ document.body.appendChild(modal);
 const bootstrapModal = new bootstrap.Modal(modal);
 bootstrapModal.show();
 
-                    // 5. При закрытии удаляем модальное окно
+                        // ДОБАВЛЯЕМ, Т.К. СТРЕЛКИ ОСТАЛИСЬ
+const antiArrowStyle = document.createElement('style');
+antiArrowStyle.textContent = `
+    .icon-external-link::after,
+    [class*="external"]::after,
+    a[target="_blank"]::after {
+        display: none !important;
+        content: none !important;
+    }
+`;
+document.head.appendChild(antiArrowStyle);
+
+// Удаляем стиль при закрытии
+modal.addEventListener('hidden.bs.modal', () => {
+    document.head.removeChild(antiArrowStyle);
+    document.body.removeChild(modal);
+});
+              
+                        // 5. При закрытии удаляем модальное окно
                     modal.addEventListener('hidden.bs.modal', () => {
                         document.body.removeChild(modal);
                     });
