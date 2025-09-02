@@ -97,20 +97,32 @@ document.addEventListener('DOMContentLoaded', () => {
                         headers: { 'X-CSRF-Token': '<?= Session::getFormToken(); ?>' }
                     }).catch(err => console.error('Delete error:', err));
 
-                    // 4. Создаем модальное окно с HTML-копией (70% ширины)
-                const modal = document.createElement('div');
-                modal.className = 'modal fade';
-                modal.innerHTML = `
-                    <div class="modal-dialog" style="max-width: 70%; margin: 2% auto;">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                            <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
-                                ${articleHtml}
-                            </div>
-                        </div>
-                    </div>
+               // 4. Создаем модальное окно с HTML-копией (70% ширины)
+const modal = document.createElement('div');
+modal.className = 'modal fade';
+modal.innerHTML = `
+    <div class="modal-dialog" style="max-width: 70%; margin: 2% auto;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
+                <style>
+                    /* Убираем стрелки у ссылок */
+                    a[target="_blank"]::after,
+                    .icon-external-link::after {
+                        display: none !important;
+                    }
+                    /* Возвращаем обычный вид ссылок */
+                    a {
+                        background: none !important;
+                        padding: 0 !important;
+                    }
+                </style>
+                ${articleHtml}
+            </div>
+        </div>
+    </div>
 `;
 
 document.body.appendChild(modal);
