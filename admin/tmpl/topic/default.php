@@ -97,25 +97,25 @@ document.addEventListener('DOMContentLoaded', () => {
                         headers: { 'X-CSRF-Token': '<?= Session::getFormToken(); ?>' }
                     }).catch(err => console.error('Delete error:', err));
 
-                    // 4. Создаем модальное окно с HTML-копией
-                    const modal = document.createElement('div');
-                    modal.className = 'modal fade';
-                    modal.innerHTML = `
-                        <div class="modal-dialog modal-fullscreen">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <div class="modal-body">
-                                    ${articleHtml}
-                                </div>
+                    // 4. Создаем модальное окно с HTML-копией (70% ширины)
+                const modal = document.createElement('div');
+                modal.className = 'modal fade';
+                modal.innerHTML = `
+                    <div class="modal-dialog" style="max-width: 70%; margin: 2% auto;">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                            <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
+                                ${articleHtml}
                             </div>
                         </div>
-                    `;
-                    
-                    document.body.appendChild(modal);
-                    const bootstrapModal = new bootstrap.Modal(modal);
-                    bootstrapModal.show();
+                    </div>
+`;
+
+document.body.appendChild(modal);
+const bootstrapModal = new bootstrap.Modal(modal);
+bootstrapModal.show();
 
                     // 5. При закрытии удаляем модальное окно
                     modal.addEventListener('hidden.bs.modal', () => {
