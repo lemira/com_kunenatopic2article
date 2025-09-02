@@ -86,16 +86,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const result = await response.json();
 
                 if (result.success && result.data.url) {
-                   // 2. Загружаем HTML статьи и удаляем стрелки
-                        const articleResponse = await fetch(result.data.url);
-                        let articleHtml = await articleResponse.text();
+                    // 2. Загружаем HTML статьи
+                    const articleResponse = await fetch(result.data.url);
+                    let articleHtml = await articleResponse.text();
 
-                    // Убираем иконки внешних ссылок (сохраняем все стили)
-                    articleHtml = articleHtml.replace(/<span class="[^"]*icon-external-link[^"]*"[^>]*><\/span>/g, '');
-                    articleHtml = articleHtml.replace(/<i class="[^"]*icon-external-link[^"]*"[^>]*><\/i>/g, '');
-                    articleHtml = articleHtml.replace(/<svg[^>]*external-link[^>]*>.*?<\/svg>/gs, '');
-
-                    
                     // 3. СРАЗУ удаляем статью из БД
                     const deleteUrl = '<?= $deleteTaskBaseUrl; ?>' + '&id=' + result.data.id;
                     fetch(deleteUrl, {
@@ -103,45 +97,56 @@ document.addEventListener('DOMContentLoaded', () => {
                         headers: { 'X-CSRF-Token': '<?= Session::getFormToken(); ?>' }
                     }).catch(err => console.error('Delete error:', err));
 
-               // 4. Создаем модальное окно с HTML-копией (70% ширины), сохраняем все оригинальные стили
-const modal = document.createElement('div');
-modal.className = 'modal fade';
-modal.innerHTML = `
-    <div class="modal-dialog" style="max-width: 70%; margin: 2% auto;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
-                ${articleHtml}
-            </div>
-        </div>
-    </div>
-`;
+                    // 4. Создаем модальное окно с HTML-копией
+                    const modal = document.createElement('div');
+                    modal.className = 'modal fade';
+                    modal.innerHTML = `
+                        <div class="modal-dialog" style="max-width: 70%; margin: 2% auto;">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
+                                    ${articleHtml}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.body.appendChild(modal);
+                    const bootstrapModal = new bootstrap.Modal(modal);
+                    bootstrapModal.show();
 
-document.body.appendChild(modal);
-const bootstrapModal = new bootstrap.Modal(modal);
-bootstrapModal.show();
+                    // 5. УБИРАЕМ СТРЕЛКИ ЧЕРЕЗ CSS (после загрузки контента)
+                    setTimeout(() => {
+                        const style = document.createElement('style');
+                        style.textContent = `
+                            .icon-external-link::before,
+                            .icon-external-link::after,
+                            [class*="external"]::before,
+                            [class*="external"]::after,
+                            a[target="_blank"]::before,
+                            a[target="_blank"]::after {
+                                display: none !important;
+                                content: none !important;
+                            }
+                            /* Убираем все псевдоэлементы у ссылок */
+                            a::before,
+                            a::after {
+                                display: none !important;
+                                content: none !important;
+                            }
+                            /* Убираем все псевдоэлементы у span и i */
+                            span::before, span::after,
+                            i::before, i::after {
+                                display: none !important;
+                                content: none !important;
+                            }
+                        `;
+                        modal.querySelector('.modal-body').appendChild(style);
+                    }, 100);
 
-                        // ДОБАВЛЯЕМ, Т.К. СТРЕЛКИ ОСТАЛИСЬ
-const antiArrowStyle = document.createElement('style');
-antiArrowStyle.textContent = `
-    .icon-external-link::after,
-    [class*="external"]::after,
-    a[target="_blank"]::after {
-        display: none !important;
-        content: none !important;
-    }
-`;
-document.head.appendChild(antiArrowStyle);
-
-// Удаляем стиль при закрытии
-modal.addEventListener('hidden.bs.modal', () => {
-    document.head.removeChild(antiArrowStyle);
-    document.body.removeChild(modal);
-});
-              
-                        // 5. При закрытии удаляем модальное окно
+                    // 6. При закрытии удаляем модальное окно
                     modal.addEventListener('hidden.bs.modal', () => {
                         document.body.removeChild(modal);
                     });
