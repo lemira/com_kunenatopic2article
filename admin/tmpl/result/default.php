@@ -4,8 +4,11 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Date\Date;
 
 /** @var \Joomla\Component\KunenaTopic2Article\Administrator\View\Result\HtmlView $this */
+
+$currentTime = (new Date())->format('Y-m-d H:i');  // Вычисляем текущее время 
 
 $app = Factory::getApplication();
 ?>
@@ -26,6 +29,12 @@ $app = Factory::getApplication();
                 <?php endforeach; ?>
             </ul>
         </div>
+
+      <div class="alert alert-info mt-3">
+          <p><?= Text::sprintf('COM_KUNENATOPIC2ARTICLE_ARTICLES_CREATION_TIME', $currentTime) ?></p>
+          <p><?= Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLES_PUBLICATION_TIME') ?></p>
+      </div>
+      
     <?php else : ?>
         <div class="alert alert-info">
             <?php echo Text::_('COM_KUNENATOPIC2ARTICLE_NO_ARTICLES_CREATED'); ?>
