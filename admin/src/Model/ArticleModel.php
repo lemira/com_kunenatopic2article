@@ -322,7 +322,7 @@ class ArticleModel extends BaseDatabaseModel
                 'catid' => (int) $this->params->article_category,
                 'state' => 1, // Published 
                 'created' => (new Date())->toSql(),
-                'publish_up' => (new Date('+24 hours'))->toSql(), // +24 часа
+                'publish_up' => (new Date())->toSql(),
                 'language' => '*',
                 'access' => 1,
                 'attribs' => '{"show_title":"","link_titles":"","show_tags":""}',
