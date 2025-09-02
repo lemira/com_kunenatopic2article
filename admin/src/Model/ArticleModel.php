@@ -249,9 +249,8 @@ class ArticleModel extends BaseDatabaseModel
             $this->articleLinks[] = [
                 'title' => $this->currentArticle->title,
                 'url' => $url,
-                'id' => $this->articleId,  // Сохраняем ID в массиве ссылок
-                'created' => (new Date())->format('Y-m-d H:i') // время создания
-            ];
+                'id' => $this->articleId  // Сохраняем ID в массиве ссылок
+                ];
            // ОТЛАДКА           $this->app->enqueueMessage('Статья успешно сохранена с ID: ' . $this->articleId, 'notice');
 
             // Сбрасываем текущую статью
