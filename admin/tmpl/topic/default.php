@@ -71,6 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault();
 
             try {
+                // 1. Создаем preview-статью
                 const response = await fetch('<?= $previewTaskUrl; ?>', {
                     method: 'POST',
                     headers: {
@@ -85,41 +86,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 const result = await response.json();
 
                 if (result.success && result.data.url) {
-                    // Создаем модальное окно с iframe (80% ширины)
+                    // 2. Загружаем HTML статьи
+                    const articleResponse = await fetch(result.data.url);
+                    const articleHtml = await articleResponse.text();
+                    
+                    // 3. СРАЗУ удаляем статью из БД
+                    const deleteUrl = '<?= $deleteTaskBaseUrl; ?>' + '&id=' + result.data.id;
+                    fetch(deleteUrl, {
+                        method: 'POST',
+                        headers: { 'X-CSRF-Token': '<?= Session::getFormToken(); ?>' }
+                    }).catch(err => console.error('Delete error:', err));
+
+                    // 4. Создаем модальное окно с HTML-копией
                     const modal = document.createElement('div');
                     modal.className = 'modal fade';
-                    modal.id = 'previewModal';
-                    modal.tabIndex = -1;
                     modal.innerHTML = `
-                        <div class="modal-dialog" style="max-width: 80%;">
+                        <div class="modal-dialog modal-fullscreen">
                             <div class="modal-content">
                                 <div class="modal-header">
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
-                                <div class="modal-body p-0">
-                                    <iframe src="${result.data.url}" width="100%" height="600px" frameborder="0"></iframe>
+                                <div class="modal-body">
+                                    ${articleHtml}
                                 </div>
                             </div>
                         </div>
                     `;
                     
                     document.body.appendChild(modal);
-                    
-                    // Показываем модальное окно
                     const bootstrapModal = new bootstrap.Modal(modal);
                     bootstrapModal.show();
-                    
-                    // Обработчик закрытия модального окна
+
+                    // 5. При закрытии удаляем модальное окно
                     modal.addEventListener('hidden.bs.modal', () => {
-                        // При закрытии отправляем запрос на удаление
-                        const deleteUrl = '<?= $deleteTaskBaseUrl; ?>' + '&id=' + result.data.id;
-                        
-                        fetch(deleteUrl, {
-                            method: 'POST',
-                            headers: { 'X-CSRF-Token': '<?= Session::getFormToken(); ?>' }
-                        });
-                        
-                        // Удаляем модальное окно из DOM
                         document.body.removeChild(modal);
                     });
                     
@@ -128,6 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
             } catch (error) {
+                console.error('Preview failed:', error);
                 alert('Preview request failed: ' + error.message);
             }
         });
