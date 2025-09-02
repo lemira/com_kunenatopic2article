@@ -86,9 +86,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 const result = await response.json();
 
                 if (result.success && result.data.url) {
-                    // 2. Загружаем HTML статьи
-                    const articleResponse = await fetch(result.data.url);
-                    const articleHtml = await articleResponse.text();
+                   // 2. Загружаем HTML статьи и удаляем стрелки
+                        const articleResponse = await fetch(result.data.url);
+                        let articleHtml = await articleResponse.text();
+
+                    // Убираем иконки внешних ссылок (сохраняем все стили)
+                    articleHtml = articleHtml.replace(/<span class="[^"]*icon-external-link[^"]*"[^>]*><\/span>/g, '');
+                    articleHtml = articleHtml.replace(/<i class="[^"]*icon-external-link[^"]*"[^>]*><\/i>/g, '');
+                    articleHtml = articleHtml.replace(/<svg[^>]*external-link[^>]*>.*?<\/svg>/gs, '');
+
                     
                     // 3. СРАЗУ удаляем статью из БД
                     const deleteUrl = '<?= $deleteTaskBaseUrl; ?>' + '&id=' + result.data.id;
@@ -97,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         headers: { 'X-CSRF-Token': '<?= Session::getFormToken(); ?>' }
                     }).catch(err => console.error('Delete error:', err));
 
-               // 4. Создаем модальное окно с HTML-копией (70% ширины)
+               // 4. Создаем модальное окно с HTML-копией (70% ширины), сохраняем все оригинальные стили
 const modal = document.createElement('div');
 modal.className = 'modal fade';
 modal.innerHTML = `
@@ -107,18 +113,6 @@ modal.innerHTML = `
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
-                <style>
-                    /* Убираем стрелки у ссылок */
-                    a[target="_blank"]::after,
-                    .icon-external-link::after {
-                        display: none !important;
-                    }
-                    /* Возвращаем обычный вид ссылок */
-                    a {
-                        background: none !important;
-                        padding: 0 !important;
-                    }
-                </style>
                 ${articleHtml}
             </div>
         </div>
