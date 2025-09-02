@@ -249,7 +249,8 @@ class ArticleModel extends BaseDatabaseModel
             $this->articleLinks[] = [
                 'title' => $this->currentArticle->title,
                 'url' => $url,
-                'id' => $this->articleId  // Сохраняем ID в массиве ссылок
+                'id' => $this->articleId,  // Сохраняем ID в массиве ссылок
+                'created' => (new Date())->format('Y-m-d H:i') // время создания
             ];
            // ОТЛАДКА           $this->app->enqueueMessage('Статья успешно сохранена с ID: ' . $this->articleId, 'notice');
 
@@ -320,9 +321,9 @@ class ArticleModel extends BaseDatabaseModel
                 'introtext' => '',
                 'fulltext' => $this->currentArticle->fulltext, // Используем отфильтрованный контент с добавленным впереди css
                 'catid' => (int) $this->params->article_category,
+                'state' => 1, // Published 
                 'created' => (new Date())->toSql(),
-                'publish_up' => (new Date())->toSql(),
-                'state' => 0, // ВРЕМЕННО все Published ## Unpublished
+                'publish_up' => (new Date('+24 hours'))->toSql(), // +24 часа
                 'language' => '*',
                 'access' => 1,
                 'attribs' => '{"show_title":"","link_titles":"","show_tags":""}',
@@ -418,7 +419,6 @@ class ArticleModel extends BaseDatabaseModel
               $this->postSize = mb_strlen($this->postText, 'UTF-8')
               + mb_strlen($this->postInfoString, 'UTF-8')
               + mb_strlen($this->reminderLines, 'UTF-8');
-       //         Factory::getApplication()->enqueueMessage('openPost Размер reminderLines: ' . mb_strlen($this->reminderLines, 'UTF-8'), 'info'); // ОТЛАДКА 
         // ОТЛАДКА        Factory::getApplication()->enqueueMessage('openPost Размер поста: ' . $this->postSize, 'info'); // ОТЛАДКА 
           } catch (\Throwable $e) {
                throw new \RuntimeException('Ошибка расчёта размера поста: ' . $e->getMessage());
