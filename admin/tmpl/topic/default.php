@@ -146,12 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         modal.querySelector('.modal-body').appendChild(style);
                     }, 100);
 
-                    // После загрузки HTML удаляем модули
-                    articleHtml = articleHtml.replace(/<jdoc:include\s+type="modules"[^>]*\/>/g, '');
-                    articleHtml = articleHtml.replace(/<div class="[^"]*module[^"]*"[^>]*>.*?<\/div>/gs, '');
-                    articleHtml = articleHtml.replace(/<aside[^>]*>.*?<\/aside>/gs, '');
-
-                    // 6. При закрытии удаляем модальное окно
+                  // 6. При закрытии удаляем модальное окно
                     modal.addEventListener('hidden.bs.modal', () => {
                         document.body.removeChild(modal);
                     });
