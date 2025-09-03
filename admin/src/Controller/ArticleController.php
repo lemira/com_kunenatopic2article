@@ -113,7 +113,7 @@ class ArticleController extends BaseController
             // Формируем URL для фронтенда
            $previewUrl = Uri::root() . 'index.php?option=com_content&view=article&id=' // кл,дс
           . $articleData['id'] 
-         . '&preview=1&tmpl=component';  // '&tmpl=component' - дает окно т статьи (дс)
+         . '&preview=1';  // '&tmpl=component' - выдает в окно т статью, НО ПОЛУЧАЕТСЯ НЕКРАСИВО (дс)
             
             // Декодируем HTML-сущности
             $previewUrl = html_entity_decode($previewUrl, ENT_QUOTES, 'UTF-8');
