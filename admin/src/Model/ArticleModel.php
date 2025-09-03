@@ -661,7 +661,14 @@ $infoString .= $idsString;
     // Заголовок поста
      if ($this->params->post_title) {
     $infoString .= ' / <span class="kun_p2a_post_subject">' . htmlspecialchars($this->currentPost->subject, ENT_QUOTES, 'UTF-8') . '</span>';
-      if ($this->params->post_transfer_scheme == 1) { // если работаем с деревом
+
+         // ОТЛАДКА
+error_log('CurrentIndex: ' . $this->currentIndex);
+error_log('PostLevelList: ' . print_r($this->$postIdListt, true));
+error_log('PostLevelList: ' . print_r($this->postLevelList, true));
+error_log('Params: ' . print_r($this->params, true));
+         
+        if ($this->params->post_transfer_scheme == 1) { // если работаем с деревом
         $infoString .= ' / ' . htmlspecialchars("\u{1F332}", ENT_QUOTES, 'UTF-8') . $this->postLevelList[$this->currentIndex];
      }    
     } 
