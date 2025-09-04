@@ -105,7 +105,7 @@ class ArticleModel extends BaseDatabaseModel
             if ($this->params->post_transfer_scheme != 1) {
                 $this->postIdList = $this->buildFlatPostIdList($firstPostId);
                 } else {
-                $this->currentIndex = 0; // для infoString // ? отл
+                // $this->currentIndex = 0; // для infoString // ? отладка
                 $baum = $this->buildTreePostIdList($firstPostId);
                 $this->postIdList = $baum['postIds'];
                 $this->postLevelList = $baum['levels'];
@@ -654,7 +654,8 @@ $infoString .= $idsString;
     // Заголовок поста
      if ($this->params->post_title) {
     $infoString .= ' / <span class="kun_p2a_post_subject">' . htmlspecialchars($this->currentPost->subject, ENT_QUOTES, 'UTF-8') . '</span>';
-
+     } 
+    
          // ОТЛАДКА
 error_log('CurrentIndex: ' . $this->currentIndex);
 error_log('postIdList: ' . print_r($this->postIdList, true));
@@ -662,10 +663,11 @@ error_log('PostLevelList: ' . print_r($this->postLevelList, true));
 // error_log('Params: ' . print_r($this->params, true));
          
         if ($this->params->post_transfer_scheme == 1) { // если работаем с деревом
+            if ($this->postId != $firstPostId;) { // для первого поста уровень не выводим
         $infoString .= ' / ' . htmlspecialchars("\u{1F332}", ENT_QUOTES, 'UTF-8') . $this->postLevelList[$this->currentIndex];
+       }                                          
      }    
-    } 
-    
+   
     // Дата и время
     if ($this->params->post_creation_date) {
         $date = date('d.m.Y', $this->currentPost->time);
