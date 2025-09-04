@@ -658,9 +658,9 @@ $infoString .= $idsString;
     $infoString .= ' / <span class="kun_p2a_post_subject">' . htmlspecialchars($this->currentPost->subject, ENT_QUOTES, 'UTF-8') . '</span>';
        
          // ОТЛАДКА
-error_log('CurrentIndex: ' . $this->currentIndex);
-error_log('postIdList: ' . print_r($this->postIdList, true));
-error_log('PostLevelList: ' . print_r($this->postLevelList, true));
+// error_log('CurrentIndex: ' . $this->currentIndex);
+// error_log('postIdList: ' . print_r($this->postIdList, true));
+// error_log('PostLevelList: ' . print_r($this->postLevelList, true));
 // error_log('Params: ' . print_r($this->params, true));
          
         if ($this->params->post_transfer_scheme == 1) { // если работаем с деревом
