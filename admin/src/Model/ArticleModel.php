@@ -662,7 +662,7 @@ error_log('PostLevelList: ' . print_r($this->postLevelList, true));
 // error_log('Params: ' . print_r($this->params, true));
          
         if ($this->params->post_transfer_scheme == 1) { // если работаем с деревом
-            if ($this->postId != $firstPostId;) { // для первого поста уровень не выводим
+            if ($this->postId != $firstPostId) { // для первого поста уровень не выводим
         $infoString .= ' / ' . htmlspecialchars("\u{1F332}", ENT_QUOTES, 'UTF-8') . $this->postLevelList[$this->currentIndex];
        }                                          
      }    
