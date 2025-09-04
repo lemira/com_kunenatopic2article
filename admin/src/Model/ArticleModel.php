@@ -90,13 +90,22 @@ class ArticleModel extends BaseDatabaseModel
         try {
             // Получаем ID первого поста
             $firstPostId = $this->params->topic_selection; 
-            $this->postId = $firstPostId; // текущий id 
+           
+        //    Factory::getApplication()->enqueueMessage('ArticleModel $firstPostId: ' . $firstPostId, 'info'); // ОТЛАДКА          
+              $this->postId = $firstPostId; // текущий id 
+              $this->openPost($this->postId); // Открываем первый пост темы для доступа к его параметрам
+              $this->subject = $this->currentPost->subject;
+              $this->threadId = (int) $this->currentPost->thread; // Получаем Id темы
+        //   Factory::getApplication()->enqueueMessage('createArticlesFromTopic $subject: ' . $this->subject, 'info'); // ОТЛАДКА 
+              $this->topicAuthorId = $this->currentPost->userid;
+              $this->reminderLines = ""; // у первого поста нет строк напоминания
 
-            // Формируем список ID постов в зависимости от схемы обхода; должно быть после открытия первого поста!
+              // Формируем список ID постов в зависимости от схемы обхода; должно быть после открытия первого поста!
             $this->openPost($firstPostId);
             if ($this->params->post_transfer_scheme != 1) {
                 $this->postIdList = $this->buildFlatPostIdList($firstPostId);
                 } else {
+                $this->currentIndex = 0; // для infoString // ? отл
                 $baum = $this->buildTreePostIdList($firstPostId);
                 $this->postIdList = $baum['postIds'];
                 $this->postLevelList = $baum['levels'];
@@ -108,15 +117,6 @@ class ArticleModel extends BaseDatabaseModel
                 $this->postIdList[] = 0; // Гарантируем завершение цикла
             }
             
-        //    Factory::getApplication()->enqueueMessage('ArticleModel $firstPostId: ' . $firstPostId, 'info'); // ОТЛАДКА          
-              $this->postId = $firstPostId; // текущий id 
-              $this->openPost($this->postId); // Открываем первый пост темы для доступа к его параметрам
-              $this->subject = $this->currentPost->subject;
-              $this->threadId = (int) $this->currentPost->thread; // Получаем Id темы
-        //   Factory::getApplication()->enqueueMessage('createArticlesFromTopic $subject: ' . $this->subject, 'info'); // ОТЛАДКА 
-              $this->topicAuthorId = $this->currentPost->userid;
-              $this->reminderLines = ""; // у первого поста нет строк напоминания
-
               $this->currentIndex = 0; // в nextPost() начинаем переход сразу к элементу (1), т.к. (0) = $topicId = $firstPostId
                     
                $this->openArticle();     // Открываем первую статью
