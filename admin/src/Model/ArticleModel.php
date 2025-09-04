@@ -49,6 +49,7 @@ class ArticleModel extends BaseDatabaseModel
     private $currentPost = null;  // Текущий пост @var    object
     private string $subject = ''; // Переменная модели для хранения subject
     private $params = null; // Хранение параметров для доступа в других методах
+    private int $firstPostId; //  ID первого поста темы
     private int $currentIndex = 0; // первый переход с первого элемента $topicId = $firstPostId (0) на 2-й (1)
     private string $infoString = '';  // строка сборки информационной строки поста в createPostInfoString()
     private string $postInfoString = '';  // Информационная строка поста
@@ -90,6 +91,7 @@ class ArticleModel extends BaseDatabaseModel
         try {
             // Получаем ID первого поста
             $firstPostId = $this->params->topic_selection; 
+            $this->firstPostId = $firstPostId; 
            
         //    Factory::getApplication()->enqueueMessage('ArticleModel $firstPostId: ' . $firstPostId, 'info'); // ОТЛАДКА          
               $this->postId = $firstPostId; // текущий id 
@@ -662,7 +664,7 @@ error_log('PostLevelList: ' . print_r($this->postLevelList, true));
 // error_log('Params: ' . print_r($this->params, true));
          
         if ($this->params->post_transfer_scheme == 1) { // если работаем с деревом
-            if ($this->postId != $firstPostId) { // для первого поста уровень не выводим
+            if ($this->postId != $this->firstPostId) { // для первого поста уровень не выводим
         $infoString .= ' / ' . htmlspecialchars("\u{1F332}", ENT_QUOTES, 'UTF-8') . $this->postLevelList[$this->currentIndex];
        }                                          
      }    
