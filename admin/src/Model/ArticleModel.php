@@ -657,9 +657,9 @@ $infoString .= $idsString;
 
          // ОТЛАДКА
 error_log('CurrentIndex: ' . $this->currentIndex);
-error_log('postIdList: ' . print_r($this->$postIdList, true));
+error_log('postIdList: ' . print_r($this->postIdList, true));
 error_log('PostLevelList: ' . print_r($this->postLevelList, true));
-error_log('Params: ' . print_r($this->params, true));
+// error_log('Params: ' . print_r($this->params, true));
          
         if ($this->params->post_transfer_scheme == 1) { // если работаем с деревом
         $infoString .= ' / ' . htmlspecialchars("\u{1F332}", ENT_QUOTES, 'UTF-8') . $this->postLevelList[$this->currentIndex];
