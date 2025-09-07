@@ -744,6 +744,7 @@ public function sendLinksToAdministrator(array $articleLinks): array
         $adminEmails[] = $adminUser->email; // Добавляем его email в массив, если он существует
             }
         }
+        $author = Factory::getUser($this->topicAuthorId);
         $authorEmail = $author->email;
 
         // 2. Фильтруем адреса, оставляя только валидные и непустые
