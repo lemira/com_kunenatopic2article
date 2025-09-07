@@ -27,6 +27,7 @@ use Kunena\Bbcode\KunenaBbcode;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Filter\InputFilter;
 use Joomla\Component\Content\Site\Helper\RouteHelper;
+use Joomla\CMS\Access\Access;
 
 /**
  * Article Model
@@ -734,12 +735,19 @@ public function sendLinksToAdministrator(array $articleLinks): array
         $mailer = Factory::getMailer();
 
         // 1. Получаем email-адреса
-        $adminEmail = $config->get('mailfrom');
-        $author = Factory::getUser($this->topicAuthorId);
+        $adminEmails = [];
+        $superUserIds = Access::getUsersByGroup(8); // Получаем массив ID всех пользователей в группе "Super Users" (ID=8)
+        if (!empty($superUserIds)) {  // Проверяем, что массив не пуст, и берем ID первого пользователя
+        $firstAdminId = $superUserIds[0];      // Берем только первый ID из списка
+        $adminUser = Factory::getUser($firstAdminId);
+        if ($adminUser && $adminUser->id) {
+        $adminEmails[] = $adminUser->email; // Добавляем его email в массив, если он существует
+            }
+        }
         $authorEmail = $author->email;
 
         // 2. Фильтруем адреса, оставляя только валидные и непустые
-        $rawRecipients = [$adminEmail, $authorEmail];
+        $rawRecipients = array_merge($adminEmails, [$authorEmail]);
         $recipients = array_unique(array_filter($rawRecipients, function ($email) {
             return filter_var($email, FILTER_VALIDATE_EMAIL);
         }));
