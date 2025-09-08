@@ -776,7 +776,7 @@ public function sendLinksToAdministrator(array $articleLinks): array
 
         // 4. Настраиваем объект Mailer
         $senderEmail = $config->get('mailfrom'); // Получаем email отправителя из глобальных настроек сайта
-        $mailer->setSender([$adminEmail, $config->get('sitename')]);
+        $mailer->setSender([$senderEmail, $config->get('sitename')]);
         $mailer->setSubject($subject);
         $mailer->setBody($body);
         $mailer->isHtml(false);
