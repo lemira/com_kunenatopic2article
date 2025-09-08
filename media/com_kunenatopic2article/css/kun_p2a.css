@@ -44,7 +44,7 @@
 }
 
 .kun_p2a_post_subject {
-    font-size: 70% !important;
+    font-size: 90% !important;
     font-weight: 600 !important; /* Полужирный, 400-normal, 500-medium, 700 - bold */
    /* Дополнительные параметры для лучшей читаемости */
     letter-spacing: 0.02em;
@@ -97,10 +97,3 @@ hr.kun_p2a-hr-gray {
     border: none !important;
 }
 
-/* Стили для iframe в модальном окне предпросмотра */
-#previewModal iframe {
-    width: 100%;
-    height: 600px;
-    border: none;
-    background: white;
-}
