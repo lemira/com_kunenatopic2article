@@ -454,7 +454,7 @@ class ArticleModel extends BaseDatabaseModel
            // Вычисляем строки напоминания текущего поста, используются в следующем посте
            if ($this->params->reminder_lines) {   
            $this->reminderLines = HTMLHelper::_('string.truncate', $this->htmlContent, (int)$this->params->reminder_lines);
-           Factory::getApplication()->enqueueMessage('transferPost reminderLines: ' . $this->reminderLines, 'info'); // ОТЛАДКА   
+// Factory::getApplication()->enqueueMessage('transferPost reminderLines: ' . $this->reminderLines, 'info'); // ОТЛАДКА   
            } 
            $this->currentArticle->fulltext .= '<div class="kun_p2a_divider-gray"></div>'; // добавляем линию разделения постов, ?? не учтена в длине статьи!
                         
