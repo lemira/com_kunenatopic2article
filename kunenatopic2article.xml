@@ -14,12 +14,6 @@
     
     <administration>
         <menu link="option=com_kunenatopic2article">COM_KUNENATOPIC2ARTICLE</menu>
-
-        <uninstall>
-            <sql>
-                <file driver="mysql" charset="utf8">sql/uninstall.mysql.utf8.sql</file>
-            </sql>
-        </uninstall>
         
         <files folder="admin">
             <folder>services</folder>
@@ -41,7 +35,13 @@
             <file>admin/services/provider.php</file>
         </services>
     </administration>
-    
+
+        <uninstall>
+            <sql>
+                <file driver="mysql" charset="utf8">sql/uninstall.mysql.utf8.sql</file>
+            </sql>
+        </uninstall>
+       
     <media destination="com_kunenatopic2article" folder="media/com_kunenatopic2article">
         <folder>css</folder>
     </media>
