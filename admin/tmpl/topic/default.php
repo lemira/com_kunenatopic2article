@@ -39,7 +39,7 @@ $deleteTaskBaseUrl = html_entity_decode(
                 <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_RESET'); ?>
             </button>
             <!-- Create Articles и Preview синхронизированы через can_create -->
-            <button type="button" id="btn_create" class="btn btn-success" onclick="Joomla.submitbutton('article.create')" <?= $this->canCreate ? '' : 'disabled'; ?>>
+            <button type="button" id="btn_create" class="btn btn-success me-2"  onclick="Joomla.submitbutton('article.create')" <?= $this->canCreate ? '' : 'disabled'; ?>>
                 <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_CREATE'); ?>
             </button>
             
