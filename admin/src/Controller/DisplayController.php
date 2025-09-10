@@ -52,9 +52,15 @@ class DisplayController extends BaseController
             $type = 'success';
            // Активируем кнопки Create и Preview после успешного сохранения
            Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', true);
+// ОТЛАДКА - временно добавить
+        error_log('Save successful, can_create set to TRUE');
+            
         } else {
             $message = Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED');
             $type = 'error';
+                
+// ОТЛАДКА - временно добавить  
+        error_log('Save failed, can_create remains FALSE');
         }
 
         $this->setRedirect(
