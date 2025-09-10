@@ -14,9 +14,9 @@ class DisplayController extends BaseController
 {
     protected $default_view = 'topic';
     
-   public function display($cachable = false, $urlparams = array())
+/*     public function display($cachable = false, $urlparams = array())
     {
-        // Всегда используем view по умолчанию ('topic')
+      // Всегда используем view по умолчанию ('topic')
         $this->input->set('view', $this->default_view);
         
         // Инициализируем can_create = false при первой загрузке или прямом вызове без task
@@ -32,6 +32,23 @@ class DisplayController extends BaseController
         
         return parent::display($cachable, $urlparams);
     }
+    */
+
+    public function display($cachable = false, $urlparams = array())
+{
+    $app = Factory::getApplication();
+    $input = $app->input;
+    
+    // Сбрасываем can_create только при первой загрузке (когда нет task и не после remember)
+    if ($input->get('task') === null && $input->get('view') === 'topic') {
+        $currentState = $app->getUserState('com_kunenatopic2article.can_create');
+        if ($currentState === null) { // Только если состояние еще не установлено
+            $app->setUserState('com_kunenatopic2article.can_create', false);
+        }
+    }
+    
+    parent::display($cachable, $urlparams);
+}
     
     public function getModel($name = '', $prefix = '', $config = [])
     {
