@@ -31,20 +31,22 @@ $deleteTaskBaseUrl = html_entity_decode(
     <div class="container-fluid">
         <h1><?= Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_TITLE'); ?></h1>
         <div class="btn-toolbar mb-3">
-            <button type="button" class="btn btn-primary me-2" onclick="Joomla.submitbutton('save')">
+        <!-- Remember и Reset Parameters всегда активны -->
+        <button type="button" class="btn btn-primary me-2" onclick="Joomla.submitbutton('save')">
                 <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_REMEMBER'); ?>
             </button>
             <button type="button" class="btn btn-secondary me-2" onclick="Joomla.submitbutton('reset')">
                 <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_RESET'); ?>
             </button>
+            <!-- Create Articles и Preview синхронизированы через can_create -->
             <button type="button" id="btn_create" class="btn btn-success" onclick="Joomla.submitbutton('article.create')" <?= $this->canCreate ? '' : 'disabled'; ?>>
                 <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_CREATE'); ?>
             </button>
             
-             <a id="previewButton" class="btn btn-info" href="#">
-               <span class="icon-eye" aria-hidden="true"></span>
-               <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_PREVIEW'); ?>
-            </a>
+            <button type="button" id="previewButton" class="btn btn-info" <?= $this->canCreate ? '' : 'disabled'; ?>>
+                <span class="icon-eye" aria-hidden="true"></span>
+                <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_PREVIEW'); ?>
+            </button>
         </div>
 
         <h3><?= Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_PARAMS'); ?></h3>
@@ -66,10 +68,14 @@ $deleteTaskBaseUrl = html_entity_decode(
 document.addEventListener('DOMContentLoaded', () => {
     const previewButton = document.getElementById('previewButton');
 
-    if (previewButton) {
-        previewButton.addEventListener('click', async (event) => {
+        if (previewButton && !previewButton.disabled) {
+            previewButton.addEventListener('click', async (event) => {
             event.preventDefault();
 
+            // Проверяем, что кнопка активна
+            if (previewButton.disabled) {
+                return;
+            }
             try {
                 // 1. Создаем preview-статью
                 const response = await fetch('<?= $previewTaskUrl; ?>', {
@@ -149,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   // 6. При закрытии удаляем модальное окно
                     modal.addEventListener('hidden.bs.modal', () => {
                         document.body.removeChild(modal);
-                    });
+                    });   // can_create остается true после Preview!
                     
                 } else {
                     alert('Error creating preview: ' + (result.message || 'Unknown error'));
