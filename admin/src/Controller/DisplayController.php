@@ -14,28 +14,24 @@ class DisplayController extends BaseController
 {
     protected $default_view = 'topic';
     
-/** ОТКАТ ИЗ_ЗА 404 Не удалось найти представление [name, type, prefix]: result, html, Administrator.
-    public function display($cachable = false, $urlparams = array())
-{
-      // Всегда используем view по умолчанию ('topic')
+   public function display($cachable = false, $urlparams = array())
+    {
+        // Всегда используем view по умолчанию ('topic')
         $this->input->set('view', $this->default_view);
         
-        // Сбрасываем can_create на false только при первой загрузке или без указания task
+        // Инициализируем can_create = false при первой загрузке или прямом вызове без task
         $app = Factory::getApplication();
-        if ($app->input->get('task') === null) {
+        $task = $app->input->get('task');
+        
+        // Сбрасываем can_create в false если:
+        // - нет task (первая загрузка/новый вызов компонента)
+        // - task = display (прямое обращение к display)
+        if ($task === null || $task === 'display' || $task === '') {
             $app->setUserState('com_kunenatopic2article.can_create', false);
         }
-    
-    return parent::display($cachable, $urlparams);
-}
-**/ 
-    public function display($cachable = false, $urlparams = array())
-{
-    // Всегда используем view по умолчанию ('topic')
-    $this->input->set('view', $this->default_view);
-    
-    return parent::display($cachable, $urlparams);
-}
+        
+        return parent::display($cachable, $urlparams);
+    }
     
     public function getModel($name = '', $prefix = '', $config = [])
     {
@@ -54,8 +50,8 @@ class DisplayController extends BaseController
         if ($model->save($data)) {
             $message = Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_SAVED');
             $type = 'success';
-            // Активируем кнопку Create после успешного сохранения
-            Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', true);
+           // Активируем кнопки Create и Preview после успешного сохранения
+           Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', true);
         } else {
             $message = Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED');
             $type = 'error';
@@ -79,7 +75,7 @@ class DisplayController extends BaseController
             $type = 'error';
         }
 
-        // Деактивируем кнопку Create после сброса
+        // Деактивируем кнопки Create и Preview после сброса
         Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', false);
         
         $this->setRedirect(
@@ -89,6 +85,6 @@ class DisplayController extends BaseController
         );
     }
 
-// function create() в в ArticleController
+// function create() в ArticleController
 
 } // КОНЕЦ КЛАССА
