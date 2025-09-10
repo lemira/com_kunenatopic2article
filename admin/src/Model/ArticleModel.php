@@ -735,20 +735,12 @@ public function sendLinksToAdministrator(array $articleLinks): array
         $mailer = Factory::getMailer();
 
         // 1. Получаем email-адреса
-        $adminEmails = [];
-        $superUserIds = Access::getUsersByGroup(8); // Получаем массив ID всех пользователей в группе "Super Users" (ID=8)
-        if (!empty($superUserIds)) {  // Проверяем, что массив не пуст, и берем ID первого пользователя
-        $firstAdminId = $superUserIds[0];      // Берем только первый ID из списка
-        $adminUser = Factory::getUser($firstAdminId);
-        if ($adminUser && $adminUser->id) {
-        $adminEmails[] = $adminUser->email; // Добавляем его email в массив, если он существует
-            }
-        }
+        $adminEmail = $config->get('mailfrom'); // $adminEmail здесь - адрес сайта (отправитель)
         $author = Factory::getUser($this->topicAuthorId);
         $authorEmail = $author->email;
 
         // 2. Фильтруем адреса, оставляя только валидные и непустые
-        $rawRecipients = array_merge($adminEmails, [$authorEmail]);
+        $rawRecipients = [$adminEmail, $authorEmail];
         $recipients = array_unique(array_filter($rawRecipients, function ($email) {
             return filter_var($email, FILTER_VALIDATE_EMAIL);
         }));
@@ -775,8 +767,7 @@ public function sendLinksToAdministrator(array $articleLinks): array
         );
 
         // 4. Настраиваем объект Mailer
-        $senderEmail = $config->get('mailfrom'); // Получаем email отправителя из глобальных настроек сайта
-        $mailer->setSender([$senderEmail, $config->get('sitename')]);
+        $mailer->setSender([$adminEmail, $config->get('sitename')]);
         $mailer->setSubject($subject);
         $mailer->setBody($body);
         $mailer->isHtml(false);
