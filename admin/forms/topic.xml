@@ -75,8 +75,8 @@
     description="COM_KUNENATOPIC2ARTICLE_POST_IDS_DESC"
     class="btn-group"
     default="0">
-    <option value="0">COM_KUNENATOPIC2ARTICLE_HIDE_IDS</option>
-    <option value="1">COM_KUNENATOPIC2ARTICLE_SHOW_IDS</option>
+    <option value="0">COM_KUNENATOPIC2ARTICLE_NOT_INCLUDE</option>
+    <option value="1">COM_KUNENATOPIC2ARTICLE_INCLUDE</option>
 </field>    
 
 <field
