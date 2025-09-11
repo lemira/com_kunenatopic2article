@@ -26,10 +26,7 @@
             <folder>libraries</folder>
         </files>
         
-        <languages folder="admin/language">
-            <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.ini</language>
-            <language tag="en-GB">en-GB/en-GB.com_kunenatopic2article.sys.ini</language>
-        </languages>
+        <languages folder="admin/language" />
 
         <services>
             <file>admin/services/provider.php</file>
