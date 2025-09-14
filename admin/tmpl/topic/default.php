@@ -39,15 +39,14 @@ $deleteTaskBaseUrl = html_entity_decode(
                 <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_RESET'); ?>
             </button>
             <!-- Create Articles и Preview синхронизированы через can_create -->
-            <button type="button" id="btn_create" class="btn btn-success me-2"  onclick="Joomla.submitbutton('article.create')" <?= $this->canCreate ? '' : 'disabled'; ?>>
-                <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_CREATE'); ?>
-            </button>
-            
-            <button type="button" id="previewButton" class="btn btn-info" <?= $this->canCreate ? '' : 'disabled'; ?>>
+             <button type="button" id="previewButton" class="btn btn-info me-2" <?= $this->canCreate ? '' : 'disabled'; ?>>
                 <span class="icon-eye" aria-hidden="true"></span>
                 <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_PREVIEW'); ?>
             </button>
-        </div>
+            <button type="button" id="btn_create" class="btn btn-success me-2"  onclick="Joomla.submitbutton('article.create')" <?= $this->canCreate ? '' : 'disabled'; ?>>
+                <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_CREATE'); ?>
+            </button>
+    </div>
 
         <h3><?= Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_PARAMS'); ?></h3>
         <?php if ($form): ?>
