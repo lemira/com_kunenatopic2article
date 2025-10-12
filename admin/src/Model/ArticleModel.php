@@ -455,9 +455,28 @@ class ArticleModel extends BaseDatabaseModel
            // Вычисляем строки напоминания текущего поста, используются в следующем посте
            if ($this->params->reminder_lines) {   
           // Вместо простого truncate, используем функцию очистки
+    // ВРЕМЕННАЯ ОТЛАДКА: Запись в файл
+    $debugLog = JPATH_ADMINISTRATOR . '/logs/kunena2article_debug.txt';
+    $debugContent = "=== DEBUG transferPost ===\n";
+    $debugContent .= "Пост ID: {$this->currentArticle->id}\n";
+    $debugContent .= "reminder_lines: " . $this->params->reminder_lines . "\n";
+    $debugContent .= "htmlContent length: " . strlen($this->htmlContent) . "\n";
+    $debugContent .= "htmlContent preview: " . substr($this->htmlContent, 0, 200) . "...\n\n";
+    
+    file_put_contents($debugLog, $debugContent, FILE_APPEND);
+
     $cleanTextForReminder = $this->extractCleanTextForReminder($this->htmlContent, (int)$this->params->reminder_lines);
+    
+    // Продолжаем отладку
+    $debugContent = "cleanTextForReminder: " . $cleanTextForReminder . "\n";
+    
     $this->reminderLines = HTMLHelper::_('string.truncate', $cleanTextForReminder, (int)$this->params->reminder_lines, true, false);
-Factory::getApplication()->enqueueMessage('transferPost reminderLines: ' . $this->reminderLines, 'info'); // ОТЛАДКА   
+    
+    $debugContent .= "final reminderLines: " . $this->reminderLines . "\n";
+    $debugContent .= "========================\n\n";
+    
+    file_put_contents($debugLog, $debugContent, FILE_APPEND);
+// Factory::getApplication()->enqueueMessage('transferPost reminderLines: ' . $this->reminderLines, 'info'); // ОТЛАДКА   
            } 
            $this->currentArticle->fulltext .= '<div class="kun_p2a_divider-gray"></div>'; // добавляем линию разделения постов, ?? не учтена в длине статьи!
                         
@@ -482,55 +501,63 @@ Factory::getApplication()->enqueueMessage('transferPost reminderLines: ' . $this
  */
 private function extractCleanTextForReminder($htmlContent, $charLimit)
 {
-    // Используем DOMDocument для надежного парсинга HTML
+    $debugLog = JPATH_ADMINISTRATOR . '/logs/kunena2article_debug.txt';
+    $debugContent = "=== DEBUG extractCleanTextForReminder ===\n";
+    $debugContent .= "charLimit: {$charLimit}\n";
+    $debugContent .= "htmlContent: " . substr($htmlContent, 0, 100) . "...\n";
+    
+    if (empty($htmlContent)) {
+        $debugContent .= "htmlContent ПУСТОЙ!\n";
+        file_put_contents($debugLog, $debugContent, FILE_APPEND);
+        return '';
+    }
+
     $dom = new DOMDocument();
-    libxml_use_internal_errors(true); // Подавляем ошибки разбора HTML5
-    $dom->loadHTML('<?xml encoding="utf-8"?>' . $htmlContent, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+    libxml_use_internal_errors(true);
+    
+    $loadResult = $dom->loadHTML('<?xml encoding="utf-8"?>' . $htmlContent, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+    
+    if (!$loadResult) {
+        $debugContent .= "ОШИБКА загрузки HTML в DOMDocument\n";
+        file_put_contents($debugLog, $debugContent, FILE_APPEND);
+        return '';
+    }
+    
     libxml_clear_errors();
 
-    $resultBuffer = ''; // Буфер для накопления результата
-    $currentLength = 0;   // Текущая длина в буфере
+    $resultBuffer = '';
+    $currentLength = 0;
 
-    // Функция для обработки DOM-узлов рекурсивно
-    $processNode = function ($node) use (&$processNode, &$resultBuffer, &$currentLength, $charLimit) {
-        // Если лимит уже исчерпан, прекращаем обработку
-        if ($currentLength >= $charLimit) {
-            return;
-        }
+    $processNode = function ($node) use (&$processNode, &$resultBuffer, &$currentLength, $charLimit, &$debugContent) {
+        if ($currentLength >= $charLimit) return;
 
-        // Обрабатываем разные типы узлов
         switch ($node->nodeType) {
             case XML_TEXT_NODE:
-                // Это текстовый узел - просто добавляем его к результату
                 $textContent = trim($node->textContent);
                 if (!empty($textContent)) {
-                    // Добавляем текст, но не превышаем лимит
                     $allowedLength = $charLimit - $currentLength;
                     if ($allowedLength > 0) {
                         $textToAdd = mb_substr($textContent, 0, $allowedLength);
                         $resultBuffer .= $textToAdd;
                         $currentLength += mb_strlen($textToAdd);
+                        $debugContent .= "Добавлен текст: '{$textToAdd}'\n";
                     }
                 }
                 break;
 
             case XML_ELEMENT_NODE:
-                // Это элемент (тег)
                 $tagName = strtolower($node->nodeName);
 
                 if ($tagName === 'a') {
-                    // ОБРАБОТКА ССЫЛКИ
                     $linkText = '';
                     $href = $node->getAttribute('href');
 
-                    // Пытаемся найти текст ссылки
                     if ($node->textContent) {
                         $linkText = trim($node->textContent);
                     } elseif ($node->hasAttribute('title')) {
                         $linkText = trim($node->getAttribute('title'));
                     }
 
-                    // Если текста нет, используем укороченный URL
                     if (empty($linkText)) {
                         $displayUrl = $href;
                         if (mb_strlen($displayUrl) > 40) {
@@ -540,61 +567,54 @@ private function extractCleanTextForReminder($htmlContent, $charLimit)
                     }
 
                     $replacement = "🔗{$linkText}🔗 ";
+                    $debugContent .= "Найдена ссылка: {$replacement}\n";
 
                 } elseif ($tagName === 'img') {
-                    // ОБРАБОТКА ИЗОБРАЖЕНИЯ
                     $altText = $node->getAttribute('alt');
 
                     if (empty($altText)) {
-                        // Извлекаем имя файла из src
                         $src = $node->getAttribute('src');
                         $fileName = basename($src);
-                        // Декодируем URL-encoded символы
                         $altText = urldecode($fileName);
                     }
 
-                    // Убираем ведущий минус, если он есть
                     if (strpos($altText, '-') === 0) {
                         $altText = substr($altText, 1);
                     }
 
                     $replacement = "🖼️{$altText}🖼️ ";
+                    $debugContent .= "Найдено изображение: {$replacement}\n";
 
                 } else {
-                    // Для всех других тегов - рекурсивно обрабатываем их дочерние элементы
                     $replacement = null;
                 }
 
-                // Если у нас есть замена (для ссылки или картинки), добавляем ее
                 if (isset($replacement)) {
                     $replacementLength = mb_strlen($replacement);
-                    // Добавляем, даже если это превысит лимит (по вашему требованию)
                     $resultBuffer .= $replacement;
                     $currentLength += $replacementLength;
                 } else {
-                    // Рекурсивно обрабатываем детей этого узла
                     foreach ($node->childNodes as $child) {
                         $processNode($child);
-                        if ($currentLength >= $charLimit) {
-                            break;
-                        }
+                        if ($currentLength >= $charLimit) break;
                     }
                 }
                 break;
         }
     };
 
-    // Начинаем обработку с тела документа
     $body = $dom->getElementsByTagName('body')->item(0);
     if ($body) {
         foreach ($body->childNodes as $topLevelNode) {
             $processNode($topLevelNode);
-            if ($currentLength >= $charLimit) {
-                break;
-            }
+            if ($currentLength >= $charLimit) break;
         }
     }
 
+    $debugContent .= "Итоговый resultBuffer: '{$resultBuffer}'\n";
+    $debugContent .= "========================\n\n";
+    file_put_contents($debugLog, $debugContent, FILE_APPEND);
+    
     return $resultBuffer;
 }
     
