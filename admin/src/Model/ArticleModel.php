@@ -28,7 +28,6 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Filter\InputFilter;
 use Joomla\Component\Content\Site\Helper\RouteHelper;
 use Joomla\CMS\Access\Access;
-use DOMDocument;
 
 /**
  * Article Model
@@ -472,6 +471,10 @@ class ArticleModel extends BaseDatabaseModel
         }
     }
 
+use Joomla\CMS\HTML\HTMLHelper;
+
+// ... внутри класса ArticleModel.php
+
 /**
  * Processes the raw HTML content, replacing links and images with short
  * descriptive text, and truncating the result to the defined limit.
@@ -496,6 +499,7 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
     $imgRegex = '/<img\s+(?:[^>]*?\s+)?src=["\'](.*?)(?:["\']\s*)?(?:alt=["\'](.*?)["\'])?[^>]*?>/is';
 
     while (
+        // Условие цикла: продолжаем, пока не достигнут лимит
         strlen($reminderLines) < $reminderLinesLength
         && preg_match("~($linkRegex|$imgRegex)~", $remainingContent, $matches, PREG_OFFSET_CAPTURE)
     ) {
@@ -506,16 +510,16 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
         $plainText = substr($remainingContent, 0, $matchOffset);
         $reminderLines .= $plainText;
 
+        // Если обычный текст превысил лимит, обрезаем и завершаем
         if (strlen($reminderLines) >= $reminderLinesLength) {
-            $reminderLines = substr($reminderLines, 0, $reminderLinesLength);
-            break;
+            return substr($reminderLines, 0, $reminderLinesLength);
         }
 
         $replacement = '';
 
         // 2. Определяем и формируем замену
-        $isLink = isset($matches[2]) && $matches[2][1] !== -1; // Проверяем, что группа href была найдена
-        $isImage = isset($matches[5]) && $matches[5][1] !== -1; // Проверяем, что группа src была найдена
+        $isLink = isset($matches[2]) && $matches[2][1] !== -1;
+        $isImage = isset($matches[5]) && $matches[5][1] !== -1;
 
         if ($isLink) {
             $href = $matches[2][0];
@@ -524,8 +528,8 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
             if (trim($linkText) !== '') {
                 $replacement = '🔗"' . trim($linkText) . '"🔗';
             } else {
-                // Укорачиваем URL до 40 символов
-                $urlPart = JHtmlString::truncate($href, 40); 
+                // Используем HTMLHelper::truncate для укорачивания URL
+                $urlPart = HTMLHelper::truncate($href, 40); 
                 $replacement = '🔗' . $urlPart . '🔗';
             }
         } elseif ($isImage) {
@@ -533,11 +537,10 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
             $alt = $matches[6][1] !== -1 ? $matches[6][0] : '';
             
             if (trim($alt) !== '') {
-                // Удаляем ведущий дефис, если есть
                 $replacement = '🖼️' . ltrim(trim($alt), '-') . '🖼️';
             } else {
                 $filename = basename($src);
-                $filename = urldecode($filename); // Декодируем URL-encoded символы
+                $filename = urldecode($filename);
                 $replacement = '🖼️' . $filename . '🖼️';
             }
         }
@@ -562,8 +565,9 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
     // 6. Удаляем любые другие оставшиеся HTML-теги для чистоты
     $reminderLines = strip_tags($reminderLines);
     
-    // 7. Обрезаем до точного лимита, если последняя замена привела к превышению
-    return JHtmlString::truncate($reminderLines, $reminderLinesLength);
+    // 7. ВОЗВРАЩАЕМ строку. Мы не обрезаем ее здесь, чтобы сохранить последнюю добавленную замену,
+    // если она привела к небольшому превышению лимита.
+    return $reminderLines;
 }
     
     /**
