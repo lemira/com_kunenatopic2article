@@ -455,28 +455,10 @@ class ArticleModel extends BaseDatabaseModel
            // Вычисляем строки напоминания текущего поста, используются в следующем посте
            if ($this->params->reminder_lines) {   
           // Вместо простого truncate, используем функцию очистки
-    // ВРЕМЕННАЯ ОТЛАДКА: Запись в файл
-    $debugLog = JPATH_ADMINISTRATOR . '/logs/kunena2article_debug.txt';
-    $debugContent = "=== DEBUG transferPost ===\n";
-    $debugContent .= "Пост ID: {$this->currentArticle->id}\n";
-    $debugContent .= "reminder_lines: " . $this->params->reminder_lines . "\n";
-    $debugContent .= "htmlContent length: " . strlen($this->htmlContent) . "\n";
-    $debugContent .= "htmlContent preview: " . substr($this->htmlContent, 0, 200) . "...\n\n";
-    
-    file_put_contents($debugLog, $debugContent, FILE_APPEND);
-
-    $cleanTextForReminder = $this->extractCleanTextForReminder($this->htmlContent, (int)$this->params->reminder_lines);
-    
-    // Продолжаем отладку
-    $debugContent = "cleanTextForReminder: " . $cleanTextForReminder . "\n";
-    
-    $this->reminderLines = HTMLHelper::_('string.truncate', $cleanTextForReminder, (int)$this->params->reminder_lines, true, false);
-    
-    $debugContent .= "final reminderLines: " . $this->reminderLines . "\n";
-    $debugContent .= "========================\n\n";
-    
-    file_put_contents($debugLog, $debugContent, FILE_APPEND);
-// Factory::getApplication()->enqueueMessage('transferPost reminderLines: ' . $this->reminderLines, 'info'); // ОТЛАДКА   
+          $reminderLinesLength = (int)$this->params->reminder_lines;
+         
+        $this->reminderLines = $this->processReminderLines($this->htmlContent, $reminderLinesLength); // обработка ссылок и рис-в и обрезание 
+ // Factory::getApplication()->enqueueMessage('transferPost reminderLines: ' . $this->reminderLines, 'info'); // ОТЛАДКА   
            } 
            $this->currentArticle->fulltext .= '<div class="kun_p2a_divider-gray"></div>'; // добавляем линию разделения постов, ?? не учтена в длине статьи!
                         
@@ -491,131 +473,97 @@ class ArticleModel extends BaseDatabaseModel
     }
 
 /**
- * Извлекаем очищенный текст из HTML для использования в 'Начале последнего сообщения'.
- * Обрабатывает ссылки и изображения, заменяя их на текстовые символы, и следит за лимитом символов.
+ * Processes the raw HTML content, replacing links and images with short
+ * descriptive text, and truncating the result to the defined limit.
  *
- * @param   string  $htmlContent  Исходный HTML-контент.
- * @param   int     $charLimit    Ограничение по количеству символов.
- *
- * @return  string  Очищенный текст, готовый для обрезки.
+ * @param string $htmlContent The raw HTML content of the post.
+ * @param int $reminderLinesLength The maximum number of characters for the reminder.
+ * @return string The processed and truncated reminder line text.
  */
-private function extractCleanTextForReminder($htmlContent, $charLimit)
+private function processReminderLines(string $htmlContent, int $reminderLinesLength): string
 {
-    $debugLog = JPATH_ADMINISTRATOR . '/logs/kunena2article_debug.txt';
-    $debugContent = "=== DEBUG extractCleanTextForReminder ===\n";
-    $debugContent .= "charLimit: {$charLimit}\n";
-    $debugContent .= "htmlContent: " . substr($htmlContent, 0, 100) . "...\n";
-    
-    if (empty($htmlContent)) {
-        $debugContent .= "htmlContent ПУСТОЙ!\n";
-        file_put_contents($debugLog, $debugContent, FILE_APPEND);
+    if ($reminderLinesLength <= 0) {
         return '';
     }
 
-    $dom = new DOMDocument();
-    libxml_use_internal_errors(true);
-    
-    $loadResult = $dom->loadHTML('<?xml encoding="utf-8"?>' . $htmlContent, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-    
-    if (!$loadResult) {
-        $debugContent .= "ОШИБКА загрузки HTML в DOMDocument\n";
-        file_put_contents($debugLog, $debugContent, FILE_APPEND);
-        return '';
-    }
-    
-    libxml_clear_errors();
+    $reminderLines = '';
+    $remainingContent = $htmlContent;
 
-    $resultBuffer = '';
-    $currentLength = 0;
+    // Регулярные выражения для поиска ссылок и изображений
+    // (1) - полный тег <a> (2) - href (3) - link text
+    $linkRegex = '/<a\s+(?:[^>]*?\s+)?href=["\'](.*?)(?:["\'].*?)?>(.*?)<\/a>/is';
+    // (4) - полный тег <img> (5) - src (6) - alt
+    $imgRegex = '/<img\s+(?:[^>]*?\s+)?src=["\'](.*?)(?:["\']\s*)?(?:alt=["\'](.*?)["\'])?[^>]*?>/is';
 
-    $processNode = function ($node) use (&$processNode, &$resultBuffer, &$currentLength, $charLimit, &$debugContent) {
-        if ($currentLength >= $charLimit) return;
+    while (
+        strlen($reminderLines) < $reminderLinesLength
+        && preg_match("~($linkRegex|$imgRegex)~", $remainingContent, $matches, PREG_OFFSET_CAPTURE)
+    ) {
+        $matchOffset = $matches[0][1];
+        $matchLength = strlen($matches[0][0]);
 
-        switch ($node->nodeType) {
-            case XML_TEXT_NODE:
-                $textContent = trim($node->textContent);
-                if (!empty($textContent)) {
-                    $allowedLength = $charLimit - $currentLength;
-                    if ($allowedLength > 0) {
-                        $textToAdd = mb_substr($textContent, 0, $allowedLength);
-                        $resultBuffer .= $textToAdd;
-                        $currentLength += mb_strlen($textToAdd);
-                        $debugContent .= "Добавлен текст: '{$textToAdd}'\n";
-                    }
-                }
-                break;
+        // 1. Добавляем обычный текст до первого найденного тега
+        $plainText = substr($remainingContent, 0, $matchOffset);
+        $reminderLines .= $plainText;
 
-            case XML_ELEMENT_NODE:
-                $tagName = strtolower($node->nodeName);
-
-                if ($tagName === 'a') {
-                    $linkText = '';
-                    $href = $node->getAttribute('href');
-
-                    if ($node->textContent) {
-                        $linkText = trim($node->textContent);
-                    } elseif ($node->hasAttribute('title')) {
-                        $linkText = trim($node->getAttribute('title'));
-                    }
-
-                    if (empty($linkText)) {
-                        $displayUrl = $href;
-                        if (mb_strlen($displayUrl) > 40) {
-                            $displayUrl = mb_substr($displayUrl, 0, 40) . '...';
-                        }
-                        $linkText = $displayUrl;
-                    }
-
-                    $replacement = "🔗{$linkText}🔗 ";
-                    $debugContent .= "Найдена ссылка: {$replacement}\n";
-
-                } elseif ($tagName === 'img') {
-                    $altText = $node->getAttribute('alt');
-
-                    if (empty($altText)) {
-                        $src = $node->getAttribute('src');
-                        $fileName = basename($src);
-                        $altText = urldecode($fileName);
-                    }
-
-                    if (strpos($altText, '-') === 0) {
-                        $altText = substr($altText, 1);
-                    }
-
-                    $replacement = "🖼️{$altText}🖼️ ";
-                    $debugContent .= "Найдено изображение: {$replacement}\n";
-
-                } else {
-                    $replacement = null;
-                }
-
-                if (isset($replacement)) {
-                    $replacementLength = mb_strlen($replacement);
-                    $resultBuffer .= $replacement;
-                    $currentLength += $replacementLength;
-                } else {
-                    foreach ($node->childNodes as $child) {
-                        $processNode($child);
-                        if ($currentLength >= $charLimit) break;
-                    }
-                }
-                break;
+        if (strlen($reminderLines) >= $reminderLinesLength) {
+            $reminderLines = substr($reminderLines, 0, $reminderLinesLength);
+            break;
         }
-    };
 
-    $body = $dom->getElementsByTagName('body')->item(0);
-    if ($body) {
-        foreach ($body->childNodes as $topLevelNode) {
-            $processNode($topLevelNode);
-            if ($currentLength >= $charLimit) break;
+        $replacement = '';
+
+        // 2. Определяем и формируем замену
+        $isLink = isset($matches[2]) && $matches[2][1] !== -1; // Проверяем, что группа href была найдена
+        $isImage = isset($matches[5]) && $matches[5][1] !== -1; // Проверяем, что группа src была найдена
+
+        if ($isLink) {
+            $href = $matches[2][0];
+            $linkText = $matches[3][0];
+            
+            if (trim($linkText) !== '') {
+                $replacement = '🔗"' . trim($linkText) . '"🔗';
+            } else {
+                // Укорачиваем URL до 40 символов
+                $urlPart = JHtmlString::truncate($href, 40); 
+                $replacement = '🔗' . $urlPart . '🔗';
+            }
+        } elseif ($isImage) {
+            $src = $matches[5][0];
+            $alt = $matches[6][1] !== -1 ? $matches[6][0] : '';
+            
+            if (trim($alt) !== '') {
+                // Удаляем ведущий дефис, если есть
+                $replacement = '🖼️' . ltrim(trim($alt), '-') . '🖼️';
+            } else {
+                $filename = basename($src);
+                $filename = urldecode($filename); // Декодируем URL-encoded символы
+                $replacement = '🖼️' . $filename . '🖼️';
+            }
         }
+
+        // 3. Добавляем замену и пробел
+        $reminderLines .= $replacement;
+        
+        // Добавляем пробел после замены, если лимит не исчерпан
+        if (strlen($reminderLines) < $reminderLinesLength && substr($reminderLines, -1) !== ' ') {
+            $reminderLines .= ' ';
+        }
+        
+        // 4. Обновляем оставшийся контент
+        $remainingContent = substr($remainingContent, $matchOffset + $matchLength);
     }
 
-    $debugContent .= "Итоговый resultBuffer: '{$resultBuffer}'\n";
-    $debugContent .= "========================\n\n";
-    file_put_contents($debugLog, $debugContent, FILE_APPEND);
+    // 5. Если лимит не исчерпан, добавляем оставшийся обычный текст
+    if (strlen($reminderLines) < $reminderLinesLength) {
+        $reminderLines .= substr($remainingContent, 0, $reminderLinesLength - strlen($reminderLines));
+    }
+
+    // 6. Удаляем любые другие оставшиеся HTML-теги для чистоты
+    $reminderLines = strip_tags($reminderLines);
     
-    return $resultBuffer;
+    // 7. Обрезаем до точного лимита, если последняя замена привела к превышению
+    return JHtmlString::truncate($reminderLines, $reminderLinesLength);
 }
     
     /**
