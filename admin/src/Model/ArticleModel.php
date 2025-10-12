@@ -534,21 +534,28 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
             $linkText = $matches[3][0];
             
             if (trim($linkText) !== '') {
-                $replacement = '&#x1f517;"' . trim($linkText) . '"&#x1f517;'; // знаки ссылки
+         //       $replacement = '&#x1f517;"' . trim($linkText) . '"&#x1f517;'; // знаки ссылки
+                $replacement = '[L]"' . trim($linkText) . '"[L]'; // ОТЛАДКА
             } else {
                 $urlPart = HTMLHelper::truncate($href, 40); 
-                $replacement = '&#x1f517;' . $urlPart . '&#x1f517;';
+              //  $replacement = '&#x1f517;' . $urlPart . '&#x1f517;';
+                // ВРЕМЕННОЕ ИЗМЕНЕНИЕ ДЛЯ ТЕСТА
+                $replacement = '[L]' . $urlPart . '[L]';
             }
         } elseif ($isImage) {
             $src = $matches[5][0];
             $alt = $matches[6][1] !== -1 ? $matches[6][0] : '';
             
             if (trim($alt) !== '') {
-                $replacement = '&#x1f5bc;' . ltrim(trim($alt), '-') . '&#x1f5bc;'; // знаки рисунка
+        //        $replacement = '&#x1f5bc;' . ltrim(trim($alt), '-') . '&#x1f5bc;'; // знаки рисунка
+           // ВРЕМЕННОЕ ИЗМЕНЕНИЕ ДЛЯ ТЕСТА: Используем [I] вместо эмодзи
+                $replacement = '[I]' . ltrim(trim($alt), '-') . '[I]';
             } else {
                 $filename = basename($src);
                 $filename = urldecode($filename);
-                $replacement = '&#x1f5bc;' . $filename . '&#x1f5bc;';
+            //    $replacement = '&#x1f5bc;' . $filename . '&#x1f5bc;';
+                 // ВРЕМЕННОЕ ИЗМЕНЕНИЕ ДЛЯ ТЕСТА
+                $replacement = '[I]' . $filename . '[I]';  
             }
         }
 
