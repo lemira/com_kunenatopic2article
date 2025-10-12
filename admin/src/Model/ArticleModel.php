@@ -471,10 +471,6 @@ class ArticleModel extends BaseDatabaseModel
         }
     }
 
-use Joomla\CMS\HTML\HTMLHelper;
-
-// ... внутри класса ArticleModel.php
-
 /**
  * Processes the raw HTML content, replacing links and images with short
  * descriptive text, and truncating the result to the defined limit.
@@ -499,7 +495,6 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
     $imgRegex = '/<img\s+(?:[^>]*?\s+)?src=["\'](.*?)(?:["\']\s*)?(?:alt=["\'](.*?)["\'])?[^>]*?>/is';
 
     while (
-        // Условие цикла: продолжаем, пока не достигнут лимит
         strlen($reminderLines) < $reminderLinesLength
         && preg_match("~($linkRegex|$imgRegex)~", $remainingContent, $matches, PREG_OFFSET_CAPTURE)
     ) {
@@ -524,7 +519,7 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
         if ($isLink) {
             $href = $matches[2][0];
             $linkText = $matches[3][0];
-            
+
             if (trim($linkText) !== '') {
                 $replacement = '🔗"' . trim($linkText) . '"🔗';
             } else {
@@ -535,7 +530,7 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
         } elseif ($isImage) {
             $src = $matches[5][0];
             $alt = $matches[6][1] !== -1 ? $matches[6][0] : '';
-            
+
             if (trim($alt) !== '') {
                 $replacement = '🖼️' . ltrim(trim($alt), '-') . '🖼️';
             } else {
@@ -547,12 +542,12 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
 
         // 3. Добавляем замену и пробел
         $reminderLines .= $replacement;
-        
+
         // Добавляем пробел после замены, если лимит не исчерпан
         if (strlen($reminderLines) < $reminderLinesLength && substr($reminderLines, -1) !== ' ') {
             $reminderLines .= ' ';
         }
-        
+
         // 4. Обновляем оставшийся контент
         $remainingContent = substr($remainingContent, $matchOffset + $matchLength);
     }
@@ -564,9 +559,8 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
 
     // 6. Удаляем любые другие оставшиеся HTML-теги для чистоты
     $reminderLines = strip_tags($reminderLines);
-    
-    // 7. ВОЗВРАЩАЕМ строку. Мы не обрезаем ее здесь, чтобы сохранить последнюю добавленную замену,
-    // если она привела к небольшому превышению лимита.
+
+    // 7. Возвращаем строку, сохраняя последнюю замену целиком
     return $reminderLines;
 }
     
