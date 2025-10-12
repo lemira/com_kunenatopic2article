@@ -488,16 +488,17 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
     $reminderLines = '';
 
     // 1. Предварительная очистка: заменяем основные бесполезные теги и сущности на пробелы
-    $cleanedContent = preg_replace(
-        '/(<p[^>]*>|<\/p>|<div[^>]*>|<\/div>|<span[^>]*>|<\/span>|<strong[^>]*>|<\/strong>|<em[^>]*>|<\/em>|<br\s*\/?>|&nbsp;|\s*[\r\n]+\s*)/i',
-        ' ',
-        $htmlContent
-    );
+ //   $cleanedContent = preg_replace(
+  //      '/(<p[^>]*>|<\/p>|<div[^>]*>|<\/div>|<span[^>]*>|<\/span>|<strong[^>]*>|<\/strong>|<em[^>]*>|<\/em>|<br\s*\/?>|&nbsp;|\s*[\r\n]+\s*)/i',
+  //      ' ',
+  //      $htmlContent
+ //   );
 
     // Декодируем HTML-сущности, чтобы они не учитывались при подсчете длины
-    $cleanedContent = html_entity_decode($cleanedContent, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+ //   $cleanedContent = html_entity_decode($cleanedContent, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
-    $remainingContent = $cleanedContent;
+ //   $remainingContent = $cleanedContent;
+$remainingContent = $htmlContent; // ОТЛАДКА
 
     // Регулярные выражения для поиска ссылок и изображений
     $linkRegex = '/<a\s+(?:[^>]*?\s+)?href=["\'](.*?)(?:["\'].*?)?>(.*?)<\/a>/is';
