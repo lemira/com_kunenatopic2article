@@ -542,23 +542,26 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
             $href = $matches[2][0];
             $linkText = $matches[3][0];
 
-            if (trim($linkText) !== '') {
-                $replacement = '🔗"' . trim($linkText) . '"🔗';
+           if (trim($linkText) !== '') {
+                // ИСХОДНО БЫЛО: $replacement = '🔗"' . trim($linkText) . '"🔗';
+                $replacement = '&#x1f517;"' . trim($linkText) . '"&#x1f517;'; // <-- ИЗМЕНЕНИЕ
             } else {
-                // Используем HTMLHelper::truncate для укорачивания URL
                 $urlPart = HTMLHelper::truncate($href, 40); 
-                $replacement = '🔗' . $urlPart . '🔗';
+                // ИСХОДНО БЫЛО: $replacement = '🔗' . $urlPart . '🔗';
+                $replacement = '&#x1f517;' . $urlPart . '&#x1f517;'; // <-- ИЗМЕНЕНИЕ
             }
         } elseif ($isImage) {
             $src = $matches[5][0];
             $alt = $matches[6][1] !== -1 ? $matches[6][0] : '';
 
-            if (trim($alt) !== '') {
-                $replacement = '🖼️' . ltrim(trim($alt), '-') . '🖼️';
+           if (trim($alt) !== '') {
+                // ИСХОДНО БЫЛО: $replacement = '🖼️' . ltrim(trim($alt), '-') . '🖼️';
+                $replacement = '&#x1f5bc;' . ltrim(trim($alt), '-') . '&#x1f5bc;'; // <-- ИЗМЕНЕНИЕ
             } else {
                 $filename = basename($src);
                 $filename = urldecode($filename);
-                $replacement = '🖼️' . $filename . '🖼️';
+                // ИСХОДНО БЫЛО: $replacement = '🖼️' . $filename . '🖼️';
+                $replacement = '&#x1f5bc;' . $filename . '&#x1f5bc;'; // <-- ИЗМЕНЕНИЕ
             }
         }
 
@@ -592,6 +595,7 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
     // 7. Возвращаем строку, сохраняя последнюю замену целиком
     return trim($reminderLines);
 }    
+    
     /**
      * Переход к следующему посту
      * @return  int  ID следующего поста или 0, если больше нет постов
