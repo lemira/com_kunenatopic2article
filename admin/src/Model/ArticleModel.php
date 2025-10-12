@@ -486,29 +486,51 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
     }
 
     $reminderLines = '';
-    $remainingContent = $htmlContent;
+
+    // 1. Предварительная очистка: заменяем основные бесполезные теги и сущности на пробелы
+    // Это гарантирует, что мы считаем длину полезного текста с самого начала.
+    $cleanedContent = preg_replace(
+        '/(<p[^>]*>|<\/p>|<div[^>]*>|<\/div>|<span[^>]*>|<\/span>|<strong[^>]*>|<\/strong>|<em[^>]*>|<\/em>|<br\s*\/?>|&nbsp;|\s*[\r\n]+\s*)/i',
+        ' ', // Заменяем на пробел, чтобы сохранить разделение слов
+        $htmlContent
+    );
+    
+    // Декодируем HTML-сущности, чтобы они не учитывались при подсчете длины
+    $cleanedContent = html_entity_decode($cleanedContent, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+    $remainingContent = $cleanedContent;
 
     // Регулярные выражения для поиска ссылок и изображений
     // (1) - полный тег <a> (2) - href (3) - link text
     $linkRegex = '/<a\s+(?:[^>]*?\s+)?href=["\'](.*?)(?:["\'].*?)?>(.*?)<\/a>/is';
     // (4) - полный тег <img> (5) - src (6) - alt
     $imgRegex = '/<img\s+(?:[^>]*?\s+)?src=["\'](.*?)(?:["\']\s*)?(?:alt=["\'](.*?)["\'])?[^>]*?>/is';
+    // Общий паттерн для поиска: ищем или ссылку, или изображение
+    $combinedRegex = "~($linkRegex|$imgRegex)~";
+
 
     while (
         strlen($reminderLines) < $reminderLinesLength
-        && preg_match("~($linkRegex|$imgRegex)~", $remainingContent, $matches, PREG_OFFSET_CAPTURE)
+        && preg_match($combinedRegex, $remainingContent, $matches, PREG_OFFSET_CAPTURE)
     ) {
         $matchOffset = $matches[0][1];
         $matchLength = strlen($matches[0][0]);
 
         // 1. Добавляем обычный текст до первого найденного тега
-        $plainText = substr($remainingContent, 0, $matchOffset);
+        // Используем trim, чтобы убрать лишние пробелы, оставшиеся после очистки
+        $plainText = trim(substr($remainingContent, 0, $matchOffset));
         $reminderLines .= $plainText;
 
         // Если обычный текст превысил лимит, обрезаем и завершаем
         if (strlen($reminderLines) >= $reminderLinesLength) {
             return substr($reminderLines, 0, $reminderLinesLength);
         }
+        
+        // Добавляем пробел после plainText, если он не был добавлен
+        if (strlen($reminderLines) > 0 && substr($reminderLines, -1) !== ' ') {
+            $reminderLines .= ' ';
+        }
+
 
         $replacement = '';
 
@@ -540,7 +562,7 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
             }
         }
 
-        // 3. Добавляем замену и пробел
+        // 3. Добавляем замену
         $reminderLines .= $replacement;
 
         // Добавляем пробел после замены, если лимит не исчерпан
@@ -553,17 +575,23 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
     }
 
     // 5. Если лимит не исчерпан, добавляем оставшийся обычный текст
-    if (strlen($reminderLines) < $reminderLinesLength) {
+    // Предварительно убираем лишние пробелы с начала remainingContent
+    $remainingContent = trim($remainingContent);
+    if (strlen($reminderLines) < $reminderLinesLength && strlen($remainingContent) > 0) {
+        // Убедимся, что после предыдущего текста/замены есть пробел
+        if (strlen($reminderLines) > 0 && substr($reminderLines, -1) !== ' ') {
+            $reminderLines .= ' ';
+        }
         $reminderLines .= substr($remainingContent, 0, $reminderLinesLength - strlen($reminderLines));
     }
 
-    // 6. Удаляем любые другие оставшиеся HTML-теги для чистоты
+    // 6. ФИНАЛЬНАЯ ОЧИСТКА: Удаляем любые оставшиеся HTML-теги для чистоты
+    // Это нужно, если в тексте были теги, которые не были учтены в предварительной очистке.
     $reminderLines = strip_tags($reminderLines);
 
     // 7. Возвращаем строку, сохраняя последнюю замену целиком
-    return $reminderLines;
-}
-    
+    return trim($reminderLines);
+}    
     /**
      * Переход к следующему посту
      * @return  int  ID следующего поста или 0, если больше нет постов
