@@ -501,8 +501,6 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
     $processedContent = trim($processedContent);
 
     // Регулярные выражения
-    // (1) - полный тег <a> (2) - href (3) - link text
-    // (4) - полный тег <img> (5) - src (6) - alt
     $combinedRegex = '~(<a\s+(?:[^>]*?\s+)?href=["\'](.*?)(?:["\'].*?)?>(.*?)<\/a>)|(<img\s+(?:[^>]*?\s+)?src=["\'](.*?)(?:["\']\s*)?(?:alt=["\'](.*?)["\'])?[^>]*?>)~iu';
 
     // 2. Итеративная обработка
@@ -511,12 +509,10 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
         mb_strlen($reminderLines) < $reminderLinesLength
         && preg_match($combinedRegex, $processedContent, $matches, PREG_OFFSET_CAPTURE, $lastOffset)
     ) {
-        // !!! ИСПРАВЛЕНИЕ #1: Используем байтовое смещение и длину для продвижения !!!
         $byteOffset = $matches[0][1];
-        $byteLength = strlen($matches[0][0]); // Используем strlen (байты) для продвижения
+        $byteLength = strlen($matches[0][0]);
 
         // Добавляем текст между последней обработанной позицией и текущим тегом
-        // Используем mb_strcut для безопасного извлечения многобайтового текста до байтового смещения
         $plainText = trim(mb_strcut($processedContent, $lastOffset, $byteOffset - $lastOffset, 'UTF-8'));
         $reminderLines .= $plainText;
 
@@ -546,19 +542,25 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
             }
         } elseif ($imageMatched) {
             $src = $matches[5][0];
+            // ИСПРАВЛЕНИЕ #1: Берем alt, если он есть, иначе пустая строка.
             $alt = isset($matches[6]) && $matches[6][1] !== -1 ? $matches[6][0] : '';
             
             $replacementText = '';
-            if (trim($alt) !== '') {
-                // ИСПРАВЛЕНИЕ #2: Если alt есть, используем его, чтобы избежать пустых символов
+            
+            // ПРОВЕРКА: Если alt-текст не пуст, используем его, обрезая дефисы.
+            if (!empty(trim($alt))) {
                 $replacementText = ltrim(trim($alt), '-');
-            } else {
-                // Если alt пуст, используем имя файла (без расширения)
+                // Также удаляем расширение файла, если alt-текст похож на имя файла
+                $replacementText = preg_replace('/\.(jpg|jpeg|png|gif|webp)$/i', '', $replacementText);
+            }
+            
+            // Если alt-текст пуст (или был только дефис), используем имя файла.
+            if (empty($replacementText)) {
                 $filename = basename($src);
                 $replacementText = preg_replace('/\.[^.]+$/', '', urldecode($filename));
             }
             
-            // Если replacementText все еще пуст, используем замену по умолчанию
+            // Если вообще ничего не удалось извлечь, используем "рисунок".
             if (empty($replacementText)) {
                 $replacementText = 'рисунок'; 
             }
@@ -573,14 +575,14 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
             $reminderLines .= ' ';
         }
         
-        // !!! ИСПРАВЛЕНИЕ #3: Обновляем смещение, используя байтовую длину !!!
         $lastOffset = $byteOffset + $byteLength;
     }
 
     // 3. Добавляем оставшийся текст
-    $remainingText = trim(mb_strcut($processedContent, $lastOffset, null, 'UTF-8')); // Считываем до конца
+    $remainingText = trim(mb_strcut($processedContent, $lastOffset, null, 'UTF-8'));
     
-    if (mb_strlen($reminderLines) < $reminderLinesLength && mb_strlen($remainingText) > 0) {
+    // ДОБАВЛЕНИЕ: Мы добавляем оставшийся текст только в том случае, если он поместится.
+    if (mb_strlen($remainingText) > 0) {
         $max_append_length = $reminderLinesLength - mb_strlen($reminderLines);
         
         if (mb_strlen($reminderLines) > 0 && mb_substr($reminderLines, -1) !== ' ') {
@@ -593,17 +595,19 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
         }
     }
 
-    // 4. ФИНАЛЬНАЯ ОЧИСТКА И ОБРЕЗАНИЕ
+    // 4. ФИНАЛЬНАЯ ОЧИСТКА И ОБРЕЗАНИЕ (ГАРАНТИРУЕТ 200 СИМВОЛОВ)
     $reminderLines = strip_tags($reminderLines);
-    
+    $reminderLines = trim($reminderLines); // Убираем возможные пробелы
+
     // Гарантируем, что длина не превышает лимит
     if (mb_strlen($reminderLines) > $reminderLinesLength) {
-        return mb_substr(trim($reminderLines), 0, $reminderLinesLength);
+        return mb_substr($reminderLines, 0, $reminderLinesLength);
     }
     
-    return trim($reminderLines);
+    return $reminderLines;
 }
-/**
+    
+    /**
      * Переход к следующему посту
      * @return  int  ID следующего поста или 0, если больше нет постов
      */
