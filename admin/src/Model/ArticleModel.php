@@ -472,6 +472,10 @@ class ArticleModel extends BaseDatabaseModel
         }
     }
 
+// Добавляем импорт для mb_strimwidth, если вы оставили его
+// use Joomla\CMS\HTML\Helpers\StringHelper; // Если решили проблему с поиском класса
+// или: use function mb_strimwidth; // Если используете mb_strimwidth
+
 /**
  * Processes the raw HTML content, replacing links and images with short
  * descriptive text, and truncating the result to the defined limit.
@@ -486,26 +490,25 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
         return '';
     }
 
-    // Устанавливаем кодировку по умолчанию для многобайтовых функций
     mb_internal_encoding('UTF-8');
     
     $reminderLines = '';
     $link_symbol = '🔗';
     $image_symbol = '🖼️';
 
-    // 1. Предварительная очистка: замена всех бесполезных тегов на один пробел
+    // 1. Предварительная очистка
     $processedContent = preg_replace(
         '/(<p[^>]*>|<\/p>|<div[^>]*>|<\/div>|<span[^>]*>|<\/span>|<strong[^>]*>|<\/strong>|<em[^>]*>|<\/em>|<br\s*\/?>|&nbsp;|\s*[\r\n]+\s*)/iu',
         ' ',
         $htmlContent
     );
-    // Декодируем HTML-сущности
     $processedContent = html_entity_decode($processedContent, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-    // Удаляем лишние пробелы в начале и конце
     $processedContent = trim($processedContent);
 
-    // Регулярные выражения для поиска ссылок и изображений
-    $combinedRegex = '~<a\s+(?:[^>]*?\s+)?href=["\'](.*?)(?:["\'].*?)?>(.*?)<\/a>|<img\s+(?:[^>]*?\s+)?src=["\'](.*?)(?:["\']\s*)?(?:alt=["\'](.*?)["\'])?[^>]*?>~iu';
+    // Регулярные выражения
+    // (1) - полный тег <a> (2) - href (3) - link text
+    // (4) - полный тег <img> (5) - src (6) - alt
+    $combinedRegex = '~(<a\s+(?:[^>]*?\s+)?href=["\'](.*?)(?:["\'].*?)?>(.*?)<\/a>)|(<img\s+(?:[^>]*?\s+)?src=["\'](.*?)(?:["\']\s*)?(?:alt=["\'](.*?)["\'])?[^>]*?>)~iu';
 
     // 2. Итеративная обработка
     $lastOffset = 0;
@@ -521,38 +524,50 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
         $plainText = trim($plainText);
         $reminderLines .= $plainText;
 
-        // Если обычный текст превысил лимит, обрезаем и возвращаем
+        // --- ТОЧКА ОСТАНОВКИ А (Обычный текст) ---
         if (mb_strlen($reminderLines) >= $reminderLinesLength) {
             return mb_substr($reminderLines, 0, $reminderLinesLength);
         }
 
-        // Добавляем пробел
         if (mb_strlen($plainText) > 0 && mb_strlen($reminderLines) < $reminderLinesLength && mb_substr($reminderLines, -1) !== ' ') {
             $reminderLines .= ' ';
         }
 
         $replacement = '';
-        $linkMatched = isset($matches[2]) && $matches[2][1] !== -1;
+        
+        // !!! ИСПРАВЛЕНИЕ: Проверяем существование полной группы (индекс 1 для <a> или 4 для <img>) !!!
+        $linkMatched = isset($matches[1]) && $matches[1][1] !== -1;
         $imageMatched = isset($matches[4]) && $matches[4][1] !== -1;
         
         // Формируем замену
         if ($linkMatched) {
+            // !!! ИСПРАВЛЕНИЕ: Проверяем существование индекса 3 перед доступом к нему (link text) !!!
             $href = $matches[2][0];
-            $linkText = $matches[3][0];
-            $replacement = (trim($linkText) !== '') ?
-                $link_symbol . '"' . trim($linkText) . '"' . $link_symbol :
-                $replacement = $link_symbol . mb_strimwidth($href, 0, 40, "...", 'UTF-8') . $link_symbol; // Обрезает строку до 40 символов и добавляет "..."
+            $linkText = isset($matches[3]) && $matches[3][1] !== -1 ? $matches[3][0] : '';
+            
+            if (trim($linkText) !== '') {
+                $replacement = $link_symbol . '"' . trim($linkText) . '"' . $link_symbol;
+            } else {
+                // Используем mb_strimwidth, т.к. он уже работает
+                $urlPart = mb_strimwidth($href, 0, 40, "...", 'UTF-8'); 
+                $replacement = $link_symbol . $urlPart . $link_symbol;
+            }
         } elseif ($imageMatched) {
-            $src = $matches[4][0];
-            $alt = isset($matches[5]) ? $matches[5][0] : '';
-            $replacement = (trim($alt) !== '') ?
-                $image_symbol . ltrim(trim($alt), '-') . $image_symbol :
-                $image_symbol . urldecode(basename($src)) . $image_symbol;
+            // !!! ИСПРАВЛЕНИЕ: Группы 5 и 6 соответствуют src и alt для <img> !!!
+            $src = $matches[5][0];
+            // Проверяем существование индекса 6 (alt)
+            $alt = isset($matches[6]) && $matches[6][1] !== -1 ? $matches[6][0] : '';
+            
+            if (trim($alt) !== '') {
+                $replacement = $image_symbol . ltrim(trim($alt), '-') . $image_symbol;
+            } else {
+                $filename = basename($src);
+                $replacement = $image_symbol . urldecode($filename) . $image_symbol;
+            }
         }
 
         $reminderLines .= $replacement;
         
-        // Добавляем пробел после замены
         if (mb_strlen($reminderLines) < $reminderLinesLength && mb_substr($reminderLines, -1) !== ' ') {
             $reminderLines .= ' ';
         }
@@ -564,15 +579,27 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
     // 3. Добавляем оставшийся текст
     $remainingText = trim(mb_substr($processedContent, $lastOffset));
     if (mb_strlen($reminderLines) < $reminderLinesLength && mb_strlen($remainingText) > 0) {
+        $max_append_length = $reminderLinesLength - mb_strlen($reminderLines);
+        
         if (mb_strlen($reminderLines) > 0 && mb_substr($reminderLines, -1) !== ' ') {
             $reminderLines .= ' ';
+            $max_append_length--; 
         }
-        $reminderLines .= mb_substr($remainingText, 0, $reminderLinesLength - mb_strlen($reminderLines));
+        
+        if ($max_append_length > 0) {
+            $reminderLines .= mb_substr($remainingText, 0, $max_append_length);
+        }
     }
 
-    return trim($reminderLines);
-} 
+    // 4. ФИНАЛЬНАЯ ОЧИСТКА И ОБРЕЗАНИЕ (Устраняет проблему 250 символов)
+    $reminderLines = strip_tags($reminderLines);
     
+    if (mb_strlen($reminderLines) > $reminderLinesLength) {
+        return mb_substr(trim($reminderLines), 0, $reminderLinesLength);
+    }
+    
+    return trim($reminderLines);
+}    
     /**
      * Переход к следующему посту
      * @return  int  ID следующего поста или 0, если больше нет постов
