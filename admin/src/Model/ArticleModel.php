@@ -472,19 +472,53 @@ class ArticleModel extends BaseDatabaseModel
         }
     }
 
-// Добавляем импорт для mb_strimwidth, если вы оставили его
-// use Joomla\CMS\HTML\Helpers\StringHelper; // Если решили проблему с поиском класса
-// или: use function mb_strimwidth; // Если используете mb_strimwidth
+/**
+ * Processes the raw HTML content, replacing links and images with short
+ * descriptive text, and truncating the result to the defined limit.
+ *
+ * @param string $htmlContent The raw HTML content of the post.
+ * @param int $reminderLinesLength The maximum number of characters for the reminder.
+ * @return string The processed and truncated reminder line text.
+ */
+private function processReminderLines(string $htmlContent, int $reminderLinesLength): string
+{
+    if ($reminderLinesLength <= 0) {
+        return '';
+    }
 
-// ...
+    mb_internal_encoding('UTF-8');
+    
+    $reminderLines = '';
+    $link_symbol = '🔗';
+    $image_symbol = '🖼️';
 
-        // ... внутри while loop ...
-        
-        // 1. Добавляем обычный текст до первого найденного тега
+    // 1. Предварительная очистка
+    $processedContent = preg_replace(
+        '/(<p[^>]*>|<\/p>|<div[^>]*>|<\/div>|<span[^>]*>|<\/span>|<strong[^>]*>|<\/strong>|<em[^>]*>|<\/em>|<br\s*\/?>|&nbsp;|\s*[\r\n]+\s*)/iu',
+        ' ',
+        $htmlContent
+    );
+    $processedContent = html_entity_decode($processedContent, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $processedContent = trim($processedContent);
+
+    // Регулярные выражения
+    // (1) - полный тег <a> (2) - href (3) - link text
+    // (4) - полный тег <img> (5) - src (6) - alt
+    $combinedRegex = '~(<a\s+(?:[^>]*?\s+)?href=["\'](.*?)(?:["\'].*?)?>(.*?)<\/a>)|(<img\s+(?:[^>]*?\s+)?src=["\'](.*?)(?:["\']\s*)?(?:alt=["\'](.*?)["\'])?[^>]*?>)~iu';
+
+    // 2. Итеративная обработка
+    $lastOffset = 0;
+    while (
+        mb_strlen($reminderLines) < $reminderLinesLength
+        && preg_match($combinedRegex, $processedContent, $matches, PREG_OFFSET_CAPTURE, $lastOffset)
+    ) {
+        $matchOffset = $matches[0][1];
+        $matchLength = mb_strlen($matches[0][0]);
+
+        // Добавляем текст между последней обработанной позицией и текущим тегом
         $plainText = trim(mb_strcut($processedContent, $lastOffset, $matchOffset - $lastOffset, 'UTF-8'));
         $reminderLines .= $plainText;
 
-        // --- ТОЧКА ОСТАНОВКИ А (Обычный текст) ---
         if (mb_strlen($reminderLines) >= $reminderLinesLength) {
             return mb_substr($reminderLines, 0, $reminderLinesLength);
         }
@@ -504,10 +538,8 @@ class ArticleModel extends BaseDatabaseModel
             $linkText = isset($matches[3]) && $matches[3][1] !== -1 ? $matches[3][0] : '';
             
             if (trim($linkText) !== '') {
-                // ИСПРАВЛЕНИЕ #1: Удаляем двойные кавычки, оставляя только символы-скобки
                 $replacement = $link_symbol . trim($linkText) . $link_symbol;
             } else {
-                // Используем mb_strimwidth, т.к. он уже работает
                 $urlPart = mb_strimwidth($href, 0, 40, "...", 'UTF-8'); 
                 $replacement = $link_symbol . $urlPart . $link_symbol;
             }
@@ -515,15 +547,11 @@ class ArticleModel extends BaseDatabaseModel
             $src = $matches[5][0];
             $alt = isset($matches[6]) && $matches[6][1] !== -1 ? $matches[6][0] : '';
             
-            // ИСПРАВЛЕНИЕ #2: Корректное формирование текста замены
             $replacementText = '';
             if (trim($alt) !== '') {
-                // Если alt есть, используем его
                 $replacementText = ltrim(trim($alt), '-');
             } else {
-                // Если alt пуст, используем имя файла
                 $filename = basename($src);
-                // Удаляем расширение файла для чистоты
                 $replacementText = preg_replace('/\.[^.]+$/', '', urldecode($filename));
             }
             
@@ -533,12 +561,10 @@ class ArticleModel extends BaseDatabaseModel
 
         $reminderLines .= $replacement;
         
-        // Добавляем пробел после замены
         if (mb_strlen($reminderLines) < $reminderLinesLength && mb_substr($reminderLines, -1) !== ' ') {
             $reminderLines .= ' ';
         }
         
-        // Обновляем смещение для следующей итерации
         $lastOffset = $matchOffset + mb_strlen($matches[0][0]);
     }
 
