@@ -540,7 +540,7 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
             $linkText = $matches[3][0];
             $replacement = (trim($linkText) !== '') ?
                 $link_symbol . '"' . trim($linkText) . '"' . $link_symbol :
-                $link_symbol . HTMLHelper::truncate($href, 40) . $link_symbol;
+                $link_symbol . Text::truncate($href, 40) . $link_symbol;
         } elseif ($imageMatched) {
             $src = $matches[4][0];
             $alt = isset($matches[5]) ? $matches[5][0] : '';
