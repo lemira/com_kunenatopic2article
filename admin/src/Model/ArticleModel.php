@@ -28,7 +28,6 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Filter\InputFilter;
 use Joomla\Component\Content\Site\Helper\RouteHelper;
 use Joomla\CMS\Access\Access;
-// use Joomla\CMS\HTML\Helpers\StringHelper;
 
 /**
  * Article Model
@@ -477,7 +476,7 @@ class ArticleModel extends BaseDatabaseModel
  * descriptive text, and truncating the result to the defined limit.
  *
  * @param string $htmlContent The raw HTML content of the post.
- * @param int $reminderLinesLength The maximum number of characters for the reminder.
+ * @param int $reminderLinesLength The maximum number из characters for the reminder.
  * @return string The processed and truncated reminder line text.
  */
 private function processReminderLines(string $htmlContent, int $reminderLinesLength): string
@@ -512,11 +511,13 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
         mb_strlen($reminderLines) < $reminderLinesLength
         && preg_match($combinedRegex, $processedContent, $matches, PREG_OFFSET_CAPTURE, $lastOffset)
     ) {
-        $matchOffset = $matches[0][1];
-        $matchLength = mb_strlen($matches[0][0]);
+        // !!! ИСПРАВЛЕНИЕ #1: Используем байтовое смещение и длину для продвижения !!!
+        $byteOffset = $matches[0][1];
+        $byteLength = strlen($matches[0][0]); // Используем strlen (байты) для продвижения
 
         // Добавляем текст между последней обработанной позицией и текущим тегом
-        $plainText = trim(mb_strcut($processedContent, $lastOffset, $matchOffset - $lastOffset, 'UTF-8'));
+        // Используем mb_strcut для безопасного извлечения многобайтового текста до байтового смещения
+        $plainText = trim(mb_strcut($processedContent, $lastOffset, $byteOffset - $lastOffset, 'UTF-8'));
         $reminderLines .= $plainText;
 
         if (mb_strlen($reminderLines) >= $reminderLinesLength) {
@@ -549,10 +550,17 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
             
             $replacementText = '';
             if (trim($alt) !== '') {
+                // ИСПРАВЛЕНИЕ #2: Если alt есть, используем его, чтобы избежать пустых символов
                 $replacementText = ltrim(trim($alt), '-');
             } else {
+                // Если alt пуст, используем имя файла (без расширения)
                 $filename = basename($src);
                 $replacementText = preg_replace('/\.[^.]+$/', '', urldecode($filename));
+            }
+            
+            // Если replacementText все еще пуст, используем замену по умолчанию
+            if (empty($replacementText)) {
+                $replacementText = 'рисунок'; 
             }
             
             $replacement = $image_symbol . $replacementText . $image_symbol;
@@ -565,11 +573,13 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
             $reminderLines .= ' ';
         }
         
-        $lastOffset = $matchOffset + mb_strlen($matches[0][0]);
+        // !!! ИСПРАВЛЕНИЕ #3: Обновляем смещение, используя байтовую длину !!!
+        $lastOffset = $byteOffset + $byteLength;
     }
 
     // 3. Добавляем оставшийся текст
-    $remainingText = trim(mb_substr($processedContent, $lastOffset));
+    $remainingText = trim(mb_strcut($processedContent, $lastOffset, null, 'UTF-8')); // Считываем до конца
+    
     if (mb_strlen($reminderLines) < $reminderLinesLength && mb_strlen($remainingText) > 0) {
         $max_append_length = $reminderLinesLength - mb_strlen($reminderLines);
         
@@ -586,13 +596,13 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
     // 4. ФИНАЛЬНАЯ ОЧИСТКА И ОБРЕЗАНИЕ
     $reminderLines = strip_tags($reminderLines);
     
+    // Гарантируем, что длина не превышает лимит
     if (mb_strlen($reminderLines) > $reminderLinesLength) {
         return mb_substr(trim($reminderLines), 0, $reminderLinesLength);
     }
     
     return trim($reminderLines);
 }
-
 /**
      * Переход к следующему посту
      * @return  int  ID следующего поста или 0, если больше нет постов
