@@ -492,76 +492,63 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
     $link_symbol = '🔗';
     $image_symbol = '🖼️';
 
-    // 1. Предварительная очистка
-    // Модификатор 'u' для работы с UTF-8
-    $cleanedContent = preg_replace(
+    // 1. Предварительная очистка: замена всех бесполезных тегов на один пробел
+    $processedContent = preg_replace(
         '/(<p[^>]*>|<\/p>|<div[^>]*>|<\/div>|<span[^>]*>|<\/span>|<strong[^>]*>|<\/strong>|<em[^>]*>|<\/em>|<br\s*\/?>|&nbsp;|\s*[\r\n]+\s*)/iu',
         ' ',
         $htmlContent
     );
+    // Декодируем HTML-сущности
+    $processedContent = html_entity_decode($processedContent, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    // Удаляем лишние пробелы в начале и конце
+    $processedContent = trim($processedContent);
 
-    $cleanedContent = html_entity_decode($cleanedContent, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    // Регулярные выражения для поиска ссылок и изображений
+    $combinedRegex = '~<a\s+(?:[^>]*?\s+)?href=["\'](.*?)(?:["\'].*?)?>(.*?)<\/a>|<img\s+(?:[^>]*?\s+)?src=["\'](.*?)(?:["\']\s*)?(?:alt=["\'](.*?)["\'])?[^>]*?>~iu';
 
-    $remainingContent = $cleanedContent;
-
-    // Регулярные выражения
-    $linkRegex = '/<a\s+(?:[^>]*?\s+)?href=["\'](.*?)(?:["\'].*?)?>(.*?)<\/a>/is';
-    $imgRegex = '/<img\s+(?:[^>]*?\s+)?src=["\'](.*?)(?:["\']\s*)?(?:alt=["\'](.*?)["\'])?[^>]*?>/is';
-    $combinedRegex = "~($linkRegex|$imgRegex)~iu";
-
+    // 2. Итеративная обработка
+    $lastOffset = 0;
     while (
         mb_strlen($reminderLines) < $reminderLinesLength
-        && preg_match($combinedRegex, $remainingContent, $matches, PREG_OFFSET_CAPTURE)
+        && preg_match($combinedRegex, $processedContent, $matches, PREG_OFFSET_CAPTURE, $lastOffset)
     ) {
-        // Получаем байтовые смещения (offset) и длину (length) от preg_match
-        $byteOffset = $matches[0][1];
-        $byteLength = strlen($matches[0][0]);
+        $matchOffset = $matches[0][1];
+        $matchLength = mb_strlen($matches[0][0]);
 
-        // 1. Добавляем обычный текст до первого найденного тега
-        // Используем mb_strcut для безопасного извлечения многобайтового текста до байтового смещения
-        $plainText = trim(mb_strcut($remainingContent, 0, $byteOffset, 'UTF-8'));
+        // Добавляем текст между последней обработанной позицией и текущим тегом
+        $plainText = mb_substr($processedContent, $lastOffset, $matchOffset - $lastOffset);
+        $plainText = trim($plainText);
         $reminderLines .= $plainText;
 
-        // --- ТОЧКА ОСТАНОВКИ А (Обычный текст) ---
+        // Если обычный текст превысил лимит, обрезаем и возвращаем
         if (mb_strlen($reminderLines) >= $reminderLinesLength) {
             return mb_substr($reminderLines, 0, $reminderLinesLength);
         }
 
-        // Добавляем пробел после обычного текста
-        if (mb_strlen($plainText) > 0 && mb_substr($reminderLines, -1) !== ' ') {
+        // Добавляем пробел
+        if (mb_strlen($plainText) > 0 && mb_strlen($reminderLines) < $reminderLinesLength && mb_substr($reminderLines, -1) !== ' ') {
             $reminderLines .= ' ';
         }
-        
+
         $replacement = '';
-
-        // 2. Определяем и формируем замену
-        $isLink = isset($matches[2]) && $matches[2][1] !== -1;
-        $isImage = isset($matches[5]) && $matches[5][1] !== -1;
-
-        if ($isLink) {
+        $linkMatched = isset($matches[2]) && $matches[2][1] !== -1;
+        $imageMatched = isset($matches[4]) && $matches[4][1] !== -1;
+        
+        // Формируем замену
+        if ($linkMatched) {
             $href = $matches[2][0];
             $linkText = $matches[3][0];
-            
-            if (trim($linkText) !== '') {
-                $replacement = $link_symbol . '"' . trim($linkText) . '"' . $link_symbol;
-            } else {
-                $urlPart = HTMLHelper::truncate($href, 40); 
-                $replacement = $link_symbol . $urlPart . $link_symbol;
-            }
-        } elseif ($isImage) {
-            $src = $matches[5][0];
-            $alt = $matches[6][1] !== -1 ? $matches[6][0] : '';
-            
-            if (trim($alt) !== '') {
-                $replacement = $image_symbol . ltrim(trim($alt), '-') . $image_symbol;
-            } else {
-                $filename = basename($src);
-                $filename = urldecode($filename);
-                $replacement = $image_symbol . $filename . $image_symbol;
-            }
+            $replacement = (trim($linkText) !== '') ?
+                $link_symbol . '"' . trim($linkText) . '"' . $link_symbol :
+                $link_symbol . HTMLHelper::truncate($href, 40) . $link_symbol;
+        } elseif ($imageMatched) {
+            $src = $matches[4][0];
+            $alt = isset($matches[5]) ? $matches[5][0] : '';
+            $replacement = (trim($alt) !== '') ?
+                $image_symbol . ltrim(trim($alt), '-') . $image_symbol :
+                $image_symbol . urldecode(basename($src)) . $image_symbol;
         }
 
-        // 3. Добавляем замену
         $reminderLines .= $replacement;
         
         // Добавляем пробел после замены
@@ -569,38 +556,22 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
             $reminderLines .= ' ';
         }
         
-        // 4. Обновляем оставшийся контент, используя байтовое смещение
-        $remainingContent = substr($remainingContent, $byteOffset + $byteLength);
+        // Обновляем смещение для следующей итерации
+        $lastOffset = $matchOffset + mb_strlen($matches[0][0]);
     }
 
-    // 5. Если лимит не исчерпан, добавляем оставшийся обычный текст
-    $remainingContent = trim($remainingContent);
-
-    if (mb_strlen($reminderLines) < $reminderLinesLength && mb_strlen($remainingContent) > 0) {
-        $max_append_length = $reminderLinesLength - mb_strlen($reminderLines);
-        
-        // Учитываем место для пробела
+    // 3. Добавляем оставшийся текст
+    $remainingText = trim(mb_substr($processedContent, $lastOffset));
+    if (mb_strlen($reminderLines) < $reminderLinesLength && mb_strlen($remainingText) > 0) {
         if (mb_strlen($reminderLines) > 0 && mb_substr($reminderLines, -1) !== ' ') {
             $reminderLines .= ' ';
-            $max_append_length--; 
         }
-        
-        if ($max_append_length > 0) {
-            $reminderLines .= mb_substr($remainingContent, 0, $max_append_length);
-        }
+        $reminderLines .= mb_substr($remainingText, 0, $reminderLinesLength - mb_strlen($reminderLines));
     }
 
-    // 6. ФИНАЛЬНАЯ ОЧИСТКА
-    $reminderLines = strip_tags($reminderLines);
-
-    // 7. ОКОНЧАТЕЛЬНОЕ ОБРЕЗАНИЕ: Гарантируем, что видимый текст не превышает лимит
-    if (mb_strlen($reminderLines) > $reminderLinesLength) {
-        // Используем mb_substr, чтобы не обрезать многобайтовые символы некорректно
-        return mb_substr(trim($reminderLines), 0, $reminderLinesLength);
-    }
-    
     return trim($reminderLines);
-}    
+} 
+    
     /**
      * Переход к следующему посту
      * @return  int  ID следующего поста или 0, если больше нет постов
