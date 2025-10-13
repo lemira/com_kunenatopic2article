@@ -547,7 +547,6 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
             $alt = isset($matches[6]) && $matches[6][1] !== -1 ? $matches[6][0] : '';
             
             $replacementText = '';
-            
             $altCleaned = trim(strip_tags($alt));
             
             if (!empty($altCleaned)) {
@@ -579,33 +578,23 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
         $lastOffset = $byteOffset + $byteLength;
     }
 
-    // 3. Добавляем оставшийся текст (ИСПРАВЛЕННЫЙ БЛОК)
+    // 3. Добавляем оставшийся текст
     $remainingText = trim(mb_strcut($processedContent, $lastOffset, null, 'UTF-8'));
     
     if (mb_strlen($remainingText) > 0) {
-        // Проверяем, нужно ли добавить пробел, и учитываем его в max_append_length
-        $space_to_add = 0;
-        if (mb_strlen($reminderLines) > 0 && mb_substr($reminderLines, -1) !== ' ') {
-            $space_to_add = 1;
-        }
+        $max_append_length = $reminderLinesLength - mb_strlen($reminderLines);
         
-        // Вычисляем, сколько места осталось
-        $max_append_length = $reminderLinesLength - mb_strlen($reminderLines) - $space_to_add;
+        if (mb_strlen($reminderLines) > 0 && mb_substr($reminderLines, -1) !== ' ') {
+            $reminderLines .= ' ';
+            $max_append_length--; 
+        }
         
         if ($max_append_length > 0) {
-            
-            // Сначала добавляем пробел (если нужен)
-            if ($space_to_add > 0) {
-                 $reminderLines .= ' ';
-            }
-
-            // Затем добавляем обрезанный остаток
             $reminderLines .= mb_substr($remainingText, 0, $max_append_length);
         }
-        // Если max_append_length <= 0, значит, места нет, и мы не добавляем ничего.
     }
 
-    // 4. ФИНАЛЬНАЯ ОЧИСТКА И ОБРЕЗАНИЕ (Этот блок гарантирует окончательный лимит)
+    // 4. ФИНАЛЬНАЯ ОЧИСТКА И ОБРЕЗАНИЕ
     $reminderLines = strip_tags($reminderLines);
     $reminderLines = trim($reminderLines);
 
