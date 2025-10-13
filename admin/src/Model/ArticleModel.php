@@ -541,7 +541,7 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
             $linkText = $matches[3][0];
             $replacement = (trim($linkText) !== '') ?
                 $link_symbol . '"' . trim($linkText) . '"' . $link_symbol :
-                $replacement = $link_symbol . StringHelper::truncate($href, 40, false) . $link_symbol;
+                $replacement = $link_symbol . \Joomla\CMS\HTML\StringHelper::truncate($href, 40, false) . $link_symbol; // без  \Joomla\CMS\HTML\ не раб-т
         } elseif ($imageMatched) {
             $src = $matches[4][0];
             $alt = isset($matches[5]) ? $matches[5][0] : '';
