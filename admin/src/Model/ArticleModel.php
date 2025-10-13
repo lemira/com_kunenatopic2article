@@ -476,7 +476,7 @@ class ArticleModel extends BaseDatabaseModel
  * descriptive text, and truncating the result to the defined limit.
  *
  * @param string $htmlContent The raw HTML content of the post.
- * @param int $reminderLinesLength The maximum number из characters for the reminder.
+ * @param int $reminderLinesLength The maximum number of characters for the reminder.
  * @return string The processed and truncated reminder line text.
  */
 private function processReminderLines(string $htmlContent, int $reminderLinesLength): string
@@ -542,31 +542,29 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
             }
         } elseif ($imageMatched) {
             $src = $matches[5][0];
-            // ИСПРАВЛЕНИЕ #1: Берем alt, если он есть, иначе пустая строка.
             $alt = isset($matches[6]) && $matches[6][1] !== -1 ? $matches[6][0] : '';
             
             $replacementText = '';
             
-            // ПРОВЕРКА: Если alt-текст не пуст, используем его, обрезая дефисы.
-            if (!empty(trim($alt))) {
-                $replacementText = ltrim(trim($alt), '-');
-                // Также удаляем расширение файла, если alt-текст похож на имя файла
-                $replacementText = preg_replace('/\.(jpg|jpeg|png|gif|webp)$/i', '', $replacementText);
+            // ИСПРАВЛЕНИЕ: Пытаемся получить alt-текст.
+            $altCleaned = trim($alt);
+            if (!empty($altCleaned)) {
+                $replacementText = ltrim($altCleaned, '-');
             }
             
-            // Если alt-текст пуст (или был только дефис), используем имя файла.
+            // Если alt-текст пуст, используем имя файла
             if (empty($replacementText)) {
                 $filename = basename($src);
-                $replacementText = preg_replace('/\.[^.]+$/', '', urldecode($filename));
+                // ИСПРАВЛЕНИЕ #1: Сохраняем расширение файла.
+                $replacementText = urldecode($filename);
             }
             
-            // Если вообще ничего не удалось извлечь, используем "рисунок".
+            // Если и имя файла пусто, используем "рисунок".
             if (empty($replacementText)) {
                 $replacementText = 'рисунок'; 
             }
             
             $replacement = $image_symbol . $replacementText . $image_symbol;
-
         }
 
         $reminderLines .= $replacement;
@@ -581,7 +579,6 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
     // 3. Добавляем оставшийся текст
     $remainingText = trim(mb_strcut($processedContent, $lastOffset, null, 'UTF-8'));
     
-    // ДОБАВЛЕНИЕ: Мы добавляем оставшийся текст только в том случае, если он поместится.
     if (mb_strlen($remainingText) > 0) {
         $max_append_length = $reminderLinesLength - mb_strlen($reminderLines);
         
@@ -595,11 +592,10 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
         }
     }
 
-    // 4. ФИНАЛЬНАЯ ОЧИСТКА И ОБРЕЗАНИЕ (ГАРАНТИРУЕТ 200 СИМВОЛОВ)
+    // 4. ФИНАЛЬНАЯ ОЧИСТКА И ОБРЕЗАНИЕ
     $reminderLines = strip_tags($reminderLines);
-    $reminderLines = trim($reminderLines); // Убираем возможные пробелы
+    $reminderLines = trim($reminderLines);
 
-    // Гарантируем, что длина не превышает лимит
     if (mb_strlen($reminderLines) > $reminderLinesLength) {
         return mb_substr($reminderLines, 0, $reminderLinesLength);
     }
