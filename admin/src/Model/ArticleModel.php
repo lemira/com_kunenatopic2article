@@ -501,7 +501,7 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
     $processedContent = trim($processedContent);
 
     // Регулярные выражения
-    $combinedRegex = '~(<a\s+(?:[^>]*?\s+)?href=["\'](.*?)(?:["\'].*?)?>(.*?)<\/a>)|(<img\s+(?:[^>]*?\s+)?src=["\'](.*?)(?:["\']\s*)?(?:alt=["\'](.*?)["\'])?[^>]*?>)~iu';
+    $combinedRegex = '~(<a\s+(?:[^>]*?\s+)?href=["\'](.*?)(?:["\'].*?)?>(.*?)<\/a>)|(<img\s+src=["\'](.*?)["\']\s+alt=["\'](.*?)["\']\s*\/?>)~iu';
 
     // 2. Итеративная обработка
     $lastOffset = 0;
@@ -534,7 +534,6 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
             $href = $matches[2][0];
             $linkText = isset($matches[3]) && $matches[3][1] !== -1 ? $matches[3][0] : '';
             
-            // !!! ИСПРАВЛЕНИЕ #1: Очищаем linkText перед проверкой
             $linkTextCleaned = trim(strip_tags($linkText));
             
             if (!empty($linkTextCleaned)) {
@@ -549,12 +548,9 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
             
             $replacementText = '';
             
-            // !!! ИСПРАВЛЕНИЕ #2: Агрессивно очищаем alt-текст перед проверкой
             $altCleaned = trim(strip_tags($alt));
             
-            // Пытаемся получить alt-текст (без дефиса в начале)
             if (!empty($altCleaned)) {
-                // Использование substr для более точной очистки, если alt начинается с дефиса
                 if (mb_substr($altCleaned, 0, 1) === '-') {
                     $replacementText = mb_substr($altCleaned, 1);
                 } else {
@@ -562,13 +558,11 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
                 }
             }
             
-            // Если alt-текст пуст, используем имя файла (с расширением)
             if (empty($replacementText)) {
                 $filename = basename($src);
                 $replacementText = urldecode($filename);
             }
             
-            // Если и имя файла пусто, используем "рисунок".
             if (empty($replacementText)) {
                 $replacementText = 'рисунок'; 
             }
@@ -610,7 +604,8 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
     }
     
     return $reminderLines;
-}    
+}
+    
     /**
      * Переход к следующему посту
      * @return  int  ID следующего поста или 0, если больше нет постов
