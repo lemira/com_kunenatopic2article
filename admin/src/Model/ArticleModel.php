@@ -474,7 +474,6 @@ class ArticleModel extends BaseDatabaseModel
 /**
  * Processes the raw HTML content, replacing links and images with short
  * descriptive text, and truncating the result to the defined limit.
- * Использует чистые UTF-8 символы для точного подсчета длины.
  *
  * @param string $htmlContent The raw HTML content of the post.
  * @param int $reminderLinesLength The maximum number of characters for the reminder.
@@ -490,10 +489,11 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
     mb_internal_encoding('UTF-8');
     
     $reminderLines = '';
-    $link_symbol = '🔗'; // 1 символ
-    $image_symbol = '🖼️'; // 1 символ
+    $link_symbol = '🔗';
+    $image_symbol = '🖼️';
 
     // 1. Предварительная очистка
+    // Модификатор 'u' для работы с UTF-8
     $cleanedContent = preg_replace(
         '/(<p[^>]*>|<\/p>|<div[^>]*>|<\/div>|<span[^>]*>|<\/span>|<strong[^>]*>|<\/strong>|<em[^>]*>|<\/em>|<br\s*\/?>|&nbsp;|\s*[\r\n]+\s*)/iu',
         ' ',
@@ -513,11 +513,13 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
         mb_strlen($reminderLines) < $reminderLinesLength
         && preg_match($combinedRegex, $remainingContent, $matches, PREG_OFFSET_CAPTURE)
     ) {
-        $matchOffset = $matches[0][1];
-        $matchLength = mb_strlen($matches[0][0]);
+        // Получаем байтовые смещения (offset) и длину (length) от preg_match
+        $byteOffset = $matches[0][1];
+        $byteLength = strlen($matches[0][0]);
 
         // 1. Добавляем обычный текст до первого найденного тега
-        $plainText = trim(mb_substr($remainingContent, 0, $matchOffset));
+        // Используем mb_strcut для безопасного извлечения многобайтового текста до байтового смещения
+        $plainText = trim(mb_strcut($remainingContent, 0, $byteOffset, 'UTF-8'));
         $reminderLines .= $plainText;
 
         // --- ТОЧКА ОСТАНОВКИ А (Обычный текст) ---
@@ -525,20 +527,14 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
             return mb_substr($reminderLines, 0, $reminderLinesLength);
         }
 
-        // Добавляем пробел после обычного текста (если он был)
+        // Добавляем пробел после обычного текста
         if (mb_strlen($plainText) > 0 && mb_substr($reminderLines, -1) !== ' ') {
             $reminderLines .= ' ';
         }
         
-        // Проверяем, что есть место для хотя бы одного символа замены, иначе не добавляем
-        if (mb_strlen($reminderLines) >= $reminderLinesLength) {
-             $remainingContent = mb_substr($remainingContent, $matchOffset + $matchLength);
-             continue;
-        }
-
         $replacement = '';
 
-        // 2. Определяем и формируем замену (используем реальные символы)
+        // 2. Определяем и формируем замену
         $isLink = isset($matches[2]) && $matches[2][1] !== -1;
         $isImage = isset($matches[5]) && $matches[5][1] !== -1;
 
@@ -573,25 +569,38 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
             $reminderLines .= ' ';
         }
         
-        // 4. Обновляем оставшийся контент
-        $remainingContent = mb_substr($remainingContent, $matchOffset + $matchLength);
+        // 4. Обновляем оставшийся контент, используя байтовое смещение
+        $remainingContent = substr($remainingContent, $byteOffset + $byteLength);
     }
 
     // 5. Если лимит не исчерпан, добавляем оставшийся обычный текст
     $remainingContent = trim($remainingContent);
+
     if (mb_strlen($reminderLines) < $reminderLinesLength && mb_strlen($remainingContent) > 0) {
+        $max_append_length = $reminderLinesLength - mb_strlen($reminderLines);
+        
+        // Учитываем место для пробела
         if (mb_strlen($reminderLines) > 0 && mb_substr($reminderLines, -1) !== ' ') {
             $reminderLines .= ' ';
+            $max_append_length--; 
         }
-        $reminderLines .= mb_substr($remainingContent, 0, $reminderLinesLength - mb_strlen($reminderLines));
+        
+        if ($max_append_length > 0) {
+            $reminderLines .= mb_substr($remainingContent, 0, $max_append_length);
+        }
     }
 
     // 6. ФИНАЛЬНАЯ ОЧИСТКА
     $reminderLines = strip_tags($reminderLines);
 
-    return trim($reminderLines);
-}
+    // 7. ОКОНЧАТЕЛЬНОЕ ОБРЕЗАНИЕ: Гарантируем, что видимый текст не превышает лимит
+    if (mb_strlen($reminderLines) > $reminderLinesLength) {
+        // Используем mb_substr, чтобы не обрезать многобайтовые символы некорректно
+        return mb_substr(trim($reminderLines), 0, $reminderLinesLength);
+    }
     
+    return trim($reminderLines);
+}    
     /**
      * Переход к следующему посту
      * @return  int  ID следующего поста или 0, если больше нет постов
