@@ -28,7 +28,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Filter\InputFilter;
 use Joomla\Component\Content\Site\Helper\RouteHelper;
 use Joomla\CMS\Access\Access;
-use Joomla\CMS\HTML\Helpers\StringHelper;
+// use Joomla\CMS\HTML\Helpers\StringHelper;
 
 /**
  * Article Model
@@ -541,8 +541,7 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
             $linkText = $matches[3][0];
             $replacement = (trim($linkText) !== '') ?
                 $link_symbol . '"' . trim($linkText) . '"' . $link_symbol :
-               // Не Используем полный, корректный путь из документации  \Joomla\CMS\HTML\Helpers\StringHelper::truncate($href, 40, false)
-                $replacement = $link_symbol . StringHelper::truncate($href, 40, false) . $link_symbol;
+                $replacement = $link_symbol . mb_strimwidth($href, 0, 40, "...", 'UTF-8') . $link_symbol; // Обрезает строку до 40 символов и добавляет "..."
         } elseif ($imageMatched) {
             $src = $matches[4][0];
             $alt = isset($matches[5]) ? $matches[5][0] : '';
