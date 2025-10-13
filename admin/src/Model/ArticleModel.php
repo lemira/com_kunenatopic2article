@@ -534,8 +534,11 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
             $href = $matches[2][0];
             $linkText = isset($matches[3]) && $matches[3][1] !== -1 ? $matches[3][0] : '';
             
-            if (trim($linkText) !== '') {
-                $replacement = $link_symbol . trim($linkText) . $link_symbol;
+            // !!! ИСПРАВЛЕНИЕ #1: Очищаем linkText перед проверкой
+            $linkTextCleaned = trim(strip_tags($linkText));
+            
+            if (!empty($linkTextCleaned)) {
+                $replacement = $link_symbol . $linkTextCleaned . $link_symbol;
             } else {
                 $urlPart = mb_strimwidth($href, 0, 40, "...", 'UTF-8'); 
                 $replacement = $link_symbol . $urlPart . $link_symbol;
@@ -546,16 +549,22 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
             
             $replacementText = '';
             
-            // ИСПРАВЛЕНИЕ: Пытаемся получить alt-текст.
-            $altCleaned = trim($alt);
+            // !!! ИСПРАВЛЕНИЕ #2: Агрессивно очищаем alt-текст перед проверкой
+            $altCleaned = trim(strip_tags($alt));
+            
+            // Пытаемся получить alt-текст (без дефиса в начале)
             if (!empty($altCleaned)) {
-                $replacementText = ltrim($altCleaned, '-');
+                // Использование substr для более точной очистки, если alt начинается с дефиса
+                if (mb_substr($altCleaned, 0, 1) === '-') {
+                    $replacementText = mb_substr($altCleaned, 1);
+                } else {
+                    $replacementText = $altCleaned;
+                }
             }
             
-            // Если alt-текст пуст, используем имя файла
+            // Если alt-текст пуст, используем имя файла (с расширением)
             if (empty($replacementText)) {
                 $filename = basename($src);
-                // ИСПРАВЛЕНИЕ #1: Сохраняем расширение файла.
                 $replacementText = urldecode($filename);
             }
             
@@ -601,8 +610,7 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
     }
     
     return $reminderLines;
-}
-    
+}    
     /**
      * Переход к следующему посту
      * @return  int  ID следующего поста или 0, если больше нет постов
