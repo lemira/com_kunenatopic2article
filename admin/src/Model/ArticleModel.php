@@ -517,7 +517,6 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
         $remainingSpaceForPlain = $reminderLinesLength - mb_strlen($reminderLines);
         $reminderLines .= mb_substr($plainText, 0, $remainingSpaceForPlain);
         
-        // Проверяем, заполнился ли лимит
         if (mb_strlen($reminderLines) >= $reminderLinesLength) {
             $lastOffset = $byteOffset + $byteLength;
             break; 
@@ -533,37 +532,57 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
         $imageMatched = isset($matches[4]) && $matches[4][1] !== -1;
         
         // 2b. Формируем замену
-       if ($linkMatched) {
-    $href = $matches[2][0];
-    $linkText = isset($matches[3]) && $matches[3][1] !== -1 ? $matches[3][0] : '';
-    
-    $linkTextCleaned = trim(strip_tags($linkText));
-    
-    if (!empty($linkTextCleaned) && strpos($linkTextCleaned, '://') === false && strpos($linkTextCleaned, 'www.') === false) {
-        // Если текст ссылки есть И он не является самим URL (нет :// или www.), используем его.
-        $replacement = $link_symbol . $linkTextCleaned . $link_symbol;
-    } else {
-        // Иначе (текст пуст, или текст — это сам URL), используем URL из href:
-        $sourceUrl = !empty($linkTextCleaned) ? $linkTextCleaned : $href;
+        if ($linkMatched) {
+            $href = $matches[2][0];
+            $linkText = isset($matches[3]) && $matches[3][1] !== -1 ? $matches[3][0] : '';
+            
+            $linkTextCleaned = trim(strip_tags($linkText));
+            
+            if (!empty($linkTextCleaned) && strpos($linkTextCleaned, '://') === false && strpos($linkTextCleaned, 'www.') === false) {
+                $replacement = $link_symbol . $linkTextCleaned . $link_symbol;
+            } else {
+                $sourceUrl = !empty($linkTextCleaned) ? $linkTextCleaned : $href;
+                $urlPart = preg_replace('#^https?://#i', '', $sourceUrl);
+                $urlPart = mb_strimwidth($urlPart, 0, 40, "...", 'UTF-8');
+                $replacement = $link_symbol . $urlPart . $link_symbol;
+            }
+        } elseif ($imageMatched) {
+            $src = $matches[5][0];
+            $alt = isset($matches[6]) && $matches[6][1] !== -1 ? $matches[6][0] : '';
+            
+            $replacementText = '';
+            $altCleaned = trim(strip_tags($alt));
+            
+            if (!empty($altCleaned)) {
+                if (mb_substr($altCleaned, 0, 1) === '-') {
+                    $replacementText = mb_substr($altCleaned, 1);
+                } else {
+                    $replacementText = $altCleaned;
+                }
+            }
+            
+            if (empty($replacementText)) {
+                $filename = basename($src);
+                $replacementText = urldecode($filename);
+            }
+            
+            if (empty($replacementText)) {
+                $replacementText = 'рисунок'; 
+            }
+            
+            $replacement = $image_symbol . $replacementText . $image_symbol;
+        }
 
-        // Применяем очистку и укорачивание:
-        $urlPart = preg_replace('#^https?://#i', '', $sourceUrl);
-        $urlPart = mb_strimwidth($urlPart, 0, 40, "...", 'UTF-8');
-        $replacement = $link_symbol . $urlPart . $link_symbol;
-    }
-} 
-        // 2c. Вставляем элемент (целиком, если он сам по себе превышает лимит)
+        // 2c. Вставляем элемент
         $remainingSpace = $reminderLinesLength - mb_strlen($reminderLines);
         
         if (mb_strlen($replacement) <= $remainingSpace) {
-            // Элемент помещается целиком
             $reminderLines .= $replacement;
             
             if (mb_strlen($reminderLines) < $reminderLinesLength && mb_substr($reminderLines, -1) !== ' ') {
                 $reminderLines .= ' ';
             }
         } else {
-            // Элемент слишком большой. Добавляем его и завершаем.
             $reminderLines .= $replacement;
             $lastOffset = $byteOffset + $byteLength;
             break; 
@@ -572,26 +591,9 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
         $lastOffset = $byteOffset + $byteLength;
     }
 
-    // 3. Добавляем оставшийся текст И АГРЕССИВНО ИЩЕМ "ГОЛЫЕ" URL
+    // 3. Добавляем оставшийся текст
     $remainingText = trim(mb_strcut($processedContent, $lastOffset, null, 'UTF-8'));
     
-    // ИСПРАВЛЕНИЕ #6: Агрессивно обрабатываем "голые" URL в оставшемся тексте
-    // Регулярное выражение для поиска URL (с http(s):// или без)
-    $urlRegex = '~(?i)\b(?:https?://|www\.)[^\s/$.?#].[^\s]*~u';
-    
-    // Заменяем найденные URL на обрезанный, очищенный вариант
-    $remainingText = preg_replace_callback($urlRegex, function ($urlMatches) use ($link_symbol) {
-        $fullUrl = $urlMatches[0];
-        
-        // 1. Очистка от http(s)://
-        $urlPart = preg_replace('#^https?://#i', '', $fullUrl);
-        // 2. Укорачивание до 40 символов
-        $urlPart = mb_strimwidth($urlPart, 0, 40, "...", 'UTF-8');
-        
-        return $link_symbol . $urlPart . $link_symbol;
-    }, $remainingText);
-    
-    // Продолжаем добавление обрезанного текста
     $max_append_length = $reminderLinesLength - mb_strlen($reminderLines);
     
     if (mb_strlen($remainingText) > 0 && $max_append_length > 0) {
