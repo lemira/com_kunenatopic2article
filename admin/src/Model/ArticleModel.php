@@ -506,30 +506,33 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
     // 2. Итеративная обработка
     $lastOffset = 0;
     while (
-        mb_strlen($reminderLines) < $reminderLinesLength
+        mb_strlen($reminderLines) < $reminderLinesLength // Возвращаем условие цикла
         && preg_match($combinedRegex, $processedContent, $matches, PREG_OFFSET_CAPTURE, $lastOffset)
     ) {
         $byteOffset = $matches[0][1];
         $byteLength = strlen($matches[0][0]);
 
-        // Добавляем текст между последней обработанной позицией и текущим тегом
+        // 2a. Добавляем текст между последней обработанной позицией и текущим тегом
         $plainText = trim(mb_strcut($processedContent, $lastOffset, $byteOffset - $lastOffset, 'UTF-8'));
-        $reminderLines .= $plainText;
-
+        $remainingSpaceForPlain = $reminderLinesLength - mb_strlen($reminderLines);
+        $reminderLines .= mb_substr($plainText, 0, $remainingSpaceForPlain);
+        
+        // Проверяем, заполнился ли лимит
         if (mb_strlen($reminderLines) >= $reminderLinesLength) {
-            return mb_substr($reminderLines, 0, $reminderLinesLength);
+            $lastOffset = $byteOffset + $byteLength;
+            break; 
         }
 
         if (mb_strlen($plainText) > 0 && mb_strlen($reminderLines) < $reminderLinesLength && mb_substr($reminderLines, -1) !== ' ') {
             $reminderLines .= ' ';
         }
-
+        
         $replacement = '';
         
         $linkMatched = isset($matches[1]) && $matches[1][1] !== -1;
         $imageMatched = isset($matches[4]) && $matches[4][1] !== -1;
         
-        // Формируем замену
+        // 2b. Формируем замену
         if ($linkMatched) {
             $href = $matches[2][0];
             $linkText = isset($matches[3]) && $matches[3][1] !== -1 ? $matches[3][0] : '';
@@ -539,7 +542,8 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
             if (!empty($linkTextCleaned)) {
                 $replacement = $link_symbol . $linkTextCleaned . $link_symbol;
             } else {
-                $urlPart = mb_strimwidth($href, 0, 40, "...", 'UTF-8'); 
+                $urlPart = preg_replace('#^https?://#i', '', $href);
+                $urlPart = mb_strimwidth($urlPart, 0, 40, "...", 'UTF-8');
                 $replacement = $link_symbol . $urlPart . $link_symbol;
             }
         } elseif ($imageMatched) {
@@ -569,10 +573,22 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
             $replacement = $image_symbol . $replacementText . $image_symbol;
         }
 
-        $reminderLines .= $replacement;
+        // 2c. Вставляем элемент, если он помещается, или если он сам по себе превышает лимит
+        // Проверяем, что элемент поместится целиком
+        $remainingSpace = $reminderLinesLength - mb_strlen($reminderLines);
         
-        if (mb_strlen($reminderLines) < $reminderLinesLength && mb_substr($reminderLines, -1) !== ' ') {
-            $reminderLines .= ' ';
+        if (mb_strlen($replacement) <= $remainingSpace) {
+            // Элемент помещается целиком
+            $reminderLines .= $replacement;
+            
+            if (mb_strlen($reminderLines) < $reminderLinesLength && mb_substr($reminderLines, -1) !== ' ') {
+                $reminderLines .= ' ';
+            }
+        } else {
+            // Элемент слишком большой. Добавляем его и завершаем.
+            $reminderLines .= $replacement;
+            $lastOffset = $byteOffset + $byteLength;
+            break; 
         }
         
         $lastOffset = $byteOffset + $byteLength;
@@ -580,10 +596,9 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
 
     // 3. Добавляем оставшийся текст
     $remainingText = trim(mb_strcut($processedContent, $lastOffset, null, 'UTF-8'));
+    $max_append_length = $reminderLinesLength - mb_strlen($reminderLines);
     
-    if (mb_strlen($remainingText) > 0) {
-        $max_append_length = $reminderLinesLength - mb_strlen($reminderLines);
-        
+    if (mb_strlen($remainingText) > 0 && $max_append_length > 0) {
         if (mb_strlen($reminderLines) > 0 && mb_substr($reminderLines, -1) !== ' ') {
             $reminderLines .= ' ';
             $max_append_length--; 
@@ -594,14 +609,11 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
         }
     }
 
-    // 4. ФИНАЛЬНАЯ ОЧИСТКА И ОБРЕЗАНИЕ
+    // 4. ФИНАЛЬНАЯ ОЧИСТКА
+    $reminderLines = preg_replace('/\s{2,}/u', ' ', $reminderLines);
     $reminderLines = strip_tags($reminderLines);
     $reminderLines = trim($reminderLines);
 
-    if (mb_strlen($reminderLines) > $reminderLinesLength) {
-        return mb_substr($reminderLines, 0, $reminderLinesLength);
-    }
-    
     return $reminderLines;
 }
     
