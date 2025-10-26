@@ -904,22 +904,21 @@ protected function getKunenaPostsPerPage(): int
 {
     $db = Factory::getDbo();
 
-    // ИСПРАВЛЕНО: Актуальное имя таблицы конфигурации Kunena
     $tableName = '#__kunena_configuration'; 
     $dbPrefix = $db->getPrefix();
     
-    // Проверка существования таблицы перед запросом (на всякий случай)
+    // Проверка существования таблицы (рекомендуется оставить для безопасности)
     $tables = $db->getTableList();
     if (!in_array($dbPrefix . 'kunena_configuration', $tables)) {
-         // Fallback, если таблица с новым именем не найдена.
-         // Можно также добавить проверку старого имени '#__kunena_config'
          return 20;
     }
 
     $query = $db->getQuery(true)
-        ->select($db->qn('value'))
+        // ИСПРАВЛЕНО: Используем 'setting_value' вместо 'value'
+        ->select($db->qn('setting_value')) 
         ->from($db->qn($tableName))
-        ->where($db->qn('name') . ' = ' . $db->q('messages_per_page')); // Ключ настройки
+        // ИСПРАВЛЕНО: Используем 'setting_key' вместо 'name'
+        ->where($db->qn('setting_key') . ' = ' . $db->q('messages_per_page')); 
 
     $db->setQuery($query, 0, 1);
     $value = $db->loadResult();
