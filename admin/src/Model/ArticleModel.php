@@ -838,13 +838,35 @@ $infoString .= $idsString;
     /**
      * Генерирует URL открытого поста в Kunena
      */
-private function getKunenaPostUrl(int $postId): string
+function getKunenaPostUrl(int $postId): string
 {
-    $catid = $this->currentPost->catid ?? 0;
-    $thread = $this->currentPost->thread ?? 0;
-    return Uri::root() . "forum/{$catid}/{$thread}#{$postId}";
+    // Получаем настройки пагинации Kunena
+    $kunenaConfig = KunenaFactory::getConfig();
+    $postsPerPage = $kunenaConfig->messages_per_page;
+    
+    // Определяем позицию поста в теме
+    $db = Factory::getDbo();
+    $query = $db->getQuery(true);
+    $query->select('COUNT(p1.id) as position')
+          ->from($db->quoteName('#__kunena_messages', 'p1'))
+          ->where($db->quoteName('p1.thread') . ' = ' . $db->quote($this->currentPost->thread))
+          ->where($db->quoteName('p1.id') . ' <= ' . $db->quote($postId))
+          ->where($db->quoteName('p1.hold') . ' = 0');
+    
+    $db->setQuery($query);
+    $position = $db->loadResult();
+    
+    // Вычисляем номер страницы
+    $page = floor(($position - 1) / $postsPerPage);
+    $start = $page * $postsPerPage;
+    
+    // Создаем базовый URL для Kunena темы
+    $url = "index.php?option=com_kunena&view=topic&catid={$this->currentPost->catid}&id={$this->currentPost->thread}&start={$start}#{$postId}";
+    
+    // Универсальное преобразование через Route
+    return Route::_($url, false);
 }
-
+    
 private function printHeadOfPost()
 {
         // Добавляем в статью инф строку   (не пуста)
