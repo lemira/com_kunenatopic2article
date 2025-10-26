@@ -903,32 +903,35 @@ public function getKunenaPostUrl(int $postId): string
 protected function getKunenaPostsPerPage(): int
 {
     $db = Factory::getDbo();
-
     $tableName = '#__kunena_configuration'; 
-    $dbPrefix = $db->getPrefix();
     
-    // Проверка существования таблицы (рекомендуется оставить для безопасности)
-    $tables = $db->getTableList();
-    if (!in_array($dbPrefix . 'kunena_configuration', $tables)) {
-         return 20;
-    }
-
+    // Шаг 1: Выбираем поле 'params' из таблицы конфигурации
     $query = $db->getQuery(true)
-        // ИСПРАВЛЕНО: Используем 'setting_value' вместо 'value'
-        ->select($db->qn('setting_value')) 
-        ->from($db->qn($tableName))
-        // ИСПРАВЛЕНО: Используем 'setting_key' вместо 'name'
-        ->where($db->qn('setting_key') . ' = ' . $db->q('messages_per_page')); 
-
+        ->select($db->qn('params'))
+        ->from($db->qn($tableName));
+        
+    // Ограничиваемся одной записью (предполагая, что это одна строка)
     $db->setQuery($query, 0, 1);
-    $value = $db->loadResult();
+    $jsonParams = $db->loadResult();
 
-    // Проверяем, удалось ли получить значение
-    if (!empty($value) && is_numeric($value) && (int) $value > 0) {
-        return (int) $value;
+    if (empty($jsonParams)) {
+        // Fallback, если строка не найдена
+        return 20; 
     }
 
-    // Fallback
+    // Шаг 2: Парсим JSON-строку в объект Registry
+    $params = new Registry($jsonParams);
+    
+    // Шаг 3: Извлекаем значение. Проверяем два возможных ключа. 
+    // В Kunena 6 чаще всего используется 'messages_per_page'.
+    $postsPerPage = $params->get('messages_per_page') ?? $params->get('messagesPerPage');
+    
+    // Проверяем и приводим к целому числу
+    if (!empty($postsPerPage) && is_numeric($postsPerPage) && (int) $postsPerPage > 0) {
+        return (int) $postsPerPage;
+    }
+
+    // Fallback, если значение не найдено или некорректно
     return 20; 
 }
     
