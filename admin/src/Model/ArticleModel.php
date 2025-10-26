@@ -843,12 +843,9 @@ $infoString .= $idsString;
 public function getKunenaPostUrl(int $postId): string
 {
     $db = Factory::getDbo();
-    
-    // Используем исправленную вспомогательную функцию
     $postsPerPage = $this->getKunenaPostsPerPage(); 
 
-    // --- Шаг 1: Получение catid, thread и времени создания поста (time) ---
-    // (Эти данные нужны для построения базового URL и определения индекса)
+    // --- Шаг 1: Получение данных поста (catid, thread, time) ---
     $query = $db->getQuery(true)
         ->select('m.catid, m.thread, m.time')
         ->from($db->qn('#__kunena_messages', 'm'))
@@ -858,16 +855,39 @@ public function getKunenaPostUrl(int $postId): string
     $postInfo = $db->loadObject();
 
     if (!$postInfo) {
-        return ''; // Пост не найден
+        return '';
     }
 
     $catid    = (int) $postInfo->catid;
     $thread   = (int) $postInfo->thread;
     $postTime = (int) $postInfo->time;
+
+    // --- Шаг 2: Получение Slug Категории и Заголовка Темы ---
     
-    // --- Шаг 2: Определение порядкового номера поста в теме ($postIndex) ---
-    // Считаем количество постов в теме, которые были опубликованы ДО текущего поста.
-    // Это и есть индекс поста (начиная с 0).
+    // A. Псевдоним Категории (из #__kunena_categories)
+    $query = $db->getQuery(true)
+        ->select($db->qn('alias'))
+        ->from($db->qn('#__kunena_categories'))
+        ->where($db->qn('id') . ' = ' . $catid);
+    $db->setQuery($query);
+    $catAlias = $db->loadResult() ?: 'category'; 
+    
+    // B. Заголовок Темы (из #__kunena_messages, id = thread)
+    $query = $db->getQuery(true)
+        ->select($db->qn('subject'))
+        ->from($db->qn('#__kunena_messages'))
+        ->where($db->qn('id') . ' = ' . $thread);
+    $db->setQuery($query);
+    $topicSubject = $db->loadResult();
+
+    // --- Шаг 3: Генерация Slug'а Темы ---
+    // Используем FilterOutput для создания URL-совместимого псевдонима.
+    $topicAlias = FilterOutput::stringURLSafe($topicSubject); 
+    $topicAlias = $topicAlias ?: 'topic'; // Fallback
+    
+    // --- Шаг 4: Расчет параметра ?start= ---
+
+    // Подсчет постов, которые были опубликованы ДО текущего поста (индекс поста)
     $query = $db->getQuery(true)
         ->select('COUNT(*)')
         ->from($db->qn('#__kunena_messages', 'm'))
@@ -879,14 +899,17 @@ public function getKunenaPostUrl(int $postId): string
     $db->setQuery($query);
     $postIndex = (int) $db->loadResult(); 
     
-    // --- Шаг 3: Расчет параметра ?start= ---
-    // start = floor(индекс_поста / сообщений_на_странице) * сообщений_на_странице
+    // Расчет параметра ?start=
     $start = (int) (floor($postIndex / $postsPerPage) * $postsPerPage);
 
-    // --- Шаг 4: Формирование полного URL ---
+    // --- Шаг 5: Формирование полного SEF URL (ИСПРАВЛЕНО) ---
     
-    // Базовый URL, соответствующий вашему формату: /index.php/forum/{catid}/{thread}
-    $baseUrl = Uri::root() . "index.php/forum/{$catid}/{$thread}";
+    // Формат slug'ов: {id}-{alias}
+    $catSlug = "{$catid}-{$catAlias}";
+    $topicSlug = "{$thread}-{$topicAlias}";
+    
+    // Составляем базовый URL. Используем правильный SEF формат Kunena: /forum/{catSlug}/{topicSlug}
+    $baseUrl = Uri::root() . "forum/{$catSlug}/{$topicSlug}";
     
     // Полный URL с параметром ?start= и якорем #postId
     $fullUrl = "{$baseUrl}?start={$start}#{$postId}";
@@ -894,45 +917,67 @@ public function getKunenaPostUrl(int $postId): string
     return $fullUrl;
 }
     
+use Joomla\CMS\Factory;
+use Joomla\Registry\Registry; 
+
 /**
- * Получает количество сообщений, отображаемых на одной странице темы Kunena, 
- * используя Kunena API.
+ * Получает количество сообщений, отображаемых на одной странице темы Kunena,
+ * с обработкой ошибок и выводом сообщения в админке.
  *
  * @return int Количество сообщений на странице.
  */
 protected function getKunenaPostsPerPage(): int
 {
-    $db = Factory::getDbo();
-    $tableName = '#__kunena_configuration'; 
+    // Безопасное значение по умолчанию (Fallback)
+    $defaultPostsPerPage = 20; 
     
-    // Шаг 1: Выбираем поле 'params' из таблицы конфигурации
-    $query = $db->getQuery(true)
-        ->select($db->qn('params'))
-        ->from($db->qn($tableName));
+    try {
+        // Получаем необходимые объекты через Factory
+        $db = Factory::getDbo();
+        $app = Factory::getApplication();
+        $tableName = '#__kunena_configuration'; 
         
-    // Ограничиваемся одной записью (предполагая, что это одна строка)
-    $db->setQuery($query, 0, 1);
-    $jsonParams = $db->loadResult();
+        $query = $db->getQuery(true)
+            ->select($db->qn('params'))
+            ->from($db->qn($tableName));
+            
+        $db->setQuery($query, 0, 1);
+        $jsonParams = $db->loadResult();
 
-    if (empty($jsonParams)) {
-        // Fallback, если строка не найдена
-        return 20; 
+        if (empty($jsonParams)) {
+            // Сообщение, если строка конфигурации не найдена
+            $app->enqueueMessage(
+                'Ошибка: Не удалось найти параметры Kunena в таблице ' . $tableName, 
+                'warning'
+            );
+            return $defaultPostsPerPage;
+        }
+
+        $params = new Registry($jsonParams);
+        $postsPerPage = $params->get('messagesPerPage');
+        
+        // Проверка корректности полученного значения
+        if (is_numeric($postsPerPage) && (int) $postsPerPage > 0) {
+            return (int) $postsPerPage;
+        } else {
+             // Сообщение, если значение некорректно
+            $app->enqueueMessage(
+                'Ошибка: Некорректное значение "messagesPerPage" ("' . $postsPerPage . '") в конфигурации Kunena.', 
+                'warning'
+            );
+            return $defaultPostsPerPage;
+        }
+
+    } catch (\Exception $e) {
+        // Ловим любые исключения (ошибка БД, парсинга и т.д.) и выводим фидбэк
+        Factory::getApplication()->enqueueMessage(
+            'Критическая ошибка при получении настройки Kunena: ' . $e->getMessage(), 
+            'error'
+        );
+        
+        // Возвращаем безопасное значение для предотвращения ошибки деления на ноль
+        return $defaultPostsPerPage; 
     }
-
-    // Шаг 2: Парсим JSON-строку в объект Registry
-    $params = new Registry($jsonParams);
-    
-    // Шаг 3: Извлекаем значение. Проверяем два возможных ключа. 
-    // В Kunena 6 чаще всего используется 'messages_per_page'.
-    $postsPerPage = $params->get('messages_per_page') ?? $params->get('messagesPerPage');
-    
-    // Проверяем и приводим к целому числу
-    if (!empty($postsPerPage) && is_numeric($postsPerPage) && (int) $postsPerPage > 0) {
-        return (int) $postsPerPage;
-    }
-
-    // Fallback, если значение не найдено или некорректно
-    return 20; 
 }
     
 private function printHeadOfPost()
