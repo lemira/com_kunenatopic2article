@@ -69,17 +69,6 @@
 </field>
 
 <field
-    name="post_ids"
-    type="radio"
-    label="COM_KUNENATOPIC2ARTICLE_POST_IDS"
-    description="COM_KUNENATOPIC2ARTICLE_POST_IDS_DESC"
-    class="btn-group"
-    default="0">
-    <option value="0">COM_KUNENATOPIC2ARTICLE_NOT_INCLUDE</option>
-    <option value="1">COM_KUNENATOPIC2ARTICLE_INCLUDE</option>
-</field>    
-
-<field
             name="post_title"
             type="radio"
             label="COM_KUNENATOPIC2ARTICLE_POST_TITLE"
@@ -89,6 +78,7 @@
             <option value="0">COM_KUNENATOPIC2ARTICLE_NOT_INCLUDE</option>
             <option value="1">COM_KUNENATOPIC2ARTICLE_INCLUDE</option>
         </field>
+
         <field
             name="kunena_post_link"
             type="radio"
@@ -99,6 +89,18 @@
             <option value="0">COM_KUNENATOPIC2ARTICLE_NOT_INCLUDE</option>
             <option value="1">COM_KUNENATOPIC2ARTICLE_INCLUDE</option>
         </field>
+
+        <field
+    name="post_ids"
+    type="radio"
+    label="COM_KUNENATOPIC2ARTICLE_POST_IDS"
+    description="COM_KUNENATOPIC2ARTICLE_POST_IDS_DESC"
+    class="btn-group"
+    default="0">
+    <option value="0">COM_KUNENATOPIC2ARTICLE_NOT_INCLUDE</option>
+    <option value="1">COM_KUNENATOPIC2ARTICLE_INCLUDE</option>
+        </field>    
+        
         <field
             name="reminder_lines"
             type="text"
