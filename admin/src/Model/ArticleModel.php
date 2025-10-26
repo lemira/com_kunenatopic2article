@@ -779,7 +779,7 @@ private function traverseTree($postId, $level, $children, &$postIdList, &$postLe
                . '" target="_blank" rel="noopener noreferrer">#' 
                . $this->currentPost->id . '</a>';
 } else {
-    $idsString .= ' / #' . $this->currentPost->id;
+    $idsString .= '#' . $this->currentPost->id;
 }
  // Родительский пост
 if (!empty($this->currentPost->parent)) {
