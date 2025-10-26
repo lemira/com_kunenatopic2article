@@ -28,7 +28,6 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Filter\InputFilter;
 use Joomla\Component\Content\Site\Helper\RouteHelper;
 use Joomla\CMS\Access\Access;
-use KunenaFactory;
 
 /**
  * Article Model
@@ -841,12 +840,27 @@ $infoString .= $idsString;
      */
 function getKunenaPostUrl(int $postId): string
 {
-    // Получаем настройки пагинации Kunena
-    $kunenaConfig = KunenaFactory::getConfig();
-    $postsPerPage = $kunenaConfig->messages_per_page;
+    // Пробуем разные способы получить настройки Kunena
+    $db = Factory::getDbo();
+    
+    // Способ 1: Прямой запрос к таблице настроек Kunena
+    $query = $db->getQuery(true);
+    $query->select($db->quoteName('params'))
+          ->from($db->quoteName('#__kunena_configuration'))
+          ->where($db->quoteName('id') . ' = 1');
+    
+    $db->setQuery($query);
+    $kunenaParams = $db->loadResult();
+    
+    if ($kunenaParams) {
+        $params = json_decode($kunenaParams, true);
+        $postsPerPage = $params['messages_per_page'] ?? 20;
+    } else {
+        // Способ 2: Запасной вариант
+ //       $postsPerPage = 20;
+    }
     
     // Определяем позицию поста в теме
-    $db = Factory::getDbo();
     $query = $db->getQuery(true);
     $query->select('COUNT(p1.id) as position')
           ->from($db->quoteName('#__kunena_messages', 'p1'))
