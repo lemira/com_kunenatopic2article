@@ -840,6 +840,12 @@ $infoString .= $idsString;
  * @param int $postId ID поста в Kunena
  * @return string Полный URL поста
  */
+/**
+ * Генерирует полный URL до конкретного поста в Kunena, используя SEF-совместимые slug-и.
+ *
+ * @param int $postId ID поста в Kunena
+ * @return string Полный URL поста
+ */
 public function getKunenaPostUrl(int $postId): string
 {
     $db = Factory::getDbo();
@@ -870,20 +876,28 @@ public function getKunenaPostUrl(int $postId): string
         ->from($db->qn('#__kunena_categories'))
         ->where($db->qn('id') . ' = ' . $catid);
     $db->setQuery($query);
-    $catAlias = $db->loadResult() ?: 'category'; 
+    $catAlias = $db->loadResult();
     
-    // B. Заголовок Темы (из #__kunena_messages, id = thread)
+    // B. Заголовок Темы (ИСПРАВЛЕНО: берем из #__kunena_topics)
     $query = $db->getQuery(true)
         ->select($db->qn('subject'))
-        ->from($db->qn('#__kunena_messages'))
+        ->from($db->qn('#__kunena_topics'))
         ->where($db->qn('id') . ' = ' . $thread);
     $db->setQuery($query);
     $topicSubject = $db->loadResult();
 
-    // --- Шаг 3: Генерация Slug'а Темы ---
-    // Используем FilterOutput для создания URL-совместимого псевдонима.
+    // --- Шаг 3: Генерация Slug-ов ---
+    
+    // ИСПРАВЛЕНИЕ 1: Если alias категории уже содержит ID (например, '8-geschichte-und'),
+    // мы используем его напрямую, чтобы избежать дублирования '8-8-geschichte-und'.
+    $catSlug = $catAlias ?: 'category';
+    
+    // ИСПРАВЛЕНИЕ 2: Генерируем slug темы из правильного subject
     $topicAlias = FilterOutput::stringURLSafe($topicSubject); 
     $topicAlias = $topicAlias ?: 'topic'; // Fallback
+    
+    // Формат slug темы: {thread}-{topic_alias}
+    $topicSlug = "{$thread}-{$topicAlias}";
     
     // --- Шаг 4: Расчет параметра ?start= ---
 
@@ -900,15 +914,12 @@ public function getKunenaPostUrl(int $postId): string
     $postIndex = (int) $db->loadResult(); 
     
     // Расчет параметра ?start=
+    $postsPerPage = $this->getKunenaPostsPerPage(); // Предполагаем, что эта функция корректна
     $start = (int) (floor($postIndex / $postsPerPage) * $postsPerPage);
 
-    // --- Шаг 5: Формирование полного SEF URL (ИСПРАВЛЕНО) ---
+    // --- Шаг 5: Формирование полного SEF URL ---
     
-    // Формат slug'ов: {id}-{alias}
-    $catSlug = "{$catid}-{$catAlias}";
-    $topicSlug = "{$thread}-{$topicAlias}";
-    
-    // Составляем базовый URL. Используем правильный SEF формат Kunena: /forum/{catSlug}/{topicSlug}
+    // Составляем базовый URL. Формат: /forum/{cat_slug}/{topic_slug}
     $baseUrl = Uri::root() . "forum/{$catSlug}/{$topicSlug}";
     
     // Полный URL с параметром ?start= и якорем #postId
@@ -916,7 +927,6 @@ public function getKunenaPostUrl(int $postId): string
 
     return $fullUrl;
 }
-
 /**
  * Получает количество сообщений, отображаемых на одной странице темы Kunena,
  * с обработкой ошибок и выводом сообщения в админке.
