@@ -28,6 +28,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Filter\InputFilter;
 use Joomla\Component\Content\Site\Helper\RouteHelper;
 use Joomla\CMS\Access\Access;
+use KunenaFactory;
 
 /**
  * Article Model
