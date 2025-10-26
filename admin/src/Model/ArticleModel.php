@@ -916,9 +916,6 @@ public function getKunenaPostUrl(int $postId): string
 
     return $fullUrl;
 }
-    
-use Joomla\CMS\Factory;
-use Joomla\Registry\Registry; 
 
 /**
  * Получает количество сообщений, отображаемых на одной странице темы Kunena,
