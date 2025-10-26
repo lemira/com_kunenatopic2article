@@ -904,20 +904,32 @@ protected function getKunenaPostsPerPage(): int
 {
     $db = Factory::getDbo();
 
-    // Прямой запрос к таблице конфигурации Kunena
+    // ИСПРАВЛЕНО: Актуальное имя таблицы конфигурации Kunena
+    $tableName = '#__kunena_configuration'; 
+    $dbPrefix = $db->getPrefix();
+    
+    // Проверка существования таблицы перед запросом (на всякий случай)
+    $tables = $db->getTableList();
+    if (!in_array($dbPrefix . 'kunena_configuration', $tables)) {
+         // Fallback, если таблица с новым именем не найдена.
+         // Можно также добавить проверку старого имени '#__kunena_config'
+         return 20;
+    }
+
     $query = $db->getQuery(true)
         ->select($db->qn('value'))
-        ->from($db->qn('#__kunena_config'))
-        ->where($db->qn('name') . ' = ' . $db->q('messages_per_page')); // Ключ настройки в БД
+        ->from($db->qn($tableName))
+        ->where($db->qn('name') . ' = ' . $db->q('messages_per_page')); // Ключ настройки
 
     $db->setQuery($query, 0, 1);
     $value = $db->loadResult();
 
-    // Проверяем, удалось ли получить значение и является ли оно положительным числом
+    // Проверяем, удалось ли получить значение
     if (!empty($value) && is_numeric($value) && (int) $value > 0) {
         return (int) $value;
     }
-    // Fallback: возвращаем 20, если значение не найдено или недействительно.
+
+    // Fallback
     return 20; 
 }
     
