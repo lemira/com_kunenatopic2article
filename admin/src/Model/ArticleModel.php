@@ -917,6 +917,9 @@ protected function getKunenaPostsPerPage(): int
     if (!empty($value) && is_numeric($value) && (int) $value > 0) {
         return (int) $value;
     }
+    // Fallback: возвращаем 20, если значение не найдено или недействительно.
+    return 20; 
+}
     
 private function printHeadOfPost()
 {
