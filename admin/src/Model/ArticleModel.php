@@ -28,6 +28,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Filter\InputFilter;
 use Joomla\Component\Content\Site\Helper\RouteHelper;
 use Joomla\CMS\Access\Access;
+use Kunena\Forum\Factory as KunenaFactory;
 
 /**
  * Article Model
@@ -837,49 +838,86 @@ $infoString .= $idsString;
     
     /**
      * Генерирует URL открытого поста в Kunena
-     */
-function getKunenaPostUrl(int $postId): string
+ * @param int $postId ID поста в Kunena
+ * @return string Полный URL поста
+ */
+public function getKunenaPostUrl(int $postId): string
 {
-    // Пробуем разные способы получить настройки Kunena
     $db = Factory::getDbo();
     
-    // Способ 1: Прямой запрос к таблице настроек Kunena
-    $query = $db->getQuery(true);
-    $query->select($db->quoteName('params'))
-          ->from($db->quoteName('#__kunena_configuration'))
-          ->where($db->quoteName('id') . ' = 1');
-    
+    // Получаем настройку "Сообщений на странице"
+    $postsPerPage = $this->getKunenaPostsPerPage(); 
+
+    // --- Шаг 1: Получение catid, thread и времени создания поста (time) ---
+    $query = $db->getQuery(true)
+        ->select('m.catid, m.thread, m.time')
+        ->from($db->qn('#__kunena_messages', 'm'))
+        ->where($db->qn('m.id') . ' = ' . (int) $postId);
+
     $db->setQuery($query);
-    $kunenaParams = $db->loadResult();
-    
-    if ($kunenaParams) {
-        $params = json_decode($kunenaParams, true);
-        $postsPerPage = $params['messages_per_page'] ?? 20;
-    } else {
-        // Способ 2: Запасной вариант
- //       $postsPerPage = 20;
+    $postInfo = $db->loadObject();
+
+    if (!$postInfo) {
+        return ''; // Пост не найден
     }
+
+    $catid    = (int) $postInfo->catid;
+    $thread   = (int) $postInfo->thread;
+    $postTime = (int) $postInfo->time;
     
-    // Определяем позицию поста в теме
-    $query = $db->getQuery(true);
-    $query->select('COUNT(p1.id) as position')
-          ->from($db->quoteName('#__kunena_messages', 'p1'))
-          ->where($db->quoteName('p1.thread') . ' = ' . $db->quote($this->currentPost->thread))
-          ->where($db->quoteName('p1.id') . ' <= ' . $db->quote($postId))
-          ->where($db->quoteName('p1.hold') . ' = 0');
-    
+    // --- Шаг 2: Определение порядкового номера поста в теме ($postIndex) ---
+    // Считаем количество постов в той же теме, которые были опубликованы ДО текущего поста.
+    // Это дает нам его индекс (начиная с 0).
+    $query = $db->getQuery(true)
+        ->select('COUNT(*)')
+        ->from($db->qn('#__kunena_messages', 'm'))
+        ->where([
+            $db->qn('m.thread') . ' = ' . $thread,
+            $db->qn('m.time') . ' < ' . $postTime
+        ]);
+
     $db->setQuery($query);
-    $position = $db->loadResult();
+    $postIndex = (int) $db->loadResult(); 
     
-    // Вычисляем номер страницы
-    $page = floor(($position - 1) / $postsPerPage);
-    $start = $page * $postsPerPage;
+    // --- Шаг 3: Расчет параметра ?start= ---
+    // start - это индекс первого поста на странице, которая содержит наш пост.
+    $start = (int) (floor($postIndex / $postsPerPage) * $postsPerPage);
+
+    // --- Шаг 4: Формирование полного URL ---
     
-    // Создаем базовый URL для Kunena темы
-    $url = "index.php?option=com_kunena&view=topic&catid={$this->currentPost->catid}&id={$this->currentPost->thread}&start={$start}#{$postId}";
+    // Формат URL: /index.php/forum/{catid}/{thread}
+    $baseUrl = Uri::root() . "index.php/forum/{$catid}/{$thread}";
     
-    // Универсальное преобразование через Route
-    return Route::_($url, false);
+    // Добавляем параметр start и якорь (#postId)
+    $fullUrl = "{$baseUrl}?start={$start}#{$postId}";
+
+    return $fullUrl;
+}
+
+/**
+ * Получает количество сообщений, отображаемых на одной странице темы Kunena, 
+ * используя Kunena API.
+ *
+ * @return int Количество сообщений на странице.
+ */
+protected function getKunenaPostsPerPage(): int
+{
+    // Проверка, что класс KunenaFactory существует, чтобы избежать фатальной ошибки,
+    // если Kunena не установлена или не загружена.
+    if (!class_exists('Kunena\Forum\Factory')) {
+        // Fallback: возвращаем стандартное значение Kunena, если API недоступно.
+        return 20; 
+    }
+
+    try {
+        $config = KunenaFactory::getConfig();
+        // Свойство называется messages_per_page в конфигурации Kunena.
+        return (int)$config->messages_per_page;
+    } catch (\Exception $e) {
+        // Логирование ошибки или возврат значения по умолчанию в случае сбоя API
+        // Factory::getApplication()->enqueueMessage('Ошибка при получении настроек Kunena: ' . $e->getMessage(), 'warning');
+        return 20;
+    }
 }
     
 private function printHeadOfPost()
