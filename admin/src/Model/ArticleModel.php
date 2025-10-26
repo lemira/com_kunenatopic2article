@@ -758,7 +758,7 @@ private function traverseTree($postId, $level, $children, &$postIdList, &$postLe
    /**
      * Формирование информационной строки о посте
      * @return  string  Информационная строка
-    
+     */
  private function createPostInfoString()
 {
     if ($this->currentPost === null) {
@@ -785,11 +785,11 @@ private function traverseTree($postId, $level, $children, &$postIdList, &$postLe
 if (!empty($this->currentPost->parent)) {
     if ($this->params->kunena_post_link) {
         $parentUrl = $this->getKunenaPostUrl($this->currentPost->parent);
-        $idsString .= ' << <a href="' . htmlspecialchars($parentUrl, ENT_QUOTES, 'UTF-8') 
+        $idsString .= ' ⟸ <a href="' . htmlspecialchars($parentUrl, ENT_QUOTES, 'UTF-8') 
                    . '" target="_blank" rel="noopener noreferrer">#' 
                    . $this->currentPost->parent . '</a>';
     } else {
-        $idsString .= ' << #' . $this->currentPost->parent;
+        $idsString .= ' ⟸ #' . $this->currentPost->parent; // '⬅' U+2B05, '⮜' U+2B9C, '👈' U+1F448, '&lArr;' ⇐, '&#9754;' ☚, '←', '◀'
     }
 }
 $infoString .= $idsString;
@@ -833,65 +833,6 @@ $infoString .= $idsString;
    $infoString .= '<br /></div>';   
     
     return $infoString;
-}
- */
-
-function createPostInfoString() {
-    $idsString = '';
-    
-    // Основной номер поста
-    if ($this->params->kunena_post_link) {
-        $currentUrl = $this->getKunenaPostUrl($this->currentPost->id);
-        $idsString .= '<a href="' . htmlspecialchars($currentUrl, ENT_QUOTES, 'UTF-8') 
-                   . '" target="_blank" rel="noopener noreferrer">#' 
-                   . $this->currentPost->id . '</a>';
-    } else {
-        $idsString .= '#' . $this->currentPost->id;
-    }
-    
-    // Родительский пост с различными вариантами стрелок
-    if (!empty($this->currentPost->parent)) {
-        $separators = [
-            '⬅',        // U+2B05
-            '⮜',        // U+2B9C  
-            '⮈',        // U+2B88
-            '👈',       // U+1F448
-            '&lArr;',   // ⇐
-            '&#9754;',  // ☚
-            '⟸',        // U+27F8
-            '🢒',        // U+1F892
-            '←',        // Простая стрелка влево
-            '◀',        // Черный указатель влево
-            '➤',        // Широкий указатель вправо (для обратной логики)
-        ];
-        
-        if ($this->params->kunena_post_link) {
-            $parentUrl = $this->getKunenaPostUrl($this->currentPost->parent);
-            $parentLink = '<a href="' . htmlspecialchars($parentUrl, ENT_QUOTES, 'UTF-8') 
-                        . '" target="_blank" rel="noopener noreferrer">#' 
-                        . $this->currentPost->parent . '</a>';
-        } else {
-            $parentLink = '#' . $this->currentPost->parent;
-        }
-        
-        // Вывод всех вариантов для тестирования
-        $idsString .= '<div style="margin: 10px 0; padding: 10px; background: #f5f5f5; border: 1px solid #ddd;">';
-        $idsString .= '<strong>Варианты символов наследования:</strong><br>';
-        
-        foreach ($separators as $index => $separator) {
-            $idsString .= 'Вариант ' . ($index + 1) . ': #' . $this->currentPost->id 
-                       . ' ' . $separator . ' ' . $parentLink . '<br>';
-        }
-        
-        $idsString .= '</div>';
-        
-        // А также стандартный вариант для текущего использования
-        $idsString .= '<div style="margin: 5px 0; font-weight: bold;">';
-        $idsString .= 'Текущий выбор: #' . $this->currentPost->id . ' ⬅ ' . $parentLink;
-        $idsString .= '</div>';
-    }
-    
-    return $idsString;
 }
     
     /**
