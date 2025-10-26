@@ -20,7 +20,6 @@ use Joomla\Registry\Registry;
 use Joomla\CMS\Date\Date;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
-use Joomla\CMS\Filter\OutputFilter;
 use Joomla\Database\DatabaseInterface;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Kunena\Bbcode\KunenaBbcode; 
@@ -28,6 +27,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Filter\InputFilter;
 use Joomla\Component\Content\Site\Helper\RouteHelper;
 use Joomla\CMS\Access\Access;
+use Joomla\CMS\Filter\Output as FilterOutput;
 
 /**
  * Article Model
@@ -188,7 +188,7 @@ class ArticleModel extends BaseDatabaseModel
             $this->currentArticle->title = $this->title;
            
             // Формируем уникальный алиас
-            $baseAlias = OutputFilter::stringURLSafe($this->title);
+            $baseAlias = FilterOutput::stringURLSafe($this->title); // дж
             $uniqueAlias = $this->getUniqueAlias($baseAlias);
             $this->currentArticle->alias = $uniqueAlias;
               
