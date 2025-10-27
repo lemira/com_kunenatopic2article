@@ -916,12 +916,10 @@ public function getKunenaPostUrl(int $postId): string
     
     // Составляем базовый URL. Формат: /forum/{cat_slug}/{topic_slug}
     $baseUrl = Uri::root() . "forum/{$catSlug}/{$topicSlug}";
-    $baseUrl = trim($baseUrl);   // Очищаем от возможных внешних пробелов
-    
+    $baseUrl = trim($baseUrl);     // Очищаем от возможных внешних пробелов
     // Полный URL с параметром ?start= и якорем #postId
     $fullUrl = "{$baseUrl}?start={$start}#{$postId}";
-
-    return $fullUrl;
+    return trim($fullUrl); // Возвращаем полностью очищенный URL
 }
     
 /**
