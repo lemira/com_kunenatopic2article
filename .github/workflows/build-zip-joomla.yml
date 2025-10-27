@@ -1,17 +1,17 @@
 name: Build Joomla Package
 
 on:
-  workflow_dispatch:  # Запуск вручную без выбора ветки
+  workflow_dispatch:  # Запуск вручную
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repository from 'interface' branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref }}  # Автоматически выбирает текущую ветку
+          ref: interface  # Явно указана ветка
 
       - name: Set timestamp variable (Берлинское время)
         run: |
