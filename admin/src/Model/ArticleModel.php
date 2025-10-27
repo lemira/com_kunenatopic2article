@@ -835,11 +835,6 @@ $infoString .= $idsString;
     return $infoString;
 }
     
-    /**
-     * Генерирует URL открытого поста в Kunena
- * @param int $postId ID поста в Kunena
- * @return string Полный URL поста
- */
 /**
  * Генерирует полный URL до конкретного поста в Kunena, используя SEF-совместимые slug-и.
  *
@@ -849,6 +844,7 @@ $infoString .= $idsString;
 public function getKunenaPostUrl(int $postId): string
 {
     $db = Factory::getDbo();
+    // Получаем корректное количество постов на странице
     $postsPerPage = $this->getKunenaPostsPerPage(); 
 
     // --- Шаг 1: Получение данных поста (catid, thread, time) ---
@@ -888,13 +884,12 @@ public function getKunenaPostUrl(int $postId): string
 
     // --- Шаг 3: Генерация Slug-ов ---
     
-    // ИСПРАВЛЕНИЕ 1: Если alias категории уже содержит ID (например, '8-geschichte-und'),
-    // мы используем его напрямую, чтобы избежать дублирования '8-8-geschichte-und'.
+    // Используем alias категории напрямую (т.к. он уже содержит ID, например, '8-geschichte-und')
     $catSlug = $catAlias ?: 'category';
     
-    // ИСПРАВЛЕНИЕ 2: Генерируем slug темы из правильного subject
+    // Генерируем slug темы
     $topicAlias = FilterOutput::stringURLSafe($topicSubject); 
-    $topicAlias = $topicAlias ?: 'topic'; // Fallback
+    $topicAlias = $topicAlias ?: 'topic'; 
     
     // Формат slug темы: {thread}-{topic_alias}
     $topicSlug = "{$thread}-{$topicAlias}";
@@ -902,31 +897,35 @@ public function getKunenaPostUrl(int $postId): string
     // --- Шаг 4: Расчет параметра ?start= ---
 
     // Подсчет постов, которые были опубликованы ДО текущего поста (индекс поста)
+    // ВАЖНО: Учитываем только опубликованные посты (m.hold = 0)
     $query = $db->getQuery(true)
         ->select('COUNT(*)')
         ->from($db->qn('#__kunena_messages', 'm'))
         ->where([
             $db->qn('m.thread') . ' = ' . $thread,
-            $db->qn('m.time') . ' < ' . $postTime
+            $db->qn('m.time') . ' < ' . $postTime,
+            $db->qn('m.hold') . ' = 0' // Учитываем только опубликованные
         ]);
 
     $db->setQuery($query);
     $postIndex = (int) $db->loadResult(); 
     
     // Расчет параметра ?start=
-    $postsPerPage = $this->getKunenaPostsPerPage(); // Предполагаем, что эта функция корректна
     $start = (int) (floor($postIndex / $postsPerPage) * $postsPerPage);
 
     // --- Шаг 5: Формирование полного SEF URL ---
     
-    // Составляем базовый URL. Формат: /forum/{cat_slug}/{topic_slug}
+    // Формат: /forum/{cat_slug}/{topic_slug}
     $baseUrl = Uri::root() . "forum/{$catSlug}/{$topicSlug}";
+    $baseUrl = trim($baseUrl); 
     
-    // Полный URL с параметром ?start= и якорем #postId
-    $fullUrl = "{$baseUrl}?start={$start}#{$postId}";
+    // Полный URL с параметром ?start= и безопасным ЯКОРЕМ KUNENA (#kmsg)
+    $fullUrl = "{$baseUrl}?start={$start}#kmsg{$postId}";
 
-    return $fullUrl;
+    // Возвращаем полностью очищенный URL
+    return trim($fullUrl);
 }
+    
 /**
  * Получает количество сообщений, отображаемых на одной странице темы Kunena,
  * с обработкой ошибок и выводом сообщения в админке.
