@@ -8,6 +8,7 @@
             description="COM_KUNENATOPIC2ARTICLE_TOPIC_SELECTION_DESC"
             default="0"
         />
+        
         <field
             name="article_category"
             type="category"
