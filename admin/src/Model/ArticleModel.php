@@ -28,6 +28,7 @@ use Joomla\CMS\Filter\InputFilter;
 use Joomla\Component\Content\Site\Helper\RouteHelper;
 use Joomla\CMS\Access\Access;
 use Joomla\CMS\Filter\OutputFilter as FilterOutput;
+use Kunena\Forum\Libraries\Route\KunenaRoute;
 
 /**
  * Article Model
@@ -844,13 +845,13 @@ $infoString .= $idsString;
 public function getKunenaPostUrl(int $postId): string
 {
     $db = Factory::getDbo();
-    $postsPerPage = $this->getKunenaPostsPerPage(); 
+    $postsPerPage = $this->getKunenaPostsPerPage();
 
-    // 1. Получаем пост: catid, thread, ordering, id
+    // 1. Получаем данные поста
     $query = $db->getQuery(true)
         ->select('m.catid, m.thread, m.ordering, m.id')
-        ->from($db->qn('#__kunena_messages', 'm'))
-        ->where($db->qn('m.id') . ' = ' . (int) $postId);
+        ->from('#__kunena_messages AS m')
+        ->where('m.id = ' . (int) $postId);
 
     $db->setQuery($query);
     $post = $db->loadObject();
@@ -859,55 +860,32 @@ public function getKunenaPostUrl(int $postId): string
         return '';
     }
 
-    $catid = (int) $post->catid;
-    $thread = (int) $post->thread;
-    $ordering = (int) $post->ordering;
+    $catid     = (int) $post->catid;
+    $thread    = (int) $post->thread;
+    $ordering  = (int) $post->ordering;
 
-    // 2. Slug'и
-    $catAlias = $db->setQuery(
-        $db->getQuery(true)
-            ->select('alias')
-            ->from('#__kunena_categories')
-            ->where('id = ' . $catid)
-    )->loadResult() ?: 'category';
-
-    $topicSubject = $db->setQuery(
-        $db->getQuery(true)
-            ->select('subject')
-            ->from('#__kunena_topics')
-            ->where('id = ' . $thread)
-    )->loadResult();
-
-    $topicAlias = FilterOutput::stringURLSafe($topicSubject) ?: 'topic';
-    $topicSlug = "{$thread}-{$topicAlias}";
-
-    // 3. Расчёт start
+    // 2. Расчёт start
     $start = 0;
 
     if ($ordering > 0) {
-        // Первый пост темы — по ordering
+        // Первый пост — по ordering
         $query = $db->getQuery(true)
             ->select('COUNT(*)')
             ->from('#__kunena_messages')
-            ->where([
-                'thread = ' . $thread,
-                'ordering < ' . $ordering,
-                'hold = 0'
-            ]);
+            ->where('thread = ' . $thread)
+            ->where('ordering < ' . $ordering)
+            ->where('hold = 0');
         $db->setQuery($query);
         $postIndex = (int) $db->loadResult();
         $start = floor($postIndex / $postsPerPage) * $postsPerPage;
     } else {
         // Ответ — по id
-        // Находим ID первого поста темы
         $firstPostId = $db->setQuery(
             $db->getQuery(true)
                 ->select('id')
                 ->from('#__kunena_messages')
-                ->where([
-                    'thread = ' . $thread,
-                    'ordering = 1'
-                ])
+                ->where('thread = ' . $thread)
+                ->where('ordering = 1')
                 ->order('id ASC')
         )->loadResult();
 
@@ -915,25 +893,26 @@ public function getKunenaPostUrl(int $postId): string
             return '';
         }
 
-        // Считаем ответы ДО текущего (по id)
         $query = $db->getQuery(true)
             ->select('COUNT(*)')
             ->from('#__kunena_messages')
-            ->where([
-                'thread = ' . $thread,
-                'id > ' . $firstPostId,
-                'id < ' . $postId,
-                'hold = 0'
-            ]);
+            ->where('thread = ' . $thread)
+            ->where('id > ' . $firstPostId)
+            ->where('id < ' . $postId)
+            ->where('hold = 0');
         $db->setQuery($query);
         $replyIndex = (int) $db->loadResult();
-
         $start = floor($replyIndex / $postsPerPage) * $postsPerPage;
     }
 
-    // 4. URL
-    $baseUrl = Uri::root() . "forum/{$catAlias}/{$topicSlug}";
-    $fullUrl = $start > 0 ? "{$baseUrl}?start={$start}#{$postId}" : "{$baseUrl}#{$postId}";
+    // 3. Генерация URL через KunenaRoute
+    $route = "index.php?option=com_kunena&view=topic&catid={$catid}&id={$thread}&mesid={$postId}";
+    if ($start > 0) {
+        $route .= "&start={$start}";
+    }
+
+    $fullUrl = KunenaRoute::_($route, false); // false = не экранировать
+    $fullUrl .= "#{$postId}";
 
     return $fullUrl;
 }
