@@ -846,61 +846,96 @@ public function getKunenaPostUrl(int $postId): string
     $db = Factory::getDbo();
     $postsPerPage = $this->getKunenaPostsPerPage(); 
 
-    // 1. Получение данных пост post
+    // 1. Получаем пост: catid, thread, ordering, id
     $query = $db->getQuery(true)
-        ->select('m.catid, m.thread')
+        ->select('m.catid, m.thread, m.ordering, m.id')
         ->from($db->qn('#__kunena_messages', 'm'))
         ->where($db->qn('m.id') . ' = ' . (int) $postId);
 
     $db->setQuery($query);
-    $postInfo = $db->loadObject();
+    $post = $db->loadObject();
 
-    if (!$postInfo) {
+    if (!$post) {
         return '';
     }
 
-    $catid  = (int) $postInfo->catid;
-    $thread = (int) $postInfo->thread;
+    $catid = (int) $post->catid;
+    $thread = (int) $post->thread;
+    $ordering = (int) $post->ordering;
 
-    // 2. Slug категории
-    $query = $db->getQuery(true)
-        ->select($db->qn('alias'))
-        ->from($db->qn('#__kunena_categories'))
-        ->where($db->qn('id') . ' = ' . $catid);
-    $db->setQuery($query);
-    $catAlias = $db->loadResult() ?: 'category';
+    // 2. Slug'и
+    $catAlias = $db->setQuery(
+        $db->getQuery(true)
+            ->select('alias')
+            ->from('#__kunena_categories')
+            ->where('id = ' . $catid)
+    )->loadResult() ?: 'category';
 
-    // 3. Slug темы
-    $query = $db->getQuery(true)
-        ->select($db->qn('subject'))
-        ->from($db->qn('#__kunena_topics'))
-        ->where($db->qn('id') . ' = ' . $thread);
-    $db->setQuery($query);
-    $topicSubject = $db->loadResult();
+    $topicSubject = $db->setQuery(
+        $db->getQuery(true)
+            ->select('subject')
+            ->from('#__kunena_topics')
+            ->where('id = ' . $thread)
+    )->loadResult();
 
     $topicAlias = FilterOutput::stringURLSafe($topicSubject) ?: 'topic';
     $topicSlug = "{$thread}-{$topicAlias}";
 
-    // 4. Расчёт start — ПО ID, НЕ ПО TIME!
-    $query = $db->getQuery(true)
-        ->select('COUNT(*)')
-        ->from($db->qn('#__kunena_messages', 'm'))
-        ->where([
-            $db->qn('m.thread') . ' = ' . $thread,
-            $db->qn('m.id') . ' < ' . $postId,
-            $db->qn('m.hold') . ' = 0'
-        ]);
+    // 3. Расчёт start
+    $start = 0;
 
-    $db->setQuery($query);
-    $postIndex = (int) $db->loadResult();
+    if ($ordering > 0) {
+        // Первый пост темы — по ordering
+        $query = $db->getQuery(true)
+            ->select('COUNT(*)')
+            ->from('#__kunena_messages')
+            ->where([
+                'thread = ' . $thread,
+                'ordering < ' . $ordering,
+                'hold = 0'
+            ]);
+        $db->setQuery($query);
+        $postIndex = (int) $db->loadResult();
+        $start = floor($postIndex / $postsPerPage) * $postsPerPage;
+    } else {
+        // Ответ — по id
+        // Находим ID первого поста темы
+        $firstPostId = $db->setQuery(
+            $db->getQuery(true)
+                ->select('id')
+                ->from('#__kunena_messages')
+                ->where([
+                    'thread = ' . $thread,
+                    'ordering = 1'
+                ])
+                ->order('id ASC')
+        )->loadResult();
 
-    $start = (int) (floor($postIndex / $postsPerPage) * $postsPerPage);
+        if (!$firstPostId) {
+            return '';
+        }
 
-    // 5. Формирование URL
+        // Считаем ответы ДО текущего (по id)
+        $query = $db->getQuery(true)
+            ->select('COUNT(*)')
+            ->from('#__kunena_messages')
+            ->where([
+                'thread = ' . $thread,
+                'id > ' . $firstPostId,
+                'id < ' . $postId,
+                'hold = 0'
+            ]);
+        $db->setQuery($query);
+        $replyIndex = (int) $db->loadResult();
+
+        $start = floor($replyIndex / $postsPerPage) * $postsPerPage;
+    }
+
+    // 4. URL
     $baseUrl = Uri::root() . "forum/{$catAlias}/{$topicSlug}";
-    $fullUrl = "{$baseUrl}?start={$start}#{$postId}";
+    $fullUrl = $start > 0 ? "{$baseUrl}?start={$start}#{$postId}" : "{$baseUrl}#{$postId}";
 
-    return rtrim($fullUrl, '?'); // на всякий случай
+    return $fullUrl;
 }
  
 /**
