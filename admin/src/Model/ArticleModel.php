@@ -248,7 +248,7 @@ class ArticleModel extends BaseDatabaseModel
             
             // Формируем URL для статьи
             $link = 'index.php?option=com_content&view=article&id=' . $this->articleId . '&catid=' . $this->params->article_category;   // Формируем базовый маршрут
-            $url = Route::_($link); //SEF включён: /article-slug, Для фронтенда, & остаётся, В Kunena SEF-правила, Фавикон
+            $url = Route::link('site', $link); //фронтэнд, SEF включён: /article-slug, Для фронтенда, & остаётся, В Kunena SEF-правила, Фавикон
 
             // Добавляем ссылку и заголовок в массив для последующего вывода
             $this->articleLinks[] = [
