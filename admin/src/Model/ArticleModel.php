@@ -847,7 +847,7 @@ public function getKunenaPostUrl(int $postId): string
     $db = Factory::getDbo();
     $postsPerPage = $this->getKunenaPostsPerPage();
 
-    // 1. Получаем данные поста
+    // 1. Данные поста
     $query = $db->getQuery(true)
         ->select('m.catid, m.thread, m.ordering, m.id')
         ->from('#__kunena_messages AS m')
@@ -868,7 +868,7 @@ public function getKunenaPostUrl(int $postId): string
     $start = 0;
 
     if ($ordering > 0) {
-        // Первый пост — по ordering
+        // Первый пост
         $query = $db->getQuery(true)
             ->select('COUNT(*)')
             ->from('#__kunena_messages')
@@ -879,7 +879,7 @@ public function getKunenaPostUrl(int $postId): string
         $postIndex = (int) $db->loadResult();
         $start = floor($postIndex / $postsPerPage) * $postsPerPage;
     } else {
-        // Ответ — по id
+        // Ответ
         $firstPostId = $db->setQuery(
             $db->getQuery(true)
                 ->select('id')
@@ -905,18 +905,18 @@ public function getKunenaPostUrl(int $postId): string
         $start = floor($replyIndex / $postsPerPage) * $postsPerPage;
     }
 
-    // 3. Генерация URL через KunenaRoute
-    $route = "index.php?option=com_kunena&view=topic&catid={$catid}&id={$thread}&mesid={$postId}";
+    // 3. URL через Joomla Route
+    $rawUrl = "index.php?option=com_kunena&view=topic&catid={$catid}&id={$thread}&mesid={$postId}";
     if ($start > 0) {
-        $route .= "&start={$start}";
+        $rawUrl .= "&start={$start}";
     }
 
-    $fullUrl = KunenaRoute::_($route, false); // false = не экранировать
+    $fullUrl = Route::_($rawUrl, false);
     $fullUrl .= "#{$postId}";
 
     return $fullUrl;
-}
- 
+} 
+
 /**
  * Получает количество сообщений, отображаемых на одной странице темы Kunena,
  * с обработкой ошибок и выводом сообщения в админке.
