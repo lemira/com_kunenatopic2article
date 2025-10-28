@@ -847,76 +847,45 @@ public function getKunenaPostUrl(int $postId): string
     $db = Factory::getDbo();
     $postsPerPage = $this->getKunenaPostsPerPage();
 
-    // 1. Данные поста
+    // --- Данные поста ---
     $query = $db->getQuery(true)
-        ->select('m.catid, m.thread, m.ordering, m.id')
+        ->select('m.catid, m.thread')
         ->from('#__kunena_messages AS m')
         ->where('m.id = ' . (int) $postId);
-
     $db->setQuery($query);
     $post = $db->loadObject();
+    if (!$post) return '';
 
-    if (!$post) {
-        return '';
-    }
+    $catid  = (int) $post->catid;
+    $thread = (int) $post->thread;
 
-    $catid     = (int) $post->catid;
-    $thread    = (int) $post->thread;
-    $ordering  = (int) $post->ordering;
+    // --- Slug'и ---
+    $catAlias = $db->setQuery(
+        $db->getQuery(true)->select('alias')->from('#__kunena_categories')->where('id = ' . $catid)
+    )->loadResult() ?: 'category';
 
-    // 2. Расчёт start
-    $start = 0;
+    $topicSubject = $db->setQuery(
+        $db->getQuery(true)->select('subject')->from('#__kunena_topics')->where('id = ' . $thread)
+    )->loadResult();
 
-    if ($ordering > 0) {
-        // Первый пост
-        $query = $db->getQuery(true)
-            ->select('COUNT(*)')
-            ->from('#__kunena_messages')
-            ->where('thread = ' . $thread)
-            ->where('ordering < ' . $ordering)
-            ->where('hold = 0');
-        $db->setQuery($query);
-        $postIndex = (int) $db->loadResult();
-        $start = floor($postIndex / $postsPerPage) * $postsPerPage;
-    } else {
-        // Ответ
-        $firstPostId = $db->setQuery(
-            $db->getQuery(true)
-                ->select('id')
-                ->from('#__kunena_messages')
-                ->where('thread = ' . $thread)
-                ->where('ordering = 1')
-                ->order('id ASC')
-        )->loadResult();
+    $topicAlias = FilterOutput::stringURLSafe($topicSubject) ?: 'topic';
+    $topicSlug = "{$thread}-{$topicAlias}";
 
-        if (!$firstPostId) {
-            return '';
-        }
+    // --- ?start= ОТ firstPostId ---
+    $offset = $postId - $this->firstPostId;
+    $start  = floor($offset / $postsPerPage) * $postsPerPage;
 
-        $query = $db->getQuery(true)
-            ->select('COUNT(*)')
-            ->from('#__kunena_messages')
-            ->where('thread = ' . $thread)
-            ->where('id > ' . $firstPostId)
-            ->where('id < ' . $postId)
-            ->where('hold = 0');
-        $db->setQuery($query);
-        $replyIndex = (int) $db->loadResult();
-        $start = floor($replyIndex / $postsPerPage) * $postsPerPage;
-    }
-
-    // 3. URL через Joomla Route
-    $rawUrl = "index.php?option=com_kunena&view=topic&catid={$catid}&id={$thread}&mesid={$postId}";
+    // --- URL ---
+    $baseUrl = Uri::root() . "forum/{$catAlias}/{$topicSlug}";
+    $fullUrl = $baseUrl;
     if ($start > 0) {
-        $rawUrl .= "&start={$start}";
+        $fullUrl .= "?start={$start}";
     }
-
-    $fullUrl = Route::_($rawUrl, false);
     $fullUrl .= "#{$postId}";
 
     return $fullUrl;
-} 
-
+}
+    
 /**
  * Получает количество сообщений, отображаемых на одной странице темы Kunena,
  * с обработкой ошибок и выводом сообщения в админке.
