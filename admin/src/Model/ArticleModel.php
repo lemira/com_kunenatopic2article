@@ -877,13 +877,8 @@ public function getKunenaPostUrl(int $postId): string
     $start = floor($postsBeforeCurrent / $postsPerPage) * $postsPerPage;
     
     // Формируем URL
-    $fullUrl = Uri::root() . "forum/{$catAlias}/{$post->thread}-{$topicAlias}?start={$start}#{$postId}";
-
-    // ПЕРЕД return $fullUrl добавьте: ОТЛАДКА
-Factory::getApplication()->enqueueMessage(
-    "Пост #{$postId}: time={$post->time}, postsBeforе={$postsBeforeCurrent}, start={$start}, perPage={$postsPerPage}", 
-    'info'
-);
+ //   $fullUrl = Uri::root() . "forum/{$catAlias}/{$post->thread}-{$topicAlias}?start={$start}#{$postId}";
+$fullUrl = Uri::root() . "forum/{$catAlias}/{$post->thread}-{$topicAlias}?start={$start}&scrollTo={$postId}"; // Задержка
     
     return $fullUrl;
 }
