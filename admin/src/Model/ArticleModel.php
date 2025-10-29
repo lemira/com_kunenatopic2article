@@ -29,6 +29,7 @@ use Joomla\Component\Content\Site\Helper\RouteHelper;
 use Joomla\CMS\Access\Access;
 use Joomla\CMS\Filter\OutputFilter as FilterOutput;
 use Kunena\Forum\Libraries\Route\KunenaRoute;
+use Kunena\Forum\Libraries\Route\KunenaRoute;
 
 /**
  * Article Model
@@ -843,6 +844,20 @@ $infoString .= $idsString;
  */
 public function getKunenaPostUrl(int $postId): string
 {
+   try {
+        // Пробуем загрузить Kunena API
+        $kunenaPath = JPATH_ROOT . '/components/com_kunena/kunena.php';
+        if (file_exists($kunenaPath)) {
+            require_once $kunenaPath;
+        }
+        
+        // Пробуем использовать родной метод
+        if (class_exists('Kunena\Forum\Libraries\Route\KunenaRoute')) {
+            $url = KunenaRoute::getMessageUrl($postId, '', 0, '');
+            return Uri::root(true) . $url; // Добавляем домен
+        }
+    } catch (\Exception $e) {
+    
     $postsPerPage = $this->getKunenaPostsPerPage();
     
     // --- Данные поста ---
@@ -881,6 +896,7 @@ public function getKunenaPostUrl(int $postId): string
     $fullUrl .= "#{$postId}";
     
     return $fullUrl;
+   }     
 }
     
 /**
