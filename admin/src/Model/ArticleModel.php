@@ -93,28 +93,29 @@ class ArticleModel extends BaseDatabaseModel
         try {
             // Получаем ID первого поста
             $firstPostId = $this->params->topic_selection; 
-            $this->firstPostId = $firstPostId; 
-           
-        //    Factory::getApplication()->enqueueMessage('ArticleModel $firstPostId: ' . $firstPostId, 'info'); // ОТЛАДКА          
-              $this->postId = $firstPostId; // текущий id 
-              $this->openPost($this->postId); // Открываем первый пост темы для доступа к его параметрам
-              $this->subject = $this->currentPost->subject;
-              $this->threadId = (int) $this->currentPost->thread; // Получаем Id темы
-        //   Factory::getApplication()->enqueueMessage('createArticlesFromTopic $subject: ' . $this->subject, 'info'); // ОТЛАДКА 
-              $this->topicAuthorId = $this->currentPost->userid;
-              $this->reminderLines = ""; // у первого поста нет строк напоминания
+            $this->firstPostId = $firstPostId;
+                //    Factory::getApplication()->enqueueMessage('ArticleModel $firstPostId: ' . $firstPostId, 'info'); // ОТЛАДКА          
+            
+            $majorParams = $this->getMajorParams($firstPostId);
+            $this->threadId = $majorParams['thread'];
+            $this->subject = $majorParams['subject'];
+            $this->topicAuthorId = $majorParams['userid'];
 
-              // Формируем список ID постов в зависимости от схемы обхода; должно быть после открытия первого поста!
-           $this->openPost($firstPostId);
-           $this->postIdList = $this->buildFlatPostIdList($firstPostId); // Создаем всегда хронологический список (flat нужен для URL постов)
-           $this->postIds_time = $this->postIdList; // Исп-ся для URL постов
-            if ($this->params->post_transfer_scheme === 1) {
+             // Формируем список ID постов в зависимости от схемы обхода; должно быть получены главные Major параметры первого поста!
+            $this->postIdList = $this->buildFlatPostIdList($firstPostId); // Создаем всегда хронологический список (flat нужен для URL постов)
+            $this->postIds_time = $this->postIdList; // Исп-ся для URL постов в обоих схемах
+            if ($this->params->post_transfer_scheme === 1) { // если flat
                // $this->currentIndex = 0; // для infoString 
                 $baum = $this->buildTreePostIdList($firstPostId);
                 $this->postIdList = $baum['postIds']; // для Tree меняем $this->postIdList
                 $this->postLevelList = $baum['levels'];
-                }
-
+                     }
+            
+              $this->postId = $firstPostId; // текущий id
+              $this->openPost($this->postId); // Открываем первый пост темы для доступа к его параметрам
+//   Factory::getApplication()->enqueueMessage('createArticlesFromTopic $subject: ' . $this->subject, 'info'); // ОТЛАДКА 
+              $this->reminderLines = ""; // у первого поста нет строк напоминания
+      
                // для preview - ограничиваем 2 постами 
             if ($isPreview) {
                 $this->postIdList = array_slice($this->postIdList, 0, 2);
@@ -123,7 +124,7 @@ class ArticleModel extends BaseDatabaseModel
             
               $this->currentIndex = 0; // в nextPost() начинаем переход сразу к элементу (1), т.к. (0) = $topicId = $firstPostId
                     
-               $this->openArticle();     // Открываем первую статью
+              $this->openArticle();     // Открываем первую статью
                     
                // Основной цикл обработки постов
                 while ($this->postId != 0) {
@@ -1336,5 +1337,26 @@ private function createParamsTable()
         throw new \Exception('Ошибка создания таблицы параметров: ' . $e->getMessage());
     }
 }
+
+public function getMajorParams($postId)
+{
+    $query = $this->db->getQuery(true)
+        ->select([
+            $this->db->quoteName('thread'),
+            $this->db->quoteName('subject'), 
+            $this->db->quoteName('userid')
+        ])
+        ->from($this->db->quoteName('#__kunena_messages'))
+        ->where($this->db->quoteName('id') . ' = ' . (int)$postId);
+    
+    $this->db->setQuery($query);
+    $result = $this->db->loadObject();
+    
+    return [
+        'thread' => $result->thread,
+        'subject' => $result->subject,
+        'userid' => $result->userid
+    ];
+}    
     
 } // КОНЕЦ КЛАССА
