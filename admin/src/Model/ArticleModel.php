@@ -776,23 +776,9 @@ private function traverseTree($postId, $level, $children, &$postIdList, &$postLe
     if ($this->params->kunena_post_link) {
    $postUrl = $this->getKunenaPostUrl($this->currentPost->id);
         
-//   $idsString .= ' <a href="' . htmlspecialchars($postUrl, ENT_QUOTES, 'UTF-8') 
-  //          . '" target="_blank" rel="noopener noreferrer">' 
-    //        . '#' . $this->currentPost->id . '</a>';
-
 $idsString .= ' <a href="' . htmlspecialchars($postUrl, ENT_QUOTES, 'UTF-8') 
-           . '" target="_blank" rel="noopener noreferrer" '
-           . 'onclick="'
-           . 'event.preventDefault(); '
-           . 'const url = this.href; '
-           . 'const win = window.open(url, \'_blank\'); '
-           . 'setTimeout(() => { '
-           . '  if (win) { '
-           . '    win.location.href = url + \'#' . $this->currentPost->id . '\'; '
-           . '  } '
-           . '}, 1000);'  // Увеличили задержку до 1 секунды
-           . '" >#' . $this->currentPost->id . '</a>';
-
+           . '" target="_blank" rel="noopener noreferrer">#' 
+           . $this->currentPost->id . '</a>';
         
 } else {
     $idsString .= '#' . $this->currentPost->id;
@@ -869,7 +855,7 @@ public function getKunenaPostUrl(int $postId): string
     $this->db->setQuery($query);
     $post = $this->db->loadObject();
     
-    // Слаги категории и темы
+    // Слаги
     $catAlias = $this->db->setQuery(
         $this->db->getQuery(true)->select('alias')->from('#__kunena_categories')->where('id = ' . $post->catid)
     )->loadResult() ?: 'category';
@@ -879,7 +865,7 @@ public function getKunenaPostUrl(int $postId): string
     )->loadResult();
     $topicAlias = FilterOutput::stringURLSafe($topicSubject) ?: 'topic';
     
-    // КРИТИЧНО: считаем позицию по времени (как делает Kunena)
+    // Считаем позицию
     $query = $this->db->getQuery(true)
         ->select('COUNT(*)')
         ->from('#__kunena_messages')
@@ -892,9 +878,9 @@ public function getKunenaPostUrl(int $postId): string
     $postsBeforeCurrent = (int) $this->db->setQuery($query)->loadResult();
     $start = floor($postsBeforeCurrent / $postsPerPage) * $postsPerPage;
     
-    // Формируем URL
-  $fullUrl = Uri::root() . "forum/{$catAlias}/{$post->thread}-{$topicAlias}?start={$start}#{$postId}";
- 
+    // ВАЖНО: добавляем параметр mesid для Kunena
+    $fullUrl = Uri::root() . "forum/{$catAlias}/{$post->thread}-{$topicAlias}?start={$start}&mesid={$postId}#message{$postId}";
+    
     return $fullUrl;
 }
     
