@@ -843,59 +843,76 @@ $infoString .= $idsString;
  */
 public function getKunenaPostUrl(int $postId): string
 {
-   try {
-        // Пробуем загрузить Kunena API
-        $kunenaPath = JPATH_ROOT . '/components/com_kunena/kunena.php';
+    try {
+        // Современный способ получения пути (Joomla 5)
+        $kunenaPath = JPATH_SITE . '/components/com_kunena/kunena.php';
+        
         if (file_exists($kunenaPath)) {
             require_once $kunenaPath;
         }
         
-        // Пробуем использовать родной метод
-        if (class_exists('Kunena\Forum\Libraries\Route\KunenaRoute')) {
-            $url = KunenaRoute::getMessageUrl($postId, '', 0, '');
-            return Uri::root(true) . $url; // Добавляем домен
+        // Пробуем использовать Kunena API
+        if (class_exists('Kunena\Forum\Libraries\Forum\Message\KunenaMessageHelper')) {
+            $message = \Kunena\Forum\Libraries\Forum\Message\KunenaMessageHelper::get($postId);
+            
+            if ($message && $message->exists()) {
+                $url = \Kunena\Forum\Libraries\Route\KunenaRoute::getMessageUrl($message);
+                
+                // Добавляем домен если нужно
+                if (strpos($url, 'http') !== 0) {
+                    $url = Uri::root(true) . $url;
+                }
+                
+                return $url;
+            }
         }
     } catch (\Exception $e) {
+        // Тихо переходим к fallback
+    }
     
+    // Наш собственный метод
+    return $this->buildKunenaPostUrlManually($postId);
+}
+
+private function buildKunenaPostUrlManually(int $postId): string
+{
     $postsPerPage = $this->getKunenaPostsPerPage();
     
-    // --- Данные поста ---
+    // Данные поста
     $query = $this->db->getQuery(true)
-        ->select('m.catid, m.thread')
+        ->select(['m.catid', 'm.thread', 'm.time'])
         ->from('#__kunena_messages AS m')
         ->where('m.id = ' . (int) $postId);
     $this->db->setQuery($query);
     $post = $this->db->loadObject();
     
-    $catid  = (int) $post->catid;
-    $thread = (int) $post->thread;
-    
-    // --- Slug'и ---
+    // Слаги
     $catAlias = $this->db->setQuery(
-        $this->db->getQuery(true)->select('alias')->from('#__kunena_categories')->where('id = ' . $catid)
+        $this->db->getQuery(true)->select('alias')->from('#__kunena_categories')->where('id = ' . $post->catid)
     )->loadResult() ?: 'category';
     
     $topicSubject = $this->db->setQuery(
-        $this->db->getQuery(true)->select('subject')->from('#__kunena_topics')->where('id = ' . $thread)
+        $this->db->getQuery(true)->select('subject')->from('#__kunena_topics')->where('id = ' . $post->thread)
     )->loadResult();
     $topicAlias = FilterOutput::stringURLSafe($topicSubject) ?: 'topic';
-    $topicSlug = "{$thread}-{$topicAlias}";
     
-    // --- Находим позицию в хронологическом списке ---
-    $position = array_search($postId, $this->postIds_time);
+    // Считаем позицию по времени (как Kunena)
+    $query = $this->db->getQuery(true)
+        ->select('COUNT(*)')
+        ->from('#__kunena_messages')
+        ->where([
+            'thread = ' . (int) $post->thread,
+            'hold = 0',
+            'time < ' . $this->db->quote($post->time)
+        ]);
     
-    // Вычисляем start
-    $start = floor($position / $postsPerPage) * $postsPerPage;
+    $postsBeforeCurrent = (int) $this->db->setQuery($query)->loadResult();
+    $start = floor($postsBeforeCurrent / $postsPerPage) * $postsPerPage;
     
-    // --- Формируем URL ---
-    $fullUrl = Uri::root() . "forum/{$catAlias}/{$topicSlug}";
-    if ($start > 0) {
-        $fullUrl .= "?start={$start}";
-    }
-    $fullUrl .= "#{$postId}";
+    // Формируем URL
+    $fullUrl = Uri::root() . "forum/{$catAlias}/{$post->thread}-{$topicAlias}?start={$start}#{$postId}";
     
     return $fullUrl;
-   }     
 }
     
 /**
