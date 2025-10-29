@@ -105,11 +105,12 @@ class ArticleModel extends BaseDatabaseModel
               $this->reminderLines = ""; // у первого поста нет строк напоминания
 
               // Формируем список ID постов в зависимости от схемы обхода; должно быть после открытия первого поста!
-            $this->openPost($firstPostId);
+           $this->openPost($firstPostId);
+           $this->postIds_time = $this->buildFlatPostIdList($this->firstPostId); // Создаем хронологический список (для URL всегда flat)
             if ($this->params->post_transfer_scheme != 1) {
-                $this->postIdList = $this->buildFlatPostIdList($firstPostId);
+                $this->postIdList = $this->postIds_time;
                 } else {
-                // $this->currentIndex = 0; // для infoString // ? отладка
+                // $this->currentIndex = 0; // для infoString 
                 $baum = $this->buildTreePostIdList($firstPostId);
                 $this->postIdList = $baum['postIds'];
                 $this->postLevelList = $baum['levels'];
@@ -842,45 +843,43 @@ $infoString .= $idsString;
  */
 public function getKunenaPostUrl(int $postId): string
 {
-    $db = Factory::getDbo();
     $postsPerPage = $this->getKunenaPostsPerPage();
-
+    
     // --- Данные поста ---
-    $query = $db->getQuery(true)
+    $query = $this->db->getQuery(true)
         ->select('m.catid, m.thread')
         ->from('#__kunena_messages AS m')
         ->where('m.id = ' . (int) $postId);
-    $db->setQuery($query);
-    $post = $db->loadObject();
-    if (!$post) return '';
-
+    $this->db->setQuery($query);
+    $post = $this->db->loadObject();
+    
     $catid  = (int) $post->catid;
     $thread = (int) $post->thread;
-
+    
     // --- Slug'и ---
-    $catAlias = $db->setQuery(
-        $db->getQuery(true)->select('alias')->from('#__kunena_categories')->where('id = ' . $catid)
+    $catAlias = $this->db->setQuery(
+        $this->db->getQuery(true)->select('alias')->from('#__kunena_categories')->where('id = ' . $catid)
     )->loadResult() ?: 'category';
-
-    $topicSubject = $db->setQuery(
-        $db->getQuery(true)->select('subject')->from('#__kunena_topics')->where('id = ' . $thread)
+    
+    $topicSubject = $this->db->setQuery(
+        $this->db->getQuery(true)->select('subject')->from('#__kunena_topics')->where('id = ' . $thread)
     )->loadResult();
-
     $topicAlias = FilterOutput::stringURLSafe($topicSubject) ?: 'topic';
     $topicSlug = "{$thread}-{$topicAlias}";
-
-    // --- ?start= ОТ firstPostId ---
-    $offset = $postId - $this->firstPostId;
-    $start  = floor($offset / $postsPerPage) * $postsPerPage;
-
-    // --- URL ---
-    $baseUrl = Uri::root() . "forum/{$catAlias}/{$topicSlug}";
-    $fullUrl = $baseUrl;
+    
+    // --- Находим позицию в хронологическом списке ---
+    $position = array_search($postId, $this->postIds_time);
+    
+    // Вычисляем start
+    $start = floor($position / $postsPerPage) * $postsPerPage;
+    
+    // --- Формируем URL ---
+    $fullUrl = Uri::root() . "forum/{$catAlias}/{$topicSlug}";
     if ($start > 0) {
         $fullUrl .= "?start={$start}";
     }
     $fullUrl .= "#{$postId}";
-
+    
     return $fullUrl;
 }
     
