@@ -106,13 +106,12 @@ class ArticleModel extends BaseDatabaseModel
 
               // Формируем список ID постов в зависимости от схемы обхода; должно быть после открытия первого поста!
            $this->openPost($firstPostId);
-           $this->postIds_time = $this->buildFlatPostIdList($this->firstPostId); // Создаем хронологический список (для URL всегда flat)
-            if ($this->params->post_transfer_scheme != 1) {
-                $this->postIdList = $this->postIds_time;
-                } else {
-                // $this->currentIndex = 0; // для infoString 
+           $this->postIdList = $this->buildFlatPostIdList($firstPostId); // Создаем всегда хронологический список (flat нужен для URL постов)
+           $this->postIds_time = $this->postIdList; // Исп-ся для URL постов
+            if ($this->params->post_transfer_scheme === 1) {
+               // $this->currentIndex = 0; // для infoString 
                 $baum = $this->buildTreePostIdList($firstPostId);
-                $this->postIdList = $baum['postIds'];
+                $this->postIdList = $baum['postIds']; // для Tree меняем $this->postIdList
                 $this->postLevelList = $baum['levels'];
                 }
 
