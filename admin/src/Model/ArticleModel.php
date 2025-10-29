@@ -844,36 +844,40 @@ $infoString .= $idsString;
 public function getKunenaPostUrl(int $postId): string
 {
     try {
-        // Современный способ получения пути (Joomla 5)
+        // Загружаем Kunena API
         $kunenaPath = JPATH_SITE . '/components/com_kunena/kunena.php';
         
         if (file_exists($kunenaPath)) {
             require_once $kunenaPath;
         }
         
-        // Пробуем использовать Kunena API
+        // Используем Kunena API
         if (class_exists('Kunena\Forum\Libraries\Forum\Message\KunenaMessageHelper')) {
             $message = \Kunena\Forum\Libraries\Forum\Message\KunenaMessageHelper::get($postId);
             
-            if ($message && $message->exists()) {
-                $url = \Kunena\Forum\Libraries\Route\KunenaRoute::getMessageUrl($message);
-                
-                // Добавляем домен если нужно
-                if (strpos($url, 'http') !== 0) {
-                    $url = Uri::root(true) . $url;
-                }
-                
-                return $url;
-            }
-        }
-    } catch (\Exception $e) {
-        // Тихо переходим к fallback
+           if ($message && $message->exists()) {
+    $url = \Kunena\Forum\Libraries\Route\KunenaRoute::getMessageUrl($message);
+    
+    // Если URL относительный, делаем абсолютным
+    if (strpos($url, '/') === 0) {
+        // Начинается с / - добавляем только протокол+домен
+        $url = rtrim(Uri::root(), '/') . $url;
     }
     
-    // Наш собственный метод
+    return $url;
+}
+        }
+    } catch (\Exception $e) {
+        Factory::getApplication()->enqueueMessage(
+            'Ошибка KunenaRoute: ' . $e->getMessage(), 
+            'warning'
+        );
+    }
+    
+    // Fallback
     return $this->buildKunenaPostUrlManually($postId);
 }
-
+    
 private function buildKunenaPostUrlManually(int $postId): string
 {
     $postsPerPage = $this->getKunenaPostsPerPage();
