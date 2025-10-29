@@ -776,10 +776,24 @@ private function traverseTree($postId, $level, $children, &$postIdList, &$postLe
     if ($this->params->kunena_post_link) {
    $postUrl = $this->getKunenaPostUrl($this->currentPost->id);
         
-   $idsString .= ' <a href="' . htmlspecialchars($postUrl, ENT_QUOTES, 'UTF-8') 
-            . '" target="_blank" rel="noopener noreferrer">' 
-        . 'onclick="event.preventDefault(); window.open(this.href); setTimeout(() => { window.location.hash = \'#' . $this->currentPost->id . '\'; }, 500);">'
-          . '#' . $this->currentPost->id . '</a>';
+//   $idsString .= ' <a href="' . htmlspecialchars($postUrl, ENT_QUOTES, 'UTF-8') 
+  //          . '" target="_blank" rel="noopener noreferrer">' 
+    //        . '#' . $this->currentPost->id . '</a>';
+
+$idsString .= ' <a href="' . htmlspecialchars($postUrl, ENT_QUOTES, 'UTF-8') 
+           . '" target="_blank" rel="noopener noreferrer" '
+           . 'onclick="'
+           . 'event.preventDefault(); '
+           . 'const url = this.href; '
+           . 'const win = window.open(url, \'_blank\'); '
+           . 'setTimeout(() => { '
+           . '  if (win) { '
+           . '    win.location.href = url + \'#' . $this->currentPost->id . '\'; '
+           . '  } '
+           . '}, 1000);'  // Увеличили задержку до 1 секунды
+           . '" >#' . $this->currentPost->id . '</a>';
+
+        
 } else {
     $idsString .= '#' . $this->currentPost->id;
 }
