@@ -843,43 +843,6 @@ $infoString .= $idsString;
  */
 public function getKunenaPostUrl(int $postId): string
 {
-    try {
-        // Загружаем Kunena API
-        $kunenaPath = JPATH_SITE . '/components/com_kunena/kunena.php';
-        
-        if (file_exists($kunenaPath)) {
-            require_once $kunenaPath;
-        }
-        
-        // Используем Kunena API
-        if (class_exists('Kunena\Forum\Libraries\Forum\Message\KunenaMessageHelper')) {
-            $message = \Kunena\Forum\Libraries\Forum\Message\KunenaMessageHelper::get($postId);
-            
-           if ($message && $message->exists()) {
-    $url = \Kunena\Forum\Libraries\Route\KunenaRoute::getMessageUrl($message);
-    
-    // Если URL относительный, делаем абсолютным
-    if (strpos($url, '/') === 0) {
-        // Начинается с / - добавляем только протокол+домен
-        $url = rtrim(Uri::root(), '/') . $url;
-    }
-    
-    return $url;
-}
-        }
-    } catch (\Exception $e) {
-        Factory::getApplication()->enqueueMessage(
-            'Ошибка KunenaRoute: ' . $e->getMessage(), 
-            'warning'
-        );
-    }
-    
-    // Fallback
-    return $this->buildKunenaPostUrlManually($postId);
-}
-    
-private function buildKunenaPostUrlManually(int $postId): string
-{
     $postsPerPage = $this->getKunenaPostsPerPage();
     
     // Данные поста
@@ -890,7 +853,7 @@ private function buildKunenaPostUrlManually(int $postId): string
     $this->db->setQuery($query);
     $post = $this->db->loadObject();
     
-    // Слаги
+    // Слаги категории и темы
     $catAlias = $this->db->setQuery(
         $this->db->getQuery(true)->select('alias')->from('#__kunena_categories')->where('id = ' . $post->catid)
     )->loadResult() ?: 'category';
@@ -900,7 +863,7 @@ private function buildKunenaPostUrlManually(int $postId): string
     )->loadResult();
     $topicAlias = FilterOutput::stringURLSafe($topicSubject) ?: 'topic';
     
-    // Считаем позицию по времени (как Kunena)
+    // КРИТИЧНО: считаем позицию по времени (как делает Kunena)
     $query = $this->db->getQuery(true)
         ->select('COUNT(*)')
         ->from('#__kunena_messages')
@@ -915,6 +878,12 @@ private function buildKunenaPostUrlManually(int $postId): string
     
     // Формируем URL
     $fullUrl = Uri::root() . "forum/{$catAlias}/{$post->thread}-{$topicAlias}?start={$start}#{$postId}";
+
+    // ПЕРЕД return $fullUrl добавьте: ОТЛАДКА
+Factory::getApplication()->enqueueMessage(
+    "Пост #{$postId}: time={$post->time}, postsBeforе={$postsBeforeCurrent}, start={$start}, perPage={$postsPerPage}", 
+    'info'
+);
     
     return $fullUrl;
 }
