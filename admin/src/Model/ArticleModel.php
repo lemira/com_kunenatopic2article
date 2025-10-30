@@ -847,39 +847,37 @@ public function getKunenaPostUrl(int $postId): string
 {
     $postsPerPage = $this->getKunenaPostsPerPage();
     
-    // Данные поста
+    // --- Данные поста ---
     $query = $this->db->getQuery(true)
-        ->select(['m.catid', 'm.thread', 'm.time'])
+        ->select('m.catid, m.thread')
         ->from('#__kunena_messages AS m')
         ->where('m.id = ' . (int) $postId);
     $this->db->setQuery($query);
     $post = $this->db->loadObject();
     
-    // Слаги
+    $catid  = (int) $post->catid;
+    $thread = (int) $post->thread;
+    
+    // --- Slug'и ---
     $catAlias = $this->db->setQuery(
-        $this->db->getQuery(true)->select('alias')->from('#__kunena_categories')->where('id = ' . $post->catid)
+        $this->db->getQuery(true)->select('alias')->from('#__kunena_categories')->where('id = ' . $catid)
     )->loadResult() ?: 'category';
     
     $topicSubject = $this->db->setQuery(
-        $this->db->getQuery(true)->select('subject')->from('#__kunena_topics')->where('id = ' . $post->thread)
+        $this->db->getQuery(true)->select('subject')->from('#__kunena_topics')->where('id = ' . $thread)
     )->loadResult();
     $topicAlias = FilterOutput::stringURLSafe($topicSubject) ?: 'topic';
+    $topicSlug = "{$thread}-{$topicAlias}";
     
-    // Считаем позицию
-    $query = $this->db->getQuery(true)
-        ->select('COUNT(*)')
-        ->from('#__kunena_messages')
-        ->where([
-            'thread = ' . (int) $post->thread,
-            'hold = 0',
-            'time < ' . $this->db->quote($post->time)
-        ]);
+    // --- Находим позицию в хронологическом списке ---
+    $position = array_search($postId, $this->postIds_time);
     
-    $postsBeforeCurrent = (int) $this->db->setQuery($query)->loadResult();
-    $start = floor($postsBeforeCurrent / $postsPerPage) * $postsPerPage;
+    // Вычисляем start
+    $start = floor($position / $postsPerPage) * $postsPerPage;
     
-    // ВАЖНО: добавляем параметр mesid для Kunena
-    $fullUrl = Uri::root() . "forum/{$catAlias}/{$post->thread}-{$topicAlias}?start={$start}&mesid={$postId}#message{$postId}";
+    // --- Формируем URL ---
+    $fullUrl = Uri::root() . "forum/{$catAlias}/{$topicSlug}";
+    $fullUrl .= "#{$postId}";
     
     return $fullUrl;
 }
