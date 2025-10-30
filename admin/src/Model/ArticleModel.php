@@ -838,7 +838,7 @@ $infoString .= $idsString;
 }
     
 /**
- * Генерирует полный URL до конкретного поста в Kunena, используя SEF-совместимые slug-и.
+ * Генерируем полный URL до конкретного поста в Kunena, используя SEF-совместимые slug-и.
  *
  * @param int $postId ID поста в Kunena
  * @return string Полный URL поста
@@ -876,14 +876,12 @@ public function getKunenaPostUrl(int $postId): string
     $start = floor($position / $postsPerPage) * $postsPerPage;
     
     // --- Формируем URL ---
-    $fullUrl = Uri::root() . "forum/{$catAlias}/{$topicSlug}";
-    $fullUrl .= "#{$postId}";
-    
+    $fullUrl = Uri::root() . "forum/{$catAlias}/{$topicSlug}" . "?start={$start}" . "#{$postId}";
     return $fullUrl;
 }
     
 /**
- * Получает количество сообщений, отображаемых на одной странице темы Kunena,
+ * Получаем количество сообщений, отображаемых на одной странице темы Kunena,
  * с обработкой ошибок и выводом сообщения в админке.
  *
  * @return int Количество сообщений на странице.
