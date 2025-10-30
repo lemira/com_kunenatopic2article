@@ -661,10 +661,9 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
       }
     }
     // --- КОНЕЦ БЛОКА ИСКЛЮЧЕНИЯ АВТОРОВ ---
-        
-            $postIds = $this->db->setQuery($query)->loadColumn();
-           
-  // ОТЛАДКА  Factory::getApplication()->enqueueMessage('Массив ID постов: ' . print_r($postIds, true), 'info'); 
+         $query->order($this->db->quoteName('id') . ' ASC');
+         $postIds = $this->db->setQuery($query)->loadColumn();
+   // ОТЛАДКА  Factory::getApplication()->enqueueMessage('Массив ID постов: ' . print_r($postIds, true), 'info'); 
    
             return $postIds;
   }
