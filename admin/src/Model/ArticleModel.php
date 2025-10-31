@@ -28,6 +28,7 @@ use Joomla\CMS\Filter\InputFilter;
 use Joomla\Component\Content\Site\Helper\RouteHelper;
 use Joomla\CMS\Access\Access;
 use Joomla\CMS\Filter\OutputFilter as FilterOutput;
+use Kunena\Forum\Libraries\Forum\KunenaForum;
 use Kunena\Forum\Libraries\Route\KunenaRoute;
 
 /**
@@ -879,18 +880,9 @@ public function getKunenaPostUrl(int $postId): string
     return $fullUrl;
 } */
 
-public function getKunenaPostUrl(int $postId): string
+getKunenaPostUrlFallback($postId);
 {
-    try {
-        // Попробуйте использовать нативный метод Kunena если доступен
-        if (class_exists('Kunena\Forum\Libraries\Route\KunenaRoute')) {
-            $message = KunenaForumMessage::getInstance($postId);
-            if ($message->exists()) {
-                return KunenaRoute::_("index.php?option=com_kunena&view=topic&catid={$message->catid}&id={$message->thread}&mesid={$postId}");
-            }
-        }
-    }  catch (Exception $e) {
- $postsPerPage = $this->getKunenaPostsPerPage();
+    $postsPerPage = $this->getKunenaPostsPerPage();
     
     // --- Данные поста ---
     $query = $this->db->getQuery(true)
@@ -923,8 +915,39 @@ public function getKunenaPostUrl(int $postId): string
     // --- Формируем URL ---
     $fullUrl = Uri::root() . "forum/{$catAlias}/{$topicSlug}" . "?start={$start}" . "#{$postId}";
     return $fullUrl;
-       }
 }
+
+public function getKunenaPostUrl(int $postId): string
+{
+    try {
+        // Инициализируем Kunena если еще не загружена
+        if (!class_exists('Kunena\Forum\Libraries\Forum\KunenaForum')) {
+            $kunenaPath = JPATH_ADMINISTRATOR . '/components/com_kunena/api.php';
+            if (file_exists($kunenaPath)) {
+                require_once $kunenaPath;
+            }
+        }
+        
+        // Проверяем доступность Kunena API
+        if (class_exists('Kunena\Forum\Libraries\Forum\KunenaForum')) {
+            KunenaForum::setup();
+            
+            // Получаем сообщение через Kunena API
+            $message = KunenaForumMessage::getInstance($postId);
+            if ($message->exists()) {
+                $url = KunenaRoute::_("index.php?option=com_kunena&view=topic&catid={$message->catid}&id={$message->thread}&mesid={$postId}");
+                return $url;
+            }
+        }
+    } catch (Exception $e) {
+        // Логируем ошибку но продолжаем работу
+        Factory::getApplication()->enqueueMessage('Kunena API error: ' . $e->getMessage(), 'notice');
+    }
+    
+    // Fallback на ваш оригинальный метод
+    return $this->getKunenaPostUrlFallback($postId);
+}
+
     /**
  * Получаем количество сообщений, отображаемых на одной странице темы Kunena,
  * с обработкой ошибок и выводом сообщения в админке.
