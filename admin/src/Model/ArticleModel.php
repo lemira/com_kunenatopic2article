@@ -841,7 +841,7 @@ $infoString .= $idsString;
  *
  * @param int $postId ID поста в Kunena
  * @return string Полный URL поста
- */
+
 public function getKunenaPostUrl(int $postId): string
 {
     $postsPerPage = $this->getKunenaPostsPerPage();
@@ -877,6 +877,74 @@ public function getKunenaPostUrl(int $postId): string
     // --- Формируем URL ---
     $fullUrl = Uri::root() . "forum/{$catAlias}/{$topicSlug}" . "?start={$start}" . "#{$postId}";
     return $fullUrl;
+}
+ */
+
+public function getKunenaPostUrl(int $postId): string
+{
+    // postsPerPage берется из безопасной функции getKunenaPostsPerPage()
+    $postsPerPage = $this->getKunenaPostsPerPage();
+    
+    // --- Шаг 1: Данные поста (catid, thread, time) ---
+    $query = $this->db->getQuery(true)
+        ->select('m.catid, m.thread, m.time')
+        ->from('#__kunena_messages AS m')
+        ->where('m.id = ' . (int) $postId);
+    $this->db->setQuery($query);
+    $post = $this->db->loadObject();
+
+    if (!$post) {
+        return '';
+    }
+
+    $catid    = (int) $post->catid;
+    $thread   = (int) $post->thread;
+    $postTime = (int) $post->time;
+    
+    // --- Шаг 2: Slug'и ---
+    
+    // Slug категории не используется для JRoute, но остается для SEF-роутинга Kunena
+    $catAlias = $this->db->setQuery(
+        $this->db->getQuery(true)->select('alias')->from('#__kunena_categories')->where('id = ' . $catid)
+    )->loadResult() ?: 'category';
+    
+    // Заголовок темы (для SEF-роутера Kunena)
+    $topicSubject = $this->db->setQuery(
+        $this->db->getQuery(true)->select('subject')->from('#__kunena_topics')->where('id = ' . $thread)
+    )->loadResult();
+    
+    // --- Шаг 3: Находим позицию (start) ---
+    
+    // ВАЖНО: Используем SQL-запрос для надежного расчета позиции, не зависящего от состояния массива.
+    // Считаем опубликованные посты (m.hold = 0), которые были опубликованы ДО нашего поста.
+    $query = $this->db->getQuery(true)
+        ->select('COUNT(*)')
+        ->from('#__kunena_messages', 'm')
+        ->where([
+            'm.thread = ' . $thread,
+            'm.time < ' . $postTime,
+            'm.hold = 0' 
+        ]);
+
+    $this->db->setQuery($query);
+    $postIndex = (int) $this->db->loadResult();
+    
+    $start = floor($postIndex / $postsPerPage) * $postsPerPage;
+    
+    // --- Шаг 4: Формируем URL с JRoute ---
+    
+    // Создаем внутренний (Non-SEF) URL, который Kunena понимает
+    $nonSefUrl = 'index.php?option=com_kunena&view=topic&catid=' . $catid . '&id=' . $thread . '&start=' . $start;
+    
+    // Добавляем якорь #ID в конце
+    $nonSefUrl .= '#' . $postId; 
+    
+    // Прогоняем через роутер Joomla, чтобы получить полный SEF URL
+    // Второй параметр (true) запрашивает абсолютный URL
+    $fullUrl = Route::_($nonSefUrl, true); 
+    
+    // Дополнительная проверка на очистку от потенциальных невидимых символов
+    return trim($fullUrl);
 }
     
 /**
