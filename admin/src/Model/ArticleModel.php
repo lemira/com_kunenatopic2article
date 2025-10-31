@@ -882,59 +882,22 @@ public function getKunenaPostUrl(int $postId): string
 
 public function getKunenaPostUrl(int $postId): string
 {
+    // ... (весь код Шага 1, 2, 3 остается неизменным) ...
+
     $postsPerPage = $this->getKunenaPostsPerPage();
     
-    // --- Шаг 1: Данные поста (catid, thread, time) ---
-    $query = $this->db->getQuery(true)
-        ->select('m.catid, m.thread, m.time')
-        ->from('#__kunena_messages AS m')
-        ->where('m.id = ' . (int) $postId);
-    $this->db->setQuery($query);
-    $post = $this->db->loadObject();
-
-    if (!$post) {
-        return '';
-    }
-
-    $catid    = (int) $post->catid;
-    $thread   = (int) $post->thread;
-    $postTime = (int) $post->time;
+    // ... (код до получения $thread, $catid, $postTime, $postIndex) ...
     
-    // --- Шаг 2: Slug'и ---
-    
-    // Псевдоним Категории
-    $catAlias = $this->db->setQuery(
-        $this->db->getQuery(true)->select('alias')->from('#__kunena_categories')->where('id = ' . $catid)
-    )->loadResult() ?: 'category';
-    
-    // Заголовок темы
-    $topicSubject = $this->db->setQuery(
-        $this->db->getQuery(true)->select('subject')->from('#__kunena_topics')->where('id = ' . $thread)
-    )->loadResult();
-    
-    // --- Шаг 3: Находим позицию (start) ---
-    
-    // Используем SQL-запрос для надежного расчета позиции, не зависящего от состояния массива.
-    // Считаем опубликованные посты (m.hold = 0), которые были опубликованы ДО нашего поста.
-    $query = $this->db->getQuery(true)
-        ->select('COUNT(*)')
-        ->from($this->db->qn('#__kunena_messages', 'm'))
-        ->where([
-            // ИСПРАВЛЕНИЕ: Использование qn() и явного префикса 'm.'
-            $this->db->qn('m.thread') . ' = ' . $thread, 
-            $this->db->qn('m.time') . ' < ' . $postTime,
-            $this->db->qn('m.hold') . ' = 0' 
-        ]);
-
-    $this->db->setQuery($query);
-    $postIndex = (int) $this->db->loadResult();
-    
+    // Вычисление $start
     $start = floor($postIndex / $postsPerPage) * $postsPerPage;
     
-    // --- Шаг 4: Формируем URL с JRoute ---
+    // --- Шаг 4: Формируем URL с JRoute (ФРОНТЕНД-КОНТЕКСТ ИСПРАВЛЕН) ---
     
-    // Создаем внутренний (Non-SEF) URL
-    $nonSefUrl = 'index.php?option=com_kunena&view=topic&catid=' . $catid . '&id=' . $thread . '&start=' . $start;
+    // !!! ЗАМЕНИТЕ 999 НА РЕАЛЬНЫЙ ITEMID ИЗ #__menu !!!
+    $frontendItemid = 2858; 
+    
+    // Создаем внутренний (Non-SEF) URL, добавляя Itemid
+    $nonSefUrl = 'index.php?option=com_kunena&view=topic&catid=' . $catid . '&id=' . $thread . '&start=' . $start . '&Itemid=' . $frontendItemid;
     
     // Добавляем якорь #ID в конце
     $nonSefUrl .= '#' . $postId; 
@@ -943,8 +906,7 @@ public function getKunenaPostUrl(int $postId): string
     $fullUrl = Route::_($nonSefUrl, true); 
     
     return trim($fullUrl);
-}
-    
+}    
 /**
  * Получаем количество сообщений, отображаемых на одной странице темы Kunena,
  * с обработкой ошибок и выводом сообщения в админке.
