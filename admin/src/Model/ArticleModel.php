@@ -880,7 +880,7 @@ public function getKunenaPostUrl(int $postId): string
     return $fullUrl;
 } */
 
-getKunenaPostUrlFallback($postId);
+protected function getKunenaPostUrlFallback(int $postId): string
 {
     $postsPerPage = $this->getKunenaPostsPerPage();
     
