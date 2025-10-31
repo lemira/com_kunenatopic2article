@@ -642,6 +642,7 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
       return $this->postIds; 
     }
 
+     /** ОРИГИНАЛ
     private function getAllThreadPosts($threadId)           
      {
      // Получаем все посты темы
@@ -668,6 +669,41 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
    
             return $postIds;
   }
+ */ 
+
+// ОТЛАДКА
+   private function getAllThreadPosts($threadId)           
+{
+    // Получаем все посты темы
+    $query = $this->db->getQuery(true)
+        ->select($this->db->quoteName('id'))
+        ->from($this->db->quoteName('#__kunena_messages'))
+        ->where($this->db->quoteName('thread') . ' = ' . $this->threadId) 
+        ->where($this->db->quoteName('hold') . ' = 0');
+
+    // --- Блок исключения авторов --- 
+    $ignoredAuthors = trim($this->params->ignored_authors);
+    if (!empty($ignoredAuthors)) {
+        $ignoredAuthorsArray = array_filter(array_map('trim', explode(',', $ignoredAuthors)));
+        if (!empty($ignoredAuthorsArray)) {
+            $quotedAuthors = array_map(array($this->db, 'quote'), $ignoredAuthorsArray);
+            $query->where($this->db->quoteName('name') . ' NOT IN (' . implode(',', $quotedAuthors) . ')');
+        }
+    }
+    
+    // ИЗМЕНИТЕ ЭТУ СТРОКУ - ВАЖНО!
+    $query->order($this->db->quoteName('time') . ' ASC, ' . $this->db->quoteName('id') . ' ASC');
+    
+    $postIds = $this->db->setQuery($query)->loadColumn();
+    
+    // ОТЛАДКА
+    Factory::getApplication()->enqueueMessage(
+        'Массив ID постов (ordered by time): ' . print_r($postIds, true), 
+        'info'
+    );
+    
+    return $postIds;
+} 
     
 /**
  * Построение списков ID постов и их уровней для древовидного обхода
@@ -842,7 +878,7 @@ $infoString .= $idsString;
  *
  * @param int $postId ID поста в Kunena
  * @return string Полный URL поста
-
+ */
 public function getKunenaPostUrl(int $postId): string
 {
     $postsPerPage = $this->getKunenaPostsPerPage();
@@ -872,14 +908,33 @@ public function getKunenaPostUrl(int $postId): string
     // --- Находим позицию в хронологическом списке ---
     $position = array_search($postId, $this->postIds_time);
     
+    // === ОТЛАДКА ===
+    $totalPostsInArray = count($this->postIds_time);
+    $firstPostInArray = $this->postIds_time[0] ?? 'none';
+    $lastPostInArray = end($this->postIds_time) ?: 'none';
+    reset($this->postIds_time);
+    
+    Factory::getApplication()->enqueueMessage(
+        "DEBUG Post {$postId}: " .
+        "thread {$thread}, " . 
+        "position {$position} of {$totalPostsInArray}, " .
+        "postsPerPage {$postsPerPage}, " .
+        "start " . floor($position / $postsPerPage) * $postsPerPage . ", " .
+        "firstPostInArray {$firstPostInArray}, " .
+        "lastPostInArray {$lastPostInArray}", 
+        'notice'
+    );
+    
     // Вычисляем start
     $start = floor($position / $postsPerPage) * $postsPerPage;
     
     // --- Формируем URL ---
     $fullUrl = Uri::root() . "forum/{$catAlias}/{$topicSlug}" . "?start={$start}" . "#{$postId}";
+    
     return $fullUrl;
-} */
-
+}
+    
+/**
 protected function getKunenaPostUrlFallback(int $postId): string
 {
     $postsPerPage = $this->getKunenaPostsPerPage();
@@ -947,6 +1002,10 @@ public function getKunenaPostUrl(int $postId): string
     // Fallback на ваш оригинальный метод
     return $this->getKunenaPostUrlFallback($postId);
 }
+/**
+
+
+
 
     /**
  * Получаем количество сообщений, отображаемых на одной странице темы Kunena,
