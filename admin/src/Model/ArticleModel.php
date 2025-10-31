@@ -28,8 +28,8 @@ use Joomla\CMS\Filter\InputFilter;
 use Joomla\Component\Content\Site\Helper\RouteHelper;
 use Joomla\CMS\Access\Access;
 use Joomla\CMS\Filter\OutputFilter as FilterOutput;
-use Kunena\Forum\Libraries\Forum\KunenaForum;
-use Kunena\Forum\Libraries\Route\KunenaRoute;
+// use Kunena\Forum\Libraries\Forum\KunenaForum;
+// use Kunena\Forum\Libraries\Route\KunenaRoute;
 
 /**
  * Article Model
@@ -642,8 +642,7 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
       return $this->postIds; 
     }
 
-     /** ОРИГИНАЛ
-    private function getAllThreadPosts($threadId)           
+   private function getAllThreadPosts($threadId)           
      {
      // Получаем все посты темы
     $query = $this->db->getQuery(true)
@@ -669,41 +668,6 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
    
             return $postIds;
   }
- */ 
-
-// ОТЛАДКА
-   private function getAllThreadPosts($threadId)           
-{
-    // Получаем все посты темы
-    $query = $this->db->getQuery(true)
-        ->select($this->db->quoteName('id'))
-        ->from($this->db->quoteName('#__kunena_messages'))
-        ->where($this->db->quoteName('thread') . ' = ' . $this->threadId) 
-        ->where($this->db->quoteName('hold') . ' = 0');
-
-    // --- Блок исключения авторов --- 
-    $ignoredAuthors = trim($this->params->ignored_authors);
-    if (!empty($ignoredAuthors)) {
-        $ignoredAuthorsArray = array_filter(array_map('trim', explode(',', $ignoredAuthors)));
-        if (!empty($ignoredAuthorsArray)) {
-            $quotedAuthors = array_map(array($this->db, 'quote'), $ignoredAuthorsArray);
-            $query->where($this->db->quoteName('name') . ' NOT IN (' . implode(',', $quotedAuthors) . ')');
-        }
-    }
-    
-    // ИЗМЕНИТЕ ЭТУ СТРОКУ - ВАЖНО!
-    $query->order($this->db->quoteName('time') . ' ASC, ' . $this->db->quoteName('id') . ' ASC');
-    
-    $postIds = $this->db->setQuery($query)->loadColumn();
-    
-    // ОТЛАДКА
-    Factory::getApplication()->enqueueMessage(
-        'Массив ID постов (ordered by time): ' . print_r($postIds, true), 
-        'info'
-    );
-    
-    return $postIds;
-} 
     
 /**
  * Построение списков ID постов и их уровней для древовидного обхода
@@ -908,62 +872,6 @@ public function getKunenaPostUrl(int $postId): string
     // --- Находим позицию в хронологическом списке ---
     $position = array_search($postId, $this->postIds_time);
     
-    // === ОТЛАДКА ===
-    $totalPostsInArray = count($this->postIds_time);
-    $firstPostInArray = $this->postIds_time[0] ?? 'none';
-    $lastPostInArray = end($this->postIds_time) ?: 'none';
-    reset($this->postIds_time);
-    
-    Factory::getApplication()->enqueueMessage(
-        "DEBUG Post {$postId}: " .
-        "thread {$thread}, " . 
-        "position {$position} of {$totalPostsInArray}, " .
-        "postsPerPage {$postsPerPage}, " .
-        "start " . floor($position / $postsPerPage) * $postsPerPage . ", " .
-        "firstPostInArray {$firstPostInArray}, " .
-        "lastPostInArray {$lastPostInArray}", 
-        'notice'
-    );
-    
-    // Вычисляем start
-    $start = floor($position / $postsPerPage) * $postsPerPage;
-    
-    // --- Формируем URL ---
-    $fullUrl = Uri::root() . "forum/{$catAlias}/{$topicSlug}" . "?start={$start}" . "#{$postId}";
-    
-    return $fullUrl;
-}
-    
-/**
-protected function getKunenaPostUrlFallback(int $postId): string
-{
-    $postsPerPage = $this->getKunenaPostsPerPage();
-    
-    // --- Данные поста ---
-    $query = $this->db->getQuery(true)
-        ->select('m.catid, m.thread')
-        ->from('#__kunena_messages AS m')
-        ->where('m.id = ' . (int) $postId);
-    $this->db->setQuery($query);
-    $post = $this->db->loadObject();
-    
-    $catid  = (int) $post->catid;
-    $thread = (int) $post->thread;
-    
-    // --- Slug'и ---
-    $catAlias = $this->db->setQuery(
-        $this->db->getQuery(true)->select('alias')->from('#__kunena_categories')->where('id = ' . $catid)
-    )->loadResult() ?: 'category';
-    
-    $topicSubject = $this->db->setQuery(
-        $this->db->getQuery(true)->select('subject')->from('#__kunena_topics')->where('id = ' . $thread)
-    )->loadResult();
-    $topicAlias = FilterOutput::stringURLSafe($topicSubject) ?: 'topic';
-    $topicSlug = "{$thread}-{$topicAlias}";
-    
-    // --- Находим позицию в хронологическом списке ---
-    $position = array_search($postId, $this->postIds_time);
-    
     // Вычисляем start
     $start = floor($position / $postsPerPage) * $postsPerPage;
     
@@ -971,42 +879,7 @@ protected function getKunenaPostUrlFallback(int $postId): string
     $fullUrl = Uri::root() . "forum/{$catAlias}/{$topicSlug}" . "?start={$start}" . "#{$postId}";
     return $fullUrl;
 }
-
-public function getKunenaPostUrl(int $postId): string
-{
-    try {
-        // Инициализируем Kunena если еще не загружена
-        if (!class_exists('Kunena\Forum\Libraries\Forum\KunenaForum')) {
-            $kunenaPath = JPATH_ADMINISTRATOR . '/components/com_kunena/api.php';
-            if (file_exists($kunenaPath)) {
-                require_once $kunenaPath;
-            }
-        }
-        
-        // Проверяем доступность Kunena API
-        if (class_exists('Kunena\Forum\Libraries\Forum\KunenaForum')) {
-            KunenaForum::setup();
-            
-            // Получаем сообщение через Kunena API
-            $message = KunenaForumMessage::getInstance($postId);
-            if ($message->exists()) {
-                $url = KunenaRoute::_("index.php?option=com_kunena&view=topic&catid={$message->catid}&id={$message->thread}&mesid={$postId}");
-                return $url;
-            }
-        }
-    } catch (Exception $e) {
-        // Логируем ошибку но продолжаем работу
-        Factory::getApplication()->enqueueMessage('Kunena API error: ' . $e->getMessage(), 'notice');
-    }
     
-    // Fallback на ваш оригинальный метод
-    return $this->getKunenaPostUrlFallback($postId);
-}
-/**
-
-
-
-
     /**
  * Получаем количество сообщений, отображаемых на одной странице темы Kunena,
  * с обработкой ошибок и выводом сообщения в админке.
