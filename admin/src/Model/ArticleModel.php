@@ -877,37 +877,55 @@ public function getKunenaPostUrl(int $postId): string
     // --- Формируем URL ---
     $fullUrl = Uri::root() . "forum/{$catAlias}/{$topicSlug}" . "?start={$start}" . "#{$postId}";
     return $fullUrl;
-}
- */
+} */
 
 public function getKunenaPostUrl(int $postId): string
 {
-    // ... (весь код Шага 1, 2, 3 остается неизменным) ...
-
-    $postsPerPage = $this->getKunenaPostsPerPage();
+    try {
+        // Попробуйте использовать нативный метод Kunena если доступен
+        if (class_exists('Kunena\Forum\Libraries\Route\KunenaRoute')) {
+            $message = KunenaForumMessage::getInstance($postId);
+            if ($message->exists()) {
+                return KunenaRoute::_("index.php?option=com_kunena&view=topic&catid={$message->catid}&id={$message->thread}&mesid={$postId}");
+            }
+        }
+    }  catch (Exception $e) {
+ $postsPerPage = $this->getKunenaPostsPerPage();
     
-    // ... (код до получения $thread, $catid, $postTime, $postIndex) ...
+    // --- Данные поста ---
+    $query = $this->db->getQuery(true)
+        ->select('m.catid, m.thread')
+        ->from('#__kunena_messages AS m')
+        ->where('m.id = ' . (int) $postId);
+    $this->db->setQuery($query);
+    $post = $this->db->loadObject();
     
-    // Вычисление $start
-    $start = floor($postIndex / $postsPerPage) * $postsPerPage;
+    $catid  = (int) $post->catid;
+    $thread = (int) $post->thread;
     
-    // --- Шаг 4: Формируем URL с JRoute (ФРОНТЕНД-КОНТЕКСТ ИСПРАВЛЕН) ---
+    // --- Slug'и ---
+    $catAlias = $this->db->setQuery(
+        $this->db->getQuery(true)->select('alias')->from('#__kunena_categories')->where('id = ' . $catid)
+    )->loadResult() ?: 'category';
     
-    // !!! ЗАМЕНИТЕ 999 НА РЕАЛЬНЫЙ ITEMID ИЗ #__menu !!!
-    $frontendItemid = 2858; 
+    $topicSubject = $this->db->setQuery(
+        $this->db->getQuery(true)->select('subject')->from('#__kunena_topics')->where('id = ' . $thread)
+    )->loadResult();
+    $topicAlias = FilterOutput::stringURLSafe($topicSubject) ?: 'topic';
+    $topicSlug = "{$thread}-{$topicAlias}";
     
-    // Создаем внутренний (Non-SEF) URL, добавляя Itemid
-    $nonSefUrl = 'index.php?option=com_kunena&view=topic&catid=' . $catid . '&id=' . $thread . '&start=' . $start . '&Itemid=' . $frontendItemid;
+    // --- Находим позицию в хронологическом списке ---
+    $position = array_search($postId, $this->postIds_time);
     
-    // Добавляем якорь #ID в конце
-    $nonSefUrl .= '#' . $postId; 
+    // Вычисляем start
+    $start = floor($position / $postsPerPage) * $postsPerPage;
     
-    // Прогоняем через роутер Joomla, запрашивая абсолютный URL
-    $fullUrl = Route::_($nonSefUrl, true); 
-    
-    return trim($fullUrl);
-}    
-/**
+    // --- Формируем URL ---
+    $fullUrl = Uri::root() . "forum/{$catAlias}/{$topicSlug}" . "?start={$start}" . "#{$postId}";
+    return $fullUrl;
+       }
+}
+    /**
  * Получаем количество сообщений, отображаемых на одной странице темы Kunena,
  * с обработкой ошибок и выводом сообщения в админке.
  *
