@@ -28,6 +28,11 @@
     display: block; /* Чтобы <p> остался блочным элементом */
 }
 
+.kun_p2a_content img {
+    max-width: 100%;
+    height: auto;          /* сохраняем пропорции */
+}
+
 /* Дополнительные стили для форматирования 
 .kun_p2a_content img { 
     max-width: 100%;  max-width: 100% и height: auto - стандартные свойства для адаптивности
