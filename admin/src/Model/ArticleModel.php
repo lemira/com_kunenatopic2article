@@ -1175,13 +1175,7 @@ private function convertBBCodeToHtml($text)
             $imagePath = $this->getAttachmentPath($attachmentId);
             
             if ($imagePath && file_exists(JPATH_ROOT . '/' . $imagePath)) {
-               // ДО ИСП_Я РАЗМЕРОВ $imageHtml = '<img src="' . $imagePath . '" alt="' . htmlspecialchars($filename) . '" />';
-                // ИСП_Е РАЗМЕРОВ, гарантируем, что размеры будут в БД ки
-        $this->ensureImageSize(ltrim($imagePath, '/'));    
-        // формирование <img>, но уже с подтягиванием размеров
-        $sizeAttr = $this->getSizeAttr($imagePath); 
-        $imageHtml = '<img src="' . $imagePath . '" alt="' . htmlspecialchars($filename) . '"' . $sizeAttr . ' loading="lazy">';
-        // КОНЕЦ ИСП_Я РАЗМЕРОВ
+                $imageHtml = '<img src="' . $imagePath . '" alt="' . htmlspecialchars($filename) . '" />';
             } else {
                 $imageHtml = $filename;
             }
@@ -1214,78 +1208,6 @@ $html = preg_replace_callback(
         
         // Fallback на простой парсер
         return $this->simpleBBCodeToHtml($text);
-    }
-}
-
-private function getSizeAttr(string $imagePath): string // ки
-{
-    $db  = Factory::getContainer()->get('DatabaseDriver');
-    $row = $db->setQuery(
-        $db->getQuery(true)
-            ->select(['width', 'height'])
-            ->from('#__kunenatopic2article_img_size')
-            ->where($db->qn('path') . ' = ' . $db->q(ltrim($imagePath, '/')))
-    )->loadRow();
-
-    if ($row && $row[0] && $row[1]) {
-        return ' width="' . $row[0] . '" height="' . $row[1] . '"';
-    }
-    return '';
-}
-    
-//  private function ensureImageSize(string $relPath): void //ки
-// private function ensureImageSize(string $relPath): void // ОТЛАДКА с ЛОГИРОВАНИЕМ
-private function ensureImageSize(string $relPath): void
-{
-    $db = Factory::getContainer()->get('DatabaseDriver');
-
-    /* 1. Уже есть? */
-    $size = $db->setQuery(
-        $db->getQuery(true)
-            ->select(['width','height'])
-            ->from('#__kunenatopic2article_img_size')
-            ->where($db->qn('path') . ' = ' . $db->q($relPath))
-    )->loadRow();
-    if ($size !== null) {
-        return; // всё есть, уходим
-    }
-
-    /* 2. Считаем px */
-    $absPath = JPATH_ROOT . '/' . ltrim($relPath, '/');
-    if (!is_file($absPath)) {
-        return; // файла нет
-    }
-
-    try {
-        $img = new \Joomla\CMS\Image\Image($absPath);
-        $w   = $img->getWidth();
-        $h   = $img->getHeight();
-    } catch (\Throwable $e) {
-        $w = $h = 0;
-    }
-
-    /* 3. Лог только тут, когда значения уже есть */
-    static $loggedPosts = [];
-    $key = $this->threadId . ':' . $this->mesId;
-    if (!isset($loggedPosts[$key]) && $w > 0 && $h > 0) {
-        Factory::getApplication()->enqueueMessage(
-            "ensureImageSize: 1-ый img поста {$this->mesId} темы {$this->threadId}, path={$relPath}  w={$w} h={$h}",
-            'notice'
-        );
-        $loggedPosts[$key] = true;
-    }
-
-    /* 4. Пишем, только если px корректны */
-    if ($w > 0 && $h > 0) {
-        $query = $db->getQuery(true)
-            ->insert('#__kunenatopic2article_img_size')
-            ->columns(['path', 'width', 'height', 'topicid'])
-            ->values(implode(',', $db->q([$relPath, $w, $h, $this->threadId])));
-        try {
-            $db->setQuery($query)->execute();
-        } catch (\RuntimeException $e) {
-            // игнорируем дубль, если вдруг параллельный процесс вставил
-        }
     }
 }
     
