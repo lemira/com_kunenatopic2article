@@ -1175,7 +1175,13 @@ private function convertBBCodeToHtml($text)
             $imagePath = $this->getAttachmentPath($attachmentId);
             
             if ($imagePath && file_exists(JPATH_ROOT . '/' . $imagePath)) {
-                $imageHtml = '<img src="' . $imagePath . '" alt="' . htmlspecialchars($filename) . '" />';
+               // ДО ИСП_Я РАЗМЕРОВ $imageHtml = '<img src="' . $imagePath . '" alt="' . htmlspecialchars($filename) . '" />';
+                // ИСП_Е РАЗМЕРОВ, гарантируем, что размеры будут в БД ки
+        $this->ensureImageSize(ltrim($imagePath, '/'));    
+        // формирование <img>, но уже с подтягиванием размеров
+        $sizeAttr = $this->getSizeAttr($imagePath);   // см. ниже
+        $imageHtml = '<img src="' . $imagePath . '" alt="' . htmlspecialchars($filename) . '"' . $sizeAttr . ' loading="lazy">';
+        // КОНЕЦ ИСП_Я РАЗМЕРОВ
             } else {
                 $imageHtml = $filename;
             }
@@ -1208,6 +1214,59 @@ $html = preg_replace_callback(
         
         // Fallback на простой парсер
         return $this->simpleBBCodeToHtml($text);
+    }
+}
+
+private function getSizeAttr(string $imagePath): string // ки
+{
+    $db  = Factory::getContainer()->get('DatabaseDriver');
+    $row = $db->setQuery(
+        $db->getQuery(true)
+            ->select(['width', 'height'])
+            ->from('#__kunenatopic2article_img_size')
+            ->where($db->qn('path') . ' = ' . $db->q(ltrim($imagePath, '/')))
+    )->loadRow();
+
+    if ($row && $row[0] && $row[1]) {
+        return ' width="' . $row[0] . '" height="' . $row[1] . '"';
+    }
+    return '';
+}
+    
+ private function ensureImageSize(string $relPath): void //ки
+{
+    $db = Factory::getContainer()->get('DatabaseDriver');
+
+    /* 1. Уже есть в таблице? → выходим (width/height уже «есть») */
+    $size = $db->setQuery(
+        $db->getQuery(true)
+            ->select(['width','height'])
+            ->from('#__kunenatopic2article_img_size')
+            ->where($db->qn('path') . ' = ' . $db->q($relPath))
+    )->loadRow();
+
+    if ($size !== null) {          // width/height УЖЕ записаны
+        return;
+    }
+
+    /* 2. Иначе: считаем 1 раз */
+    $absPath = JPATH_ROOT . '/' . ltrim($relPath, '/');
+    try {
+        $img = new Image($absPath);
+        $w   = $img->getWidth();
+        $h   = $img->getHeight();
+    } catch (\Throwable $e) {
+        $w = $h = 0;
+    }
+
+    /* 3. Если получили корректные px → пишем */
+    if ($w > 0 && $h > 0) {
+        $db->setQuery(
+            $db->getQuery(true)
+                ->insert('#__kunenatopic2article_img_size')
+                ->columns(['path', 'width', 'height', 'topicid'])
+                ->values(implode(',', $db->q([$relPath, $w, $h, $this->threadId])))
+        )->execute();
     }
 }
     
