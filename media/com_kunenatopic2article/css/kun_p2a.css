@@ -4,22 +4,6 @@
     line-height: 1.6;
 }
 
-/* 1. Ограничение ширины для больших экранов */
-.kun_p2a_content {
-    max-width: 900px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-/* 2. Сброс ограничения на узких экранах */
-@media (max-width: 900px) {
-    .kun_p2a_content {
-        max-width: none;   /* вернём 100 % ширины */
-        margin-left: 0;
-        margin-right: 0;
-    }
-}
-
 .kun_p2a_content p {
     all: unset; /* Сброс всех стилей */
     margin: 0 !important;
@@ -30,10 +14,28 @@
 
 .kun_p2a_content img {
     max-width: 100%;
-    height: auto;          /* сохраняем пропорции */
+    height: auto;          /* сохраняем пропорции ки */
 }
 
 /* Дополнительные стили для форматирования 
+
+1. Ограничение ширины для больших экранов 
+.kun_p2a_content {
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+2. Сброс ограничения на узких экранах
+@media (max-width: 900px) {
+    .kun_p2a_content {
+        max-width: none;   /* вернём 100 % ширины */
+        margin-left: 0;
+        margin-right: 0;
+    }
+}
+
+
 .kun_p2a_content img { 
     max-width: 100%;  max-width: 100% и height: auto - стандартные свойства для адаптивности
     height: auto;
