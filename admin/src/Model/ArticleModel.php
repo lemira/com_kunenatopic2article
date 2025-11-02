@@ -53,7 +53,7 @@ class ArticleModel extends BaseDatabaseModel
     private string $subject = ''; // Переменная модели для хранения subject
     private $params = null; // Хранение параметров для доступа в других методах
     private int $firstPostId; //  ID первого поста темы
-    private int $currentIndex = 0; // первый переход с первого элемента $topicId = $firstPostId (0) на 2-й (1)
+    private int $currentIndex = 0; // первый переход с первого элемента $threadId = $firstPostId (0) на 2-й (1)
     private string $infoString = '';  // строка сборки информационной строки поста в createPostInfoString()
     private string $postInfoString = '';  // Информационная строка поста
     private string $reminderLines = '';  // строки напоминания поста
@@ -123,7 +123,7 @@ class ArticleModel extends BaseDatabaseModel
                 $this->postIdList[] = 0; // Гарантируем завершение цикла
             }
             
-              $this->currentIndex = 0; // в nextPost() начинаем переход сразу к элементу (1), т.к. (0) = $topicId = $firstPostId
+              $this->currentIndex = 0; // в nextPost() начинаем переход сразу к элементу (1), т.к. (0) = $threadId = $firstPostId
                     
               $this->openArticle();     // Открываем первую статью
                     
