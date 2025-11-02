@@ -1234,7 +1234,8 @@ private function getSizeAttr(string $imagePath): string // ки
 }
     
 //  private function ensureImageSize(string $relPath): void //ки
-private function ensureImageSize(string $relPath): void // ОТЛАДКА с ЛОГИРОВАНИЕМ
+// private function ensureImageSize(string $relPath): void // ОТЛАДКА с ЛОГИРОВАНИЕМ
+private function ensureImageSize(string $relPath): void
 {
     $db = Factory::getContainer()->get('DatabaseDriver');
 
@@ -1245,25 +1246,16 @@ private function ensureImageSize(string $relPath): void // ОТЛАДКА с Л�
             ->from('#__kunenatopic2article_img_size')
             ->where($db->qn('path') . ' = ' . $db->q($relPath))
     )->loadRow();
-    if ($size !== null) return;
+    if ($size !== null) {
+        return; // всё есть, уходим
+    }
 
-    /* 2. Проверяем файл */
+    /* 2. Считаем px */
     $absPath = JPATH_ROOT . '/' . ltrim($relPath, '/');
-/* ВНУТРИ ensureImageSize() */
-static $loggedPosts = []; // одно сообщение на пост за запрос
+    if (!is_file($absPath)) {
+        return; // файла нет
+    }
 
-$key = $this->threadId . ':' . $this->mesId; // у вас уже есть $mesId в парсере
-if (!isset($loggedPosts[$key])) {
-    Factory::getApplication()->enqueueMessage(
-        "ensureImageSize: 1-ый img поста {$this->mesId} темы {$this->threadId}, path={$relPath}  w={$w} h={$h}",
-        'notice'
-    );
-    $loggedPosts[$key] = true;
-}
-
-    if (!is_file($absPath)) return;
-
-    /* 3. Считаем */
     try {
         $img = new \Joomla\CMS\Image\Image($absPath);
         $w   = $img->getWidth();
@@ -1271,20 +1263,31 @@ if (!isset($loggedPosts[$key])) {
     } catch (\Throwable $e) {
         $w = $h = 0;
     }
-    Factory::getApplication()->enqueueMessage(
-        "ensureImageSize: w={$w} h={$h}",
-        'notice'
-    );
 
-    if ($w > 0 && $h > 0) {
-        $db->setQuery(
-            $db->getQuery(true)
-                ->insert('#__kunenatopic2article_img_size')
-                ->columns(['path', 'width', 'height', 'topicid'])
-                ->values(implode(',', $db->q([$relPath, $w, $h, $this->threadId])))
-        )->execute();
+    /* 3. Лог только тут, когда значения уже есть */
+    static $loggedPosts = [];
+    $key = $this->threadId . ':' . $this->mesId;
+    if (!isset($loggedPosts[$key]) && $w > 0 && $h > 0) {
+        Factory::getApplication()->enqueueMessage(
+            "ensureImageSize: 1-ый img поста {$this->mesId} темы {$this->threadId}, path={$relPath}  w={$w} h={$h}",
+            'notice'
+        );
+        $loggedPosts[$key] = true;
     }
-}   
+
+    /* 4. Пишем, только если px корректны */
+    if ($w > 0 && $h > 0) {
+        $query = $db->getQuery(true)
+            ->insert('#__kunenatopic2article_img_size')
+            ->columns(['path', 'width', 'height', 'topicid'])
+            ->values(implode(',', $db->q([$relPath, $w, $h, $this->threadId])));
+        try {
+            $db->setQuery($query)->execute();
+        } catch (\RuntimeException $e) {
+            // игнорируем дубль, если вдруг параллельный процесс вставил
+        }
+    }
+}
     
 /**
  * Удаляет статью предпросмотра по ID
