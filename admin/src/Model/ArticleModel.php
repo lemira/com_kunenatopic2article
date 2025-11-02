@@ -1249,10 +1249,17 @@ private function ensureImageSize(string $relPath): void // ОТЛАДКА с Л�
 
     /* 2. Проверяем файл */
     $absPath = JPATH_ROOT . '/' . ltrim($relPath, '/');
+/* ВНУТРИ ensureImageSize() */
+static $loggedPosts = []; // одно сообщение на пост за запрос
+
+$key = $this->threadId . ':' . $this->mesId; // у вас уже есть $mesId в парсере
+if (!isset($loggedPosts[$key])) {
     Factory::getApplication()->enqueueMessage(
-        "ensureImageSize: path={$relPath}  abs={$absPath}  exists=" . (is_file($absPath) ? 'Y' : 'N'),
+        "ensureImageSize: 1-ый img поста {$this->mesId} темы {$this->threadId}, path={$relPath}  w={$w} h={$h}",
         'notice'
     );
+    $loggedPosts[$key] = true;
+}
 
     if (!is_file($absPath)) return;
 
@@ -1276,10 +1283,6 @@ private function ensureImageSize(string $relPath): void // ОТЛАДКА с Л�
                 ->columns(['path', 'width', 'height', 'topicid'])
                 ->values(implode(',', $db->q([$relPath, $w, $h, $this->threadId])))
         )->execute();
-        Factory::getApplication()->enqueueMessage(
-            "ensureImageSize: INSERTED {$relPath}",
-            'message'
-        );
     }
 }   
     
