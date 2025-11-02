@@ -1179,7 +1179,7 @@ private function convertBBCodeToHtml($text)
                 // ИСП_Е РАЗМЕРОВ, гарантируем, что размеры будут в БД ки
         $this->ensureImageSize(ltrim($imagePath, '/'));    
         // формирование <img>, но уже с подтягиванием размеров
-        $sizeAttr = $this->getSizeAttr($imagePath);   // см. ниже
+        $sizeAttr = $this->getSizeAttr($imagePath); 
         $imageHtml = '<img src="' . $imagePath . '" alt="' . htmlspecialchars($filename) . '"' . $sizeAttr . ' loading="lazy">';
         // КОНЕЦ ИСП_Я РАЗМЕРОВ
             } else {
@@ -1233,33 +1233,42 @@ private function getSizeAttr(string $imagePath): string // ки
     return '';
 }
     
- private function ensureImageSize(string $relPath): void //ки
+//  private function ensureImageSize(string $relPath): void //ки
+private function ensureImageSize(string $relPath): void // ОТЛАДКА с ЛОГИРОВАНИЕМ
 {
     $db = Factory::getContainer()->get('DatabaseDriver');
 
-    /* 1. Уже есть в таблице? → выходим (width/height уже «есть») */
+    /* 1. Уже есть? */
     $size = $db->setQuery(
         $db->getQuery(true)
             ->select(['width','height'])
             ->from('#__kunenatopic2article_img_size')
             ->where($db->qn('path') . ' = ' . $db->q($relPath))
     )->loadRow();
+    if ($size !== null) return;
 
-    if ($size !== null) {          // width/height УЖЕ записаны
-        return;
-    }
-
-    /* 2. Иначе: считаем 1 раз */
+    /* 2. Проверяем файл */
     $absPath = JPATH_ROOT . '/' . ltrim($relPath, '/');
+    Factory::getApplication()->enqueueMessage(
+        "ensureImageSize: path={$relPath}  abs={$absPath}  exists=" . (is_file($absPath) ? 'Y' : 'N'),
+        'notice'
+    );
+
+    if (!is_file($absPath)) return;
+
+    /* 3. Считаем */
     try {
-        $img = new Image($absPath);
+        $img = new \Joomla\CMS\Image\Image($absPath);
         $w   = $img->getWidth();
         $h   = $img->getHeight();
     } catch (\Throwable $e) {
         $w = $h = 0;
     }
+    Factory::getApplication()->enqueueMessage(
+        "ensureImageSize: w={$w} h={$h}",
+        'notice'
+    );
 
-    /* 3. Если получили корректные px → пишем */
     if ($w > 0 && $h > 0) {
         $db->setQuery(
             $db->getQuery(true)
@@ -1267,8 +1276,12 @@ private function getSizeAttr(string $imagePath): string // ки
                 ->columns(['path', 'width', 'height', 'topicid'])
                 ->values(implode(',', $db->q([$relPath, $w, $h, $this->threadId])))
         )->execute();
+        Factory::getApplication()->enqueueMessage(
+            "ensureImageSize: INSERTED {$relPath}",
+            'message'
+        );
     }
-}
+}   
     
 /**
  * Удаляет статью предпросмотра по ID
