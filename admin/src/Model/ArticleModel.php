@@ -1111,6 +1111,12 @@ private function simpleBBCodeToHtml($text)
 // BBCode парсер с использованием chriskonnertz/bbcode
 private function convertBBCodeToHtml($text)
 {
+    // В самом начале функции ОТЛАДКА
+echo '<pre style="background: #f0f0f0; padding: 10px; margin: 10px; border: 2px solid red;">';
+echo "INPUT TEXT:\n";
+echo htmlspecialchars($text);
+echo '</pre>';
+    
     try {
         // Подключаем библиотеку BBCode напрямую
         $bbcodePath = JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
