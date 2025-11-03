@@ -1111,6 +1111,10 @@ private function simpleBBCodeToHtml($text)
 // BBCode парсер с использованием chriskonnertz/bbcode
 private function convertBBCodeToHtml($text)
 {
+// ОТЛАДКА
+     // 0. Старт
+    Factory::getApplication()->enqueueMessage('>>> convertBBCodeToHtml СТАРТ, длина текста: ' . strlen($text), 'notice');
+    
     try {
         // Подключаем библиотеку BBCode напрямую
         $bbcodePath = JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
@@ -1138,16 +1142,13 @@ private function convertBBCodeToHtml($text)
         
         // Применяем BBCode парсер
         $html = $bbcode->render($text);
-
+ //ОТЛАДКА 
+        // 1. сразу после $html = $bbcode->render($text);
+        Factory::getApplication()->enqueueMessage('>>> 1. После BBCode-парсера: ' . htmlspecialchars(substr($html, 0, 500)), 'notice');
+      
         // Нормализуем br теги
         $html = preg_replace('/\s*<br\s*\/?>\s*/i', "\n", $html);
-
-//ОТЛАДКА 
-// 1. после $bbcode->render($text)
-error_log('======== 1. AFTER BBCode ========' . PHP_EOL . $html);
-
-
-        
+     
         // Разбиваем по переносам строк
         $lines = explode("\n", $html);
         
@@ -1195,8 +1196,8 @@ $html = preg_replace_callback(
 /*-----------------------------------------------------*/
 
         // ОТЛАДКА
-     // 2. после блока «автолинковка + скобки»
-error_log('======== 2. AFTER LINKS+BRACKETS ========' . PHP_EOL . $html);
+    Factory::getApplication()->enqueueMessage('>>> 2. После обработки ссылок/скобок: ' . htmlspecialchars(substr($html, 0, 500)), 'notice');
+
         
         // Восстанавливаем изображения
         foreach ($attachments as $marker => $data) {
@@ -1229,6 +1230,11 @@ $html = preg_replace_callback(
         
          // ДОБАВЛЯЕМ ОБЕРТКУ КОНТЕЙНЕРА
         $html = '<div class="kun_p2a_content">' . $html . '</div>';
+
+  // ОТЛАДКА
+        // 3. перед return
+        Factory::getApplication()->enqueueMessage('>>> 3. Финальный HTML (первые 500 симв): ' . htmlspecialchars(substr($html, 0, 500)), 'notice');
+
         
         return $html;
         
