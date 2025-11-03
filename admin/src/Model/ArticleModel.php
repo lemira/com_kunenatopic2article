@@ -1112,13 +1112,6 @@ private function simpleBBCodeToHtml($text)
 private function convertBBCodeToHtml($text)
 {
     try {
-        // ВРЕМЕННАЯ ДИАГНОСТИКА - потом удалить
-$logFile = JPATH_ROOT . '/tmp/bbcode_debug.txt';
-file_put_contents($logFile, "=== DEBUG " . date('Y-m-d H:i:s') . " ===\n", FILE_APPEND);
-file_put_contents($logFile, "INPUT TEXT:\n" . $text . "\n\n", FILE_APPEND);
-file_put_contents($logFile, "RAW (htmlspecialchars):\n" . htmlspecialchars($text) . "\n\n", FILE_APPEND);
-file_put_contents($logFile, str_repeat('=', 80) . "\n\n", FILE_APPEND);
-        
         // Подключаем библиотеку BBCode напрямую
         $bbcodePath = JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
         
@@ -1135,40 +1128,45 @@ file_put_contents($logFile, str_repeat('=', 80) . "\n\n", FILE_APPEND);
         // ПРЕДВАРИТЕЛЬНАЯ ОБРАБОТКА (до BBCode парсинга)
         /*-----------------------------------------------------*/
         
-        // 1. Защищаем цифровые артефакты типа <2> от интерпретации как тегов
-        // Заменяем на временные маркеры
-        $angleNumberMarkers = [];
+        // 1. Защищаем проблемные конструкции с угловыми скобками
+        // Сначала ищем <цифра без закрывающей скобки перед [br
+        $text = preg_replace('/<(\d+)\[br\s*\/?\]/i', '&lt;$1&gt;[br /]', $text);
+        
+        // Затем ищем <цифра> в любом месте
+        $text = preg_replace('/<(\d+)>/', '&lt;$1&gt;', $text);
+        
+        // Защищаем одиночные < перед [br
+        $text = preg_replace('/<([^>\[]+?)\[br\s*\/?\]/i', '&lt;$1[br /]', $text);
+        
+        // 2. Защищаем "далёкие" угловые скобки (текст внутри)
+        // Ищем конструкции типа <текст с кириллицей или латиницей>
         $text = preg_replace_callback(
-            '/<(\d+)>/',
-            function($matches) use (&$angleNumberMarkers) {
-                $marker = '###ANGLE_NUM_' . count($angleNumberMarkers) . '###';
-                $angleNumberMarkers[$marker] = $matches[1];
-                return $marker;
+            '/<([^<>]*?[а-яА-ЯёЁa-zA-Z][^<>]*?)>/u',
+            function($matches) {
+                // Проверяем, что это не HTML/BBCode тег
+                $content = $matches[1];
+                if (preg_match('/^[a-zA-Z]+(\s|$)/i', $content)) {
+                    // Похоже на тег, оставляем
+                    return $matches[0];
+                }
+                // Это текст в скобках, экранируем
+                return '&lt;' . $content . '&gt;';
             },
             $text
         );
         
-        // 2. Защищаем "левые" угловые скобки (не являющиеся BBCode или HTML тегами)
-        // Паттерн находит < за которыми НЕ следует буква или слэш (не тег)
-        $leftAngleMarkers = [];
-        $text = preg_replace_callback(
-            '/<(?![a-zA-Z\/!\?]|\s*\/[a-zA-Z])([^>]*?)>/',
-            function($matches) use (&$leftAngleMarkers) {
-                $marker = '###LEFT_ANGLE_' . count($leftAngleMarkers) . '###';
-                $leftAngleMarkers[$marker] = $matches[0];
-                return $marker;
-            },
-            $text
-        );
+        // 3. Защищаем одиночные открывающие < без пары
+        $text = preg_replace('/<(?![a-zA-Z\/!\?]|\s*\/[a-zA-Z]|&)([^>]*?)(\[|$)/u', '&lt;$1$2', $text);
         
-        // 3. Автолинковка "голых" URL (до BBCode парсинга!)
-        // Важно: проверяем, что URL не внутри BBCode тега [url]
+        // 4. Автолинковка "голых" URL
+        // Преобразуем URL в BBCode формат [url]
         $text = preg_replace_callback(
-            '#(?<!\[url[^\]]*\])(https?://[^\s\[\]<>]+)(?!\[/url\])#i',
+            '#(?<![\[="\'])(?<!href=)(https?://[^\s\[\]<>"\'\)]+)#i',
             function($matches) {
                 $url = $matches[1];
-                // Преобразуем в BBCode формат, который потом обработается парсером
-                return '[url=' . $url . ']' . $url . '[/url]';
+                // Удаляем trailing punctuation
+                $url = rtrim($url, '.,;:!?');
+                return '[url]' . $url . '[/url]';
             },
             $text
         );
@@ -1177,7 +1175,7 @@ file_put_contents($logFile, str_repeat('=', 80) . "\n\n", FILE_APPEND);
         // ОБРАБОТКА ATTACHMENTS
         /*-----------------------------------------------------*/
         
-        // Заменяем attachment на временные маркеры (чтобы BBCode парсер их не трогал)
+        // Заменяем attachment на временные маркеры
         $attachments = [];
         $text = preg_replace_callback(
             '/\[attachment=(\d+)\](.*?)\[\/attachment\]/i',
@@ -1232,20 +1230,6 @@ file_put_contents($logFile, str_repeat('=', 80) . "\n\n", FILE_APPEND);
         $html = implode("\n", $paragraphs);
 
         /*-----------------------------------------------------*/
-        // ВОССТАНОВЛЕНИЕ ЗАЩИЩЁННЫХ ЭЛЕМЕНТОВ
-        /*-----------------------------------------------------*/
-        
-        // Восстанавливаем цифровые артефакты в безопасном виде
-        foreach ($angleNumberMarkers as $marker => $number) {
-            $html = str_replace($marker, '&lt;' . $number . '&gt;', $html);
-        }
-        
-        // Восстанавливаем "левые" скобки в экранированном виде
-        foreach ($leftAngleMarkers as $marker => $original) {
-            $html = str_replace($marker, htmlspecialchars($original, ENT_QUOTES, 'UTF-8'), $html);
-        }
-        
-        /*-----------------------------------------------------*/
         // ВОССТАНОВЛЕНИЕ ИЗОБРАЖЕНИЙ
         /*-----------------------------------------------------*/
         
@@ -1267,16 +1251,48 @@ file_put_contents($logFile, str_repeat('=', 80) . "\n\n", FILE_APPEND);
         }
 
         /*-----------------------------------------------------*/
-        // ОБРЕЗКА ДЛИННЫХ ССЫЛОК
+        // ФИНАЛЬНАЯ ОБРАБОТКА ССЫЛОК
         /*-----------------------------------------------------*/
         
+        // Добавляем rel и target к ссылкам, если их нет
         $html = preg_replace_callback(
-            '#<a\s+([^>]*?)href=[\'"]([^\'"]+)[\'"]([^>]*)>([^<]{50,})</a>#i',
+            '#<a\s+([^>]*?)href=[\'"]([^\'"]+)[\'"]([^>]*?)>(.*?)</a>#is',
+            function($m) {
+                $before = $m[1];
+                $href = $m[2];
+                $after = $m[3];
+                $text = $m[4];
+                
+                // Проверяем, нет ли уже rel и target
+                $hasRel = stripos($before . $after, 'rel=') !== false;
+                $hasTarget = stripos($before . $after, 'target=') !== false;
+                
+                $attrs = $before;
+                if (!$hasRel) {
+                    $attrs .= ' rel="nofollow noopener noreferrer"';
+                }
+                if (!$hasTarget) {
+                    $attrs .= ' target="_blank"';
+                }
+                $attrs .= $after;
+                
+                return '<a ' . trim($attrs) . ' href="' . $href . '">' . $text . '</a>';
+            },
+            $html
+        );
+        
+        // Обрезка длинных текстов ссылок (больше 50 символов)
+        $html = preg_replace_callback(
+            '#<a\s+([^>]+)>((?:https?://)?[^\s<]{50,})</a>#i',
             function ($m) {
-                $visible = mb_substr($m[4], 0, 47) . '…';
-                return '<a ' . $m[1] . 'href="' . $m[2] . '"' . $m[3] . '>'
-                       . htmlspecialchars($visible, ENT_QUOTES, 'UTF-8')
-                       . '</a>';
+                // Извлекаем только текст ссылки (без тегов внутри)
+                $linkText = strip_tags($m[2]);
+                if (mb_strlen($linkText) > 50) {
+                    $visible = mb_substr($linkText, 0, 47) . '…';
+                } else {
+                    $visible = $linkText;
+                }
+                return '<a ' . $m[1] . '>' . htmlspecialchars($visible, ENT_QUOTES, 'UTF-8') . '</a>';
             },
             $html
         );
