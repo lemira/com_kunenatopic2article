@@ -1141,6 +1141,12 @@ private function convertBBCodeToHtml($text)
 
         // Нормализуем br теги
         $html = preg_replace('/\s*<br\s*\/?>\s*/i', "\n", $html);
+
+//ОТЛАДКА 
+        // 1. сразу после  $html = $bbcode->render($text);
+//    (до всех наших правок)
+echo '<pre><b>1. После BBCode-парсера:</b> '.htmlspecialchars($html).'</pre>';
+
         
         // Разбиваем по переносам строк
         $lines = explode("\n", $html);
@@ -1187,6 +1193,11 @@ $html = preg_replace_callback(
         $html
 );
 /*-----------------------------------------------------*/
+
+        // ОТЛАДКА
+        // 2. после блока «автолинковка + защита скобок»
+echo '<pre><b>2. После нашей обработки:</b> '.htmlspecialchars($html).'</pre>';
+die;   // <-- остановим выполнение, чтобы увидеть вывод
         
         // Восстанавливаем изображения
         foreach ($attachments as $marker => $data) {
