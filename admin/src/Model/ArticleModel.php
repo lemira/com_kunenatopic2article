@@ -1138,6 +1138,26 @@ private function convertBBCodeToHtml($text)
         
         // Применяем BBCode парсер
         $html = $bbcode->render($text);
+
+/* ---------- защита от «сломанных» угловых скобок ---------- ки */
+
+// 1. Убираем пустые конструкции вида <2>, <4> и т.д.
+$html = preg_replace('#<(\d+)>#', '&lt;$1&gt;', $html);
+
+// 2. Экранируем все остальные одиночные скобки, которые не похожи на корректные теги
+$html = preg_replace_callback(
+    '#<([^>a-zA-Z/!]|[a-zA-Z]+[^>]*[^a-zA-Z0-9>])>#',
+    function ($m) {
+        // если это действительно тег – оставляем, иначе экранируем
+        if (preg_match('/^[a-zA-Z][a-zA-Z0-9]*(\s.*)?$/s', $m[1])) {
+            return $m[0];          // вернуть как есть
+        }
+        return '&lt;' . $m[1] . '&gt;'; // экранировать
+    },
+    $html
+);
+
+/* ---------- /защита ---------- */
         
         // Нормализуем br теги
         $html = preg_replace('/\s*<br\s*\/?>\s*/i', "\n", $html);
@@ -1192,6 +1212,16 @@ $html = preg_replace_callback(
                . htmlspecialchars($visible, ENT_QUOTES, 'UTF-8')
                . '</a>';
     },
+    $html
+);
+
+/* автоматически оборачиваем «голые» URL в <a> ки */
+$html = preg_replace(
+    '#(?<![\'">])(
+        https?://                 # протокол
+        [^\s<]+                   # всё, кроме пробела и <
+    )#ixu',
+    '<a href="$1" rel="nofollow noopener noreferrer" target="_blank">$1</a>',
     $html
 );
         
