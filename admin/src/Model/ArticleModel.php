@@ -1113,7 +1113,7 @@ private function convertBBCodeToHtml($text)
 {
 // ОТЛАДКА
      // 0. Старт
-    Factory::getApplication()->enqueueMessage('>>> convertBBCodeToHtml СТАРТ, длина текста: ' . strlen($text), 'notice');
+    Factory::getApplication()->enqueueMessage('>>> convertBBCodeToHtml СТАРТ, длина текста: ' . strlen($text), 'info');
     
     try {
         // Подключаем библиотеку BBCode напрямую
@@ -1144,7 +1144,7 @@ private function convertBBCodeToHtml($text)
         $html = $bbcode->render($text);
  //ОТЛАДКА 
         // 1. сразу после $html = $bbcode->render($text);
-        Factory::getApplication()->enqueueMessage('>>> 1. После BBCode-парсера: ' . htmlspecialchars(substr($html, 0, 500)), 'notice');
+        Factory::getApplication()->enqueueMessage('>>> 1. После BBCode-парсера: ' . htmlspecialchars(substr($html, 0, 500)), 'info');
       
         // Нормализуем br теги
         $html = preg_replace('/\s*<br\s*\/?>\s*/i', "\n", $html);
@@ -1196,7 +1196,7 @@ $html = preg_replace_callback(
 /*-----------------------------------------------------*/
 
         // ОТЛАДКА
-    Factory::getApplication()->enqueueMessage('>>> 2. После обработки ссылок/скобок: ' . htmlspecialchars(substr($html, 0, 500)), 'notice');
+    Factory::getApplication()->enqueueMessage('>>> 2. После обработки ссылок/скобок: ' . htmlspecialchars(substr($html, 0, 500)), 'info');
 
         
         // Восстанавливаем изображения
