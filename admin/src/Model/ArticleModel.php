@@ -1111,10 +1111,6 @@ private function simpleBBCodeToHtml($text)
 // BBCode парсер с использованием chriskonnertz/bbcode
 private function convertBBCodeToHtml($text)
 {
-// ОТЛАДКА
-     // 0. Старт
-    Factory::getApplication()->enqueueMessage('>>> convertBBCodeToHtml СТАРТ, длина текста: ' . strlen($text), 'info');
-    
     try {
         // Подключаем библиотеку BBCode напрямую
         $bbcodePath = JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
@@ -1128,27 +1124,82 @@ private function convertBBCodeToHtml($text)
         require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/Tag.php';
         require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
         
+        /*-----------------------------------------------------*/
+        // ПРЕДВАРИТЕЛЬНАЯ ОБРАБОТКА (до BBCode парсинга)
+        /*-----------------------------------------------------*/
+        
+        // 1. Защищаем цифровые артефакты типа <2> от интерпретации как тегов
+        // Заменяем на временные маркеры
+        $angleNumberMarkers = [];
+        $text = preg_replace_callback(
+            '/<(\d+)>/',
+            function($matches) use (&$angleNumberMarkers) {
+                $marker = '###ANGLE_NUM_' . count($angleNumberMarkers) . '###';
+                $angleNumberMarkers[$marker] = $matches[1];
+                return $marker;
+            },
+            $text
+        );
+        
+        // 2. Защищаем "левые" угловые скобки (не являющиеся BBCode или HTML тегами)
+        // Паттерн находит < за которыми НЕ следует буква или слэш (не тег)
+        $leftAngleMarkers = [];
+        $text = preg_replace_callback(
+            '/<(?![a-zA-Z\/!\?]|\s*\/[a-zA-Z])([^>]*?)>/',
+            function($matches) use (&$leftAngleMarkers) {
+                $marker = '###LEFT_ANGLE_' . count($leftAngleMarkers) . '###';
+                $leftAngleMarkers[$marker] = $matches[0];
+                return $marker;
+            },
+            $text
+        );
+        
+        // 3. Автолинковка "голых" URL (до BBCode парсинга!)
+        // Важно: проверяем, что URL не внутри BBCode тега [url]
+        $text = preg_replace_callback(
+            '#(?<!\[url[^\]]*\])(https?://[^\s\[\]<>]+)(?!\[/url\])#i',
+            function($matches) {
+                $url = $matches[1];
+                // Преобразуем в BBCode формат, который потом обработается парсером
+                return '[url=' . $url . ']' . $url . '[/url]';
+            },
+            $text
+        );
+        
+        /*-----------------------------------------------------*/
+        // ОБРАБОТКА ATTACHMENTS
+        /*-----------------------------------------------------*/
+        
         // Заменяем attachment на временные маркеры (чтобы BBCode парсер их не трогал)
         $attachments = [];
-        $text = preg_replace_callback('/\[attachment=(\d+)\](.*?)\[\/attachment\]/i', function($matches) use (&$attachments) {
-            $attachmentId = $matches[1];
-            $filename = $matches[2];
-            $marker = '###ATTACHMENT_' . count($attachments) . '###';
-            $attachments[$marker] = [$attachmentId, $filename];
-            return $marker;
-        }, $text);
+        $text = preg_replace_callback(
+            '/\[attachment=(\d+)\](.*?)\[\/attachment\]/i',
+            function($matches) use (&$attachments) {
+                $attachmentId = $matches[1];
+                $filename = $matches[2];
+                $marker = '###ATTACHMENT_' . count($attachments) . '###';
+                $attachments[$marker] = [$attachmentId, $filename];
+                return $marker;
+            },
+            $text
+        );
+        
+        /*-----------------------------------------------------*/
+        // BBCODE ПАРСИНГ
+        /*-----------------------------------------------------*/
         
         $bbcode = new \ChrisKonnertz\BBCode\BBCode();
         
         // Применяем BBCode парсер
         $html = $bbcode->render($text);
- //ОТЛАДКА 
-        // 1. сразу после $html = $bbcode->render($text);
-        Factory::getApplication()->enqueueMessage('>>> 1. После BBCode-парсера: ' . htmlspecialchars(substr($html, 0, 500)), 'info');
-      
+
+        /*-----------------------------------------------------*/
+        // ПОСТОБРАБОТКА HTML
+        /*-----------------------------------------------------*/
+        
         // Нормализуем br теги
         $html = preg_replace('/\s*<br\s*\/?>\s*/i', "\n", $html);
-     
+        
         // Разбиваем по переносам строк
         $lines = explode("\n", $html);
         
@@ -1173,31 +1224,23 @@ private function convertBBCodeToHtml($text)
         
         $html = implode("\n", $paragraphs);
 
-/*-----------------------------------------------------*/
-// 3. автолинковка и защита скобок
-/* 3.1 автолинковка «голых» URL                        */
-$html = preg_replace(
-        '#(?<![\'">])(https?://[^\s<]+)#i',
-        '<a href="$1" rel="nofollow noopener noreferrer" target="_blank">$1</a>',
-        $html
-);
-
-/* 3.2 убираем цифровые артефакты <2<br /> и т.д.        */
-$html = preg_replace('#<(\d+)(?=<br\s*/?\s*>)#i', '&lt;$1&gt;', $html);
-
-/* 3.3 экранируем остальные «левые» скобки, кроме валидных тегов */
-$html = preg_replace_callback(
-        '#<(?![a-zA-Z/!?]|\s*/[a-zA-Z])[^>]*>#',
-        function ($m) {
-            return htmlspecialchars($m[0], ENT_QUOTES, 'UTF-8');
-        },
-        $html
-);
-/*-----------------------------------------------------*/
-
-        // ОТЛАДКА
-    Factory::getApplication()->enqueueMessage('>>> 2. После обработки ссылок/скобок: ' . htmlspecialchars(substr($html, 0, 500)), 'info');
-
+        /*-----------------------------------------------------*/
+        // ВОССТАНОВЛЕНИЕ ЗАЩИЩЁННЫХ ЭЛЕМЕНТОВ
+        /*-----------------------------------------------------*/
+        
+        // Восстанавливаем цифровые артефакты в безопасном виде
+        foreach ($angleNumberMarkers as $marker => $number) {
+            $html = str_replace($marker, '&lt;' . $number . '&gt;', $html);
+        }
+        
+        // Восстанавливаем "левые" скобки в экранированном виде
+        foreach ($leftAngleMarkers as $marker => $original) {
+            $html = str_replace($marker, htmlspecialchars($original, ENT_QUOTES, 'UTF-8'), $html);
+        }
+        
+        /*-----------------------------------------------------*/
+        // ВОССТАНОВЛЕНИЕ ИЗОБРАЖЕНИЙ
+        /*-----------------------------------------------------*/
         
         // Восстанавливаем изображения
         foreach ($attachments as $marker => $data) {
@@ -1216,25 +1259,23 @@ $html = preg_replace_callback(
             $html = str_replace($marker, $imageHtml, $html);
         }
 
-/* ---------- обрезка ЛЮБЫХ длинных ссылок ---------- ки */
-$html = preg_replace_callback(
-    '#<a\s+([^>]*?)href=[\'"]([^\'"]+)[\'"]([^>]*)>([^<]{50,})</a>#i',
-    function ($m) {
-        $visible = mb_substr($m[4], 0, 47) . '…';
-        return '<a ' . $m[1] . 'href="' . $m[2] . '"' . $m[3] . '>'
-               . htmlspecialchars($visible, ENT_QUOTES, 'UTF-8')
-               . '</a>';
-    },
-    $html
-);
+        /*-----------------------------------------------------*/
+        // ОБРЕЗКА ДЛИННЫХ ССЫЛОК
+        /*-----------------------------------------------------*/
         
-         // ДОБАВЛЯЕМ ОБЕРТКУ КОНТЕЙНЕРА
+        $html = preg_replace_callback(
+            '#<a\s+([^>]*?)href=[\'"]([^\'"]+)[\'"]([^>]*)>([^<]{50,})</a>#i',
+            function ($m) {
+                $visible = mb_substr($m[4], 0, 47) . '…';
+                return '<a ' . $m[1] . 'href="' . $m[2] . '"' . $m[3] . '>'
+                       . htmlspecialchars($visible, ENT_QUOTES, 'UTF-8')
+                       . '</a>';
+            },
+            $html
+        );
+        
+        // ДОБАВЛЯЕМ ОБЕРТКУ КОНТЕЙНЕРА
         $html = '<div class="kun_p2a_content">' . $html . '</div>';
-
-  // ОТЛАДКА
-        // 3. перед return
-        Factory::getApplication()->enqueueMessage('>>> 3. Финальный HTML (первые 500 симв): ' . htmlspecialchars(substr($html, 0, 500)), 'notice');
-
         
         return $html;
         
