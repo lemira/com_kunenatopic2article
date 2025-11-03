@@ -1112,6 +1112,13 @@ private function simpleBBCodeToHtml($text)
 private function convertBBCodeToHtml($text)
 {
     try {
+        // ВРЕМЕННАЯ ДИАГНОСТИКА - потом удалить
+$logFile = JPATH_ROOT . '/tmp/bbcode_debug.txt';
+file_put_contents($logFile, "=== DEBUG " . date('Y-m-d H:i:s') . " ===\n", FILE_APPEND);
+file_put_contents($logFile, "INPUT TEXT:\n" . $text . "\n\n", FILE_APPEND);
+file_put_contents($logFile, "RAW (htmlspecialchars):\n" . htmlspecialchars($text) . "\n\n", FILE_APPEND);
+file_put_contents($logFile, str_repeat('=', 80) . "\n\n", FILE_APPEND);
+        
         // Подключаем библиотеку BBCode напрямую
         $bbcodePath = JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
         
