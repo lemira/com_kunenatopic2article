@@ -1144,8 +1144,7 @@ private function convertBBCodeToHtml($text)
 
 //ОТЛАДКА 
 // 1. после $bbcode->render($text)
-file_put_contents(JPATH_ROOT . '/tmp/bbcodelog.txt',
-                  "1. AFTER BBCode:\n" . $html . "\n\n", FILE_APPEND);
+error_log('======== 1. AFTER BBCode ========' . PHP_EOL . $html);
 
 
         
@@ -1196,9 +1195,8 @@ $html = preg_replace_callback(
 /*-----------------------------------------------------*/
 
         // ОТЛАДКА
-      // 2. после нашего блока «автолинковка + скобки»
-file_put_contents(JPATH_ROOT . '/tmp/bbcodelog.txt',
-                  "2. AFTER LINKS+BRACKETS:\n" . $html . "\n\n", FILE_APPEND);
+     // 2. после блока «автолинковка + скобки»
+error_log('======== 2. AFTER LINKS+BRACKETS ========' . PHP_EOL . $html);
         
         // Восстанавливаем изображения
         foreach ($attachments as $marker => $data) {
