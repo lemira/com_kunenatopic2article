@@ -1097,7 +1097,12 @@ public function sendLinksToAdministrator(array $articleLinks): array
     }
 }
 
-// Простой парсер как fallback
+     /**
+     * Преобразование BBCode в HTML
+     * @param   string  $text  Текст с BBCode
+     * @return  string  HTML-текст
+     */
+// BBCode парсер с использованием chriskonnertz/bbcode
 private function simpleBBCodeToHtml($text)
 {
    return 'NO PARSER'; // СООБЩАЕМ, ЧТО С ОСНОВНЫМ ПАРСЕРОМ ПРОБЛЕМЫ
@@ -1124,7 +1129,11 @@ private function convertBBCodeToHtml($text)
         require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/Tag.php';
         require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
     
-    // Автолинковка "голых" URL кл
+   // Чистим [br /] внутри <цифра[br /> и конструкций типа <4»[br />
+        $text = preg_replace('/<(\d+)\[br\s*\/?\]/i', '<$1>', $text);
+        $text = preg_replace('/<(\d+)([^\[<>]*?)\[br\s*\/?\]/iu', '<$1>$2', $text);
+   
+    // Делаем линками "голые" URL кл
         $text = preg_replace_callback(
             '#(?<![\[="\'])(?<!href=)(https?://[^\s\[\]<>"\'\)]+)#i',
             function($m) {
@@ -1176,27 +1185,6 @@ private function convertBBCodeToHtml($text)
         
         $html = implode("\n", $paragraphs);
 
-/* ---------- защита «левых» угловых скобок --------ки-- */
-
-// 1. закрываем цифровые артефакты  <2<br />  →  &lt;2&gt;<br />
-$html = preg_replace('#<(\d+)(?=<br\s*/?\s*>)#i', '&lt;$1&gt;', $html);
-
-// 2. экранируем всё, что НЕ похоже на корректный HTML-тег
-$html = preg_replace_callback(
-    '#<([^>]*+)>#',                    // любая пара <...>
-    function ($m) {
-        $inside = trim($m[1]);
-
-        // разрешённые теги: пустой (</td>), слово, слово/слово, слово с атрибутами
-        if (preg_match('/^(?:\/[a-zA-Z][a-zA-Z0-9]*|[a-zA-Z][a-zA-Z0-9]*(?:\s+[^>]*)?)$/', $inside)) {
-            return $m[0];               // оставляем настоящий тег
-        }
-        // всё остальное – экранируем
-        return '&lt;' . $inside . '&gt;';
-    },
-    $html
-);
-
         // Восстанавливаем изображения
         foreach ($attachments as $marker => $data) {
             $attachmentId = $data[0];
@@ -1241,7 +1229,13 @@ $html = preg_replace_callback(
         return $this->simpleBBCodeToHtml($text);
     }
 }
-    
+   
+// Простой парсер как fallback
+private function simpleBBCodeToHtml($text)
+{
+   return 'NO PARSER'; // СООБЩАЕМ, ЧТО С ОСНОВНЫМ ПАРСЕРОМ ПРОБЛЕМЫ
+}
+     
 /**
  * Удаляет статью предпросмотра по ID
  * 
@@ -1294,8 +1288,8 @@ public function deletePreviewArticleById($id)
         return false;
     }
 }
-    
-      /**
+
+    /**
      * Получение параметров компонента из таблиц
      * @return  object|null  Объект с параметрами компонента
      */
