@@ -1118,10 +1118,10 @@ private function convertBBCodeToHtml($text)
         require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/Tag.php';
         require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
     
-   // Чистим [br /] внутри <цифра[br /> и конструкций типа <4»[br />
-        $text = preg_replace('/<(\d+)\[br\s*\/?\]/i', '<$1>', $text);
-        $text = preg_replace('/<(\d+)([^\[<>]*?)\[br\s*\/?\]/iu', '<$1>$2', $text);
-   
+    // Уд-м "[br /", которые обрубают текст поста при переносе в статью кл
+        $text = preg_replace('/<([^>]*?)\[br\s*\/\s*[>\]]/iu', '<$1>', $text);  // Удаляем [br с любыми вар-ми закрытия: [br />, [br /], [br/> и пр.
+        $text = preg_replace('/([»"\.])\s*>/u', '$1', $text);  // Удаляем одиночные > после кавычек/точек     
+      
     // Делаем линками "голые" URL кл
         $text = preg_replace_callback(
             '#(?<![\[="\'])(?<!href=)(https?://[^\s\[\]<>"\'\)]+)#i',
