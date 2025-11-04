@@ -1111,12 +1111,6 @@ private function simpleBBCodeToHtml($text)
 // BBCode парсер с использованием chriskonnertz/bbcode
 private function convertBBCodeToHtml($text)
 {
-    // В самом начале функции ОТЛАДКА
-echo '<pre style="background: #f0f0f0; padding: 10px; margin: 10px; border: 2px solid red;">';
-echo "INPUT TEXT:\n";
-echo htmlspecialchars($text);
-echo '</pre>';
-    
     try {
         // Подключаем библиотеку BBCode напрямую
         $bbcodePath = JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
@@ -1129,84 +1123,31 @@ echo '</pre>';
         // Подключаем нужные файлы вручную
         require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/Tag.php';
         require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
-        
-        /*-----------------------------------------------------*/
-        // ПРЕДВАРИТЕЛЬНАЯ ОБРАБОТКА (до BBCode парсинга)
-        /*-----------------------------------------------------*/
-        
-        // 1. Защищаем проблемные конструкции с угловыми скобками
-        // Сначала ищем <цифра без закрывающей скобки перед [br
-        $text = preg_replace('/<(\d+)\[br\s*\/?\]/i', '&lt;$1&gt;[br /]', $text);
-        
-        // Затем ищем <цифра> в любом месте
-        $text = preg_replace('/<(\d+)>/', '&lt;$1&gt;', $text);
-        
-        // Защищаем одиночные < перед [br
-        $text = preg_replace('/<([^>\[]+?)\[br\s*\/?\]/i', '&lt;$1[br /]', $text);
-        
-        // 2. Защищаем "далёкие" угловые скобки (текст внутри)
-        // Ищем конструкции типа <текст с кириллицей или латиницей>
-        $text = preg_replace_callback(
-            '/<([^<>]*?[а-яА-ЯёЁa-zA-Z][^<>]*?)>/u',
-            function($matches) {
-                // Проверяем, что это не HTML/BBCode тег
-                $content = $matches[1];
-                if (preg_match('/^[a-zA-Z]+(\s|$)/i', $content)) {
-                    // Похоже на тег, оставляем
-                    return $matches[0];
-                }
-                // Это текст в скобках, экранируем
-                return '&lt;' . $content . '&gt;';
-            },
-            $text
-        );
-        
-        // 3. Защищаем одиночные открывающие < без пары
-        $text = preg_replace('/<(?![a-zA-Z\/!\?]|\s*\/[a-zA-Z]|&)([^>]*?)(\[|$)/u', '&lt;$1$2', $text);
-        
-        // 4. Автолинковка "голых" URL
-        // Преобразуем URL в BBCode формат [url]
+    
+    // Автолинковка "голых" URL кл
         $text = preg_replace_callback(
             '#(?<![\[="\'])(?<!href=)(https?://[^\s\[\]<>"\'\)]+)#i',
-            function($matches) {
-                $url = $matches[1];
-                // Удаляем trailing punctuation
-                $url = rtrim($url, '.,;:!?');
+            function($m) {
+                $url = rtrim($m[1], '.,;:!?');
                 return '[url]' . $url . '[/url]';
             },
             $text
         );
         
-        /*-----------------------------------------------------*/
-        // ОБРАБОТКА ATTACHMENTS
-        /*-----------------------------------------------------*/
-        
-        // Заменяем attachment на временные маркеры
+        // Заменяем attachment на временные маркеры (чтобы BBCode парсер их не трогал)
         $attachments = [];
-        $text = preg_replace_callback(
-            '/\[attachment=(\d+)\](.*?)\[\/attachment\]/i',
-            function($matches) use (&$attachments) {
-                $attachmentId = $matches[1];
-                $filename = $matches[2];
-                $marker = '###ATTACHMENT_' . count($attachments) . '###';
-                $attachments[$marker] = [$attachmentId, $filename];
-                return $marker;
-            },
-            $text
-        );
-        
-        /*-----------------------------------------------------*/
-        // BBCODE ПАРСИНГ
-        /*-----------------------------------------------------*/
+        $text = preg_replace_callback('/\[attachment=(\d+)\](.*?)\[\/attachment\]/i', function($matches) use (&$attachments) {
+            $attachmentId = $matches[1];
+            $filename = $matches[2];
+            $marker = '###ATTACHMENT_' . count($attachments) . '###';
+            $attachments[$marker] = [$attachmentId, $filename];
+            return $marker;
+        }, $text);
         
         $bbcode = new \ChrisKonnertz\BBCode\BBCode();
         
         // Применяем BBCode парсер
         $html = $bbcode->render($text);
-
-        /*-----------------------------------------------------*/
-        // ПОСТОБРАБОТКА HTML
-        /*-----------------------------------------------------*/
         
         // Нормализуем br теги
         $html = preg_replace('/\s*<br\s*\/?>\s*/i', "\n", $html);
@@ -1235,10 +1176,27 @@ echo '</pre>';
         
         $html = implode("\n", $paragraphs);
 
-        /*-----------------------------------------------------*/
-        // ВОССТАНОВЛЕНИЕ ИЗОБРАЖЕНИЙ
-        /*-----------------------------------------------------*/
-        
+/* ---------- защита «левых» угловых скобок --------ки-- */
+
+// 1. закрываем цифровые артефакты  <2<br />  →  &lt;2&gt;<br />
+$html = preg_replace('#<(\d+)(?=<br\s*/?\s*>)#i', '&lt;$1&gt;', $html);
+
+// 2. экранируем всё, что НЕ похоже на корректный HTML-тег
+$html = preg_replace_callback(
+    '#<([^>]*+)>#',                    // любая пара <...>
+    function ($m) {
+        $inside = trim($m[1]);
+
+        // разрешённые теги: пустой (</td>), слово, слово/слово, слово с атрибутами
+        if (preg_match('/^(?:\/[a-zA-Z][a-zA-Z0-9]*|[a-zA-Z][a-zA-Z0-9]*(?:\s+[^>]*)?)$/', $inside)) {
+            return $m[0];               // оставляем настоящий тег
+        }
+        // всё остальное – экранируем
+        return '&lt;' . $inside . '&gt;';
+    },
+    $html
+);
+
         // Восстанавливаем изображения
         foreach ($attachments as $marker => $data) {
             $attachmentId = $data[0];
@@ -1256,54 +1214,19 @@ echo '</pre>';
             $html = str_replace($marker, $imageHtml, $html);
         }
 
-        /*-----------------------------------------------------*/
-        // ФИНАЛЬНАЯ ОБРАБОТКА ССЫЛОК
-        /*-----------------------------------------------------*/
+/* ---------- обрезка ЛЮБЫХ длинных ссылок ---------- ки */
+$html = preg_replace_callback(
+    '#<a\s+([^>]*?)href=[\'"]([^\'"]+)[\'"]([^>]*)>([^<]{50,})</a>#i',
+    function ($m) {
+        $visible = mb_substr($m[4], 0, 47) . '…';
+        return '<a ' . $m[1] . 'href="' . $m[2] . '"' . $m[3] . '>'
+               . htmlspecialchars($visible, ENT_QUOTES, 'UTF-8')
+               . '</a>';
+    },
+    $html
+);
         
-        // Добавляем rel и target к ссылкам, если их нет
-        $html = preg_replace_callback(
-            '#<a\s+([^>]*?)href=[\'"]([^\'"]+)[\'"]([^>]*?)>(.*?)</a>#is',
-            function($m) {
-                $before = $m[1];
-                $href = $m[2];
-                $after = $m[3];
-                $text = $m[4];
-                
-                // Проверяем, нет ли уже rel и target
-                $hasRel = stripos($before . $after, 'rel=') !== false;
-                $hasTarget = stripos($before . $after, 'target=') !== false;
-                
-                $attrs = $before;
-                if (!$hasRel) {
-                    $attrs .= ' rel="nofollow noopener noreferrer"';
-                }
-                if (!$hasTarget) {
-                    $attrs .= ' target="_blank"';
-                }
-                $attrs .= $after;
-                
-                return '<a ' . trim($attrs) . ' href="' . $href . '">' . $text . '</a>';
-            },
-            $html
-        );
-        
-        // Обрезка длинных текстов ссылок (больше 50 символов)
-        $html = preg_replace_callback(
-            '#<a\s+([^>]+)>((?:https?://)?[^\s<]{50,})</a>#i',
-            function ($m) {
-                // Извлекаем только текст ссылки (без тегов внутри)
-                $linkText = strip_tags($m[2]);
-                if (mb_strlen($linkText) > 50) {
-                    $visible = mb_substr($linkText, 0, 47) . '…';
-                } else {
-                    $visible = $linkText;
-                }
-                return '<a ' . $m[1] . '>' . htmlspecialchars($visible, ENT_QUOTES, 'UTF-8') . '</a>';
-            },
-            $html
-        );
-        
-        // ДОБАВЛЯЕМ ОБЕРТКУ КОНТЕЙНЕРА
+         // ДОБАВЛЯЕМ ОБЕРТКУ КОНТЕЙНЕРА
         $html = '<div class="kun_p2a_content">' . $html . '</div>';
         
         return $html;
