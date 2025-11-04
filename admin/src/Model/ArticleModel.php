@@ -1063,7 +1063,7 @@ public function sendLinksToAdministrator(array $articleLinks): array
 }
 
     // ПАРСЕР
-        // Получение реального пути к attachment из базы данных
+        // ПОДГОТОВКА К ПАРСЕРУ. Получение реального пути к attachment из базы данных
     private function getAttachmentPath($attachmentId)
 {
     try {
@@ -1095,17 +1095,6 @@ public function sendLinksToAdministrator(array $articleLinks): array
         error_log('Error getting attachment path: ' . $e->getMessage());
         return null;
     }
-}
-
-     /**
-     * Преобразование BBCode в HTML
-     * @param   string  $text  Текст с BBCode
-     * @return  string  HTML-текст
-     */
-// BBCode парсер с использованием chriskonnertz/bbcode
-private function simpleBBCodeToHtml($text)
-{
-   return 'NO PARSER'; // СООБЩАЕМ, ЧТО С ОСНОВНЫМ ПАРСЕРОМ ПРОБЛЕМЫ
 }
 
      /**
@@ -1235,7 +1224,8 @@ private function simpleBBCodeToHtml($text)
 {
    return 'NO PARSER'; // СООБЩАЕМ, ЧТО С ОСНОВНЫМ ПАРСЕРОМ ПРОБЛЕМЫ
 }
-     
+ // ------- КОНЕЦ ПАРСЕРА ---------
+    
 /**
  * Удаляет статью предпросмотра по ID
  * 
