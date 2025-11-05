@@ -1121,8 +1121,20 @@ private function convertBBCodeToHtml($text)
     // Уд-м "[br /", которые обрубают текст поста при переносе в статью кл
         $text = preg_replace('/<([^>]*?)\[br\s*\/\s*[>\]]/iu', '<$1>', $text);  // Удаляем [br с любыми вар-ми закрытия: [br />, [br /], [br/> и пр.
         $text = preg_replace('/([»"\.])\s*>/u', '$1', $text);  // Удаляем одиночные > после кавычек/точек     
-      
-    // Делаем линками "голые" URL кл
+
+    // Защищаем URL внутри [img] тегов от преобразования в линки
+        $imgProtect = [];
+        $text = preg_replace_callback(
+            '/\[img\](https?:\/\/[^\[]+?)\[\/img\]/i',
+            function($m) use (&$imgProtect) {
+                $marker = '___IMGURL_' . count($imgProtect) . '___';
+                $imgProtect[$marker] = $m[0]; // Сохраняем весь тег [img]...[/img]
+                return $marker;
+            },
+            $text
+        );  
+        
+        // Делаем линками "голые" URL кл
         $text = preg_replace_callback(
             '#(?<![\[="\'])(?<!href=)(https?://[^\s\[\]<>"\'\)]+)#i',
             function($m) {
@@ -1131,6 +1143,11 @@ private function convertBBCodeToHtml($text)
             },
             $text
         );
+
+       // Восстанавливаем защищённые [img] теги
+        foreach ($imgProtect as $marker => $original) {
+            $text = str_replace($marker, $original, $text);
+        }
         
         // Заменяем attachment на временные маркеры (чтобы BBCode парсер их не трогал)
         $attachments = [];
