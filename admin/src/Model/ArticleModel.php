@@ -765,61 +765,62 @@ private function traverseTree($postId, $level, $children, &$postIdList, &$postLe
         return '';
     }
 
-    $infoString = HTMLHelper::_('content.prepare', '<div class="kun_p2a_infoPostString text-center">'); // Используем современный синтаксис Joomla 5
+    $infoString = HTMLHelper::_('content.prepare', '<div class="kun_p2a_infoPostString text-center">');
     
-    // IDs постов (с ссылкой или без)
-    if ($this->params->post_ids) {      // НАЧАЛО БЛОКА IDs
-    // Формируем часть строки с ID постов
-    $idsString = '';
-    
-    // Текущий пост
-    if ($this->params->kunena_post_link) {
-   $postUrl = $this->getKunenaPostUrl($this->currentPost->id);
+    // IDs постов (с ссылкой или без) - ЭТО ПЕРВАЯ СТРОКА БЕЗ ЖЕЛТОГО ФОНА
+    if ($this->params->post_ids) {
+        $idsString = '';
         
-$idsString .= ' <a href="' . htmlspecialchars($postUrl, ENT_QUOTES, 'UTF-8') 
-           . '" target="_blank" rel="noopener noreferrer">#' 
-           . $this->currentPost->id . '</a>';
+        // Текущий пост
+        if ($this->currentPost->kunena_post_link) {
+            $postUrl = $this->getKunenaPostUrl($this->currentPost->id);
+            $idsString .= ' <a href="' . htmlspecialchars($postUrl, ENT_QUOTES, 'UTF-8') 
+                       . '" target="_blank" rel="noopener noreferrer">#' 
+                       . $this->currentPost->id . '</a>';
+        } else {
+            $idsString .= '#' . $this->currentPost->id;
+        }
         
-} else {
-    $idsString .= '#' . $this->currentPost->id;
-}
- // Родительский пост
-if (!empty($this->currentPost->parent)) {
-    if ($this->params->kunena_post_link) {
-        $parentUrl = $this->getKunenaPostUrl($this->currentPost->parent);
-        $idsString .= ' ⟸ <a href="' . htmlspecialchars($parentUrl, ENT_QUOTES, 'UTF-8') 
-                   . '" target="_blank" rel="noopener noreferrer">#' 
-                   . $this->currentPost->parent . '</a>';
-    } else {
-        $idsString .= ' ⟸ #' . $this->currentPost->parent; // '⬅' U+2B05, '⮜' U+2B9C, '👈' U+1F448, '&lArr;' ⇐, '&#9754;' ☚, '←', '◀'
+        // Родительский пост
+        if (!empty($this->currentPost->parent)) {
+            if ($this->params->kunena_post_link) {
+                $parentUrl = $this->getKunenaPostUrl($this->currentPost->parent);
+                $idsString .= ' ⟸ <a href="' . htmlspecialchars($parentUrl, ENT_QUOTES, 'UTF-8') 
+                           . '" target="_blank" rel="noopener noreferrer">#' 
+                           . $this->currentPost->parent . '</a>';
+            } else {
+                $idsString .= ' ⟸ #' . $this->currentPost->parent;
+            }
+        }
+        $infoString .= $idsString;
     }
-}
-$infoString .= $idsString;
-    }  // КОНЕЦ БЛОКА IDs
-  $infoString .= '<br />';  
     
-  // Автор (никнейм)
+    $infoString .= '</div>'; // Закрываем первый блок
+    
+    // НАЧАЛО БЛОКА С ЖЕЛТЫМ ФОНОМ
+    $infoString .= '<div class="kun_p2a_infoPostString_yellow text-center">';
+    
+    // Автор (никнейм)
     if ($this->params->post_author) {
         $infoString .= htmlspecialchars($this->currentPost->name, ENT_QUOTES, 'UTF-8');
     }
     
     // Заголовок поста
-     if ($this->params->post_title) {
-    $infoString .= ' / <span class="kun_p2a_post_subject">' . htmlspecialchars($this->currentPost->subject, ENT_QUOTES, 'UTF-8') . '</span>';
-       
+    if ($this->params->post_title) {
+        $infoString .= ' / <span class="kun_p2a_post_subject">' . htmlspecialchars($this->currentPost->subject, ENT_QUOTES, 'UTF-8') . '</span>';
+        
+        if ($this->params->post_transfer_scheme == 1) {
+            if ($this->postId != $this->firstPostId) {
+                $infoString .= ' / ' . htmlspecialchars("\u{1F332}", ENT_QUOTES, 'UTF-8') . $this->postLevelList[$this->currentIndex];
          // ОТЛАДКА
 // error_log('CurrentIndex: ' . $this->currentIndex);
 // error_log('postIdList: ' . print_r($this->postIdList, true));
 // error_log('PostLevelList: ' . print_r($this->postLevelList, true));
 // error_log('Params: ' . print_r($this->params, true));
-         
-        if ($this->params->post_transfer_scheme == 1) { // если работаем с деревом
-            if ($this->postId != $this->firstPostId) { // для первого поста уровень не выводим
-        $infoString .= ' / ' . htmlspecialchars("\u{1F332}", ENT_QUOTES, 'UTF-8') . $this->postLevelList[$this->currentIndex];
-       }                                          
-     }    
-    } 
-   
+            }                                          
+        }    
+    }
+    
     // Дата и время
     if ($this->params->post_creation_date) {
         $date = date('d.m.Y', $this->currentPost->time);
@@ -831,8 +832,7 @@ $infoString .= $idsString;
         }
     }
 
-   // Закрываем блок инф строки
-   $infoString .= '<br /></div>';   
+    $infoString .= '</div>'; // Закрываем желтый блок
     
     return $infoString;
 }
@@ -942,20 +942,22 @@ protected function getKunenaPostsPerPage(): int
     
 private function printHeadOfPost()
 {
-        // Добавляем в статью инф строку   (не пуста)
-           $this->currentArticle->fulltext .= $this->postInfoString;
-  //      Factory::getApplication()->enqueueMessage('transferPost инф стр: ' . $this->postInfoString, 'info'); // ОТЛАДКА   
+    // Добавляем в статью инф строку (не пуста)
+    $this->currentArticle->fulltext .= $this->postInfoString;
+
+    if ($this->params->reminder_lines && $this->currentPost->parent) {
+        // Оборачиваем текст напоминания в span с классом
+        $reminderText = '<span class="kun_p2a_reminder_label">' 
+            . Text::_('COM_KUNENATOPIC2ARTICLE_START_OF_REMINDER_LINES')
+            . '#' . $this->currentPost->parent . ':' 
+            . '</span>';
             
-    if ($this->params->reminder_lines && $this->currentPost->parent) {        // Если нужно выводить строки напоминнания
-    $this->currentArticle->fulltext .= Text::_('COM_KUNENATOPIC2ARTICLE_START_OF_REMINDER_LINES')
-        . '#' . $this->currentPost->parent . ': '
-        . '<div class="kun_p2a_reminderLines">' . $this->reminderLines . '</div>';    // Добавляем в статью строки напоминания предыдущего поста  
- }    
-        
-    $this->currentArticle->fulltext .= '<div class="kun_p2a_divider-gray"></div>';   //    Светло-серый 
-                     
-        // return;   в конце void-метода не нужен
- }
+        $this->currentArticle->fulltext .= $reminderText
+            . '<div class="kun_p2a_reminderLines">' . $this->reminderLines . '</div>';
+    }
+    
+    $this->currentArticle->fulltext .= '<div class="kun_p2a_divider-gray"></div>';
+}
   
     /**
  * Отправка email-уведомлений о созданных статьях
