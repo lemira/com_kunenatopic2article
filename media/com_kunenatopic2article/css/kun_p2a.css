@@ -120,3 +120,28 @@ hr.kun_p2a-hr-gray {
     border: none !important;
 }
 
+/* Стиль для метки/заголовка строк-напоминаний */
+.kun_p2a_reminder_label {
+    font-size: 85% !important;
+    color: #8B8000 !important;
+    display: block;
+    text-align: center;
+    margin-bottom: 0.3em;
+    font-weight: 600;
+}
+
+/* Стиль для информационной строки поста с желтым фоном */
+.kun_p2a_infoPostString_yellow {
+    font-size: 70% !important;
+    line-height: 1.4;
+    margin: 0.5em 0;
+    padding: 0.5em;
+    color: #333;
+    background-color: #FFFDE7 !important;
+    border: 1px solid #FFEAA7 !important;
+    border-radius: 4px;
+}
+
+.kun_p2a_infoPostString_yellow.text-center {
+    text-align: center !important;
+}
