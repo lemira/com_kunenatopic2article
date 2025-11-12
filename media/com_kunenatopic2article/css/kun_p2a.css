@@ -86,6 +86,33 @@
     border-left: 3px solid #FFD700;  /* Золотистая левая граница */
 }
 
+/* Стиль для метки/заголовка строк-напоминаний */
+.kun_p2a_reminder_label {
+    font-size: 85% !important;
+    color: #8B8000 !important;
+    display: block;
+    text-align: center;
+    margin-bottom: 0.3em;
+    font-weight: 600;
+}
+
+/* Стиль для информационной строки поста с желтым фоном (копируем стиль reminderLines) */
+.kun_p2a_infoPostString_yellow {
+    font-size: 70% !important;
+    line-height: 1.4;
+    color: #8B8000 !important;
+    background-color: #FFFDE7 !important;
+    width: 80% !important;
+    margin: 0.8em auto !important;
+    padding: 0.5em;
+    border-left: 3px solid #FFD700;
+    border-radius: 0 4px 4px 0;
+}
+
+.kun_p2a_infoPostString_yellow.text-center {
+    text-align: center !important;
+}
+
 /* Линия с эффектом углубления */
 .kun_p2a_divider-shadow {
     width: 50% !important;
@@ -120,34 +147,3 @@ hr.kun_p2a-hr-gray {
     border: none !important;
 }
 
-/* Стиль для метки/заголовка строк-напоминаний */
-.kun_p2a_reminder_label {
-    font-size: 85% !important;
-    color: #8B8000 !important;
-    display: block;
-    text-align: center;
-    margin-bottom: 0.3em;
-    font-weight: 600;
-}
-
-/* Стиль для информационной строки поста с желтым фоном (копируем стиль reminderLines) */
-.kun_p2a_infoPostString_yellow {
-    font-size: 70% !important;
-    line-height: 1.4;
-    color: #8B8000 !important;
-    background-color: #FFFDE7 !important;
-    width: 80% !important;
-    margin: 0.8em auto !important;
-    padding: 0.5em;
-    border-left: 3px solid #FFD700;
-    border-radius: 0 4px 4px 0;
-}
-
-.kun_p2a_infoPostString_yellow.text-center {
-    text-align: center !important;
-}
-
-/* Остальные существующие стили остаются ниже */
-.kun_p2a_divider-shadow {
-    /* ... */
-}
