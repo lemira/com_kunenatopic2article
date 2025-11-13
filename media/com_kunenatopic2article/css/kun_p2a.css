@@ -84,7 +84,7 @@
 .kun_p2a_reminder_header {
     font-size: 70% !important; /* Уменьшили размер */
     color: #8B8000 !important;
-    background-color: #FFFDE7 !important;
+/*  background-color: #FFFDE7 !important; */
     display: block !important;
     text-align: center !important;
     margin: 0 auto !important;
