@@ -52,18 +52,61 @@
     color: #004499;
 } */
 
-/* Стиль для информационной строки поста */
-.kun_p2a_infoPostString {
-    font-size: 70% !important;  /* Уменьшение шрифта до 70% */
-    line-height: 1.4;
-    margin: 0.5em 0;
-    padding: 0.3em;
-    color: #333;
+/* Стили для блока информационных строк поста */
+
+/* Стиль для строки с ID постов */
+.kun_p2a_ids {
+    font-size: 70% !important;
+    line-height: 1.2 !important;
+    margin: 0 auto !important;
+    padding: 0.1em !important;
+    color: #333 !important;
+    text-align: center !important;
+    display: block !important;
 }
 
-/* Центрирование текста */
-.kun_p2a_infoPostString.text-center {
+/* Стиль для основной информационной строки (автор, тема, дата) */
+.kun_p2a_info_main {
+    font-size: 85% !important; /* Увеличили размер */
+    line-height: 1.2 !important;
+    color: #8B8000 !important;
+    background-color: #FFFDE7 !important;
+    width: 80% !important;
+    margin: 0 auto !important;
+    padding: 0.3em !important;
+    border-left: 3px solid #FFD700 !important;
+    border-radius: 0 4px 4px 0 !important;
     text-align: center !important;
+    display: block !important;
+}
+
+/* Стиль для заголовка напоминания */
+.kun_p2a_reminder_header {
+    font-size: 70% !important; /* Уменьшили размер */
+    color: #8B8000 !important;
+    background-color: #FFFDE7 !important;
+    display: block !important;
+    text-align: center !important;
+    margin: 0 auto !important;
+    padding: 0.3em !important;
+    width: 80% !important;
+    border-left: 3px solid #FFD700 !important;
+    border-radius: 0 4px 4px 0 !important;
+    line-height: 1.2 !important;
+}
+
+/* Стиль для текста напоминания */
+.kun_p2a_reminder_content {
+    font-size: 85% !important;
+    color: #8B8000 !important;
+    background-color: #FFFDE7 !important;
+    width: 80% !important;
+    margin: 0 auto !important;
+    padding: 0.3em !important;
+    border-left: 3px solid #FFD700 !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+    display: block !important;
 }
 
 .kun_p2a_post_subject {
@@ -73,51 +116,6 @@
     letter-spacing: 0.02em;
     display: inline-block;
     margin: 0 0.3em;
-}
-
-/* Стиль для строк-напоминаний */
-.kun_p2a_reminderLines {
-    font-size: 85% !important;
-    color: #8B8000 !important;
-    background-color: #FFFDE7 !important;
-    width: 80% !important;
-    margin: 0 auto !important; /* Убрали вертикальные отступы */
-    padding: 0.3em;
-    border-left: 3px solid #FFD700;
-    line-height: 1.2 !important; /* Уменьшили межстрочный интервал */
-    text-align: center !important;
-}
-
-/* Стиль для заголовка строк-напоминаний */
-kun_p2a_reminder_label {
-    font-size: 70% !important; /* размер 70% */
-    color: #8B8000 !important;
-    background-color: #FFFDE7 !important; /* желтый фон */
-    display: block;
-    text-align: center;
-    margin: 0 auto !important; /* Убирает лишние отступы */
-    padding: 0.3em;
-    width: 80% !important;
-    border-left: 3px solid #FFD700;
-    border-radius: 0 4px 4px 0;
-    line-height: 1.2 !important; /* Уменьшает межстрочный интервал */
-}
-
-/* Стиль для информационной строки поста с желтым фоном (как у reminderLines) */
-.kun_p2a_infoPostString_yellow {
-    font-size: 85% !important; /* 85% как у reminderLines */
-    line-height: 1.2 !important; /* Уменьшает межстрочный интервал */
-    color: #8B8000 !important;
-    background-color: #FFFDE7 !important;
-    width: 80% !important;
-    margin: 0 auto !important; /* Убирает вертикальные отступы */
-    padding: 0.3em;
-    border-left: 3px solid #FFD700;
-    border-radius: 0 4px 4px 0;
-}
-
-.kun_p2a_infoPostString_yellow.text-center {
-    text-align: center !important;
 }
 
 /* Линия с эффектом углубления */
