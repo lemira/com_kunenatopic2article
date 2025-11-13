@@ -772,7 +772,7 @@ private function traverseTree($postId, $level, $children, &$postIdList, &$postLe
         $idsString = '';
         
         // Текущий пост
-        if ($this->currentPost->kunena_post_link) {
+        if ($this->params->kunena_post_link) {
             $postUrl = $this->getKunenaPostUrl($this->currentPost->id);
             $idsString .= ' <a href="' . htmlspecialchars($postUrl, ENT_QUOTES, 'UTF-8') 
                        . '" target="_blank" rel="noopener noreferrer">#' 
