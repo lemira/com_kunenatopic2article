@@ -765,13 +765,12 @@ private function traverseTree($postId, $level, $children, &$postIdList, &$postLe
         return '';
     }
 
-    $infoString = HTMLHelper::_('content.prepare', '<div class="kun_p2a_infoPostString text-center">');
+    $infoString = HTMLHelper::_('content.prepare', '<div class="kun_p2a_ids text-center">');
     
-    // IDs постов (с ссылкой или без) - ЭТО ПЕРВАЯ СТРОКА БЕЗ ЖЕЛТОГО ФОНА
+    // IDs постов
     if ($this->params->post_ids) {
         $idsString = '';
         
-        // Текущий пост
         if ($this->params->kunena_post_link) {
             $postUrl = $this->getKunenaPostUrl($this->currentPost->id);
             $idsString .= ' <a href="' . htmlspecialchars($postUrl, ENT_QUOTES, 'UTF-8') 
@@ -781,7 +780,6 @@ private function traverseTree($postId, $level, $children, &$postIdList, &$postLe
             $idsString .= '#' . $this->currentPost->id;
         }
         
-        // Родительский пост
         if (!empty($this->currentPost->parent)) {
             if ($this->params->kunena_post_link) {
                 $parentUrl = $this->getKunenaPostUrl($this->currentPost->parent);
@@ -795,17 +793,15 @@ private function traverseTree($postId, $level, $children, &$postIdList, &$postLe
         $infoString .= $idsString;
     }
     
-    $infoString .= '</div>'; // Закрываем первый блок
+    $infoString .= '</div>'; // Закрываем блок IDs
     
-    // НАЧАЛО БЛОКА С ЖЕЛТЫМ ФОНОМ
-    $infoString .= '<div class="kun_p2a_infoPostString_yellow text-center">';
+    // Основная информационная строка
+    $infoString .= '<div class="kun_p2a_info_main text-center">';
     
-    // Автор (никнейм)
     if ($this->params->post_author) {
         $infoString .= htmlspecialchars($this->currentPost->name, ENT_QUOTES, 'UTF-8');
     }
     
-    // Заголовок поста
     if ($this->params->post_title) {
         $infoString .= ' / <span class="kun_p2a_post_subject">' . htmlspecialchars($this->currentPost->subject, ENT_QUOTES, 'UTF-8') . '</span>';
         
@@ -816,7 +812,6 @@ private function traverseTree($postId, $level, $children, &$postIdList, &$postLe
         }    
     }
     
-    // Дата и время
     if ($this->params->post_creation_date) {
         $date = date('d.m.Y', $this->currentPost->time);
         $infoString .= ' / ' . $date;
@@ -827,9 +822,27 @@ private function traverseTree($postId, $level, $children, &$postIdList, &$postLe
         }
     }
 
-    $infoString .= '</div>'; // Закрываем желтый блок
+    $infoString .= '</div>'; // Закрываем основную инфо строку
     
     return $infoString;
+}
+
+private function printHeadOfPost()
+{
+    // Добавляем в статью инф строку
+    $this->currentArticle->fulltext .= $this->postInfoString;
+
+    if ($this->params->reminder_lines && $this->currentPost->parent) {
+        $reminderText = '<div class="kun_p2a_reminder_header">' 
+            . Text::_('COM_KUNENATOPIC2ARTICLE_START_OF_REMINDER_LINES')
+            . '#' . $this->currentPost->parent . ':' 
+            . '</div>';
+            
+        $this->currentArticle->fulltext .= $reminderText
+            . '<div class="kun_p2a_reminder_content">' . $this->reminderLines . '</div>';
+    }
+    
+    $this->currentArticle->fulltext .= '<div class="kun_p2a_divider-gray"></div>';
 }
     
 /**
@@ -934,26 +947,7 @@ protected function getKunenaPostsPerPage(): int
         return $defaultPostsPerPage; 
     }
 }
-    
-private function printHeadOfPost()
-{
-    // Добавляем в статью инф строку (не пуста)
-    $this->currentArticle->fulltext .= $this->postInfoString;
-
-    if ($this->params->reminder_lines && $this->currentPost->parent) {
-        // Оборачиваем текст напоминания в span с классом
-        $reminderText = '<span class="kun_p2a_reminder_label">' 
-            . Text::_('COM_KUNENATOPIC2ARTICLE_START_OF_REMINDER_LINES')
-            . '#' . $this->currentPost->parent . ':' 
-            . '</span>';
-            
-        $this->currentArticle->fulltext .= $reminderText
-            . '<div class="kun_p2a_reminderLines">' . $this->reminderLines . '</div>';
-    }
-    
-    $this->currentArticle->fulltext .= '<div class="kun_p2a_divider-gray"></div>';
-}
-  
+     
     /**
  * Отправка email-уведомлений о созданных статьях
  * @param   array  $articleLinks  Массив ссылок на статьи
