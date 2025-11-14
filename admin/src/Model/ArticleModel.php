@@ -773,9 +773,14 @@ private function traverseTree($postId, $level, $children, &$postIdList, &$postLe
         
         if ($this->params->kunena_post_link) {
             $postUrl = $this->getKunenaPostUrl($this->currentPost->id);
-            $idsString .= ' <a href="' . htmlspecialchars($postUrl, ENT_QUOTES, 'UTF-8') 
-                       . '" target="_blank" rel="noopener noreferrer">#' 
-                       . $this->currentPost->id . '</a>';
+            // ЕСЛИ URL ПУСТОЙ, НЕ ДЕЛАЕМ ССЫЛКУ
+            if (!empty($postUrl)) {
+                $idsString .= ' <a href="' . htmlspecialchars($postUrl, ENT_QUOTES, 'UTF-8') 
+                           . '" target="_blank" rel="noopener noreferrer">#' 
+                           . $this->currentPost->id . '</a>';
+            } else {
+                $idsString .= '#' . $this->currentPost->id;
+            }
         } else {
             $idsString .= '#' . $this->currentPost->id;
         }
@@ -783,9 +788,14 @@ private function traverseTree($postId, $level, $children, &$postIdList, &$postLe
         if (!empty($this->currentPost->parent)) {
             if ($this->params->kunena_post_link) {
                 $parentUrl = $this->getKunenaPostUrl($this->currentPost->parent);
-                $idsString .= ' ⟸ <a href="' . htmlspecialchars($parentUrl, ENT_QUOTES, 'UTF-8') 
-                           . '" target="_blank" rel="noopener noreferrer">#' 
-                           . $this->currentPost->parent . '</a>';
+                // ЕСЛИ URL ПУСТОЙ, НЕ ДЕЛАЕМ ССЫЛКУ
+                if (!empty($parentUrl)) {
+                    $idsString .= ' ⟸ <a href="' . htmlspecialchars($parentUrl, ENT_QUOTES, 'UTF-8') 
+                               . '" target="_blank" rel="noopener noreferrer">#' 
+                               . $this->currentPost->parent . '</a>';
+                } else {
+                    $idsString .= ' ⟸ #' . $this->currentPost->parent;
+                }
             } else {
                 $idsString .= ' ⟸ #' . $this->currentPost->parent;
             }
@@ -846,13 +856,18 @@ private function printHeadOfPost()
 }
     
 /**
- * Генерируем полный URL до конкретного поста в Kunena, используя SEF-совместимые slug-и.
+ * Генерируем полный URL для конкретного поста в Kunena, используя SEF-совместимые slug-и.
  *
  * @param int $postId ID поста в Kunena
  * @return string Полный URL поста
  */
 public function getKunenaPostUrl(int $postId): string
 {
+    // ПРОВЕРКА: если пост не существует в обработанном списке, возвращаем пустую строку
+    if (!in_array($postId, $this->postIds_time)) {
+        return '';
+    }
+    
     $postsPerPage = $this->getKunenaPostsPerPage();
     
     // --- Данные поста ---
@@ -860,8 +875,14 @@ public function getKunenaPostUrl(int $postId): string
         ->select('m.catid, m.thread')
         ->from('#__kunena_messages AS m')
         ->where('m.id = ' . (int) $postId);
+
     $this->db->setQuery($query);
     $post = $this->db->loadObject();
+    
+    // ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: если пост не найден, возвращаем пустую строку
+    if (!$post) {
+        return '';
+    }
     
     $catid  = (int) $post->catid;
     $thread = (int) $post->thread;
