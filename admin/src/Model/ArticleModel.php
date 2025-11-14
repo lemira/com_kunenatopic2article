@@ -677,48 +677,84 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
 private function buildTreePostIdList($firstPostId)
 {
     try {
-        // Получаем все посты темы
-        $postIds = $this->getAllThreadPosts($this->threadId);
-        
-        // Получаем связи родитель-дети
+        // 1. Получаем ВСЕ посты темы (включая hold>0) ТОЛЬКО ДЛЯ ПОСТРОЕНИЯ СВЯЗЕЙ
         $query = $this->db->getQuery(true)
-            ->select(['parent as id', 'id as child'])
+            ->select($this->db->quoteName(['id', 'parent', 'hold']))
             ->from($this->db->quoteName('#__kunena_messages'))
-            ->where($this->db->quoteName('parent') . ' IN (' . implode(',', array_map('intval', $postIds)) . ')');
+            ->where($this->db->quoteName('thread') . ' = ' . $this->threadId);
         
-        $pairs = $this->db->setQuery($query)->loadObjectList();
+        $allPosts = $this->db->setQuery($query)->loadObjectList();
         
-        // Группируем по родителям
-        $children = [];
-        foreach ($pairs as $pair) {
-            $children[$pair->id][] = $pair->child;
+        // 2. ОТДЕЛЬНО получаем посты для финального списка (только hold=0)
+        $finalPostIds = $this->getAllThreadPosts($this->threadId); // ваш существующий метод
+        
+        // 3. Строим полную карту связей из ВСЕХ постов
+        $fullChildrenMap = [];
+        foreach ($allPosts as $post) {
+            if ($post->parent > 0) {
+                $fullChildrenMap[$post->parent][] = $post->id;
+            }
         }
         
-        // Добавляем листовые узлы с нулями
-        foreach ($postIds as $postId) {
-            if (!isset($children[$postId])) {
+        // 4. Восстанавливаем связи для потомков удаленных постов
+        $recoveredChildren = [];
+        
+        foreach ($allPosts as $post) {
+            // Если пост в финальном списке И его родитель удален
+            if (in_array($post->id, $finalPostIds) && 
+                $post->parent > 0 && 
+                !in_array($post->parent, $finalPostIds)) {
+                
+                // Находим нового родителя: поднимаемся по цепочке пока не найдем существующего
+                $newParent = $this->findClosestExistingParent($post->parent, $finalPostIds, $allPosts);
+                
+                if ($newParent > 0) {
+                    $recoveredChildren[$newParent][] = $post->id;
+                } else {
+                    // Если не нашли существующего родителя в цепочке - прикрепляем к корню
+                    $recoveredChildren[$firstPostId][] = $post->id;
+                }
+            }
+        }
+        
+        // 5. Объединяем восстановленные связи с обычными
+        $children = [];
+        foreach ($finalPostIds as $postId) {
+            if ($postId == 0) continue;
+            
+            $children[$postId] = [];
+            
+            // Обычные дети
+            if (isset($fullChildrenMap[$postId])) {
+                foreach ($fullChildrenMap[$postId] as $childId) {
+                    if (in_array($childId, $finalPostIds)) {
+                        $children[$postId][] = $childId;
+                    }
+                }
+            }
+            
+            // Восстановленные дети
+            if (isset($recoveredChildren[$postId])) {
+                $children[$postId] = array_merge($children[$postId], $recoveredChildren[$postId]);
+            }
+            
+            // Сортируем и убираем дубликаты
+            if (!empty($children[$postId])) {
+                $children[$postId] = array_unique($children[$postId]);
+                sort($children[$postId]);
+            } else {
                 $children[$postId] = [0];
             }
         }
         
-        // Сортируем по ID родителей
-        ksort($children);
-        
-        // Сортируем детей каждого родителя по ID (= по времени)
-        foreach ($children as &$childList) {
-            if ($childList[0] !== 0) { // Не сортируем массивы только с нулем
-                sort($childList);
-            }
-        }
-        
-        // Выполняем обход дерева
+        // 6. Выполняем обход дерева
         $postIdList = [];
         $postLevelList = [];
         
         $this->traverseTree($firstPostId, 0, $children, $postIdList, $postLevelList);
         
         return [
-           'postIds' => array_merge($postIdList, [0]), // Добавляем 0 в конец
+           'postIds' => array_merge($postIdList, [0]),
             'levels' => $postLevelList
         ];
         
@@ -731,6 +767,38 @@ private function buildTreePostIdList($firstPostId)
     }
 }
 
+/**
+ * Находит ближайшего существующего родителя в цепочке
+ */
+private function findClosestExistingParent($deletedParentId, $finalPostIds, $allPosts)
+{
+    $postMap = [];
+    foreach ($allPosts as $post) {
+        $postMap[$post->id] = $post;
+    }
+    
+    $currentId = $deletedParentId;
+    
+    // Поднимаемся по цепочке родителей
+    while (isset($postMap[$currentId])) {
+        $currentPost = $postMap[$currentId];
+        
+        // Если нашли существующего родителя - возвращаем его
+        if (in_array($currentPost->id, $finalPostIds)) {
+            return $currentPost->id;
+        }
+        
+        // Переходим к следующему родителю
+        if ($currentPost->parent > 0) {
+            $currentId = $currentPost->parent;
+        } else {
+            break; // Достигли корня
+        }
+    }
+    
+    return 0; // Не нашли существующего родителя
+}
+    
 /**
  * Рекурсивный обход дерева в глубину
  * @param   int    $postId         Текущий пост
