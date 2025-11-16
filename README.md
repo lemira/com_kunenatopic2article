@@ -1,9 +1,11 @@
 # Kunena Topic to Article
 
+*Documentation in Russian:* [🇷🇺 Русский](docs/README.ru.md)
+
 A component for automatically creating Joomla articles based on Kunena forum topics.
 Developed for Joomla 5 and Kunena 6.x.
 
-[📖 Detailed functionality description](FUNCTIONALITY.md) | [ℹ️ Additional information](ADDITIONAL.md)
+[📖 Detailed functionality description](docs/FUNCTIONALITY.md) | [ℹ️ Additional information](docs/ADDITIONAL.md)
 
 ## 🚀 General Information
 
@@ -42,7 +44,7 @@ The stylesheet `/media/com_kunenatopic2article/css/kun_p2a.css` can be edited in
 ### 1.3. Installation
 1. Install the component from the `com_kunenatopic2article.zip` file through the Joomla extensions manager
 2. The component will automatically create the `kunenatopic2article_params` table (one row) in the database
-3. Additionally, a [precise positioning plugin](ADDITIONAL.md#8-precise-positioning-plugin) is available, see section 8
+3. Additionally, a [precise positioning plugin](docs/ADDITIONAL.md#8-precise-positioning-plugin) is available, see section 8
 
 ## ⚙️ Basic Information About Component Operation
 
@@ -81,7 +83,7 @@ Displayed before each post if at least one of its parameters is enabled. When al
 - All links are preserved
 - "Bare" URLs (without explanatory text) are shortened to 50 characters
 - Attachment images are copied as links to these attachments in Kunena folders
-- See also section 5 [Parsing](FUNCTIONALITY.md#5-parsing)
+- See also section 5 [Parsing](docs/FUNCTIONALITY.md#5-parsing)
 
 ## 📊 Article Creation Results
 
@@ -100,5 +102,5 @@ Created articles and posts in the topic "live their own lives" after the compone
 
 ---
 
-*[➡️ More about the post info block and parsing](FUNCTIONALITY.md)  
-[➡️ Additional information about the plugin and compatibility](ADDITIONAL.md)*
+*[➡️ More about the post info block and parsing](docs/FUNCTIONALITY.md)  
+[➡️ Additional information about the plugin and compatibility](docs/ADDITIONAL.md)*
