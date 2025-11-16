@@ -1,6 +1,6 @@
 # Component Functionality
 
-[⬅️ Back to main description](README.md) | [ℹ️ Additional information](ADDITIONAL.md)
+[⬅️ Back to main description](../README.md) | [ℹ️ Additional information](ADDITIONAL.md)
 
 ## 4. Post Info Block
 
@@ -73,4 +73,4 @@ The component supports two schemes for transferring posts to articles (determine
 
 ---
 
-*[⬅️ Back to main description](README.md) | [➡️ Additional information](ADDITIONAL.md)*
+*[⬅️ Back to main description](../README.md) | [➡️ Additional information](ADDITIONAL.md)*
