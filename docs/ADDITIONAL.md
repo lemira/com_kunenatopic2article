@@ -1,6 +1,6 @@
 # Additional Information
 
-[⬅️ Back to main description](README.md) | [📖 Detailed functionality description](FUNCTIONALITY.md)
+[⬅️ Back to main description](../README.md) | [📖 Detailed functionality description](FUNCTIONALITY.md)
 
 ## 8. Precise Positioning Plugin
 
@@ -47,4 +47,4 @@ Old PNG files may have color profile issues affecting display in articles. Profi
 
 ---
 
-*[⬅️ Back to main description](README.md) | [📖 Detailed functionality description](FUNCTIONALITY.md)*
+*[⬅️ Back to main description](../README.md) | [📖 Detailed functionality description](FUNCTIONALITY.md)*
