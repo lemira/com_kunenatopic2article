@@ -80,33 +80,47 @@
     display: block !important;
 }
 
-/* Стиль для заголовка напоминания */
-.kun_p2a_reminder_header {
-    font-size: 70% !important; /* Уменьшили размер */
-    color: #8B8000 !important;
-/*  background-color: #FFFDE7 !important; */
-    display: block !important;
-    text-align: center !important;
-    margin: 0 auto !important;
-    padding: 0.3em !important;
-    width: 80% !important;
-    border-left: 3px solid #FFD700 !important;
-    border-radius: 0 4px 4px 0 !important;
-    line-height: 1.2 !important;
+/* Стиль строки с индексами */
+.kun_p2a_index_line {
+    font-size: 0.85em;
+    color: #666;
+    opacity: 0.8;
+    margin-bottom: 3px;
 }
 
-/* Стиль для текста напоминания */
+/* Стили для блока напоминания */
 .kun_p2a_reminder_content {
-    font-size: 85% !important;
-    color: #8B8000 !important;
-    background-color: #FFFDE7 !important;
-    width: 80% !important;
-    margin: 0 auto !important;
-    padding: 0.3em !important;
-    border-left: 3px solid #FFD700 !important;
-    line-height: 1.2 !important;
-    text-align: center !important;
-    display: block !important;
+    position: relative;
+    font-size: 0.9em;
+    color: #666;
+    border-left: 2px solid #ddd;
+    padding-left: 8px;
+    margin: 5px 0;
+    background-color: #ffffcc; /* Желтый фон */
+}
+
+.tooltip-icon {
+    display: inline-block;
+    margin-right: 5px;
+    font-size: 0.8em;
+    opacity: 0.6;
+}
+
+/* Тултип для десктопа */
+@media (min-width: 769px) {
+    .kun_p2a_reminder_content:hover::before {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 100%;
+        left: 0;
+        background: #333;
+        color: white;
+        padding: 5px 8px;
+        border-radius: 4px;
+        font-size: 0.8em;
+        white-space: nowrap;
+        z-index: 1000;
+    }
 }
 
 .kun_p2a_post_subject {
