@@ -833,7 +833,7 @@ private function traverseTree($postId, $level, $children, &$postIdList, &$postLe
         return '';
     }
 
-    $infoString = HTMLHelper::_('content.prepare', '<div class="kun_p2a_ids text-center">');
+    $infoString = HTMLHelper::_('content.prepare', '<div class="kun_p2a_ids kun_p2a_index_line text-center">');
     
     // IDs постов
     if ($this->params->post_ids) {
@@ -911,13 +911,13 @@ private function printHeadOfPost()
     $this->currentArticle->fulltext .= $this->postInfoString;
 
     if ($this->params->reminder_lines && $this->currentPost->parent) {
-        $reminderText = '<div class="kun_p2a_reminder_header">' 
-            . Text::_('COM_KUNENATOPIC2ARTICLE_START_OF_REMINDER_LINES')
-            . '#' . $this->currentPost->parent . ':' 
+        $reminderText = '<div class="kun_p2a_reminder_content" data-tooltip="' 
+            . Text::_('COM_KUNENATOPIC2ARTICLE_START_OF_REMINDER_LINES') . '">'
+            . '<span class="tooltip-icon">ⓘ</span> '
+            . $this->reminderLines 
             . '</div>';
             
-        $this->currentArticle->fulltext .= $reminderText
-            . '<div class="kun_p2a_reminder_content">' . $this->reminderLines . '</div>';
+        $this->currentArticle->fulltext .= $reminderText;
     }
     
     $this->currentArticle->fulltext .= '<div class="kun_p2a_divider-gray"></div>';
