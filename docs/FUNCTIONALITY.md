@@ -11,6 +11,8 @@ The complete post info block displays:
 - **Main Information Line** - author, subject, tree level, date and time
 - **Reminder Lines** - beginning of the previous message
 
+> A tooltip "Beginning of the previous message" (in the component's language) appears when the user hovers the cursor over the reminder lines.
+
 ### 4.2. Reminder Lines Format
 - Optimal length: 50-150 characters
 - Format of links and images in reminder lines:
