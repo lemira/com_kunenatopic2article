@@ -97,6 +97,7 @@
     padding-left: 8px;
     margin: 5px 0;
     background-color: #ffffcc; /* Желтый фон */
+    text-align: center; /* Выключка в центр */ 
 }
 
 .tooltip-icon {
