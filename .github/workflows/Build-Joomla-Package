@@ -1,0 +1,42 @@
+name: Build Joomla Package
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository from 'interface' branch
+        uses: actions/checkout@v4
+        with:
+          ref: interface
+
+      - name: Set timestamp variable (Berlin time)
+        run: |
+          TIMESTAMP=$(TZ="Europe/Berlin" date +"%y%m%d-%H%M")
+          echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
+
+      - name: Prepare build directory
+        run: |
+          mkdir build
+
+          # Копируем только нужные папки
+          cp -r admin build/admin
+          cp -r media build/media
+          cp -r manifest build/manifest
+
+          # Если нужен XML-манифест в корне — добавьте строку ниже:
+          # cp manifest/*.xml build/
+
+      - name: Create ZIP archive (installable package)
+        run: |
+          cd build
+          zip -r ../KunenaTopic2Article-${{ env.TIMESTAMP }}.zip ./*
+
+      - name: Upload ZIP as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KunenaTopic2Article-${{ env.TIMESTAMP }}
+          path: KunenaTopic2Article-${{ env.TIMESTAMP }}.zip
