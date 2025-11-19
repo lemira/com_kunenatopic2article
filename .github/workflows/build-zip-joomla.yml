@@ -15,16 +15,14 @@ jobs:
         with:
           ref: interface
 
-      - name: Set timestamp (Berlin)
+      - name: Set timestamp (Berlin time)
         run: echo "TIMESTAMP=$(TZ=Europe/Berlin date +'%y%m%d-%H%M')" >> $GITHUB_ENV
 
-      - name: Create Joomla package ZIP
+      - name: Build clean Joomla ZIP
         run: |
           zip -r com_kunenatopic2article_${{ env.TIMESTAMP }}.zip \
-            admin \
-            media \
-            com_kunenatopic2article.xml \
-            -x "*.git*" "*.github*" "docs/*" "README*" "*.md" 
+            admin/ media/ com_kunenatopic2article.xml \
+            -x "*.git*" "*.github*" "docs/*" "README*" "*.md" ".editorconfig" ".gitignore"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
