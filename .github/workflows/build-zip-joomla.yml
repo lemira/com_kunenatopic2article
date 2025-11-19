@@ -1,33 +1,41 @@
 name: Build Joomla Package
 
 on:
-  workflow_dispatch:  # Запуск вручную
+  workflow_dispatch:    # запуск вручную
+  push:
+    branches: [ interface ]   # собирает автоматически при любом push в ветку interface
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository from 'interface' branch
+      - name: Checkout repository (branch interface)
         uses: actions/checkout@v4
         with:
-          ref: interface  # Явно указана ветка
+          ref: interface
 
-      - name: Set timestamp variable (Берлинское время)
+      - name: Set timestamp (Berlin time)
         run: |
           TIMESTAMP=$(TZ="Europe/Berlin" date +"%y%m%d-%H%M")
           echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
 
-      - name: Create ZIP archive with timestamp
+      - name: Create clean Joomla package ZIP
         run: |
-          zip -r Joomla-Component-${{ env.TIMESTAMP }}.zip * -x ".git*" ".github*"
+          mkdir -p joomla-package
 
-      - name: Extract ZIP archive
-        run: |
-          unzip Joomla-Component-${{ env.TIMESTAMP }}.zip -d extracted_files
+          cp -r admin      joomla-package/
+          cp -r media      joomla-package/
+          cp com_kunenatopic2article.xml joomla-package/
 
-      - name: Upload extracted files
+          cd joomla-package
+          zip -r ../com_kunenatopic2article_${{ env.TIMESTAMP }}.zip .
+          cd ..
+
+          mv com_kunenatopic2article_${{ env.TIMESTAMP }}.zip .
+
+      - name: Upload package as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Joomla-Component-${{ env.TIMESTAMP }}
-          path: extracted_files/
+          name: com_kunenatopic2article_${{ env.TIMESTAMP }}
+          path: com_kunenatopic2article_${{ env.TIMESTAMP }}.zip
