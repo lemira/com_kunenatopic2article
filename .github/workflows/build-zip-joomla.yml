@@ -1,41 +1,42 @@
+# File: .github/workflows/build-joomla-package.yml ki
+# Name: Build Joomla Package
+# Purpose: Build a clean installable ZIP for the Kunena-topic-to-article component
+#          (only admin/, media/ and kunenatopic2article.xml go into the package).
+
 name: Build Joomla Package
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ interface ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout interface branch
+      # ---------- 1. Get the code ----------
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           ref: interface
 
-      - name: Set timestamp
+      # ---------- 2. Berlin timestamp ----------
+      - name: Set timestamp (Berlin time)
+        run: echo "TIMESTAMP=$(TZ=Europe/Berlin date +'%y%m%d-%H%M')" >> $GITHUB_ENV
+
+      # ---------- 3. Build the package ----------
+      - name: Build clean Joomla package ZIP
         run: |
-          TIMESTAMP=$(TZ="Europe/Berlin" date +"%y%m%d-%H%M")
-          echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
+          zip -r com_kunenatopic2article_${{ env.TIMESTAMP }}.zip \
+            admin/ \
+            media/ \
+            kunenatopic2article.xml \
+            -x "*.git*" "*.github*" "docs/*" "README*" "*.md"
 
-      - name: Prepare build folder
-        run: |
-          rm -rf build
-          mkdir build
-
-          cp -r admin build/admin
-          cp -r media build/media
-
-          # Кладём манифест в корень ZIP (обязательно!)
-          cp manifest/*.xml build/
-
-      - name: Create ZIP
-        run: |
-          cd build
-          zip -r ../KunenaTopic2Article-${{ env.TIMESTAMP }}.zip .
-
-      - name: Upload zip
+      # ---------- 4. Upload artifact ----------
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: KunenaTopic2Article-${{ env.TIMESTAMP }}
-          path: KunenaTopic2Article-${{ env.TIMESTAMP }}.zip
+          name: com_kunenatopic2article_${{ env.TIMESTAMP }}
+          path: com_kunenatopic2article_${{ env.TIMESTAMP }}.zip
