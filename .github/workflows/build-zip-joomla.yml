@@ -20,7 +20,7 @@ jobs:
       - name: Build clean Joomla package ZIP 🚀
         run: |
           ARCHIVE_NAME="com_kunenatopic2article_${{ env.TIMESTAMP }}.zip"
-          zip -r $ARCHIVE_NAME admin/ media/ kunenatopic2article.xml
+          zip -r $ARCHIVE_NAME admin/ media/ language/ kunenatopic2article.xml
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
