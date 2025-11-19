@@ -6,26 +6,28 @@ on:
     branches: [ interface ]
 
 jobs:
-  build:
+  build-package:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           ref: interface
 
-      - name: Set timestamp (Berlin time)
+      - name: Set timestamp (Berlin)
         run: echo "TIMESTAMP=$(TZ=Europe/Berlin date +'%y%m%d-%H%M')" >> $GITHUB_ENV
 
-      - name: Build clean Joomla package ZIP
+      - name: Create Joomla package ZIP
         run: |
-          zip com_kunenatopic2article_${{ env.TIMESTAMP }}.zip \
-            admin/* media/* com_kunenatopic2article.xml \
-            -r
+          zip -r com_kunenatopic2article_${{ env.TIMESTAMP }}.zip \
+            admin \
+            media \
+            com_kunenatopic2article.xml
 
-      - name: Upload artifact
+      # ← Вот эта строчка убирает лишний артефакт "build"
+      - name: Upload Joomla package
         uses: actions/upload-artifact@v4
         with:
           name: com_kunenatopic2article_${{ env.TIMESTAMP }}
           path: com_kunenatopic2article_${{ env.TIMESTAMP }}.zip
+          if-no-files-found: error   # на всякий случай
