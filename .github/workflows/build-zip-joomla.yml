@@ -1,4 +1,5 @@
 name: Build Joomla Package
+
 on:
   workflow_dispatch:
   push:
@@ -27,7 +28,9 @@ jobs:
       - name: Build clean Joomla package ZIP 🚀
         run: |
           ARCHIVE_NAME="com_kunenatopic2article_${{ env.TIMESTAMP }}.zip"
-          zip -r $ARCHIVE_NAME admin/ media/ kunenatopic2article.xml
+          # Собираем admin/, media/ и манифест, исключая docs и README
+          zip -r $ARCHIVE_NAME admin media kunenatopic2article.xml \
+            -x "docs/*" -x "README*"
 
       - name: Verify archive contents
         run: |
