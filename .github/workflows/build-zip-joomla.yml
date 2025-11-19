@@ -1,34 +1,41 @@
-name: Build Joomla Package # Строка 1 (Опционально, но лучше оставить)
-on: # Строка 2 (ОБЯЗАТЕЛЬНО)
-  workflow_dispatch:
-  push:
-    branches: [ interface ]
+name: Build Joomla Package
 
-jobs: # ОБЯЗАТЕЛЬНО
+on:
+  workflow_dispatch:
+
+jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout interface branch
         uses: actions/checkout@v4
         with:
           ref: interface
 
-      - name: Set timestamp (Berlin time)
-        run: echo "TIMESTAMP=$(TZ=Europe/Berlin date +'%y%m%d-%H%M')" >> $GITHUB_ENV
-
-      - name: Build clean Joomla package ZIP (FINAL FIX) ✅
+      - name: Set timestamp
         run: |
-          ARCHIVE_NAME="com_kunenatopic2article_${{ env.TIMESTAMP }}.zip"
-          
-          # Переходим в директорию, где лежат все файлы пакета
-          cd ${{ github.workspace }}
-          
-          # Архивируем содержимое: папки admin и media, 
-          # и файл kunenatopic2article.xml. 
-          # В этом режиме zip добавит их в корень архива.
-          zip -r $ARCHIVE_NAME admin media kunenatopic2article.xml
-          
-          # Перемещаем готовый архив на уровень выше, 
-          # чтобы actions/upload-artifact мог его найти.
-          mv $ARCHIVE_NAME ..
+          TIMESTAMP=$(TZ="Europe/Berlin" date +"%y%m%d-%H%M")
+          echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
+
+      - name: Prepare build folder
+        run: |
+          rm -rf build
+          mkdir build
+
+          cp -r admin build/admin
+          cp -r media build/media
+
+          # Кладём манифест в корень ZIP (обязательно!)
+          cp manifest/*.xml build/
+
+      - name: Create ZIP
+        run: |
+          cd build
+          zip -r ../KunenaTopic2Article-${{ env.TIMESTAMP }}.zip .
+
+      - name: Upload zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: KunenaTopic2Article-${{ env.TIMESTAMP }}
+          path: KunenaTopic2Article-${{ env.TIMESTAMP }}.zip
