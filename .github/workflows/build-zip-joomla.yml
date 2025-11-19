@@ -1,10 +1,10 @@
-name: Build Joomla Package # Строка 1 (Опционально, но лучше оставить)
-on: # Строка 2 (ОБЯЗАТЕЛЬНО)
+name: Build Joomla Package
+on:
   workflow_dispatch:
   push:
     branches: [ interface ]
 
-jobs: # ОБЯЗАТЕЛЬНО
+jobs:
   build:
     runs-on: ubuntu-latest
 
@@ -20,11 +20,7 @@ jobs: # ОБЯЗАТЕЛЬНО
       - name: Build clean Joomla package ZIP 🚀
         run: |
           ARCHIVE_NAME="com_kunenatopic2article_${{ env.TIMESTAMP }}.zip"
-          # Список файлов и папок для включения в корне ZIP-архива
-          FILES="admin media kunenatopic2article.xml"
-          
-          # -r для рекурсивного включения папок
-          zip -r $ARCHIVE_NAME $FILES
+          zip -r $ARCHIVE_NAME admin/ media/ kunenatopic2article.xml
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
