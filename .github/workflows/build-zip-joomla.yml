@@ -1,32 +1,10 @@
-name: Build Joomla Package 
-
-on: 
-  workflow_dispatch:
-  push:
-    branches: [ interface ]
-
-jobs: # ОБЯЗАТЕЛЬНО
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: interface
-
-      - name: Set timestamp (Berlin time)
-        run: echo "TIMESTAMP=$(TZ=Europe/Berlin date +'%y%m%d-%H%M')" >> $GITHUB_ENV
-
-      - name: Build clean Joomla package ZIP ✅
+- name: Build clean Joomla package ZIP ✅
         run: |
-          zip -r com_kunenatopic2article_${{ env.TIMESTAMP }}.zip \
-            admin \
-            media \
-            kunenatopic2article.xml
-            
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: com_kunenatopic2article_${{ env.TIMESTAMP }}
-          path: com_kunenatopic2article_${{ env.TIMESTAMP }}.zip
+          ARCHIVE_NAME="com_kunenatopic2article_${{ env.TIMESTAMP }}.zip"
+          
+          # Создаем список файлов и папок, которые должны быть в пакете
+          FILES="admin media kunenatopic2article.xml"
+          
+          # Архивируем только эти элементы
+          # -r для рекурсивного включения папок admin и media
+          zip -r $ARCHIVE_NAME $FILES
