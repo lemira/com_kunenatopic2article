@@ -17,10 +17,23 @@ jobs:
       - name: Set timestamp (Berlin time)
         run: echo "TIMESTAMP=$(TZ=Europe/Berlin date +'%y%m%d-%H%M')" >> $GITHUB_ENV
 
+      - name: Check files structure
+        run: |
+          echo "Current directory structure:"
+          ls -la
+          echo "XML file exists:"
+          ls -la kunenatopic2article.xml || echo "XML file not found!"
+
       - name: Build clean Joomla package ZIP 🚀
         run: |
           ARCHIVE_NAME="com_kunenatopic2article_${{ env.TIMESTAMP }}.zip"
-          zip -r $ARCHIVE_NAME admin/ media/ language/ kunenatopic2article.xml
+          zip -r $ARCHIVE_NAME admin/ media/ kunenatopic2article.xml
+
+      - name: Verify archive contents
+        run: |
+          ARCHIVE_NAME="com_kunenatopic2article_${{ env.TIMESTAMP }}.zip"
+          echo "Archive contents:"
+          unzip -l $ARCHIVE_NAME
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
