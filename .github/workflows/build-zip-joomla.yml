@@ -21,12 +21,13 @@ jobs:
       - name: Check files structure
         run: |
           echo "Current directory structure:"
-          ls -la
+          ls -la $GITHUB_WORKSPACE
           echo "XML file exists:"
-          ls -la kunenatopic2article.xml || echo "XML file not found!"
+          ls -la $GITHUB_WORKSPACE/kunenatopic2article.xml || echo "XML file not found!"
 
       - name: Build clean Joomla package ZIP 🚀
         run: |
+          cd $GITHUB_WORKSPACE
           ARCHIVE_NAME="com_kunenatopic2article_${{ env.TIMESTAMP }}.zip"
           # Собираем admin/, media/ и манифест, исключая docs и README
           zip -r $ARCHIVE_NAME admin media kunenatopic2article.xml \
@@ -34,6 +35,7 @@ jobs:
 
       - name: Verify archive contents
         run: |
+          cd $GITHUB_WORKSPACE
           ARCHIVE_NAME="com_kunenatopic2article_${{ env.TIMESTAMP }}.zip"
           echo "Archive contents:"
           unzip -l $ARCHIVE_NAME
@@ -42,4 +44,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: com_kunenatopic2article_${{ env.TIMESTAMP }}
-          path: com_kunenatopic2article_${{ env.TIMESTAMP }}.zip
+          path: ${{ github.workspace }}/com_kunenatopic2article_${{ env.TIMESTAMP }}.zip
