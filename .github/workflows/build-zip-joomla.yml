@@ -1,5 +1,4 @@
 name: Build Joomla Package
-
 on:
   workflow_dispatch:
   push:
@@ -18,30 +17,24 @@ jobs:
       - name: Set timestamp (Berlin time)
         run: echo "TIMESTAMP=$(TZ=Europe/Berlin date +'%y%m%d-%H%M')" >> $GITHUB_ENV
 
-      - name: Check files structure
-        run: |
-          echo "Current directory structure:"
-          ls -la $GITHUB_WORKSPACE
-          echo "XML file exists:"
-          ls -la $GITHUB_WORKSPACE/kunenatopic2article.xml || echo "XML file not found!"
-
       - name: Build clean Joomla package ZIP 🚀
         run: |
-          cd $GITHUB_WORKSPACE
           ARCHIVE_NAME="com_kunenatopic2article_${{ env.TIMESTAMP }}.zip"
-          # Собираем admin/, media/ и манифест, исключая docs и README
-          zip -r $ARCHIVE_NAME admin media kunenatopic2article.xml \
-            -x "docs/*" -x "README*"
+          # Создаем архив в правильной структуре
+          zip -r $ARCHIVE_NAME admin/ media/ kunenatopic2article.xml
 
-      - name: Verify archive contents
+      - name: Verify archive structure
         run: |
-          cd $GITHUB_WORKSPACE
           ARCHIVE_NAME="com_kunenatopic2article_${{ env.TIMESTAMP }}.zip"
-          echo "Archive contents:"
-          unzip -l $ARCHIVE_NAME
+          mkdir test_extract
+          unzip $ARCHIVE_NAME -d test_extract
+          echo "Extracted structure:"
+          find test_extract -type f -name "*.xml"
+          echo "Root files:"
+          ls -la test_extract/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: com_kunenatopic2article_${{ env.TIMESTAMP }}
-          path: ${{ github.workspace }}/com_kunenatopic2article_${{ env.TIMESTAMP }}.zip
+          path: com_kunenatopic2article_${{ env.TIMESTAMP }}.zip
