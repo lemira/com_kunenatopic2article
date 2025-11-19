@@ -18,14 +18,26 @@ jobs:
       - name: Set timestamp (Berlin time)
         run: echo "TIMESTAMP=$(TZ=Europe/Berlin date +'%y%m%d-%H%M')" >> $GITHUB_ENV
 
-      - name: Build clean Joomla ZIP
+      - name: Build Joomla package ZIP
         run: |
-          zip -r com_kunenatopic2article_${{ env.TIMESTAMP }}.zip \
-            admin/ media/ com_kunenatopic2article.xml \
-            -x "*.git*" "*.github*" "docs/*" "README*" "*.md" ".editorconfig" ".gitignore"
+          # Явно добавляем только то, что нужно, и ничего больше
+          zip com_kunenatopic2article_${{ env.TIMESTAMP }}.zip \
+            admin/* \
+            media/* \
+            com_kunenatopic2article.xml \
+            -r
+
+          # Если по какой-то причине манифест всё ещё не попал — покажем содержимое корня
+          echo "=== Содержимое рабочей директории ==="
+          ls -la admin media com_kunenatopic2article.xml || true
+
+          echo "=== Содержимое созданного ZIP ==="
+          unzip -l com_kunenatopic2article_${{ env.TIMESTAMP }}.zip
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
+          name: com_kunenatopic2article_${{ env.TIMESTAMP }}
+          path: com_kunenatopic2article_${{ env.TIMESTAMP }}.zip
           name: com_kunenatopic2article_${{ env.TIMESTAMP }}
           path: com_kunenatopic2article_${{ env.TIMESTAMP }}.zip
