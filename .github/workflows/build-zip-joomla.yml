@@ -1,40 +1,32 @@
 name: Build Joomla Package
 
 on:
-  workflow_dispatch:    # запуск вручную
+  workflow_dispatch:
   push:
-    branches: [ interface ]   # собирает автоматически при любом push в ветку interface
+    branches: [ interface ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository (branch interface)
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           ref: interface
 
-      - name: Set timestamp (Berlin time)
+      - name: Set timestamp (Berlin)
+        run: echo "TIMESTAMP=$(TZ=Europe/Berlin date +'%y%m%d-%H%M')" >> $GITHUB_ENV
+
+      - name: Create Joomla package ZIP
         run: |
-          TIMESTAMP=$(TZ="Europe/Berlin" date +"%y%m%d-%H%M")
-          echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
+          zip -r com_kunenatopic2article_${{ env.TIMESTAMP }}.zip \
+            admin \
+            media \
+            com_kunenatopic2article.xml \
+            -x "*.git*" "*.github*" "docs/*" "README*" "*.md" 
 
-      - name: Create clean Joomla package ZIP
-        run: |
-          mkdir -p joomla-package
-
-          cp -r admin      joomla-package/
-          cp -r media      joomla-package/
-          cp com_kunenatopic2article.xml joomla-package/
-
-          cd joomla-package
-          zip -r ../com_kunenatopic2article_${{ env.TIMESTAMP }}.zip .
-          cd ..
-
-          mv com_kunenatopic2article_${{ env.TIMESTAMP }}.zip .
-
-      - name: Upload package as artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: com_kunenatopic2article_${{ env.TIMESTAMP }}
