@@ -1,6 +1,6 @@
 # Component Functionality
 
-[⬅️ Back to main description](../README.md) | [ℹ️ Additional information](ADDITIONAL.md)
+[⬅️ Component purpose, parameters, installation, operation](../README.md) | [ℹ️ Emails about article creation, database encoding, plugin](ADDITIONAL.md)
 
 ## 4. Post Info Block
 
@@ -13,6 +13,7 @@ The complete post info block displays:
 
 > A tooltip "Beginning of the previous message" (in the component's language) appears when the user hovers the cursor over the reminder lines.
 
+![Post Info Block](docs/images/Post_Info_Block.png "Post Info Block")
 ### 4.2. Reminder Lines Format
 - Optimal length: 50-150 characters
 - Format of links and images in reminder lines:
@@ -71,8 +72,7 @@ The component supports two schemes for transferring posts to articles (determine
 - Temporarily hidden posts contain information about their parents (parent field). An existing ancestor of a temporarily hidden post is assigned as the parent of its children.
 - The situation is different with completely deleted posts. Information about their parents disappears along with them. To save cut-off branches, the component assigns the first post of the topic as the parent of the first posts of these branches.
 
+![Tree of post relations in a topic](docs/images/Article_Topic_Tree.png "Tree of post relations in a topic")
 7.3.4. If post index links are enabled in the parameters, the index of a temporarily hidden post is displayed as regular text (not a link). The index of a completely deleted post is replaced with the index of the first post of the topic, according to section 7.3.3.
 
----
-
-*[⬅️ Back to main description](../README.md) | [➡️ Additional information](ADDITIONAL.md)*
+*[⬅️ Component purpose, parameters, installation, operation](../README.md) | [➡️Emails about article creation, database encoding, plugin](ADDITIONAL.md)*
