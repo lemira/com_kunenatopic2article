@@ -35,6 +35,9 @@ SMTP, Sendmail, or PHP Mail. Joomla automatically uses the selected method.
 
 Old PNG files may have color profile issues affecting display in articles. Profiles of such images can be fixed with online tools like PNGcheck, ImageOptim, etc.
 
+## 12. An example of the component in action
+Creating 14 articles from a topic (using a tree scheme).
+
 ![14 articles created from a topic](images/Many_articles_created.png "14 articles created from a topic")
 
 ## ❓ Frequently Asked Questions
