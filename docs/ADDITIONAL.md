@@ -1,6 +1,6 @@
 # Additional Information
 
-[⬅️ Back to main description](../README.md) | [📖 Detailed functionality description](FUNCTIONALITY.md)
+[⬅️ Component purpose, parameters, installation, operation](../README.md) | [📖 Post relations in Kunena, info block, parsing, languages](FUNCTIONALITY.md)
 
 ## 8. Precise Positioning Plugin
 
@@ -35,7 +35,7 @@ SMTP, Sendmail, or PHP Mail. Joomla automatically uses the selected method.
 
 Old PNG files may have color profile issues affecting display in articles. Profiles of such images can be fixed with online tools like PNGcheck, ImageOptim, etc.
 
----
+![14 articles created from a topic](images/Many_articles_created.png "14 articles created from a topic")
 
 ## ❓ Frequently Asked Questions
 
@@ -45,6 +45,4 @@ Old PNG files may have color profile issues affecting display in articles. Profi
 ### ❓ Is the connection between articles and the topic preserved after editing?
 ❌ Generally speaking - no, after creation the article and topic live independent lives. However, links in articles can be used to navigate to post indices in the forum, but even this connection can be broken if a post is deleted after article creation.
 
----
-
-*[⬅️ Back to main description](../README.md) | [📖 Detailed functionality description](FUNCTIONALITY.md)*
+*[⬅️ Component purpose, parameters, installation, operation](../README.md) | [📖 Post relations in Kunena, info block, parsing, languages](FUNCTIONALITY.md)*
