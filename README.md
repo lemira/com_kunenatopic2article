@@ -41,6 +41,8 @@ _¹ ID is displayed in the upper right corner of the post after the # sign when 
 Styles define the appearance of articles (default - almost standard) and the formatting of the info block.
 The stylesheet `/media/com_kunenatopic2article/css/kun_p2a.css` can be edited in `com_kunenatopic2article.zip` or directly on the server without reinstalling the component.
 
+![Component parameters form and control buttons](docs/images/Main_Component_Form.png "Component parameters form and control buttons")
+
 ### 1.3. Installation
 1. Install the component from the `com_kunenatopic2article.zip` file through the Joomla extensions manager
 2. The component will automatically create the `kunenatopic2article_params` table (one row) in the database
@@ -92,6 +94,7 @@ After processing the topic, the following are displayed:
 - **Created Articles** - list with IDs and article names, as well as links to them
 - **Emails Sent** - list of email addresses to which the component sent notifications about article creation. See also section 10.
 
+![Article creation results form](docs/images/Article_result.png "Article creation results form")
 ### 3.2. Further Action Options
 Below the article list, there are two buttons:
 - **🔄 Continue Work** - opens the form with saved parameters (only Topic ID is reset)
