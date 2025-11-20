@@ -87,6 +87,10 @@ Displayed before each post if at least one of its parameters is enabled. When al
 - Attachment images are copied as links to these attachments in Kunena folders
 - See also section 5 [Parsing](docs/FUNCTIONALITY.md#5-parsing)
 
+### 2.7. Example of an article based on the topic
+
+![Article based on a topic](docs/images/Article_Topic_Tree.png "Article based on a topic")
+
 ## 📊 Article Creation Results
 
 ### 3.1. Execution Report
