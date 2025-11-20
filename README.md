@@ -5,7 +5,7 @@
 A component for automatically creating Joomla articles based on Kunena forum topics.
 Developed for Joomla 5 and Kunena 6.x.
 
-[📖 Detailed functionality description](docs/FUNCTIONALITY.md) | [ℹ️ Additional information](docs/ADDITIONAL.md)
+[📖 Post relations in Kunena, info block, parsing, languages](docs/FUNCTIONALITY.md) | [ℹ️ Emails about article creation, database encoding, plugin](docs/ADDITIONAL.md)
 
 ## 🚀 General Information
 
@@ -102,5 +102,5 @@ Created articles and posts in the topic "live their own lives" after the compone
 
 ---
 
-*[➡️ More about the post info block and parsing](docs/FUNCTIONALITY.md)  
-[➡️ Additional information about the plugin and compatibility](docs/ADDITIONAL.md)*
+*[➡️ Post relations in Kunena, info block, parsing, languages](docs/FUNCTIONALITY.md)  
+[➡️ Emails about article creation, database encoding, plugin](docs/ADDITIONAL.md)*
