@@ -111,6 +111,8 @@ Created articles and posts in the topic "live their own lives" after the compone
 
 This component uses the [chriskonnertz/bbcode](https://github.com/chriskonnertz/bbcode) parser for BBCode to HTML conversion. Huge thanks to Chris Konnertz!
 
+Of course, I am grateful to the **Kunena** developers, whose forum I use on my sites for many years.
+
 ## ✋ Support
 
 If you like this project, you can make a donation via PayPal:
