@@ -117,7 +117,8 @@ Of course, I am grateful to the **Kunena** developers, whose forum I use on my s
 
 If you like this project, you can make a donation via PayPal:
 
-👉 [paypal.me/lemiratGiCh](paypal.me/lemiratGiCh)
+👉 paypal.me/lemiratGiCh
+
 
 ---
 
