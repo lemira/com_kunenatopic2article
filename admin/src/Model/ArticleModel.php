@@ -171,11 +171,9 @@ class ArticleModel extends BaseDatabaseModel
     {
            try {
            $this->currentArticle = new \stdClass(); // Инициализируем $this->currentArticle как stdClass
-           // Сбрасываем текущий размер статьи
            $this->articleId = 0; // Сбрасываем при открытии новой статьи    
-           $this->articleSize = 0;
+           $this->articleSize = 0;   // Сбрасываем текущий размер статьи
            $this->currentArticle->fulltext = ''; // для возможного изменения строк предупреждения
-           $this->currentArticle->fulltext .= '<div class="kunenatopic2article_marker" style="display:none;"></div>'; // для плагина подклюсения CSS
            
            $this->currentArticle->fulltext .=  Text::_('COM_KUNENATOPIC2ARTICLE_INFORMATION_SIGN') . '<br />'    // ?? не учтена длина!
                  . Text::_('COM_KUNENATOPIC2ARTICLE_WARNING_SIGN') 
@@ -194,8 +192,6 @@ class ArticleModel extends BaseDatabaseModel
             $baseAlias = FilterOutput::stringURLSafe($this->title); // дж
             $uniqueAlias = $this->getUniqueAlias($baseAlias);
             $this->currentArticle->alias = $uniqueAlias;
-              
-            
           // Отладка  $this->app->enqueueMessage('openArticle Статья открыта: ' . $this->title . ', категория: ' . $this->params->article_category . ', alias: ' . $uniqueAlias, 'notice');
 
             return true;
@@ -216,9 +212,7 @@ class ArticleModel extends BaseDatabaseModel
         }
 
         try {
-    // ОТЛАДКА      Factory::getApplication()->enqueueMessage('closeArticle Сохранение статьи: ' . $this->currentArticle->title, 'info');     
-   
-            // 1. Фильтрация контента
+           // 1. Фильтрация контента
             $filter = InputFilter::getInstance([], [], 1, 1);
             $filteredContent = $filter->clean($this->currentArticle->fulltext, 'html');
     
@@ -232,7 +226,6 @@ class ArticleModel extends BaseDatabaseModel
           
             // 4. Создаем статью через Table
             $this->articleId = $this->createArticleViaTable();
-
   // Factory::getApplication()->enqueueMessage('closeArticle fulltext после createArt' . HTMLHelper::_('string.truncate', $this->currentArticle->fulltext, 100, true, false),'info'); 
                          
             if (!$this->articleId) {
@@ -286,7 +279,6 @@ class ArticleModel extends BaseDatabaseModel
         $counter = ($counter === '') ? 2 : $counter + 1;
         $alias = $baseAlias . '-' . $counter;
     }
-
     return $alias;
 }
     
@@ -462,7 +454,7 @@ class ArticleModel extends BaseDatabaseModel
            } 
            $this->currentArticle->fulltext .= '<div class="kun_p2a_divider-gray"></div>'; // добавляем линию разделения постов, ?? не учтена в длине статьи!
                         
-            // Обновляем размер статьи DOLLARthis - postSize включает длину инф строки и строки напоминания, вычислен в openPost
+            // Обновляем размер статьи. $this-postSize включает длину инф строки и строки напоминания, вычислен в openPost
             $this->articleSize += $this->postSize;
 // Factory::getApplication()->enqueueMessage('transferPost Размер статьи: ' . $this->articleSize, 'info'); // ОТЛАДКА   
             return true;
@@ -686,7 +678,7 @@ private function buildTreePostIdList($firstPostId)
         $allPosts = $this->db->setQuery($query)->loadObjectList();
         
         // 2. ОТДЕЛЬНО получаем посты для финального списка (только hold=0)
-        $finalPostIds = $this->getAllThreadPosts($this->threadId); // ваш существующий метод
+        $finalPostIds = $this->getAllThreadPosts($this->threadId); 
         
         // 3. Строим полную карту связей из ВСЕХ постов
         $fullChildrenMap = [];
@@ -768,7 +760,7 @@ private function buildTreePostIdList($firstPostId)
 }
 
 /**
- * Находит ближайшего существующего родителя в цепочке
+ * Находим ближайшего существующего родителя в цепочке
  */
 private function findClosestExistingParent($deletedParentId, $finalPostIds, $allPosts)
 {
@@ -1135,7 +1127,7 @@ public function sendLinksToAdministrator(array $articleLinks): array
 
         // Обновляем состояние модели
         $this->emailsSent = false;
-        $this->emailsSentTo = []; // или $recipients, в зависимости от вашей логики
+        $this->emailsSentTo = []; // или $recipients
     }
 
     // Возвращаем итоговый массив с результатом операции
@@ -1164,9 +1156,7 @@ public function sendLinksToAdministrator(array $articleLinks): array
             if (file_exists(JPATH_ROOT . '/' . $imagePath)) {
                 return $imagePath;
             }
-            
-            // Для отладки - логируем что нашли 
-    // ОТЛАДКА         error_log("Attachment $attachmentId: path='$imagePath', exists=" . (file_exists(JPATH_ROOT . '/' . $imagePath) ? 'YES' : 'NO'));
+     // ОТЛАДКА         error_log("Attachment $attachmentId: path='$imagePath', exists=" . (file_exists(JPATH_ROOT . '/' . $imagePath) ? 'YES' : 'NO'));
         }
         
         return null;
@@ -1288,7 +1278,7 @@ private function convertBBCodeToHtml($text)
             $html = str_replace($marker, $imageHtml, $html);
         }
 
-/* ---------- обрезка ЛЮБЫХ длинных ссылок ---------- ки */
+// обрезка ЛЮБЫХ длинных ссылок ки
 $html = preg_replace_callback(
     '#<a\s+([^>]*?)href=[\'"]([^\'"]+)[\'"]([^>]*)>([^<]{50,})</a>#i',
     function ($m) {
