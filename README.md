@@ -107,6 +107,10 @@ Below the article list, there are two buttons:
 ### 3.3. Connection Between Articles and Topic
 Created articles and posts in the topic "live their own lives" after the component runs and can be edited independently. The exception is links in articles to post indices, if they were created. When clicking such a link, the corresponding post on the forum opens in a neighboring browser tab. _If a post is deleted after article creation, the link may stop working._
 
+## 🙏 Acknowledgments
+
+This component uses the [chriskonnertz/bbcode](https://github.com/chriskonnertz/bbcode) parser for BBCode to HTML conversion. Huge thanks to Chris Konnertz!
+
 ---
 
 *[➡️ Post relations in Kunena, info block, parsing, languages](docs/FUNCTIONALITY.md)  
