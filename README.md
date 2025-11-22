@@ -79,7 +79,7 @@ Only the following are transferred to articles:
 - Posts by authors not listed in "Ignored Authors"
 
 ### 2.5. Post Info Block
-Displayed before each post if at least one of its parameters is enabled. When all parameters are disabled, posts are separated by a subtle line. See section 4.
+Displayed before each post if at least one of the info block parameters is enabled. When all parameters are disabled, posts are separated by a subtle line. See section 4.
 
 ### 2.6. Markup Preservation
 - All links are preserved
