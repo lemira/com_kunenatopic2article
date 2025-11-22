@@ -119,8 +119,6 @@ If you like this project, you can make a donation via PayPal:
 
 👉 https://paypal.me/lemiratGiCh
 
-
-
 ---
 
 *[➡️ Post relations in Kunena, info block, parsing, languages](docs/FUNCTIONALITY.md)  
