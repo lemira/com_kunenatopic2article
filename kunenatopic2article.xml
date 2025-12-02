@@ -8,7 +8,28 @@
     <authorEmail>lemirat@gmail.com</authorEmail>
     <authorUrl>https://geschichte-chronologie.de</authorUrl>
     <version>1.0.1</version>
-    <description>COM_KUNENATOPIC2ARTICLE_DESC</description>
+   <description>
+<![CDATA[
+<div style="padding:15px;background:#f8f9fa;border-left:4px solid #28a745;">
+    <h3 style="margin-top:0;color:#28a745;">Kunena Topic to Article</h3>
+    <p><strong>Компонент для конвертации тем Kunena Forum в статьи Joomla</strong></p>
+    
+    <div style="margin:10px 0;padding:10px;background:white;border:1px solid #dee2e6;">
+        <strong>📋 Возможности:</strong>
+        <ul style="margin:5px 0 0 15px;">
+            <li>Конвертация тем Kunena в статьи</li>
+            <li>Поддержка BBCode и HTML</li>
+            <li>Гибкие настройки преобразования</li>
+            <li>Полная очистка при удалении</li>
+        </ul>
+    </div>
+    
+    <p style="margin-top:10px;font-size:0.9em;color:#666;">
+        <em>Версия 2.0.0 • Благодарим за использование!</em>
+    </p>
+</div>
+]]>
+</description>
     
     <namespace path="src">Joomla\Component\KunenaTopic2Article</namespace>
 
