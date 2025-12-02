@@ -8,11 +8,35 @@ use Joomla\CMS\Language\Text;
 
 class com_KunenaTopic2ArticleInstallerScript
 {
-    public function install($parent) 
-    {
-        echo '<p style="color: green; font-weight: bold;">' . Text::_('COM_KUNENATOPIC2ARTICLE_INSTALL_SUCCESS') . '</p>';
-        return true;
-    }
+   public function install($parent) 
+{
+    // Сохраняем в сессии
+    Factory::getApplication()->setUserState('kunena_install_message', 
+        Text::_('COM_KUNENATOPIC2ARTICLE_INSTALL_SUCCESS'));
+    
+    // JavaScript для отображения после загрузки
+    echo '<script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Ждем пока появится модальное окно Joomla
+            setTimeout(function() {
+                var modal = document.querySelector(".modal-body");
+                if (modal) {
+                    // Создаем наше сообщение
+                    var msg = document.createElement("div");
+                    msg.className = "alert alert-success kunena-custom-message";
+                    msg.innerHTML = "<strong>' . Text::_('COM_KUNENATOPIC2ARTICLE_INSTALL_SUCCESS') . '</strong>";
+                    msg.style.marginTop = "15px";
+                    msg.style.borderLeft = "4px solid #28a745";
+                    
+                    // Добавляем в модальное окно
+                    modal.appendChild(msg);
+                }
+            }, 300);
+        });
+    </script>';
+    
+    return true;
+}
     
     public function update($parent) 
 {
@@ -37,16 +61,12 @@ class com_KunenaTopic2ArticleInstallerScript
     }
     
     public function postflight($type, $parent) 
-{
-    if ($type === 'install') {
-        $app = Factory::getApplication();
-        $app->enqueueMessage(
-            Text::_('COM_KUNENATOPIC2ARTICLE_INSTALL_SUCCESS'), 
-            'success'
-        );
+    {
+        if ($type === 'install') {
+            echo '<p>' . Text::_('COM_KUNENATOPIC2ARTICLE_POSTFLIGHT_INSTALL') . '</p>';
+        }
+        return true;
     }
-    return true;
-}
     
     private function cleanMenuItems()
     {
