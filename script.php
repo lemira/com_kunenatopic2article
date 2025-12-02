@@ -15,11 +15,10 @@ class com_KunenaTopic2ArticleInstallerScript
     }
     
     public function update($parent) 
-    {
-        $version = $parent->get('manifest')->version;
-        echo '<p style="color: blue; font-weight: bold;">' . sprintf(Text::_('COM_KUNENATOPIC2ARTICLE_UPDATE_SUCCESS'), $version) . '</p>';
-        return true;
-    }
+{
+    echo '<p style="color: blue; font-weight: bold;">' . Text::_('COM_KUNENATOPIC2ARTICLE_UPDATE_SUCCESS') . '</p>';
+    return true;
+}
     
     public function uninstall($parent) 
     {
