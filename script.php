@@ -4,13 +4,44 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Cache\Cache;
 use Joomla\CMS\Log\Log;
+use Joomla\CMS\Language\Text;
 
 class com_KunenaTopic2ArticleInstallerScript
 {
-    public function uninstall($parent)
+    public function install($parent) 
+    {
+        echo '<p style="color: green; font-weight: bold;">' . Text::_('COM_KUNENATOPIC2ARTICLE_INSTALL_SUCCESS') . '</p>';
+        return true;
+    }
+    
+    public function update($parent) 
+    {
+        $version = $parent->get('manifest')->version;
+        echo '<p style="color: blue; font-weight: bold;">' . sprintf(Text::_('COM_KUNENATOPIC2ARTICLE_UPDATE_SUCCESS'), $version) . '</p>';
+        return true;
+    }
+    
+    public function uninstall($parent) 
     {
         $this->cleanMenuItems();
         $this->clearRouterCache();
+        echo '<p style="color: orange; font-weight: bold;">' . Text::_('COM_KUNENATOPIC2ARTICLE_UNINSTALL_SUCCESS') . '</p>';
+        return true;
+    }
+    
+    public function preflight($type, $parent) 
+    {
+        if ($type === 'update') {
+            echo '<p>' . Text::_('COM_KUNENATOPIC2ARTICLE_PREFLIGHT_UPDATE') . '</p>';
+        }
+        return true;
+    }
+    
+    public function postflight($type, $parent) 
+    {
+        if ($type === 'install') {
+            echo '<p>' . Text::_('COM_KUNENATOPIC2ARTICLE_POSTFLIGHT_INSTALL') . '</p>';
+        }
         return true;
     }
     
@@ -28,7 +59,7 @@ class com_KunenaTopic2ArticleInstallerScript
             $db->execute();
             
         } catch (Exception $e) {
-            Log::add('Error cleaning menu items: ' . $e->getMessage(), Log::WARNING, 'jerror');
+            Log::add(Text::_('COM_KUNENATOPIC2ARTICLE_ERROR_CLEAN_MENU') . ': ' . $e->getMessage(), Log::WARNING, 'jerror');
         }
     }
     
@@ -38,7 +69,7 @@ class com_KunenaTopic2ArticleInstallerScript
             Cache::getCacheController('callback')->clean('com_menus');
             Cache::getCacheController('callback')->clean('com_router');
         } catch (Exception $e) {
-            Log::add('Error clearing router cache: ' . $e->getMessage(), Log::WARNING, 'jerror');
+            Log::add(Text::_('COM_KUNENATOPIC2ARTICLE_ERROR_CLEAN_CACHE') . ': ' . $e->getMessage(), Log::WARNING, 'jerror');
         }
     }
 }
