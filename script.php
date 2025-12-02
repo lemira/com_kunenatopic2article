@@ -37,12 +37,16 @@ class com_KunenaTopic2ArticleInstallerScript
     }
     
     public function postflight($type, $parent) 
-    {
-        if ($type === 'install') {
-            echo '<p>' . Text::_('COM_KUNENATOPIC2ARTICLE_POSTFLIGHT_INSTALL') . '</p>';
-        }
-        return true;
+{
+    if ($type === 'install') {
+        $app = Factory::getApplication();
+        $app->enqueueMessage(
+            Text::_('COM_KUNENATOPIC2ARTICLE_INSTALL_SUCCESS'), 
+            'success'
+        );
     }
+    return true;
+}
     
     private function cleanMenuItems()
     {
