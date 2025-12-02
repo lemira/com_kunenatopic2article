@@ -8,32 +8,30 @@ use Joomla\CMS\Language\Text;
 
 class com_KunenaTopic2ArticleInstallerScript
 {
-   public function install($parent) 
+   public function install($parent)
 {
-    // Сохраняем в сессии
-    Factory::getApplication()->setUserState('kunena_install_message', 
-        Text::_('COM_KUNENATOPIC2ARTICLE_INSTALL_SUCCESS'));
+    $app = Factory::getApplication();
     
-    // JavaScript для отображения после загрузки
-    echo '<script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // Ждем пока появится модальное окно Joomla
-            setTimeout(function() {
-                var modal = document.querySelector(".modal-body");
-                if (modal) {
-                    // Создаем наше сообщение
-                    var msg = document.createElement("div");
-                    msg.className = "alert alert-success kunena-custom-message";
-                    msg.innerHTML = "<strong>' . Text::_('COM_KUNENATOPIC2ARTICLE_INSTALL_SUCCESS') . '</strong>";
-                    msg.style.marginTop = "15px";
-                    msg.style.borderLeft = "4px solid #28a745";
-                    
-                    // Добавляем в модальное окно
-                    modal.appendChild(msg);
-                }
-            }, 300);
-        });
-    </script>';
+    $html = '
+    <div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-left: 4px solid #28a745; border-radius: 4px;">
+        <h4 style="margin-top: 0; color: #28a745;">✅ Kunena Topic to Article установлен!</h4>
+        <p><strong>Компонент для конвертации тем Kunena Forum в статьи Joomla</strong></p>
+        
+        <div style="margin: 10px 0; padding: 10px; background: white; border: 1px solid #ddd;">
+            <strong>🚀 Как начать:</strong>
+            <ol style="margin: 5px 0 0 15px;">
+                <li>Перейдите в <em>Компоненты → Kunena Topic to Article</em></li>
+                <li>Выберите тему Kunena для конвертации</li>
+                <li>Настройте параметры и создайте статью</li>
+            </ol>
+        </div>
+        
+        <p style="margin-top: 10px; font-size: 0.9em; color: #666;">
+            <em>Благодарим за использование нашего компонента!</em>
+        </p>
+    </div>';
+    
+    $app->enqueueMessage($html, 'message');
     
     return true;
 }
