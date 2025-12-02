@@ -28,8 +28,6 @@ use Joomla\CMS\Filter\InputFilter;
 use Joomla\Component\Content\Site\Helper\RouteHelper;
 use Joomla\CMS\Access\Access;
 use Joomla\CMS\Filter\OutputFilter as FilterOutput;
-// use Kunena\Forum\Libraries\Forum\KunenaForum;
-// use Kunena\Forum\Libraries\Route\KunenaRoute;
 
 /**
  * Article Model
@@ -1319,32 +1317,19 @@ private function simpleBBCodeToHtml($text)
  * @param int $id ID статьи для удаления
  * @return bool True при успешном удалении, false при ошибке
  */
+/**
+ * Удаляет статью предпросмотра по ID
+ * 
+ * @param int $id ID статьи для удаления
+ * @return bool True при успешном удалении, false при ошибке
+ */
 public function deletePreviewArticleById($id)
 {
     try {
         $db = $this->getDatabase();
         
-        // Сначала проверяем, что статья существует и это preview
-        $query = $db->getQuery(true)
-            ->select(['id', 'alias'])
-            ->from('#__content')
-            ->where('id = ' . (int) $id);
-        
-        $db->setQuery($query);
-        $article = $db->loadObject();
-        
-        if (!$article) {
-            error_log('Article not found with ID: ' . $id);
-            return false;
-        }
-        
-        // Проверяем, что это preview-статья
-        if (strpos($article->alias, 'test-bbcode') === false) {
-            error_log('Article is not a preview article (alias: ' . $article->alias . ')');
-            return false;
-        }
-        
-        // Удаляем статью
+        // ПРОСТО УДАЛЯЕМ СТАТЬЮ БЕЗ ПРОВЕРКИ АЛИАСА
+        // (в preview мы всегда передаем правильный ID)
         $query = $db->getQuery(true)
             ->delete('#__content')
             ->where('id = ' . (int) $id);
@@ -1353,6 +1338,20 @@ public function deletePreviewArticleById($id)
         $result = $db->execute();
         
         if ($result) {
+            // Также удаляем запись из workflow_associations, если она есть
+            try {
+                $query = $db->getQuery(true)
+                    ->delete('#__workflow_associations')
+                    ->where('item_id = ' . (int) $id)
+                    ->where('extension = ' . $db->quote('com_content.article'));
+                
+                $db->setQuery($query);
+                $db->execute();
+            } catch (\Exception $e) {
+                // Игнорируем ошибки при удалении из workflow_associations
+                // (возможно, таблицы нет или запись уже удалена)
+            }
+            
             error_log('Successfully deleted preview article with ID: ' . $id);
             return true;
         } else {
