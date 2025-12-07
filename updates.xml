@@ -1,8 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <updates>
+    <!-- Version 1.0.2 - Current release -->
     <update>
         <name>Kunena Topic to Article</name>
-        <description>Automatically converts Kunena forum topics into Joomla articles</description>
+        <description>Creates Joomla articles based on Kunena forum topics</description>
+        <element>com_kunenatopic2article</element>
+        <type>component</type>
+        <version>1.0.2</version>
+        <infourl title="Kunena Topic to Article">https://github.com/lemira/comkunenatopic2article</infourl>
+        <downloads>
+            <downloadurl type="full" format="zip">https://github.com/lemira/comkunenatopic2article/releases/download/v1.0.2/com_kunenatopic2article.zip</downloadurl>
+        </downloads>
+        <tags>
+            <tag>stable</tag>
+        </tags>
+        <maintainer>Leonid Mira</maintainer>
+        <maintainerurl>https://geschichte-chronologie.de</maintainerurl>
+        <targetplatform name="joomla" version="5.0"/>
+        <client>administrator</client>
+    </update>
+
+    <!-- Version 1.0.1 - Previous release -->
+    <update>
+        <name>Kunena Topic to Article</name>
+        <description>Creates Joomla articles based on Kunena forum topics</description>
         <element>com_kunenatopic2article</element>
         <type>component</type>
         <version>1.0.1</version>
@@ -10,7 +31,36 @@
         <downloads>
             <downloadurl type="full" format="zip">https://github.com/lemira/comkunenatopic2article/releases/download/v1.0.1/com_kunenatopic2article.zip</downloadurl>
         </downloads>
+        <tags>
+            <tag>stable</tag>
+        </tags>
+        <maintainer>Leonid Mira</maintainer>
+        <maintainerurl>https://geschichte-chronologie.de</maintainerurl>
         <targetplatform name="joomla" version="5.0"/>
         <client>administrator</client>
     </update>
+
+    <!-- 
+    TEMPLATE FOR FUTURE VERSIONS:
+    Copy the block below and update version numbers when releasing new versions
+    
+    <update>
+        <name>Kunena Topic to Article</name>
+        <description>Creates Joomla articles based on Kunena forum topics</description>
+        <element>com_kunenatopic2article</element>
+        <type>component</type>
+        <version>X.Y.Z</version>
+        <infourl title="Kunena Topic to Article">https://github.com/lemira/comkunenatopic2article</infourl>
+        <downloads>
+            <downloadurl type="full" format="zip">https://github.com/lemira/comkunenatopic2article/releases/download/vX.Y.Z/com_kunenatopic2article.zip</downloadurl>
+        </downloads>
+        <tags>
+            <tag>stable</tag>
+        </tags>
+        <maintainer>Leonid Mira</maintainer>
+        <maintainerurl>https://geschichte-chronologie.de</maintainerurl>
+        <targetplatform name="joomla" version="5.0"/>
+        <client>administrator</client>
+    </update>
+    -->
 </updates>
