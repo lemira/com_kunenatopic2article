@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="component" version="5.0" method="upgrade">
-    <name>com_kunenatopic2article</name>
-    <author>lr</author>
-    <creationDate>Januar 2025</creationDate>
-    <copyright>(C) 2025 lr. All rights reserved.</copyright>
-    <license>GNU/GPL</license>
+    <name>COM_KUNENATOPIC2ARTICLE</name>
+    <author>Leonid Ratner</author>
+    <creationDate>January 2025</creationDate>
+    <copyright>(C) 2025 Leonid Ratner. All rights reserved.</copyright>
+    <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
     <authorEmail>lemirat@gmail.com</authorEmail>
     <authorUrl>https://geschichte-chronologie.de</authorUrl>
     <version>1.0.1</version>
-     <description>COM_KUNENATOPIC2ARTICLE_DESC</description>
+    <description>COM_KUNENATOPIC2ARTICLE_DESC</description>
     
     <namespace path="src">Joomla\Component\KunenaTopic2Article</namespace>
-
     <scriptfile>script.php</scriptfile>
     
     <administration>
@@ -29,20 +28,26 @@
         </files>
         
         <languages folder="admin/language" />
-
         <services>
-            <file>admin/services/provider.php</file>
+            <provider>admin/services/provider.php</provider>
         </services>
     </administration>
-
-        <uninstall>
-            <sql>
-                <file driver="mysql" charset="utf8">sql/uninstall.mysql.utf8.sql</file>
-            </sql>
-        </uninstall>
+    
+    <uninstall>
+        <sql>
+            <file driver="mysql" charset="utf8">admin/sql/uninstall.mysql.utf8.sql</file>
+        </sql>
+    </uninstall>
        
     <media destination="com_kunenatopic2article" folder="media/com_kunenatopic2article">
         <folder>css</folder>
     </media>
+    
+    <!-- Update server for automatic updates -->
+    <updateservers>
+        <server type="extension" priority="1" name="Kunena Topic to Article Updates">
+            https://raw.githubusercontent.com/lemira/comkunenatopic2article/master/updates.xml
+        </server>
+    </updateservers>
     
 </extension>
