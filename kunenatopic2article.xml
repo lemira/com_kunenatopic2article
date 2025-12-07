@@ -11,8 +11,11 @@
     <description>COM_KUNENATOPIC2ARTICLE_DESC</description>
     
     <namespace path="src">Joomla\Component\KunenaTopic2Article</namespace>
-    <scriptfile>script.php</scriptfile>
+    <version>1.0.1</version>
+     <description>COM_KUNENATOPIC2ARTICLE_DESC</description>
     
+    <namespace path="src">Joomla\Component\KunenaTopic2Article</namespace>
+
     <administration>
         <menu link="option=com_kunenatopic2article">COM_KUNENATOPIC2ARTICLE</menu>
         
