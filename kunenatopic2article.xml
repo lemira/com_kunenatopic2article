@@ -16,6 +16,8 @@
     
     <namespace path="src">Joomla\Component\KunenaTopic2Article</namespace>
 
+     <scriptfile>script.php</scriptfile>
+    
     <administration>
         <menu link="option=com_kunenatopic2article">COM_KUNENATOPIC2ARTICLE</menu>
         
@@ -38,7 +40,7 @@
     
     <uninstall>
         <sql>
-            <file driver="mysql" charset="utf8">admin/sql/uninstall.mysql.utf8.sql</file>
+            <file driver="mysql" charset="utf8">sql/uninstall.mysql.utf8.sql</file>
         </sql>
     </uninstall>
        
