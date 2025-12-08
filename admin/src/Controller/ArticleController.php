@@ -7,9 +7,9 @@
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
-namespace Joomla\Component\KunenaTopic2Article\Administrator\Controller;
+defined('_JEXEC') or die;
 
-defined('_JEXEC') or die('Restricted access');
+namespace Joomla\Component\KunenaTopic2Article\Administrator\Controller;
 
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Factory;
