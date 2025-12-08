@@ -7,9 +7,9 @@
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
-namespace Joomla\Component\KunenaTopic2Article\Administrator\Model;
+defined('_JEXEC') or die;
 
-\defined('_JEXEC') or die('Restricted access');
+namespace Joomla\Component\KunenaTopic2Article\Administrator\Model;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
