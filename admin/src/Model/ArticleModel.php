@@ -1160,8 +1160,7 @@ public function sendLinksToAdministrator(array $articleLinks): array
         return null;
         
     } catch (\Exception $e) {
-        error_log('Error getting attachment path: ' . $e->getMessage());
-        return null;
+       return null;
     }
 }
 
@@ -1352,16 +1351,15 @@ public function deletePreviewArticleById($id)
                 // (возможно, таблицы нет или запись уже удалена)
             }
             
-            error_log('Successfully deleted preview article with ID: ' . $id);
+      //      error_log('Successfully deleted preview article with ID: ' . $id);
             return true;
         } else {
-            error_log('Failed to delete article with ID: ' . $id);
+      //      error_log('Failed to delete article with ID: ' . $id);
             return false;
         }
         
     } catch (\Exception $e) {
-        error_log('Exception in deletePreviewArticleById: ' . $e->getMessage());
-        return false;
+          return false;
     }
 }
 
