@@ -7,9 +7,9 @@
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
-namespace Joomla\Component\KunenaTopic2Article\Administrator\View\Result;
-
 defined('_JEXEC') or die;
+
+namespace Joomla\Component\KunenaTopic2Article\Administrator\View\Result;
 
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Factory;
