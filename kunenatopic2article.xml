@@ -28,9 +28,12 @@
         </files>
         
         <languages folder="admin/language">
-            <language tag="en-GB">en-GB/com_kunenatopic2article.ini</language>
-            <language tag="de-DE">de-DE/com_kunenatopic2article.ini</language>
-            <language tag="ru-RU">ru-RU/com_kunenatopic2article.ini</language>
+    <language tag="en-GB">en-GB/com_kunenatopic2article.ini</language>
+    <language tag="en-GB">en-GB/com_kunenatopic2article.sys.ini</language>
+    <language tag="de-DE">de-DE/com_kunenatopic2article.ini</language>
+    <language tag="de-DE">de-DE/com_kunenatopic2article.sys.ini</language>
+    <language tag="ru-RU">ru-RU/com_kunenatopic2article.ini</language>
+    <language tag="ru-RU">ru-RU/com_kunenatopic2article.sys.ini</language>
         </languages>
         
         <services>
