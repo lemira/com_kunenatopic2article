@@ -1181,9 +1181,10 @@ private function convertBBCodeToHtml($text)
             return $this->simpleBBCodeToHtml($text);
         }
         
-        // Подключаем нужные файлы вручную
-        require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/Tag.php';
-        require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
+        // Подключаем автолоадер, который уже зарегистрирован в script.php
+       // страховка: если автолоадер ещё не подключен (например, вызываем не из компонента)
+        $autoload = JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/vendor/autoload.php';
+        if (file_exists($autoload)) require_once $autoload;
     
     // Уд-м "[br /", которые обрубают текст поста при переносе в статью кл
         $text = preg_replace('/<([^>]*?)\[br\s*\/\s*[>\]]/iu', '<$1>', $text);  // Удаляем [br с любыми вар-ми закрытия: [br />, [br /], [br/> и пр.
