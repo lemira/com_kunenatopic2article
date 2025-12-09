@@ -7,9 +7,9 @@
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
-defined('_JEXEC') or die;
-
 namespace Joomla\Component\KunenaTopic2Article\Administrator\Model;
+
+defined('_JEXEC') or die;
 
 use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\Factory;
@@ -153,7 +153,7 @@ class TopicModel extends AdminModel
         $table = new ParamsTable($this->db);
 
         if (!$table->load(1)) {
-            $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED') . ': ' . Text::_('JLIB_DATABASE_ERROR_LOAD_FAILED'), 'error');
+            $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED') . ': ' . Text::_('COM_KUNENATOPIC2ARTICLE_DATABASE_ERROR'), 'error');
             return false;
         }
 
@@ -172,7 +172,7 @@ class TopicModel extends AdminModel
         $table = new ParamsTable($this->db);
 
         if (!$table->load(1)) {
-            $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_RESET_FAILED') . ': ' . Text::_('JLIB_DATABASE_ERROR_LOAD_FAILED'), 'error');
+            $this->app->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_RESET_FAILED') . ': ' . Text::_('COM_KUNENATOPIC2ARTICLE_DATABASE_ERROR'), 'error');
             return false;
         }
 
