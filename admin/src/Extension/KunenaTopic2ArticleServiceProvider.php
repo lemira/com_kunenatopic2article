@@ -7,8 +7,9 @@
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
-defined('_JEXEC') or die;
 namespace Joomla\Component\KunenaTopic2Article\Administrator\Extension;
+
+defined('_JEXEC') or die;
 
 use Joomla\CMS\Extension\ComponentInterface;
 use Joomla\CMS\Extension\Service\Provider\ComponentDispatcherFactory;
