@@ -39,13 +39,13 @@ class com_KunenaTopic2ArticleInstallerScript
     }
     
     private function clearRouterCache()
-    {
-        try {
-            Cache::getCacheController('callback')->clean('com_menus');
-            Cache::getCacheController('callback')->clean('com_router');
-        } catch (Exception $e) {
-            // Логируем ошибку, но не прерываем деинсталляцию
-            Log::add('Error clearing KunenaTopic2Article router cache: ' . $e->getMessage(), Log::WARNING, 'jerror');
-        }
+{
+    try {
+        $app = Factory::getApplication();
+        // чистим системный кэш
+        $app->getCache()->clean('com_menus');
+        $app->getCache()->clean('com_router');
+    } catch (\Throwable $e) {
+        Log::add('Error clearing KunenaTopic2Article router cache: ' . $e->getMessage(), Log::WARNING, 'jerror');
     }
 }
