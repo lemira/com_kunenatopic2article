@@ -7,6 +7,10 @@
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
-defined('_JEXEC') || exit;
+defined('_JEXEC') or die;
+
+use Joomla\DI\Container;
+use Joomla\DI\ServiceProviderInterface;
 use Joomla\Component\KunenaTopic2Article\Administrator\Extension\KunenaTopic2ArticleServiceProvider;
+
 return new KunenaTopic2ArticleServiceProvider;
