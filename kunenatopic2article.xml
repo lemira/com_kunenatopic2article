@@ -28,10 +28,6 @@
         </files>
      </administration>
 
-            <services namespace="Joomla\Component\KunenaTopic2Article">
-            <provider>admin/services/provider.php</provider>
-        </services>
-       
         <languages folder="admin/language">
     <language tag="en-GB">en-GB/com_kunenatopic2article.ini</language>
     <language tag="en-GB">en-GB/com_kunenatopic2article.sys.ini</language>
