@@ -1,0 +1,30 @@
+name: Build Joomla Package
+on:
+  workflow_dispatch:  # Запуск вручную
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository from 'interface' branch
+        uses: actions/checkout@v4
+        with:
+          ref: interface  # Явно указана ветка
+      
+      - name: Set timestamp variable (Берлинское время)
+        run: |
+          TIMESTAMP=$(TZ="Europe/Berlin" date +"%y%m%d-%H%M")
+          echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
+      
+      - name: Create ZIP archive with timestamp
+        run: |
+          zip -r Joomla-Component-${{ env.TIMESTAMP }}.zip admin/ media/ kunenatopic2article.xml script.php
+      
+      - name: Extract ZIP archive
+        run: |
+          unzip Joomla-Component-${{ env.TIMESTAMP }}.zip -d extracted_files
+      
+      - name: Upload extracted files
+        uses: actions/upload-artifact@v4
+        with:
+          name: Joomla-Component-${{ env.TIMESTAMP }}
+          path: extracted_files/
