@@ -17,7 +17,7 @@ jobs:
       
       - name: Create ZIP archive with timestamp
         run: |
-          zip -r Joomla-Component-${{ env.TIMESTAMP }}.zip admin/ media/ kunenatopic2article.xml
+          zip -r Joomla-Component-${{ env.TIMESTAMP }}.zip admin/ media/ kunenatopic2article.xml script.php
       
       - name: Extract ZIP archive
         run: |
