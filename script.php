@@ -49,3 +49,4 @@ class com_KunenaTopic2ArticleInstallerScript
         Log::add('Error clearing KunenaTopic2Article router cache: ' . $e->getMessage(), Log::WARNING, 'jerror');
     }
 }
+}
