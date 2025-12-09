@@ -24,8 +24,7 @@
             <folder>sql</folder>
             <folder>language</folder>
             <folder>assets/css</folder>
-            <folder>libraries</folder>
-        </files>
+       </files>
      </administration>
 
     <files>
