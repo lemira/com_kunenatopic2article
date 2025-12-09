@@ -28,7 +28,7 @@
         </files>
      </administration>
 
-            <services>
+            <services namespace="Joomla\Component\KunenaTopic2Article">
             <provider>admin/services/provider.php</provider>
         </services>
        
