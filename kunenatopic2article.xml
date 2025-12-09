@@ -26,7 +26,12 @@
             <folder>assets/css</folder>
             <folder>libraries</folder>
         </files>
-        
+     </administration>
+
+            <services>
+            <provider>admin/services/provider.php</provider>
+        </services>
+       
         <languages folder="admin/language">
     <language tag="en-GB">en-GB/com_kunenatopic2article.ini</language>
     <language tag="en-GB">en-GB/com_kunenatopic2article.sys.ini</language>
@@ -36,11 +41,6 @@
     <language tag="ru-RU">ru-RU/com_kunenatopic2article.sys.ini</language>
         </languages>
         
-        <services>
-            <provider>admin/services/provider.php</provider>
-        </services>
-    </administration>
-    
     <uninstall>
         <sql>
             <file driver="mysql" charset="utf8">admin/sql/uninstall.mysql.utf8.sql</file>
