@@ -7,9 +7,9 @@
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
-defined('_JEXEC') or die;
-
 namespace Joomla\Component\KunenaTopic2Article\Administrator\Model;
+
+defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
@@ -404,7 +404,7 @@ class ArticleModel extends BaseDatabaseModel
 
             // Проверяем, найден ли текст   // НЕ НУЖНО?
             if ($this->postText === null) {
-                throw new \Exception(Text::sprintf('COM_YOURCOMPONENT_POST_TEXT_NOT_FOUND', $postId));
+                throw new \Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_POST_TEXT_NOT_FOUND', $postId));
             }
  
             $this->postInfoString = $this->createPostInfoString(); // Вычиcляем информационную строку (всегда есть хотя бы разделители) поста
