@@ -49,4 +49,52 @@ class com_KunenaTopic2ArticleInstallerScript
         Log::add('Error clearing KunenaTopic2Article router cache: ' . $e->getMessage(), Log::WARNING, 'jerror');
     }
 }
+
+public function postflight($type, $parent)
+{
+    $libPath = JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode';
+
+    // 1. Проверяем, есть ли автолоадер
+    if (!file_exists($libPath . '/vendor/autoload.php'))
+    {
+        // 2. Проверяем, есть ли composer.json
+        if (!file_exists($libPath . '/composer.json'))
+        {
+            throw new \RuntimeException('Library descriptor missing: ' . $libPath . '/composer.json');
+        }
+
+        // 3. Находим исполняемый composer
+        $composer = $this->findComposer();   // см. ниже
+        if (!$composer)
+        {
+            throw new \RuntimeException('Composer not found. Please install Composer on the server.');
+        }
+
+        // 4. Устанавливаем зависимости
+        $cmd = escapeshellcmd($composer) . ' install --no-dev --prefer-dist --working-dir=' . escapeshellarg($libPath);
+        exec($cmd . ' 2>&1', $out, $code);
+
+        if ($code !== 0)
+        {
+            throw new \RuntimeException('Composer install failed: ' . implode(PHP_EOL, $out));
+        }
+    }
+
+    // 5. Подключаем автолоадер
+    require_once $libPath . '/vendor/autoload.php';
+}
+
+private function findComposer()
+{
+    // 1. Смотрим глобальный composer
+    $global = trim(shell_exec('which composer'));
+    if ($global && is_executable($global)) return $global;
+
+    // 2. Пробуем php composer.phar в корне сайта
+    $local = JPATH_ROOT . '/composer.phar';
+    if (file_exists($local) && is_executable($local)) return PHP_BINARY . ' ' . $local;
+
+    return false;
+}
+    
 }
