@@ -8,8 +8,8 @@
   },
   "autoload": {
     "psr-4": {
-      "MyKunena\\Parser\\": "src/"   ← если создавать свой класс
+      "MyKunena\\Parser\\": "src/"
     },
-    "files": []                      ← автолоадер подхватит всё сам
+    "files": []                   
   }
 }
