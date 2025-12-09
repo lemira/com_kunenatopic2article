@@ -52,47 +52,45 @@ class com_KunenaTopic2ArticleInstallerScript
 
 public function postflight($type, $parent)
 {
+    // 1. Путь к нашей внутренней папке с composer.json
     $libPath = JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode';
 
-    // 1. Проверяем, есть ли автолоадер
+    // 2. Если ещё не стоят зависимости – ставим
     if (!file_exists($libPath . '/vendor/autoload.php'))
     {
-        // 2. Проверяем, есть ли composer.json
-        if (!file_exists($libPath . '/composer.json'))
-        {
-            throw new \RuntimeException('Library descriptor missing: ' . $libPath . '/composer.json');
-        }
-
-        // 3. Находим исполняемый composer
-        $composer = $this->findComposer();   // см. ниже
+        $composer = $this->findComposer();   // ниже
         if (!$composer)
         {
-            throw new \RuntimeException('Composer not found. Please install Composer on the server.');
+            throw new \RuntimeException('Composer not found. Ask hoster to install it.');
         }
 
-        // 4. Устанавливаем зависимости
-        $cmd = escapeshellcmd($composer) . ' install --no-dev --prefer-dist --working-dir=' . escapeshellarg($libPath);
+        // Командная строка
+        $cmd = escapeshellcmd($composer) .
+               ' install --no-dev --prefer-dist --working-dir=' .
+               escapeshellarg($libPath);
         exec($cmd . ' 2>&1', $out, $code);
 
         if ($code !== 0)
         {
-            throw new \RuntimeException('Composer install failed: ' . implode(PHP_EOL, $out));
+            throw new \RuntimeException('Composer install failed:' . implode("\n", $out));
         }
     }
 
-    // 5. Подключаем автолоадер
+    // 3. Подключаем автолоадер (теперь классы ChrisKonnertz доступны)
     require_once $libPath . '/vendor/autoload.php';
-}
 
+    // (можно вызвать здесь же clearRouterCache и т. д.)
+}
+    
 private function findComposer()
 {
-    // 1. Смотрим глобальный composer
-    $global = trim(shell_exec('which composer'));
+    // 1. Глобальный composer
+    $global = trim((string)shell_exec('which composer 2>/dev/null'));
     if ($global && is_executable($global)) return $global;
 
-    // 2. Пробуем php composer.phar в корне сайта
+    // 2. composer.phar в корне сайта
     $local = JPATH_ROOT . '/composer.phar';
-    if (file_exists($local) && is_executable($local)) return PHP_BINARY . ' ' . $local;
+    if (file_exists($local)) return PHP_BINARY . ' ' . $local;
 
     return false;
 }
