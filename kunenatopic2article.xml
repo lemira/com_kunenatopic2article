@@ -28,6 +28,10 @@
         </files>
      </administration>
 
+    <files>
+    <filename>script.php</filename>
+    </files>
+
         <languages folder="admin/language">
     <language tag="en-GB">en-GB/com_kunenatopic2article.ini</language>
     <language tag="en-GB">en-GB/com_kunenatopic2article.sys.ini</language>
@@ -39,7 +43,7 @@
         
     <uninstall>
         <sql>
-            <file driver="mysql" charset="utf8">admin/sql/uninstall.mysql.utf8.sql</file>
+            <file driver="mysql" charset="utf8">sql/uninstall.mysql.utf8.sql</file>
         </sql>
     </uninstall>
        
