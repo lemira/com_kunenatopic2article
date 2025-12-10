@@ -10,9 +10,9 @@
  * @license     MIT (for original portions); see LICENSE_MIT.txt
  */
 
-defined('_JEXEC') or die;
-
 namespace Joomla\Component\Kunenatopic2Article\Administrator\Parser;
+
+defined('_JEXEC') or die;
 
 class Tag
 {
