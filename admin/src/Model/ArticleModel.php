@@ -28,7 +28,7 @@ use Joomla\CMS\Filter\InputFilter;
 use Joomla\Component\Content\Site\Helper\RouteHelper;
 use Joomla\CMS\Access\Access;
 use Joomla\CMS\Filter\OutputFilter as FilterOutput;
-use MyKunena\Parser\BBCode;
+use Joomla\Component\Kunenatopic2Article\Administrator\Parser\BBCode;
 
 /**
  * Article Model
