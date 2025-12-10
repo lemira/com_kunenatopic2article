@@ -12,7 +12,7 @@
     
     <namespace path="src">Joomla\Component\KunenaTopic2Article</namespace>
     <scriptfile>script.php</scriptfile>
-    
+
     <administration>
         <menu link="option=com_kunenatopic2article">COM_KUNENATOPIC2ARTICLE</menu>
         
@@ -24,7 +24,7 @@
             <folder>sql</folder>
             <folder>language</folder>
             <folder>assets/css</folder>
-       </files>
+        </files>
      </administration>
 
     <files>
