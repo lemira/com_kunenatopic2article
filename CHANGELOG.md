@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2025-01-10
+
+### Fixed
+- Added GPL license headers to all PHP files for JED compliance
+- Added JEXEC security checks to all PHP files
+- Fixed XML manifest structure (removed duplicate entries)
+- Fixed language file paths and naming convention
+- Removed duplicate language keys in .ini files
+- Added missing language keys for error messages
+- Fixed SQL uninstall file path in manifest
+- Corrected namespace declaration order in PHP files
+
+### Changed
+- Renamed language files to follow Joomla 5 standards (removed language prefix)
+- Updated language file declarations in XML manifest
+- Replaced error_log() calls with proper error handling
+- Modified BBCode parser files to include GPL headers
+- Language constant values now properly quoted in .ini files
+- Removed trailing spaces from language strings
+
+### Added
+- LICENSE_MIT.txt file for BBCode parser attribution
+- Explicit language file entries in XML manifest
+- com_kunenatopic2article.sys.ini files for all languages
+
+### Technical
+- Passed JED Checker validation
+- Improved code compliance with Joomla 5 standards
+- Enhanced security with JEXEC checks in all entry points
+
+---
+
 ## [1.0.2] - 2025-01-07
 
 ### Changed
