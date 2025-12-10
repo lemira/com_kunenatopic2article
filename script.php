@@ -1,12 +1,4 @@
 <?php
-/**
- * @package     Joomla.Administrator
- * @subpackage  com_kunenatopic2article
- *
- * @copyright   (C) 2025 Leonid Ratner. All rights reserved.
- * @license     GNU General Public License version 2 or later; see LICENSE.txt
- */
-
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
@@ -33,21 +25,22 @@ class com_KunenaTopic2ArticleInstallerScript
             $db->setQuery($query);
             $db->execute();
         } catch (Exception $e) {
-            // Логируем ошибку, но не прерываем деинсталляцию
             Log::add('Error cleaning KunenaTopic2Article menu items: ' . $e->getMessage(), Log::WARNING, 'jerror');
         }
     }
     
     private function clearRouterCache()
-{
-    try {
-        $app = Factory::getApplication();
-        // чистим системный кэш
-        $app->getCache()->clean('com_menus');
-        $app->getCache()->clean('com_router');
-    } catch (\Throwable $e) {
-        Log::add('Error clearing KunenaTopic2Article router cache: ' . $e->getMessage(), Log::WARNING, 'jerror');
+    {
+        try {
+            // Очистка кэша маршрутизации Joomla 5
+            $cache = Factory::getCache('com_menus', '');
+            $cache->clean();
+            
+            $cache = Factory::getCache('com_router', '');
+            $cache->clean();
+            
+        } catch (\Throwable $e) {
+            Log::add('Error clearing KunenaTopic2Article router cache: ' . $e->getMessage(), Log::WARNING, 'jerror');
+        }
     }
-}
- 
 }
