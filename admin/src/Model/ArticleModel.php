@@ -29,6 +29,7 @@ use Joomla\Component\Content\Site\Helper\RouteHelper;
 use Joomla\CMS\Access\Access;
 use Joomla\CMS\Filter\OutputFilter as FilterOutput;
 use Joomla\Component\KunenaTopic2Article\Administrator\Parser\BBCode;
+use Joomla\Component\KunenaTopic2Article\Administrator\Parser\Tag; // подгрузка класса при компиляции файла, BBCode сможет делать new Tag()
 
 /**
  * Article Model
