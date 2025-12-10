@@ -1186,6 +1186,19 @@ private function convertBBCodeToHtml($text)
             throw new \RuntimeException('BBCode class not registered: ' . $class);
         }
 
+           // временный дамп для Tag
+$tagClass = 'Joomla\Component\KunenaTopic2Article\Administrator\Parser\Tag';
+$tagFile  = JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/src/Parser/Tag.php';
+
+if (!file_exists($tagFile)) {
+    throw new \RuntimeException('Tag file not found: ' . $tagFile);
+}
+if (!class_exists($tagClass, true)) {
+    throw new \RuntimeException('Tag class not registered: ' . $tagClass);
+}
+
+$bbcode = new $class;   // теперь создаём объект
+           
         $bbcode = new $class;   // теперь создаём объект
            
        //!!! $bbcode = new BBCode();
