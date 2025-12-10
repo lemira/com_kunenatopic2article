@@ -1294,23 +1294,18 @@ $html = preg_replace_callback(
         
         return $html;
         
-    } catch (\Exception $e) {
-        $this->app->enqueueMessage(
-            Text::_('COM_KUNENATOPIC2ARTICLE_BBCODE_PARSE_ERROR') . ': ' . $e->getMessage(),
-            'warning'
-        );
-        
-        // Fallback на простой парсер
-        return $this->simpleBBCodeToHtml($text);
-    }
+    } catch (\Throwable $e) { 
+    // ВРЕМЕННЫЙ ДЕБАГ  – выводим текст исключения, Exception вместо Throwable, чтобы ловить всё
+    $this->app->enqueueMessage('Parser exception: ' . $e->getMessage(), 'error');
+
+    $this->app->enqueueMessage(
+        Text::_('COM_KUNENATOPIC2ARTICLE_BBCODE_PARSE_ERROR') . ': ' . $e->getMessage(),
+        'warning'
+    );
+    return 'NO PARSER';
 }
-   
-// Простой парсер как fallback
-private function simpleBBCodeToHtml($text)
-{
-   return 'NO PARSER'; // СООБЩАЕМ, ЧТО С ОСНОВНЫМ ПАРСЕРОМ ПРОБЛЕМЫ
 }
- // ------- КОНЕЦ ПАРСЕРА ---------
+   // ------- КОНЕЦ ПАРСЕРА ---------
     
 /**
  * Удаляет статью предпросмотра по ID
