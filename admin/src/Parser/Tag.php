@@ -12,7 +12,7 @@
 
 defined('_JEXEC') or die;
 
-namespace MyKunena\Parser;
+namespace Joomla\Component\Kunenatopic2Article\Administrator\Parser;
 
 class Tag
 {
