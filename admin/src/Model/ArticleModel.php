@@ -28,6 +28,7 @@ use Joomla\CMS\Filter\InputFilter;
 use Joomla\Component\Content\Site\Helper\RouteHelper;
 use Joomla\CMS\Access\Access;
 use Joomla\CMS\Filter\OutputFilter as FilterOutput;
+use Joomla\Component\KunenaTopic2Article\Administrator\Parser\BBCode;
 
 /**
  * Article Model
@@ -1173,7 +1174,7 @@ public function sendLinksToAdministrator(array $articleLinks): array
 private function convertBBCodeToHtml($text)
 {
     try {
-        $bbcode = new \Joomla\Component\Kunenatopic2Article\Administrator\Parser\BBCode();
+        $bbcode = new BBCode();
     
     // Уд-м "[br /", которые обрубают текст поста при переносе в статью кл
         $text = preg_replace('/<([^>]*?)\[br\s*\/\s*[>\]]/iu', '<$1>', $text);  // Удаляем [br с любыми вар-ми закрытия: [br />, [br /], [br/> и пр.
@@ -1289,6 +1290,12 @@ $html = preg_replace_callback(
         return $this->simpleBBCodeToHtml($text);
     }
 }
+
+  private function simpleBBCodeToHtml($text)
+{
+    return 'NO PARSER';
+}
+    
    // ------- КОНЕЦ ПАРСЕРА ---------
     
 /**
