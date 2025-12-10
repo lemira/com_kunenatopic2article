@@ -109,7 +109,7 @@ Created articles and posts in the topic "live their own lives" after the compone
 
 ## 🙏 Acknowledgments
 
-This component uses the [chriskonnertz/bbcode](https://github.com/chriskonnertz/bbcode) parser for BBCode to HTML conversion. Huge thanks to Chris Konnertz!
+This component includes code from [chriskonnertz/bbcode](https://github.com/chriskonnertz/bbcode) parser for BBCode to HTML conversion. (MIT License). Huge thanks to Chris Konnertz! The BBCode parser code remains under its original MIT License, while the rest of the component is GPL-2.0-or-later.
 
 Of course, I am grateful to the **Kunena** developers, whose forum I use on my sites for many years.
 

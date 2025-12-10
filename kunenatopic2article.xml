@@ -7,15 +7,10 @@
     <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
     <authorEmail>lemirat@gmail.com</authorEmail>
     <authorUrl>https://geschichte-chronologie.de</authorUrl>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <description>COM_KUNENATOPIC2ARTICLE_DESC</description>
     
     <namespace path="src">Joomla\Component\KunenaTopic2Article</namespace>
-    <version>1.0.1</version>
-     <description>COM_KUNENATOPIC2ARTICLE_DESC</description>
-    
-    <namespace path="src">Joomla\Component\KunenaTopic2Article</namespace>
-
     <scriptfile>script.php</scriptfile>
 
     <administration>
@@ -29,15 +24,22 @@
             <folder>sql</folder>
             <folder>language</folder>
             <folder>assets/css</folder>
-            <folder>libraries</folder>
         </files>
+     </administration>
+
+    <files>
+    <filename>script.php</filename>
+    </files>
+
+        <languages folder="admin/language">
+    <language tag="en-GB">en-GB/com_kunenatopic2article.ini</language>
+    <language tag="en-GB">en-GB/com_kunenatopic2article.sys.ini</language>
+    <language tag="de-DE">de-DE/com_kunenatopic2article.ini</language>
+    <language tag="de-DE">de-DE/com_kunenatopic2article.sys.ini</language>
+    <language tag="ru-RU">ru-RU/com_kunenatopic2article.ini</language>
+    <language tag="ru-RU">ru-RU/com_kunenatopic2article.sys.ini</language>
+        </languages>
         
-        <languages folder="admin/language" />
-        <services>
-            <provider>admin/services/provider.php</provider>
-        </services>
-    </administration>
-    
     <uninstall>
         <sql>
             <file driver="mysql" charset="utf8">sql/uninstall.mysql.utf8.sql</file>
@@ -48,7 +50,6 @@
         <folder>css</folder>
     </media>
     
-    <!-- Update server for automatic updates -->
     <updateservers>
         <server type="extension" priority="1" name="Kunena Topic to Article Updates">
             https://raw.githubusercontent.com/lemira/comkunenatopic2article/master/updates.xml

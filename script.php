@@ -25,7 +25,6 @@ class com_KunenaTopic2ArticleInstallerScript
             $db->setQuery($query);
             $db->execute();
         } catch (Exception $e) {
-            // Логируем ошибку, но не прерываем деинсталляцию
             Log::add('Error cleaning KunenaTopic2Article menu items: ' . $e->getMessage(), Log::WARNING, 'jerror');
         }
     }
@@ -33,10 +32,14 @@ class com_KunenaTopic2ArticleInstallerScript
     private function clearRouterCache()
     {
         try {
-            Cache::getCacheController('callback')->clean('com_menus');
-            Cache::getCacheController('callback')->clean('com_router');
-        } catch (Exception $e) {
-            // Логируем ошибку, но не прерываем деинсталляцию
+            // Очистка кэша маршрутизации Joomla 5
+            $cache = Factory::getCache('com_menus', '');
+            $cache->clean();
+            
+            $cache = Factory::getCache('com_router', '');
+            $cache->clean();
+            
+        } catch (\Throwable $e) {
             Log::add('Error clearing KunenaTopic2Article router cache: ' . $e->getMessage(), Log::WARNING, 'jerror');
         }
     }

@@ -1,13 +1,19 @@
 <?php
-
-namespace ChrisKonnertz\BBCode;
-
 /**
- * This class represents a single BBCode tag.
- * It is just a simple class used for storing tag.
+ * @package     Joomla.Administrator
+ * @subpackage  com_kunenatopic2article
  *
- * @package ChrisKonnertz\BBCode
+ * Original code: Chris Konnertz <chriskonnertz@googlemail.com>
+ * @copyright   (C) 2012–2023 Chris Konnertz (MIT license)
+ * @copyright   (C) 2025 Leonid Ratner. All rights reserved.
+ * @license     GNU General Public License version 2 or later; see LICENSE.txt
+ * @license     MIT (for original portions); see LICENSE_MIT.txt
  */
+
+namespace Joomla\Component\Kunenatopic2Article\Administrator\Parser;
+
+defined('_JEXEC') or die;
+
 class Tag
 {
 

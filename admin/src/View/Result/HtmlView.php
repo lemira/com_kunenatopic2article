@@ -2,6 +2,9 @@
 /**
  * @package     KunenaTopic2Article
  * @subpackage  Administrator
+ *
+ * @copyright   (C) 2025 Leonid Ratner. All rights reserved.
+ * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
 namespace Joomla\Component\KunenaTopic2Article\Administrator\View\Result;

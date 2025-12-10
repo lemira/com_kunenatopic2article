@@ -1,17 +1,20 @@
 <?php
-
-namespace ChrisKonnertz\BBCode;
-
-use Closure;
-
 /**
- * BBCode to HTML converter
+ * @package     Joomla.Administrator
+ * @subpackage  com_kunenatopic2article
  *
- * Inspired by Kai Mallea (kmallea@gmail.com)
- *
- * Licensed under the MIT license:
- * http://www.opensource.org/licenses/mit-license.php
+ * Original code: Chris Konnertz <chriskonnertz@googlemail.com>
+ * @copyright   (C) 2012–2023 Chris Konnertz (MIT license)
+ * Modified for com_kunenatopic2article
+ * @copyright   (C) 2025 Leonid Ratner. All rights reserved.
+ * @license     GNU General Public License version 2 or later; see LICENSE.txt
+ * @license     MIT (for original portions); see LICENSE_MIT.txt
  */
+
+namespace Joomla\Component\Kunenatopic2Article\Administrator\Parser;
+
+defined('_JEXEC') or die;
+
 class BBCode
 {
 

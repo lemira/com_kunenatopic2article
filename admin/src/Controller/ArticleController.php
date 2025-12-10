@@ -2,11 +2,14 @@
 /**
  * @package     Joomla.Administrator
  * @subpackage  com_kunenatopic2article
+ *
+ * @copyright   (C) 2025 Leonid Ratner. All rights reserved.
+ * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
 namespace Joomla\Component\KunenaTopic2Article\Administrator\Controller;
 
-defined('_JEXEC') or die('Restricted access');
+defined('_JEXEC') or die;
 
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Factory;

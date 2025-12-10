@@ -1,5 +1,15 @@
 <?php
+/**
+ * @package     Joomla.Administrator
+ * @subpackage  com_kunenatopic2article
+ *
+ * @copyright   (C) 2025 Leonid Ratner. All rights reserved.
+ * @license     GNU General Public License version 2 or later; see LICENSE.txt
+ */
+
 namespace Joomla\Component\KunenaTopic2Article\Administrator\Extension;
+
+defined('_JEXEC') or die;
 
 use Joomla\CMS\Extension\ComponentInterface;
 use Joomla\CMS\Extension\Service\Provider\ComponentDispatcherFactory;

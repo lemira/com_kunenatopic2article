@@ -1,11 +1,18 @@
 <?php
+/**
+ * @package     Joomla.Administrator
+ * @subpackage  com_kunenatopic2article
+ *
+ * @copyright   (C) 2025 Leonid Ratner. All rights reserved.
+ * @license     GNU General Public License version 2 or later; see LICENSE.txt
+ */
+
 namespace Joomla\Component\KunenaTopic2Article\Administrator\Table;
 
-\defined('_JEXEC') or die;
+defined('_JEXEC') or die;
 
 use Joomla\CMS\Table\Table;
 use Joomla\Database\DatabaseDriver;
-use Joomla\CMS\Factory;
 
 class ParamsTable extends Table
 {
@@ -46,8 +53,10 @@ class ParamsTable extends Table
         $db->execute();
         
         // Добавляем начальные данные
-        $insertQuery = "INSERT IGNORE INTO `#__kunenatopic2article_params` 
-                        (`id`, `topic_selection`, `article_category`, `post_transfer_scheme`, `max_article_size`, `post_author`, `post_creation_date`, `post_creation_time`, `post_ids`, `post_title`, `kunena_post_link`, `reminder_lines`, `ignored_authors`)
+        $insertQuery = "INSERT IGNORE INTO `#__kunenatopic2article_params` (
+                        `id`, `topic_selection`, `article_category`, `post_transfer_scheme`, `max_article_size`, 
+                        `post_author`, `post_creation_date`, `post_creation_time`, `post_ids`, `post_title`, 
+                        `kunena_post_link`, `reminder_lines`, `ignored_authors`)
                         VALUES (1, 0, 0, 1, 40000, 1, 0, 0, 0, 0, 0, 0, '')";
         
         $db->setQuery($insertQuery);

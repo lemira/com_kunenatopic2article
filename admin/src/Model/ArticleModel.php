@@ -9,7 +9,7 @@
 
 namespace Joomla\Component\KunenaTopic2Article\Administrator\Model;
 
-\defined('_JEXEC') or die('Restricted access');
+defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
@@ -22,12 +22,14 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Database\DatabaseInterface;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
-use Kunena\Bbcode\KunenaBbcode; 
+// use Kunena\Bbcode\KunenaBbcode; 
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Filter\InputFilter;
 use Joomla\Component\Content\Site\Helper\RouteHelper;
 use Joomla\CMS\Access\Access;
 use Joomla\CMS\Filter\OutputFilter as FilterOutput;
+use Joomla\Component\KunenaTopic2Article\Administrator\Parser\BBCode;
+use Joomla\Component\KunenaTopic2Article\Administrator\Parser\Tag; // подгрузка класса при компиляции файла, BBCode сможет делать new Tag()
 
 /**
  * Article Model
@@ -404,7 +406,7 @@ class ArticleModel extends BaseDatabaseModel
 
             // Проверяем, найден ли текст   // НЕ НУЖНО?
             if ($this->postText === null) {
-                throw new \Exception(Text::sprintf('COM_YOURCOMPONENT_POST_TEXT_NOT_FOUND', $postId));
+                throw new \Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_POST_TEXT_NOT_FOUND', $postId));
             }
  
             $this->postInfoString = $this->createPostInfoString(); // Вычиcляем информационную строку (всегда есть хотя бы разделители) поста
@@ -1160,8 +1162,7 @@ public function sendLinksToAdministrator(array $articleLinks): array
         return null;
         
     } catch (\Exception $e) {
-        error_log('Error getting attachment path: ' . $e->getMessage());
-        return null;
+       return null;
     }
 }
 
@@ -1174,17 +1175,8 @@ public function sendLinksToAdministrator(array $articleLinks): array
 private function convertBBCodeToHtml($text)
 {
     try {
-        // Подключаем библиотеку BBCode напрямую
-        $bbcodePath = JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
-        
-        if (!file_exists($bbcodePath)) {
-            // Fallback на простой парсер, если библиотеки нет
-            return $this->simpleBBCodeToHtml($text);
-        }
-        
-        // Подключаем нужные файлы вручную
-        require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/Tag.php';
-        require_once JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
+        class_exists(Tag::class, true);   // гарантируем загрузку
+        $bbcode = new BBCode();
     
     // Уд-м "[br /", которые обрубают текст поста при переносе в статью кл
         $text = preg_replace('/<([^>]*?)\[br\s*\/\s*[>\]]/iu', '<$1>', $text);  // Удаляем [br с любыми вар-ми закрытия: [br />, [br /], [br/> и пр.
@@ -1227,9 +1219,7 @@ private function convertBBCodeToHtml($text)
             return $marker;
         }, $text);
         
-        $bbcode = new \ChrisKonnertz\BBCode\BBCode();
-        
-        // Применяем BBCode парсер
+       // Применяем BBCode парсер
         $html = $bbcode->render($text);
         
         // Нормализуем br теги
@@ -1293,23 +1283,22 @@ $html = preg_replace_callback(
         
         return $html;
         
-    } catch (\Exception $e) {
+     } catch (\Throwable $e) {        // ловим всё, не только Exception
+        // Сообщение пользователю
         $this->app->enqueueMessage(
             Text::_('COM_KUNENATOPIC2ARTICLE_BBCODE_PARSE_ERROR') . ': ' . $e->getMessage(),
             'warning'
         );
-        
-        // Fallback на простой парсер
         return $this->simpleBBCodeToHtml($text);
     }
 }
-   
-// Простой парсер как fallback
-private function simpleBBCodeToHtml($text)
+
+  private function simpleBBCodeToHtml($text)
 {
-   return 'NO PARSER'; // СООБЩАЕМ, ЧТО С ОСНОВНЫМ ПАРСЕРОМ ПРОБЛЕМЫ
+    return 'NO PARSER';
 }
- // ------- КОНЕЦ ПАРСЕРА ---------
+    
+   // ------- КОНЕЦ ПАРСЕРА ---------
     
 /**
  * Удаляет статью предпросмотра по ID
@@ -1352,16 +1341,15 @@ public function deletePreviewArticleById($id)
                 // (возможно, таблицы нет или запись уже удалена)
             }
             
-            error_log('Successfully deleted preview article with ID: ' . $id);
+      //      error_log('Successfully deleted preview article with ID: ' . $id);
             return true;
         } else {
-            error_log('Failed to delete article with ID: ' . $id);
+      //      error_log('Failed to delete article with ID: ' . $id);
             return false;
         }
         
     } catch (\Exception $e) {
-        error_log('Exception in deletePreviewArticleById: ' . $e->getMessage());
-        return false;
+          return false;
     }
 }
 
