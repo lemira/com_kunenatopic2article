@@ -28,8 +28,6 @@ use Joomla\CMS\Filter\InputFilter;
 use Joomla\Component\Content\Site\Helper\RouteHelper;
 use Joomla\CMS\Access\Access;
 use Joomla\CMS\Filter\OutputFilter as FilterOutput;
-use Joomla\Component\Kunenatopic2Article\Administrator\Parser\BBCode; 
-       
 
 /**
  * Article Model
@@ -1175,33 +1173,7 @@ public function sendLinksToAdministrator(array $articleLinks): array
 private function convertBBCodeToHtml($text)
 {
     try {
-           // временный дамп: какой файл Joomla ищет
-        $class = 'Joomla\Component\KunenaTopic2Article\Administrator\Parser\BBCode';
-        $file  = JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/src/Parser/BBCode.php';
-
-        if (!file_exists($file)) {
-            throw new \RuntimeException('BBCode file not found: ' . $file);
-        }
-        if (!class_exists($class, true)) {
-            throw new \RuntimeException('BBCode class not registered: ' . $class);
-        }
-
-           // временный дамп для Tag
-$tagClass = 'Joomla\Component\KunenaTopic2Article\Administrator\Parser\Tag';
-$tagFile  = JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/src/Parser/Tag.php';
-
-if (!file_exists($tagFile)) {
-    throw new \RuntimeException('Tag file not found: ' . $tagFile);
-}
-if (!class_exists($tagClass, true)) {
-    throw new \RuntimeException('Tag class not registered: ' . $tagClass);
-}
-
-$bbcode = new $class;   // теперь создаём объект
-           
-        $bbcode = new $class;   // теперь создаём объект
-           
-       //!!! $bbcode = new BBCode();
+        $bbcode = new \Joomla\Component\Kunenatopic2Article\Administrator\Parser\BBCode();
     
     // Уд-м "[br /", которые обрубают текст поста при переносе в статью кл
         $text = preg_replace('/<([^>]*?)\[br\s*\/\s*[>\]]/iu', '<$1>', $text);  // Удаляем [br с любыми вар-ми закрытия: [br />, [br /], [br/> и пр.
@@ -1308,16 +1280,14 @@ $html = preg_replace_callback(
         
         return $html;
         
-    } catch (\Throwable $e) { 
-    // ВРЕМЕННЫЙ ДЕБАГ  – выводим текст исключения, Exception вместо Throwable, чтобы ловить всё
-    $this->app->enqueueMessage('Parser exception: ' . $e->getMessage(), 'error');
-
-    $this->app->enqueueMessage(
-        Text::_('COM_KUNENATOPIC2ARTICLE_BBCODE_PARSE_ERROR') . ': ' . $e->getMessage(),
-        'warning'
-    );
-    return 'NO PARSER';
-}
+     } catch (\Throwable $e) {        // ловим всё, не только Exception
+        // Сообщение пользователю
+        $this->app->enqueueMessage(
+            Text::_('COM_KUNENATOPIC2ARTICLE_BBCODE_PARSE_ERROR') . ': ' . $e->getMessage(),
+            'warning'
+        );
+        return $this->simpleBBCodeToHtml($text);
+    }
 }
    // ------- КОНЕЦ ПАРСЕРА ---------
     
