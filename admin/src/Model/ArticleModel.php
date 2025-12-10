@@ -1174,18 +1174,7 @@ public function sendLinksToAdministrator(array $articleLinks): array
 private function convertBBCodeToHtml($text)
 {
     try {
-        // Подключаем библиотеку BBCode напрямую
-        $bbcodePath = JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/src/ChrisKonnertz/BBCode/BBCode.php';
-        
-        if (!file_exists($bbcodePath)) {
-            // Fallback на простой парсер, если библиотеки нет
-            return $this->simpleBBCodeToHtml($text);
-        }
-        
-        // Подключаем автолоадер, который уже зарегистрирован в script.php
-       // страховка: если автолоадер ещё не подключен (например, вызываем не из компонента)
-        $autoload = JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/libraries/bbcode/vendor/autoload.php';
-        if (file_exists($autoload)) require_once $autoload;
+       $bbcode = new BBCode();
     
     // Уд-м "[br /", которые обрубают текст поста при переносе в статью кл
         $text = preg_replace('/<([^>]*?)\[br\s*\/\s*[>\]]/iu', '<$1>', $text);  // Удаляем [br с любыми вар-ми закрытия: [br />, [br /], [br/> и пр.
@@ -1228,9 +1217,7 @@ private function convertBBCodeToHtml($text)
             return $marker;
         }, $text);
         
-        $bbcode = new BBCode();
-        
-        // Применяем BBCode парсер
+       // Применяем BBCode парсер
         $html = $bbcode->render($text);
         
         // Нормализуем br теги
