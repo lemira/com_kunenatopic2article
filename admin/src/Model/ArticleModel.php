@@ -1175,7 +1175,20 @@ public function sendLinksToAdministrator(array $articleLinks): array
 private function convertBBCodeToHtml($text)
 {
     try {
-        $bbcode = new BBCode();
+           // временный дамп: какой файл Joomla ищет
+        $class = 'Joomla\Component\KunenaTopic2Article\Administrator\Parser\BBCode';
+        $file  = JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/src/Parser/BBCode.php';
+
+        if (!file_exists($file)) {
+            throw new \RuntimeException('BBCode file not found: ' . $file);
+        }
+        if (!class_exists($class, true)) {
+            throw new \RuntimeException('BBCode class not registered: ' . $class);
+        }
+
+        $bbcode = new $class;   // теперь создаём объект
+           
+       //!!! $bbcode = new BBCode();
     
     // Уд-м "[br /", которые обрубают текст поста при переносе в статью кл
         $text = preg_replace('/<([^>]*?)\[br\s*\/\s*[>\]]/iu', '<$1>', $text);  // Удаляем [br с любыми вар-ми закрытия: [br />, [br /], [br/> и пр.
