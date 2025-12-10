@@ -1175,6 +1175,7 @@ public function sendLinksToAdministrator(array $articleLinks): array
 private function convertBBCodeToHtml($text)
 {
     try {
+        class_exists(Tag::class, true);   // гарантируем загрузку
         $bbcode = new BBCode();
     
     // Уд-м "[br /", которые обрубают текст поста при переносе в статью кл
