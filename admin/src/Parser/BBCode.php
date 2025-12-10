@@ -5,6 +5,7 @@
  *
  * Original code: Chris Konnertz <chriskonnertz@googlemail.com>
  * @copyright   (C) 2012–2023 Chris Konnertz (MIT license)
+ * Modified for com_kunenatopic2article
  * @copyright   (C) 2025 Leonid Ratner. All rights reserved.
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  * @license     MIT (for original portions); see LICENSE_MIT.txt
