@@ -22,12 +22,13 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Database\DatabaseInterface;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
-use Kunena\Bbcode\KunenaBbcode; 
+// use Kunena\Bbcode\KunenaBbcode; 
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Filter\InputFilter;
 use Joomla\Component\Content\Site\Helper\RouteHelper;
 use Joomla\CMS\Access\Access;
 use Joomla\CMS\Filter\OutputFilter as FilterOutput;
+use MyKunena\Parser\BBCode;
 
 /**
  * Article Model
@@ -1227,7 +1228,7 @@ private function convertBBCodeToHtml($text)
             return $marker;
         }, $text);
         
-        $bbcode = new \ChrisKonnertz\BBCode\BBCode();
+        $bbcode = new BBCode();
         
         // Применяем BBCode парсер
         $html = $bbcode->render($text);
