@@ -1166,6 +1166,103 @@ public function sendLinksToAdministrator(array $articleLinks): array
     }
 }
 
+/**
+ * Методы для парсинга видео в ArticleModel
+  */
+
+/**
+ * Проверка, включен ли плагин AllVideos
+ * @return bool True если плагин включен
+ */
+private function isAllVideosEnabled(): bool
+{
+    try {
+        $db = $this->db;
+        $query = $db->getQuery(true)
+            ->select('enabled')
+            ->from('#__extensions')
+            ->where('type = ' . $db->quote('plugin'))
+            ->where('folder = ' . $db->quote('content'))
+            ->where('element = ' . $db->quote('allvideos'));
+        
+        $db->setQuery($query);
+        $result = $db->loadResult();
+        
+        return (bool) $result;
+    } catch (\Exception $e) {
+        return false;
+    }
+}
+
+/**
+ * Распознавание и обработка видео-ссылок
+ * @param string $text Текст для обработки
+ * @return string Текст с обработанными видео
+ */
+private function processVideoLinks(string $text): string
+{
+    $allVideosEnabled = $this->isAllVideosEnabled();
+    
+    // Паттерны для различных видео-платформ
+    $patterns = [
+        'youtube' => [
+            'pattern' => '#(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([\w-]+)#i',
+            'tag' => 'youtube',
+            'iframe' => '<iframe width="560" height="315" src="https://www.youtube.com/embed/{VIDEO_ID}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+        ],
+        'vimeo' => [
+            'pattern' => '#(?:https?://)?(?:www\.)?vimeo\.com/(\d+)#i',
+            'tag' => 'vimeo',
+            'iframe' => '<iframe src="https://player.vimeo.com/video/{VIDEO_ID}" width="640" height="360" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>'
+        ],
+        'dailymotion' => [
+            'pattern' => '#(?:https?://)?(?:www\.)?dailymotion\.com/video/([\w-]+)#i',
+            'tag' => 'dailymotion',
+            'iframe' => null // Только через AllVideos
+        ],
+        'facebook' => [
+            'pattern' => '#(?:https?://)?(?:www\.)?facebook\.com/.*?/videos/(\d+)#i',
+            'tag' => 'facebook',
+            'iframe' => null
+        ],
+        'soundcloud' => [
+            'pattern' => '#(?:https?://)?(?:www\.)?soundcloud\.com/([\w-]+/[\w-]+)#i',
+            'tag' => 'soundcloud',
+            'iframe' => null
+        ]
+    ];
+    
+    foreach ($patterns as $platform => $config) {
+        $text = preg_replace_callback(
+            $config['pattern'],
+            function($matches) use ($platform, $config, $allVideosEnabled) {
+                $videoId = $matches[1];
+                $fullUrl = $matches[0];
+                
+                if ($allVideosEnabled) {
+                    // Используем теги AllVideos
+                    return '{' . $config['tag'] . '}' . $videoId . '{/' . $config['tag'] . '}';
+                } else {
+                    // Генерируем собственный iframe или помечаем как видео
+                    if ($config['iframe'] !== null) {
+                        return str_replace('{VIDEO_ID}', $videoId, $config['iframe']);
+                    } else {
+                        // Для платформ без поддержки iframe оставляем ссылку с пометкой
+                        $tooltip = Text::_('COM_KUNENATOPIC2ARTICLE_VIDEO_INSTALL_ALLVIDEOS');
+                        return '<a href="' . htmlspecialchars($fullUrl, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener noreferrer" title="' . $tooltip . '">' 
+                               . htmlspecialchars($fullUrl, ENT_QUOTES, 'UTF-8') 
+                               . ' <span class="kun_p2a_video_label" data-tooltip="' . $tooltip . '">(' 
+                               . Text::_('COM_KUNENATOPIC2ARTICLE_VIDEO_LABEL') . ')</span></a>';
+                    }
+                }
+            },
+            $text
+        );
+    }
+    
+    return $text;
+}
+    
      /**
      * Преобразование BBCode в HTML
      * @param   string  $text  Текст с BBCode
@@ -1175,26 +1272,29 @@ public function sendLinksToAdministrator(array $articleLinks): array
 private function convertBBCodeToHtml($text)
 {
     try {
-        class_exists(Tag::class, true);   // гарантируем загрузку
+        class_exists(Tag::class, true);
         $bbcode = new BBCode();
     
-    // Уд-м "[br /", которые обрубают текст поста при переносе в статью кл
-        $text = preg_replace('/<([^>]*?)\[br\s*\/\s*[>\]]/iu', '<$1>', $text);  // Удаляем [br с любыми вар-ми закрытия: [br />, [br /], [br/> и пр.
-        $text = preg_replace('/([»"\.])\s*>/u', '$1', $text);  // Удаляем одиночные > после кавычек/точек     
+        // Удаляем "[br /" которые обрубают текст
+        $text = preg_replace('/<([^>]*?)\[br\s*\/\s*[>\]]/iu', '<$1>', $text);
+        $text = preg_replace('/([»"\.])\s*>/u', '$1', $text);
 
-    // Защищаем URL внутри [img] тегов от преобразования в линки
+        // Обрабатываем видео-ссылки ДО обработки других ссылок
+        $text = $this->processVideoLinks($text);
+
+        // Защищаем URL внутри [img] тегов
         $imgProtect = [];
         $text = preg_replace_callback(
             '/\[img\](https?:\/\/[^\[]+?)\[\/img\]/i',
             function($m) use (&$imgProtect) {
                 $marker = '___IMGURL_' . count($imgProtect) . '___';
-                $imgProtect[$marker] = $m[0]; // Сохраняем весь тег [img]...[/img]
+                $imgProtect[$marker] = $m[0];
                 return $marker;
             },
             $text
         );  
         
-        // Делаем линками "голые" URL кл
+        // Делаем линками "голые" URL (но не видео-ссылки)
         $text = preg_replace_callback(
             '#(?<![\[="\'])(?<!href=)(https?://[^\s\[\]<>"\'\)]+)#i',
             function($m) {
@@ -1204,12 +1304,12 @@ private function convertBBCodeToHtml($text)
             $text
         );
 
-       // Восстанавливаем защищённые [img] теги
+        // Восстанавливаем защищённые [img] теги
         foreach ($imgProtect as $marker => $original) {
             $text = str_replace($marker, $original, $text);
         }
         
-        // Заменяем attachment на временные маркеры (чтобы BBCode парсер их не трогал)
+        // Заменяем attachment на временные маркеры
         $attachments = [];
         $text = preg_replace_callback('/\[attachment=(\d+)\](.*?)\[\/attachment\]/i', function($matches) use (&$attachments) {
             $attachmentId = $matches[1];
@@ -1219,7 +1319,7 @@ private function convertBBCodeToHtml($text)
             return $marker;
         }, $text);
         
-       // Применяем BBCode парсер
+        // Применяем BBCode парсер
         $html = $bbcode->render($text);
         
         // Нормализуем br теги
@@ -1232,15 +1332,14 @@ private function convertBBCodeToHtml($text)
         $paragraphs = [];
         foreach ($lines as $line) {
             $line = trim($line);
-            
             // Если строка пустая - добавляем пустой параграф
             if ($line === '') {
                 $paragraphs[] = '<p>&nbsp;</p>';
                 continue;
             }
-            
             // Если строка не пустая - оборачиваем в <p>, если нужно
-            if (!preg_match('/^\s*<(p|div|h[1-6]|ul|ol|li|blockquote|pre|table|tr|td|th)\b/i', $line)) {
+            // Не оборачиваем iframe в параграфы
+            if (!preg_match('/^\s*<(p|div|h[1-6]|ul|ol|li|blockquote|pre|table|tr|td|th|iframe)\b/i', $line)) {
                 $line = '<p>' . $line . '</p>';
             }
             
@@ -1254,8 +1353,7 @@ private function convertBBCodeToHtml($text)
             $attachmentId = $data[0];
             $filename = $data[1];
             
-            // Получаем реальный путь из базы данных
-            $imagePath = $this->getAttachmentPath($attachmentId);
+            $imagePath = $this->getAttachmentPath($attachmentId); // Получаем реальный путь из базы данных
             
             if ($imagePath && file_exists(JPATH_ROOT . '/' . $imagePath)) {
                 $imageHtml = '<img src="' . $imagePath . '" alt="' . htmlspecialchars($filename) . '" />';
@@ -1266,25 +1364,24 @@ private function convertBBCodeToHtml($text)
             $html = str_replace($marker, $imageHtml, $html);
         }
 
-// обрезка ЛЮБЫХ длинных ссылок ки
-$html = preg_replace_callback(
-    '#<a\s+([^>]*?)href=[\'"]([^\'"]+)[\'"]([^>]*)>([^<]{50,})</a>#i',
-    function ($m) {
-        $visible = mb_substr($m[4], 0, 47) . '…';
-        return '<a ' . $m[1] . 'href="' . $m[2] . '"' . $m[3] . '>'
-               . htmlspecialchars($visible, ENT_QUOTES, 'UTF-8')
-               . '</a>';
-    },
-    $html
-);
+        // Обрезка длинных ссылок
+        $html = preg_replace_callback(
+            '#<a\s+([^>]*?)href=[\'"]([^\'"]+)[\'"]([^>]*)>([^<]{50,})</a>#i',
+            function ($m) {
+                $visible = mb_substr($m[4], 0, 47) . '…';
+                return '<a ' . $m[1] . 'href="' . $m[2] . '"' . $m[3] . '>'
+                       . htmlspecialchars($visible, ENT_QUOTES, 'UTF-8')
+                       . '</a>';
+            },
+            $html
+        );
         
-         // ДОБАВЛЯЕМ ОБЕРТКУ КОНТЕЙНЕРА
+        // Добавляем обертку контейнера
         $html = '<div class="kun_p2a_content">' . $html . '</div>';
         
         return $html;
         
-     } catch (\Throwable $e) {        // ловим всё, не только Exception
-        // Сообщение пользователю
+    } catch (\Throwable $e) {
         $this->app->enqueueMessage(
             Text::_('COM_KUNENATOPIC2ARTICLE_BBCODE_PARSE_ERROR') . ': ' . $e->getMessage(),
             'warning'
@@ -1292,7 +1389,7 @@ $html = preg_replace_callback(
         return $this->simpleBBCodeToHtml($text);
     }
 }
-
+    
   private function simpleBBCodeToHtml($text)
 {
     return 'NO PARSER';
