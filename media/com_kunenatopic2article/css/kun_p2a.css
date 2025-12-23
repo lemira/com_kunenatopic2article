@@ -142,6 +142,77 @@
     border: none !important;
 }
 
+/* Стили для меток видео */
+.kun_p2a_video_label {
+    display: inline-block;
+    padding: 2px 6px;
+    margin-left: 4px;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 3px;
+    cursor: help;
+    position: relative;
+}
+
+/* Всплывающая подсказка для метки видео */
+.kun_p2a_video_label[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 12px;
+    background-color: rgba(0, 0, 0, 0.9);
+    color: #fff;
+    font-size: 12px;
+    font-weight: normal;
+    white-space: nowrap;
+    border-radius: 4px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.kun_p2a_video_label[data-tooltip]::before {
+    content: '';
+    position: absolute;
+    bottom: 115%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.9);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+    z-index: 1000;
+}
+
+.kun_p2a_video_label:hover::after,
+.kun_p2a_video_label:hover::before {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Стили для iframe видео */
+.kun_p2a_content iframe {
+    max-width: 100%;
+    margin: 10px 0;
+    display: block;
+}
+
+/* Респонсивность для видео */
+@media (max-width: 768px) {
+    .kun_p2a_content iframe {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 16 / 9;
+    }
+}
+
 /* Светло-серая линия */
 .kun_p2a_divider-gray {
     width: 50% !important;
