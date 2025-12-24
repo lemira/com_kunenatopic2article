@@ -212,10 +212,9 @@ class ArticleModel extends BaseDatabaseModel
         }
 
         try {
-           // 1. Фильтрация контента
-            $filter = InputFilter::getInstance([], [], 1, 1);
-            $filteredContent = $filter->clean($this->currentArticle->fulltext, 'html');
-    
+           // 1. Контент уже очищен BBCode парсером, дополнительная фильтрация не нужна
+           $filteredContent = $this->currentArticle->fulltext;
+
             // 2. Формирование ссылки на CSS
            HTMLHelper::_('stylesheet', 'com_kunenatopic2article/css/kun_p2a.css', ['relative' => true]);
            $cssLink = '<link href="' . Uri::root(true) . '/media/com_kunenatopic2article/css/kun_p2a.css" rel="stylesheet">'; // для Сборки финального контента
@@ -1183,7 +1182,7 @@ private function isAllVideosEnabled(): bool
             ->from('#__extensions')
             ->where('type = ' . $db->quote('plugin'))
             ->where('folder = ' . $db->quote('content'))
-            ->where('element = ' . $db->quote('allvideos'));
+            ->where('element = ' . $db->quote('jw_allvideos')); 
         
         $db->setQuery($query);
         $result = $db->loadResult();
@@ -1287,7 +1286,6 @@ private function processVideoLinks(string $text): string
      * @param   string  $text  Текст с BBCode
      * @return  string  HTML-текст
      */
-// BBCode парсер с использованием chriskonnertz/bbcode
 private function convertBBCodeToHtml($text)
 {
     try {
@@ -1347,7 +1345,7 @@ private function convertBBCodeToHtml($text)
         $html = preg_replace('/\s*<br\s*\/?>\s*/i', "\n", $html);
         
        // Восстанавливаем iframe ПОСЛЕ нормализации br и ДО обработки строк
-        error_log('Before iframe restore: ' . substr($html, 0, 500)); // ОТЛАДКА
+     // ОТЛАДКА   error_log('Before iframe restore: ' . substr($html, 0, 500)); 
         $html = preg_replace_callback(
             '/___IFRAME_[a-f0-9]+___\|\|(.*?)\|\|/i',
             function($matches) {
@@ -1355,7 +1353,7 @@ private function convertBBCodeToHtml($text)
             },
             $html
         );
-error_log('After iframe restore: ' . substr($html, 0, 500)); // ОТЛАДКА
+    // ОТЛАДКА   error_log('After iframe restore: ' . substr($html, 0, 500)); 
         
         // Разбиваем по переносам строк
         $lines = explode("\n", $html);
