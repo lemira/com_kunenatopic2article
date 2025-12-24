@@ -1344,6 +1344,7 @@ private function convertBBCodeToHtml($text)
         $html = $bbcode->render($text);
 
         // Восстанавливаем iframe ДО обработки строк
+        error_log('Before iframe restore: ' . substr($html, 0, 500)); // ОТЛАДКА
         $html = preg_replace_callback(
             '/___IFRAME_[a-f0-9]+___\|\|(.*?)\|\|/i',
             function($matches) {
@@ -1351,6 +1352,7 @@ private function convertBBCodeToHtml($text)
             },
             $html
         );
+error_log('After iframe restore: ' . substr($html, 0, 500)); // ОТЛАДКА
         
         // Нормализуем br теги
         $html = preg_replace('/\s*<br\s*\/?>\s*/i', "\n", $html);
