@@ -1195,6 +1195,19 @@ private function isAllVideosEnabled(): bool
 }
 
 /**
+ * Извлечение URL из BBCode тега [video]
+ * @param string $text Текст для обработки
+ * @return string Текст с извлеченными URL
+ */
+private function extractVideoFromBBCode(string $text): string
+{
+    // Обрабатываем [video]URL[/video] - просто извлекаем URL
+    $text = preg_replace('/\[video\](https?:\/\/[^\[]+?)\[\/video\]/i', '$1', $text);
+    
+    return $text;
+}
+    
+/**
  * Распознавание и обработка видео-ссылок
  * @param string $text Текст для обработки
  * @return string Текст с обработанными видео
@@ -1206,7 +1219,7 @@ private function processVideoLinks(string $text): string
     // Паттерны для различных видео-платформ
     $patterns = [
         'youtube' => [
-            'pattern' => '#(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([\w-]+)#i',
+            'pattern' => '#(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([\w-]+)(?:[&\?][^\s]*)?#i',
             'tag' => 'youtube',
             'iframe' => '<iframe width="560" height="315" src="https://www.youtube.com/embed/{VIDEO_ID}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
         ],
@@ -1218,7 +1231,7 @@ private function processVideoLinks(string $text): string
         'dailymotion' => [
             'pattern' => '#(?:https?://)?(?:www\.)?dailymotion\.com/video/([\w-]+)#i',
             'tag' => 'dailymotion',
-            'iframe' => null // Только через AllVideos
+            'iframe' => null 
         ],
         'facebook' => [
             'pattern' => '#(?:https?://)?(?:www\.)?facebook\.com/.*?/videos/(\d+)#i',
@@ -1243,9 +1256,15 @@ private function processVideoLinks(string $text): string
                     // Используем теги AllVideos
                     return '{' . $config['tag'] . '}' . $videoId . '{/' . $config['tag'] . '}';
                 } else {
-                    // Генерируем собственный iframe или помечаем как видео
+                     // Генерируем собственный iframe или помечаем как видео
                     if ($config['iframe'] !== null) {
-                        return str_replace('{VIDEO_ID}', $videoId, $config['iframe']);
+                        // Создаем маркер для защиты iframe от разбиения на строки
+                        $iframe = str_replace('{VIDEO_ID}', $videoId, $config['iframe']);
+                        $marker = '___IFRAME_' . md5($iframe) . '___';
+                        
+                        // Сохраняем iframe для последующего восстановления
+                        // (будет восстановлен в convertBBCodeToHtml)
+                        return $marker . '||' . base64_encode($iframe) . '||';
                     } else {
                         // Для платформ без поддержки iframe оставляем ссылку с пометкой
                         $tooltip = Text::_('COM_KUNENATOPIC2ARTICLE_VIDEO_INSTALL_ALLVIDEOS');
@@ -1264,7 +1283,7 @@ private function processVideoLinks(string $text): string
 }
     
      /**
-     * Преобразование BBCode в HTML
+     * Преобразование BBCode в HTML с обработкой видео
      * @param   string  $text  Текст с BBCode
      * @return  string  HTML-текст
      */
@@ -1279,6 +1298,8 @@ private function convertBBCodeToHtml($text)
         $text = preg_replace('/<([^>]*?)\[br\s*\/\s*[>\]]/iu', '<$1>', $text);
         $text = preg_replace('/([»"\.])\s*>/u', '$1', $text);
 
+        // Сначала обрабатываем BBCode тег [video]
+        $text = $this->extractVideoFromBBCode($text);
         // Обрабатываем видео-ссылки ДО обработки других ссылок
         $text = $this->processVideoLinks($text);
 
@@ -1294,7 +1315,7 @@ private function convertBBCodeToHtml($text)
             $text
         );  
         
-        // Делаем линками "голые" URL (но не видео-ссылки)
+        // Делаем линками "голые" URL (но уже не видео-ссылки)
         $text = preg_replace_callback(
             '#(?<![\[="\'])(?<!href=)(https?://[^\s\[\]<>"\'\)]+)#i',
             function($m) {
@@ -1321,6 +1342,15 @@ private function convertBBCodeToHtml($text)
         
         // Применяем BBCode парсер
         $html = $bbcode->render($text);
+
+        // Восстанавливаем iframe ДО обработки строк
+        $html = preg_replace_callback(
+            '/___IFRAME_[a-f0-9]+___\|\|(.*?)\|\|/i',
+            function($matches) {
+                return base64_decode($matches[1]);
+            },
+            $html
+        );
         
         // Нормализуем br теги
         $html = preg_replace('/\s*<br\s*\/?>\s*/i', "\n", $html);
@@ -1338,7 +1368,7 @@ private function convertBBCodeToHtml($text)
                 continue;
             }
             // Если строка не пустая - оборачиваем в <p>, если нужно
-            // Не оборачиваем iframe в параграфы
+            // Не оборачиваем iframe и другие блочные элементы в параграфы
             if (!preg_match('/^\s*<(p|div|h[1-6]|ul|ol|li|blockquote|pre|table|tr|td|th|iframe)\b/i', $line)) {
                 $line = '<p>' . $line . '</p>';
             }
