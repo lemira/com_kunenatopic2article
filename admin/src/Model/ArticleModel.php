@@ -1214,34 +1214,33 @@ private function extractVideoFromBBCode(string $text): string
 private function processVideoLinks(string $text): string
 {
     $allVideosEnabled = $this->isAllVideosEnabled();
-      // ВРЕМЕННАЯ ОТЛАДКА
-    error_log('AllVideos enabled: ' . ($allVideosEnabled ? 'YES' : 'NO'));
-  
+      
     // Паттерны для различных видео-платформ
     $patterns = [
         'youtube' => [
-            'pattern' => '#(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([\w-]+)(?:.*?[&\?]t=(\d+))?#i',
+           // Захватываем ВСЮ ссылку включая параметры
+            'pattern' => '#((?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([\w-]+)(?:[&\?]t=(\d+)s?)?[^\s]*)#i',
             'tag' => 'youtube',
             'iframe' => '<iframe width="560" height="315" src="https://www.youtube.com/embed/{VIDEO_ID}?start={TIME_PARAM}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
         ],
         'vimeo' => [
-            'pattern' => '#(?:https?://)?(?:www\.)?vimeo\.com/(\d+)#i',
+            'pattern' => '#((?:https?://)?(?:www\.)?vimeo\.com/(\d+)[^\s]*)#i',
             'tag' => 'vimeo',
             'iframe' => '<iframe src="https://player.vimeo.com/video/{VIDEO_ID}" width="640" height="360" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>'
         ],
         'dailymotion' => [
-            'pattern' => '#(?:https?://)?(?:www\.)?dailymotion\.com/video/([\w-]+)#i',
+           'pattern' => '#((?:https?://)?(?:www\.)?dailymotion\.com/video/([\w-]+)[^\s]*)#i',
             'tag' => 'dailymotion',
             'iframe' => null 
         ],
         'facebook' => [
-           'pattern' => '#(?:https?://)?(?:www\.)?facebook\.com/(?:watch/?\?v=|.*?/videos/)(\d+)#i',
+           'pattern' => '#((?:https?://)?(?:www\.)?facebook\.com/(?:watch/?\?v=|.*?/videos/)(\d+)[^\s]*)#i',
             'tag' => 'facebook',
             'iframe' => null
         ],
         'soundcloud' => [
-            'pattern' => '#(?:https?://)?(?:www\.)?soundcloud\.com/([\w-]+/[\w-]+)#i',
-            'tag' => 'soundcloud',
+           'pattern' => '#((?:https?://)?(?:www\.)?soundcloud\.com/([\w-]+/[\w-]+(?:/[\w-]+)*)[^\s]*)#i',
+           'tag' => 'soundcloud',
             'iframe' => null
         ]
     ];
@@ -1250,23 +1249,20 @@ private function processVideoLinks(string $text): string
         $text = preg_replace_callback(
             $config['pattern'],
             function($matches) use ($platform, $config, $allVideosEnabled) {
-                $videoId = $matches[1];
-                $fullUrl = $matches[0];
+                $fullMatch = $matches[1]; // Полное совпадение включая параметры
+                $videoId = $matches[2];   // ID видео
                    
                 // Для YouTube извлекаем параметр времени (если есть)
                 $timeParam = '';
-                if ($platform === 'youtube' && isset($matches[2]) && !empty($matches[2])) {
-                    $timeParam = $matches[2];
+               if ($platform === 'youtube' && isset($matches[3]) && !empty($matches[3])) {
+                    $timeParam = $matches[3];
                 }
                 
-                // ВРЕМЕННАЯ ОТЛАДКА
-                error_log("Found $platform video: ID=$videoId, AllVideos=" . ($allVideosEnabled ? 'YES' : 'NO'));
-                
                 if ($allVideosEnabled) {
-                    // Используем теги AllVideos (без параметров времени, т.к. AllVideos их не поддерживает)
-                    // Для Facebook используем полный URL вместо ID
-                    if ($platform === 'facebook') {
-                        return '{' . $config['tag'] . '}' . $fullUrl . '{/' . $config['tag'] . '}';
+                     // Используем теги AllVideos (без параметров времени)
+                    // Для Facebook и SoundCloud используем полный URL
+                    if ($platform === 'facebook' || $platform === 'soundcloud') {
+                        return '{' . $config['tag'] . '}' . $fullMatch . '{/' . $config['tag'] . '}';
                     }
                   return '{' . $config['tag'] . '}' . $videoId . '{/' . $config['tag'] . '}';
                 } else {
@@ -1284,15 +1280,17 @@ private function processVideoLinks(string $text): string
                         
                         $marker = '___IFRAME_' . md5($iframe) . '___';
                         
-                        // Сохраняем iframe для последующего восстановления
+                        // Сохраняем iframe для последующего восстановления ?
                         return $marker . '||' . base64_encode($iframe) . '||';
                     } else {
                         // Для платформ без поддержки iframe оставляем ссылку с пометкой
                         $tooltip = Text::_('COM_KUNENATOPIC2ARTICLE_VIDEO_INSTALL_ALLVIDEOS');
-                        return '<a href="' . htmlspecialchars($fullUrl, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener noreferrer" title="' . $tooltip . '">' 
-                               . htmlspecialchars($fullUrl, ENT_QUOTES, 'UTF-8') 
+                         $label = Text::_('COM_KUNENATOPIC2ARTICLE_VIDEO_LABEL');
+                        
+                        return '<a href="' . htmlspecialchars($fullMatch, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener noreferrer" title="' . $tooltip . '">' 
+                               . htmlspecialchars($fullMatch, ENT_QUOTES, 'UTF-8') 
                                . ' <span class="kun_p2a_video_label" data-tooltip="' . $tooltip . '">(' 
-                               . Text::_('COM_KUNENATOPIC2ARTICLE_VIDEO_LABEL') . ')</span></a>';
+                               . $label . ')</span></a>';
                     }
                 }
             },
