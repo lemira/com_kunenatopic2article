@@ -1236,7 +1236,7 @@ private function processVideoLinks(string $text): string
         ],
         'facebook' => [
            'pattern' => '#(?:https?://)?(?:www\.)?facebook\.com/(?:watch/?\?v=|.*?/videos/)(\d+)#i',
-            tag' => 'facebook',
+            'tag' => 'facebook',
             'iframe' => null
         ],
         'soundcloud' => [
