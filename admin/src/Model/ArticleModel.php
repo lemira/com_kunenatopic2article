@@ -1214,13 +1214,15 @@ private function extractVideoFromBBCode(string $text): string
 private function processVideoLinks(string $text): string
 {
     $allVideosEnabled = $this->isAllVideosEnabled();
-    
+      // ВРЕМЕННАЯ ОТЛАДКА
+    error_log('AllVideos enabled: ' . ($allVideosEnabled ? 'YES' : 'NO'));
+  
     // Паттерны для различных видео-платформ
     $patterns = [
         'youtube' => [
-            'pattern' => '#(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([\w-]+)(?:[&\?][^\s]*)?#i',
+            'pattern' => '#(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([\w-]+)(?:.*?[&\?]t=(\d+))?#i',
             'tag' => 'youtube',
-            'iframe' => '<iframe width="560" height="315" src="https://www.youtube.com/embed/{VIDEO_ID}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+            'iframe' => '<iframe width="560" height="315" src="https://www.youtube.com/embed/{VIDEO_ID}?start={TIME_PARAM}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
         ],
         'vimeo' => [
             'pattern' => '#(?:https?://)?(?:www\.)?vimeo\.com/(\d+)#i',
@@ -1233,8 +1235,8 @@ private function processVideoLinks(string $text): string
             'iframe' => null 
         ],
         'facebook' => [
-            'pattern' => '#(?:https?://)?(?:www\.)?facebook\.com/.*?/videos/(\d+)#i',
-            'tag' => 'facebook',
+           'pattern' => '#(?:https?://)?(?:www\.)?facebook\.com/(?:watch/?\?v=|.*?/videos/)(\d+)#i',
+            tag' => 'facebook',
             'iframe' => null
         ],
         'soundcloud' => [
@@ -1250,19 +1252,39 @@ private function processVideoLinks(string $text): string
             function($matches) use ($platform, $config, $allVideosEnabled) {
                 $videoId = $matches[1];
                 $fullUrl = $matches[0];
+                   
+                // Для YouTube извлекаем параметр времени (если есть)
+                $timeParam = '';
+                if ($platform === 'youtube' && isset($matches[2]) && !empty($matches[2])) {
+                    $timeParam = $matches[2];
+                }
+                
+                // ВРЕМЕННАЯ ОТЛАДКА
+                error_log("Found $platform video: ID=$videoId, AllVideos=" . ($allVideosEnabled ? 'YES' : 'NO'));
                 
                 if ($allVideosEnabled) {
-                    // Используем теги AllVideos
-                    return '{' . $config['tag'] . '}' . $videoId . '{/' . $config['tag'] . '}';
+                    // Используем теги AllVideos (без параметров времени, т.к. AllVideos их не поддерживает)
+                    // Для Facebook используем полный URL вместо ID
+                    if ($platform === 'facebook') {
+                        return '{' . $config['tag'] . '}' . $fullUrl . '{/' . $config['tag'] . '}';
+                    }
+                  return '{' . $config['tag'] . '}' . $videoId . '{/' . $config['tag'] . '}';
                 } else {
                      // Генерируем собственный iframe или помечаем как видео
                     if ($config['iframe'] !== null) {
                         // Создаем маркер для защиты iframe от разбиения на строки
                         $iframe = str_replace('{VIDEO_ID}', $videoId, $config['iframe']);
+                        
+                        // Добавляем параметр времени для YouTube
+                        if ($platform === 'youtube' && !empty($timeParam)) {
+                            $iframe = str_replace('?start={TIME_PARAM}', '?start=' . $timeParam, $iframe);
+                        } else {
+                            $iframe = str_replace('?start={TIME_PARAM}', '', $iframe);
+                        }
+                        
                         $marker = '___IFRAME_' . md5($iframe) . '___';
                         
                         // Сохраняем iframe для последующего восстановления
-                        // (будет восстановлен в convertBBCodeToHtml)
                         return $marker . '||' . base64_encode($iframe) . '||';
                     } else {
                         // Для платформ без поддержки iframe оставляем ссылку с пометкой
