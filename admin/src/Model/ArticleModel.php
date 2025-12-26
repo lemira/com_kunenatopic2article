@@ -1414,11 +1414,16 @@ private function convertBBCodeToHtml($text)
             $html = str_replace($marker, $imageHtml, $html);
         }
 
-        // Обрезка длинных ссылок
+        // Обрезка длинных ссылок  (НО НЕ ТРОГАЕМ ТЕГИ ALLVIDEOS)
         $html = preg_replace_callback(
             '#<a\s+([^>]*?)href=[\'"]([^\'"]+)[\'"]([^>]*)>([^<]{50,})</a>#i',
             function ($m) {
-                $visible = mb_substr($m[4], 0, 47) . '…';
+                 // Пропускаем ссылки, которые содержат теги AllVideos
+                if (preg_match('/\{(?:youtube|vimeo|facebook|soundcloud|dailymotion)\}/', $m[4])) {
+                    return $m[0]; // Возвращаем без изменений
+                }
+                
+              $visible = mb_substr($m[4], 0, 47) . '…';
                 return '<a ' . $m[1] . 'href="' . $m[2] . '"' . $m[3] . '>'
                        . htmlspecialchars($visible, ENT_QUOTES, 'UTF-8')
                        . '</a>';
