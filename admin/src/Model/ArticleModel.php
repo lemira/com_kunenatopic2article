@@ -1287,11 +1287,11 @@ private function processVideoLinks(string $text): string
                         $tooltip = Text::_('COM_KUNENATOPIC2ARTICLE_VIDEO_INSTALL_ALLVIDEOS');
                          $label = Text::_('COM_KUNENATOPIC2ARTICLE_VIDEO_LABEL');
                         
-                        return '<a href="' . htmlspecialchars($fullMatch, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener noreferrer" title="' . $tooltip . '">' 
+                                              return '<a href="' . htmlspecialchars($fullMatch, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener noreferrer">' 
                                . htmlspecialchars($fullMatch, ENT_QUOTES, 'UTF-8') 
-                               . ' <span class="kun_p2a_video_label" data-tooltip="' . $tooltip . '">(' 
-                               . $label . ')</span></a>';
-                    }
+                               . '</a> <span class="kun_p2a_video_label" data-tooltip="' . $tooltip . '">'
+                               . '<span class="tooltip-icon">🎬</span> (' . $label . ')</span>';
+     }
                 }
             },
             $text
