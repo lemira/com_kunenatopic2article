@@ -83,6 +83,11 @@ class ArticleModel extends BaseDatabaseModel
    public function createArticlesFromTopic($isPreview = false)
         {  
         $this->isPreview = $isPreview;   // для closeArticle()
+
+// Триггер загрузки языкового файла компонента
+    // Первое обращение к Text::_() для любой константы компонента загружает язык
+    Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED');
+            
          // Параметры $params получаем из таблицы kunenatopic2article_params
          $this->params = $this->getComponentParams(); 
          if (empty($this->params) || empty($this->params->topic_selection)) {
