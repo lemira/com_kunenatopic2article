@@ -167,10 +167,10 @@ hr.kun_p2a-hr-gray {
     border: none !important;
 }
 
-/* Стили для меток видео - используем тот же подход, что и для reminder_content */
-/* ========== КРАСИВЫЕ ВИДЕО-МЕТКИ ========== */
+/* Стили для меток видео */
+/* ==================== ВИДЕО СТИЛИ ==================== */
 
-/* Основной стиль метки видео */
+/* КРАСИВЫЕ МЕТКИ ДЛЯ ВИДЕО-ССЫЛОК */
 .kun_p2a_video_label {
     display: inline-flex !important;
     align-items: center !important;
@@ -193,14 +193,14 @@ hr.kun_p2a-hr-gray {
     white-space: nowrap !important;
 }
 
-/* Эффект при наведении */
+/* Эффект при наведении на метку */
 .kun_p2a_video_label:hover {
     transform: translateY(-2px) !important;
     box-shadow: 0 5px 15px rgba(102, 126, 234, 0.5) !important;
     border-color: rgba(255, 255, 255, 0.5) !important;
 }
 
-/* Иконка в метке */
+/* Иконка внутри метки (эмодзи камеры) */
 .kun_p2a_video_label .tooltip-icon {
     display: inline-flex !important;
     align-items: center !important;
@@ -214,7 +214,9 @@ hr.kun_p2a-hr-gray {
     padding: 2px !important;
 }
 
-/* Тултип - красивая версия */
+/* ========== ТУЛТИП ДЛЯ ВИДЕО-МЕТОК ========== */
+
+/* Основной тултип (появляется при наведении) */
 .kun_p2a_video_label[data-tooltip]::before {
     content: attr(data-tooltip) !important;
     position: absolute !important;
@@ -242,7 +244,7 @@ hr.kun_p2a-hr-gray {
     word-wrap: break-word !important;
 }
 
-/* Стрелка тултипа */
+/* Стрелка тултипа (треугольник снизу) */
 .kun_p2a_video_label[data-tooltip]::after {
     content: '' !important;
     position: absolute !important;
@@ -266,14 +268,101 @@ hr.kun_p2a-hr-gray {
     visibility: visible !important;
 }
 
-/* Стиль для иконки внутри метки (улучшенный) */
-.kun_p2a_video_label .tooltip-icon::before {
-    content: '🎬';
-    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3));
+/* ========== СТИЛИ ДЛЯ IFRAME ВИДЕО ========== */
+
+/* Все iframe в контенте (YouTube, Vimeo через AllVideos) */
+.kun_p2a_content iframe {
+    max-width: 100% !important;
+    margin: 20px 0 !important;
+    display: block !important;
+    border-radius: 8px !important;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid #e0e0e0 !important;
 }
 
-/* Адаптация для мобильных */
+/* Специально для YouTube и Vimeo iframe */
+.kun_p2a_content iframe[src*="youtube"],
+.kun_p2a_content iframe[src*="vimeo"] {
+    border: none !important;
+    border-radius: 8px !important;
+    background: #000 !important;
+}
+
+/* Контейнер для видео (имитация плеера) */
+.kun_p2a_video_container {
+    position: relative;
+    max-width: 800px;
+    margin: 20px auto;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    background: #1a1a1a;
+}
+
+/* ========== СПЕЦИАЛЬНЫЕ СТИЛИ ДЛЯ ПЛАТФОРМ ========== */
+
+/* Facebook Video (если отображается как ссылка) */
+.kun_p2a_content a[href*="facebook.com/watch"],
+.kun_p2a_content a[href*="facebook.com/videos"] {
+    position: relative;
+    padding: 8px 15px 8px 45px;
+    background: linear-gradient(135deg, #1877f2 0%, #0d5cb6 100%);
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    display: inline-block;
+    margin: 5px 0;
+    border: 1px solid #0d5cb6;
+    box-shadow: 0 3px 10px rgba(24, 119, 242, 0.3);
+}
+
+/* Иконка Facebook перед ссылкой */
+.kun_p2a_content a[href*="facebook.com/watch"]:before,
+.kun_p2a_content a[href*="facebook.com/videos"]:before {
+    content: 'f';
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    font-size: 18px;
+    background: white;
+    color: #1877f2;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* SoundCloud ссылки */
+.kun_p2a_content a[href*="soundcloud.com"] {
+    padding-left: 40px;
+    background: linear-gradient(135deg, #ff8800 0%, #cc5500 100%);
+}
+
+.kun_p2a_content a[href*="soundcloud.com"]:before {
+    content: '♫';
+    color: #ff8800;
+}
+
+/* Dailymotion ссылки */
+.kun_p2a_content a[href*="dailymotion.com"] {
+    padding-left: 40px;
+    background: linear-gradient(135deg, #0066dc 0%, #004499 100%);
+}
+
+.kun_p2a_content a[href*="dailymotion.com"]:before {
+    content: '▶';
+    color: #0066dc;
+}
+
+/* ========== АДАПТИВНОСТЬ ========== */
+
 @media (max-width: 768px) {
+    /* Видео-метки на мобильных */
     .kun_p2a_video_label {
         padding: 3px 10px 3px 6px !important;
         margin-left: 6px !important;
@@ -288,39 +377,23 @@ hr.kun_p2a-hr-gray {
         height: 16px !important;
     }
     
+    /* Тултипы на мобильных */
     .kun_p2a_video_label[data-tooltip]::before {
         font-size: 12px !important;
         max-width: 220px !important;
         min-width: 150px !important;
         padding: 10px 12px !important;
     }
-}
-
-/* Стиль для iframe видео (если AllVideos установлен) */
-.kun_p2a_content iframe {
-    max-width: 100% !important;
-    margin: 20px 0 !important;
-    display: block !important;
-    border-radius: 8px !important;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1) !important;
-    border: 1px solid #e0e0e0 !important;
-}
-
-/* Контейнер для видео (имитация плеера) */
-.kun_p2a_video_container {
-    position: relative;
-    max-width: 800px;
-    margin: 20px auto;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-    background: #1a1a1a;
-}
-
-/* Для YouTube и Vimeo iframe */
-.kun_p2a_content iframe[src*="youtube"],
-.kun_p2a_content iframe[src*="vimeo"] {
-    border: none !important;
-    border-radius: 8px !important;
-    background: #000 !important;
+    
+    /* Iframe на мобильных */
+    .kun_p2a_content iframe {
+        border-radius: 6px !important;
+        margin: 15px 0 !important;
+    }
+    
+    /* Контейнер для видео на мобильных */
+    .kun_p2a_video_container {
+        border-radius: 8px;
+        margin: 15px auto;
+    }
 }
