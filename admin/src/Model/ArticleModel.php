@@ -1302,7 +1302,9 @@ private function processVideoLinks(string $text): string
             $text
         );
     }
-    
+    // Декодируем результат обработки видео-ссылок
+    $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8'); // '&lt;', ''&gt;', '&quot;', '&amp;
+
     return $text;
 }
     
