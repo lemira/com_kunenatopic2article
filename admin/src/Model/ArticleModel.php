@@ -1139,91 +1139,129 @@ public function sendLinksToAdministrator(array $articleLinks): array
 }
 
     // ПАРСЕР
-        // ПОДГОТОВКА К ПАРСЕРУ. Получение реального пути к attachment из базы данных
     private function getAttachmentPath($attachmentId)
-{
-    try {
-        $db = $this->getDatabase();
-        $query = $db->getQuery(true)
-            ->select(['folder', 'filename', 'filename_real'])
-            ->from('#__kunena_attachments')
-            ->where('id = ' . (int)$attachmentId);
-        
-        $db->setQuery($query);
-        $attachment = $db->loadObject();
-        
-        if ($attachment) {
-            // Путь к файлу формируется из folder + filename (системное имя)
-            $imagePath = $attachment->folder . '/' . $attachment->filename;
+    {
+        try {
+            $db = $this->getDatabase();
+            $query = $db->getQuery(true)
+                ->select(['folder', 'filename', 'filename_real'])
+                ->from('#__kunena_attachments')
+                ->where('id = ' . (int)$attachmentId);
             
-            // Проверяем существование файла
-            if (file_exists(JPATH_ROOT . '/' . $imagePath)) {
-                return $imagePath;
+            $db->setQuery($query);
+            $attachment = $db->loadObject();
+            
+            if ($attachment) {
+                $imagePath = $attachment->folder . '/' . $attachment->filename;
+                
+                if (file_exists(JPATH_ROOT . '/' . $imagePath)) {
+                    return $imagePath;
+                }
             }
-     // ОТЛАДКА         error_log("Attachment $attachmentId: path='$imagePath', exists=" . (file_exists(JPATH_ROOT . '/' . $imagePath) ? 'YES' : 'NO'));
+            
+            return null;
+            
+        } catch (\Exception $e) {
+           return null;
         }
-        
-        return null;
-        
-    } catch (\Exception $e) {
-       return null;
     }
-}
 
-/**
- * Методы для парсинга видео в ArticleModel
-  */
-
-/**
- * Проверка, включен ли плагин AllVideos
- * @return bool True если плагин включен
- */
-private function isAllVideosEnabled(): bool
-{
-    try {
-        $db = $this->db;
-        $query = $db->getQuery(true)
-            ->select('enabled')
-            ->from('#__extensions')
-            ->where('type = ' . $db->quote('plugin'))
-            ->where('folder = ' . $db->quote('content'))
-            ->where('element = ' . $db->quote('jw_allvideos')); 
-        
-        $db->setQuery($query);
-        $result = $db->loadResult();
-        
-        return (bool) $result;
-    } catch (\Exception $e) {
-        return false;
+    private function isAllVideosEnabled(): bool
+    {
+        try {
+            $db = $this->db;
+            $query = $db->getQuery(true)
+                ->select('enabled')
+                ->from('#__extensions')
+                ->where('type = ' . $db->quote('plugin'))
+                ->where('folder = ' . $db->quote('content'))
+                ->where('element = ' . $db->quote('jw_allvideos')); 
+            
+            $db->setQuery($query);
+            $result = $db->loadResult();
+            
+            return (bool) $result;
+        } catch (\Exception $e) {
+            return false;
+        }
     }
-}
 
-/**
- * Извлечение URL из BBCode тега [video]
- * @param string $text Текст для обработки
- * @return string Текст с извлеченными URL
+    private function extractVideoFromBBCode(string $text): string
+    {
+        $text = preg_replace('/\[video\](https?:\/\/[^\[]+?)\[\/video\]/i', '$1', $text);
+        return $text;
+    }
+   
+   /**
+ * Определяет платформу по URL
  */
-private function extractVideoFromBBCode(string $text): string
+private function detectVideoPlatform(string $url): ?string
 {
-    // Обрабатываем [video]URL[/video] - просто извлекаем URL
-    $text = preg_replace('/\[video\](https?:\/\/[^\[]+?)\[\/video\]/i', '$1', $text);
+    $patterns = [
+        'youtube' => '/youtube\.com|youtu\.be/',
+        'vimeo' => '/vimeo\.com/',
+        'dailymotion' => '/dailymotion\.com/',
+        'facebook' => '/facebook\.com/',
+        'soundcloud' => '/soundcloud\.com/'
+    ];
     
-    return $text;
+    foreach ($patterns as $platform => $pattern) {
+        if (preg_match($pattern, $url)) {
+            return $platform;
+        }
+    }
+    
+    return null;
 }
-    
-/**
- * Распознавание и обработка видео-ссылок
- * @param string $text Текст для обработки
- * @return string Текст с обработанными видео
- */
-private function processVideoLinks(string $text): string
+ 
+   private function processVideoLinks(string $text): string
 {
     $allVideosEnabled = $this->isAllVideosEnabled();
-      
-    // Паттерны для различных видео-платформ
+    
+    // Сначала обрабатываем BBCode ссылки [url=...]текст[/url]
+    $text = preg_replace_callback(
+        '/\[url=([^\]]+)\](.*?)\[\/url\]/i',
+        function($matches) {
+            $url = trim($matches[1]);
+            $linkText = trim($matches[2]);
+            
+            // Проверяем, является ли это видео-ссылкой
+            $platform = $this->detectVideoPlatform($url);
+            
+            if ($platform) {
+                // Это видео-ссылка
+                $fixedUrl = $this->fixVideoUrl($platform, $url);
+               $tooltip = 'Это ссылка на видео. Для просмотра рекомендуется установить плагин AllVideos.';
+             // $tooltip = Text::_('COM_KUNENATOPIC2ARTICLE_VIDEO_INSTALL_ALLVIDEOS');
+           // $tooltip = 'TEST: ' . Text::_('COM_KUNENATOPIC2ARTICLE_VIDEO_INSTALL_ALLVIDEOS');
+                $displayText = $this->getDisplayText($platform, $fixedUrl);
+                
+                // Иконка только для Facebook
+                $icon = ($platform === 'facebook') ? '<span class="facebook-icon">f</span>' : '';
+                
+                // Текст ссылки + стилизованная кнопка
+                $result = htmlspecialchars($linkText, ENT_QUOTES, 'UTF-8') . ' ' .
+                         '<a href="' . htmlspecialchars($fixedUrl, ENT_QUOTES, 'UTF-8') . '" ' .
+                         'target="_blank" rel="noopener noreferrer" ' .
+                         'class="kun_p2a_video_link" ' .
+                         'data-tooltip="' . htmlspecialchars($tooltip, ENT_QUOTES, 'UTF-8') . '">' .
+                         $icon . htmlspecialchars($displayText, ENT_QUOTES, 'UTF-8') .
+                         '</a>';
+                
+                // Защищаем от повторной обработки
+                return '___PROCESSED_VIDEO_LINK___' . base64_encode($result) . '___END___';
+            }
+            
+            // Обычная ссылка
+            return '<a href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '">' .
+                   htmlspecialchars($linkText, ENT_QUOTES, 'UTF-8') . '</a>';
+        },
+        $text
+    );
+    
+    // Затем обычная обработка видео-ссылок (не BBCode)
     $patterns = [
         'youtube' => [
-           // Захватываем ВСЮ ссылку включая параметры
             'pattern' => '#((?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([\w-]+)(?:[&\?]t=(\d+)s?)?[^\s]*)#i',
             'tag' => 'youtube',
             'iframe' => '<iframe width="560" height="315" src="https://www.youtube.com/embed/{VIDEO_ID}?start={TIME_PARAM}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
@@ -1234,18 +1272,18 @@ private function processVideoLinks(string $text): string
             'iframe' => '<iframe src="https://player.vimeo.com/video/{VIDEO_ID}" width="640" height="360" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>'
         ],
         'dailymotion' => [
-           'pattern' => '#((?:https?://)?(?:www\.)?dailymotion\.com/video/([\w-]+)[^\s]*)#i',
+            'pattern' => '#((?:https?://)?(?:www\.)?dailymotion\.com/video/([\w-]+)[^\s]*)#i',
             'tag' => 'dailymotion',
             'iframe' => null 
         ],
         'facebook' => [
-           'pattern' => '#((?:https?://)?(?:www\.)?facebook\.com/(?:watch/?\?v=|.*?/videos/)(\d+)[^\s]*)#i',
+            'pattern' => '#((?:https?://)?(?:www\.)?facebook\.com/(?:watch/?\?v=|.*?/videos/)(\d+)[^\s]*)#i',
             'tag' => 'facebook',
             'iframe' => null
         ],
         'soundcloud' => [
-           'pattern' => '#((?:https?://)?(?:www\.)?soundcloud\.com/([\w-]+/[\w-]+(?:/[\w-]+)*)[^\s]*)#i',
-           'tag' => 'soundcloud',
+            'pattern' => '#((?:https?://)?(?:www\.)?soundcloud\.com/([\w-]+/[\w-]+(?:/[\w-]+)*)[^\s]*)#i',
+            'tag' => 'soundcloud',
             'iframe' => null
         ]
     ];
@@ -1254,29 +1292,29 @@ private function processVideoLinks(string $text): string
         $text = preg_replace_callback(
             $config['pattern'],
             function($matches) use ($platform, $config, $allVideosEnabled) {
-                $fullMatch = $matches[1]; // Полное совпадение включая параметры
-                $videoId = $matches[2];   // ID видео
-                   
-                // Для YouTube извлекаем параметр времени (если есть)
+                $fullMatch = $matches[1];
+                
+                // Пропускаем уже обработанные ссылки
+                if (strpos($fullMatch, '___PROCESSED_VIDEO_LINK___') !== false) {
+                    return $fullMatch;
+                }
+                
+                $videoId = $matches[2];
+                
                 $timeParam = '';
-               if ($platform === 'youtube' && isset($matches[3]) && !empty($matches[3])) {
+                if ($platform === 'youtube' && isset($matches[3]) && !empty($matches[3])) {
                     $timeParam = $matches[3];
                 }
                 
                 if ($allVideosEnabled) {
-                     // Используем теги AllVideos (без параметров времени)
-                    // Для Facebook и SoundCloud используем полный URL
                     if ($platform === 'facebook' || $platform === 'soundcloud') {
                         return '{' . $config['tag'] . '}' . $fullMatch . '{/' . $config['tag'] . '}';
                     }
-                  return '{' . $config['tag'] . '}' . $videoId . '{/' . $config['tag'] . '}';
+                    return '{' . $config['tag'] . '}' . $videoId . '{/' . $config['tag'] . '}';
                 } else {
-                     // Генерируем собственный iframe или помечаем как видео
                     if ($config['iframe'] !== null) {
-                        // Создаем маркер для защиты iframe от разбиения на строки
                         $iframe = str_replace('{VIDEO_ID}', $videoId, $config['iframe']);
                         
-                        // Добавляем параметр времени для YouTube
                         if ($platform === 'youtube' && !empty($timeParam)) {
                             $iframe = str_replace('?start={TIME_PARAM}', '?start=' . $timeParam, $iframe);
                         } else {
@@ -1284,36 +1322,94 @@ private function processVideoLinks(string $text): string
                         }
                         
                         $marker = '___IFRAME_' . md5($iframe) . '___';
-                        
-                        // Сохраняем iframe для последующего восстановления ?
                         return $marker . '||' . base64_encode($iframe) . '||';
                     } else {
-                        // Для платформ без поддержки iframe оставляем ссылку с пометкой
-                        $tooltip = Text::_('COM_KUNENATOPIC2ARTICLE_VIDEO_INSTALL_ALLVIDEOS');
-                         $label = Text::_('COM_KUNENATOPIC2ARTICLE_VIDEO_LABEL');
+                        // Стилизованная ссылка
+                        $fixedUrl = $this->fixVideoUrl($platform, $fullMatch);
+                        $tooltip = 'Это ссылка на видео. Рекомендуется установить плагин AllVideos.';
+                     //    $tooltip = Text::_('COM_KUNENATOPIC2ARTICLE_VIDEO_INSTALL_ALLVIDEOS');
+                      // $tooltip = 'TEST: ' . Text::_('COM_KUNENATOPIC2ARTICLE_VIDEO_INSTALL_ALLVIDEOS');
+                        $displayText = $this->getDisplayText($platform, $fixedUrl);
                         
-                                              return '<a href="' . htmlspecialchars($fullMatch, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener noreferrer">' 
-                               . htmlspecialchars($fullMatch, ENT_QUOTES, 'UTF-8') 
-                               . '</a> <span class="kun_p2a_video_label" data-tooltip="' . $tooltip . '">'
-                               . '<span class="tooltip-icon">🎬</span> (' . $label . ')</span>';
-     }
+                        $icon = ($platform === 'facebook') ? '<span class="facebook-icon">f</span>' : '';
+                        
+                        $result = '<a href="' . htmlspecialchars($fixedUrl, ENT_QUOTES, 'UTF-8') . '" ' .
+                                 'target="_blank" rel="noopener noreferrer" ' .
+                                 'class="kun_p2a_video_link" ' .
+                                 'data-tooltip="' . htmlspecialchars($tooltip, ENT_QUOTES, 'UTF-8') . '">' .
+                                 $icon . htmlspecialchars($displayText, ENT_QUOTES, 'UTF-8') .
+                                 '</a>';
+                        
+                        return '___PROCESSED_VIDEO_LINK___' . base64_encode($result) . '___END___';
+                    }
                 }
             },
             $text
         );
     }
-    // Декодируем результат обработки видео-ссылок
-    $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8'); // '&lt;', ''&gt;', '&quot;', '&amp;
+    
+       return $text;
+}
 
-    return $text;
+/**
+ * Исправляет URL для видео
+ */
+private function fixVideoUrl(string $platform, string $url): string
+{
+    $url = trim($url);
+    
+    // Очистка
+    $url = str_replace(["\xC2\xA0", "&nbsp;", "\n", "\r", "\t"], '', $url);
+    $url = preg_replace('/a href=/i', '', $url);
+    $url = preg_replace('/<\/?a[^>]*>/i', '', $url);
+    $url = preg_replace('/^https?:\/\/s\/\//i', 'https://', $url);
+    
+    // Протокол
+    if (!preg_match('/^https?:\/\//i', $url)) {
+        $url = 'https://' . $url;
+    }
+    
+    // Для Facebook гарантируем www.
+    if ($platform === 'facebook' && strpos($url, 'www.facebook.com') === false) {
+        $url = str_replace('facebook.com', 'www.facebook.com', $url);
+    }
+    
+    // HTTPS
+    $url = str_replace('http://', 'https://', $url);
+    
+    return $url;
+}
+
+/**
+ * Текст для отображения
+ */
+private function getDisplayText(string $platform, string $url): string
+{
+    // Базовые названия платформ
+    $platformNames = [
+        'facebook' => 'Facebook',
+        'youtube' => 'YouTube', 
+        'vimeo' => 'Vimeo',
+        'dailymotion' => 'Dailymotion',
+        'soundcloud' => 'SoundCloud'
+    ];
+    
+    $platformName = $platformNames[$platform] ?? 'Video';
+    
+    // Получаем часть URL для отображения
+    $urlPart = preg_replace('/^https?:\/\//i', '', $url);
+    $urlPart = preg_replace('/^www\./i', '', $urlPart);
+    
+    // Обрезаем если слишком длинный
+    if (mb_strlen($urlPart) > 30) {
+        $urlPart = mb_substr($urlPart, 0, 27) . '…';
+    }
+    
+    // Формируем текст: "Платформа: сокращенный-URL"
+    return $platformName . ': ' . $urlPart;
 }
     
-     /**
-     * Преобразование BBCode в HTML с обработкой видео
-     * @param   string  $text  Текст с BBCode
-     * @return  string  HTML-текст
-     */
-private function convertBBCodeToHtml($text)
+   private function convertBBCodeToHtml($text)
 {
     try {
         class_exists(Tag::class, true);
@@ -1325,8 +1421,9 @@ private function convertBBCodeToHtml($text)
 
         // Сначала обрабатываем BBCode тег [video]
         $text = $this->extractVideoFromBBCode($text);
-        // Обрабатываем видео-ссылки ДО обработки других ссылок
-        $text = $this->processVideoLinks($text);
+        
+        // Обрабатываем ВСЕ видео-ссылки (включая BBCode)
+         $text = $this->processVideoLinks($text);
 
         // Защищаем URL внутри [img] тегов
         $imgProtect = [];
@@ -1368,11 +1465,10 @@ private function convertBBCodeToHtml($text)
         // Применяем BBCode парсер
         $html = $bbcode->render($text);
 
-        // Нормализуем br теги ПЕРЕД восстановлением iframe
+        // Нормализуем br теги
         $html = preg_replace('/\s*<br\s*\/?>\s*/i', "\n", $html);
         
-       // Восстанавливаем iframe ПОСЛЕ нормализации br и ДО обработки строк
-     // ОТЛАДКА   error_log('Before iframe restore: ' . substr($html, 0, 500)); 
+        // Восстанавливаем iframe
         $html = preg_replace_callback(
             '/___IFRAME_[a-f0-9]+___\|\|(.*?)\|\|/i',
             function($matches) {
@@ -1380,7 +1476,15 @@ private function convertBBCodeToHtml($text)
             },
             $html
         );
-    // ОТЛАДКА   error_log('After iframe restore: ' . substr($html, 0, 500)); 
+        
+        // Восстанавливаем обработанные видео-ссылки
+        $html = preg_replace_callback(
+            '/___PROCESSED_VIDEO_LINK___(.*?)___END___/',
+            function($matches) {
+                return base64_decode($matches[1]);
+            },
+            $html
+        );
         
         // Разбиваем по переносам строк
         $lines = explode("\n", $html);
@@ -1389,13 +1493,10 @@ private function convertBBCodeToHtml($text)
         $paragraphs = [];
         foreach ($lines as $line) {
             $line = trim($line);
-            // Если строка пустая - добавляем пустой параграф
             if ($line === '') {
                 $paragraphs[] = '<p>&nbsp;</p>';
                 continue;
             }
-            // Если строка не пустая - оборачиваем в <p>, если нужно
-            // Не оборачиваем iframe и другие блочные элементы в параграфы
             if (!preg_match('/^\s*<(p|div|h[1-6]|ul|ol|li|blockquote|pre|table|tr|td|th|iframe)\b/i', $line)) {
                 $line = '<p>' . $line . '</p>';
             }
@@ -1410,7 +1511,7 @@ private function convertBBCodeToHtml($text)
             $attachmentId = $data[0];
             $filename = $data[1];
             
-            $imagePath = $this->getAttachmentPath($attachmentId); // Получаем реальный путь из базы данных
+            $imagePath = $this->getAttachmentPath($attachmentId);
             
             if ($imagePath && file_exists(JPATH_ROOT . '/' . $imagePath)) {
                 $imageHtml = '<img src="' . $imagePath . '" alt="' . htmlspecialchars($filename) . '" />';
@@ -1421,16 +1522,15 @@ private function convertBBCodeToHtml($text)
             $html = str_replace($marker, $imageHtml, $html);
         }
 
-        // Обрезка длинных ссылок  (НО НЕ ТРОГАЕМ ТЕГИ ALLVIDEOS)
+        // Обрезка длинных ссылок
         $html = preg_replace_callback(
             '#<a\s+([^>]*?)href=[\'"]([^\'"]+)[\'"]([^>]*)>([^<]{50,})</a>#i',
             function ($m) {
-                 // Пропускаем ссылки, которые содержат теги AllVideos
                 if (preg_match('/\{(?:youtube|vimeo|facebook|soundcloud|dailymotion)\}/', $m[4])) {
-                    return $m[0]; // Возвращаем без изменений
+                    return $m[0];
                 }
                 
-              $visible = mb_substr($m[4], 0, 47) . '…';
+                $visible = mb_substr($m[4], 0, 47) . '…';
                 return '<a ' . $m[1] . 'href="' . $m[2] . '"' . $m[3] . '>'
                        . htmlspecialchars($visible, ENT_QUOTES, 'UTF-8')
                        . '</a>';
@@ -1438,24 +1538,48 @@ private function convertBBCodeToHtml($text)
             $html
         );
         
-        // Добавляем обертку контейнера
-        $html = '<div class="kun_p2a_content">' . $html . '</div>';
+        // Обертка iframe в контейнер
+        if (strpos($html, '<iframe') !== false) {
+            $html = preg_replace_callback(
+                '/(<iframe[^>]*>.*?<\/iframe>)/is',
+                function($matches) {
+                    return '<div class="kun_p2a_video_container">' . $matches[1] . '</div>';
+                },
+                $html
+            );
+        }
         
+         // Восстанавливаем обработанные видео-ссылки
+        $html = preg_replace_callback(
+            '/___PROCESSED_VIDEO_LINK___(.*?)___END___/',
+            function($matches) {
+                return base64_decode($matches[1]);
+            },
+            $html
+        );
+        
+        //  Декодирование HTML-сущностей 
+        $html = str_replace('&lt;', '<', $html);
+        $html = str_replace('&gt;', '>', $html);
+        $html = str_replace('&quot;', '"', $html);
+        $html = str_replace('&amp;', '&', $html);
+        
+        $html = '<div class="kun_p2a_content">' . $html . '</div>';
         return $html;
         
     } catch (\Throwable $e) {
         $this->app->enqueueMessage(
-            Text::_('COM_KUNENATOPIC2ARTICLE_BBCODE_PARSE_ERROR') . ': ' . $e->getMessage(),
+            'BBCode Parse Error: ' . $e->getMessage(),
             'warning'
         );
         return $this->simpleBBCodeToHtml($text);
     }
 }
     
-  private function simpleBBCodeToHtml($text)
-{
-    return 'NO PARSER';
-}
+    private function simpleBBCodeToHtml($text)
+    {
+        return 'NO PARSER';
+    }
     
    // ------- КОНЕЦ ПАРСЕРА ---------
     
