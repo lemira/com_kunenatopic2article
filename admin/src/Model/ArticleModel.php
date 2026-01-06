@@ -1170,54 +1170,8 @@ public function sendLinksToAdministrator(array $articleLinks): array
         }
     }
 
-   private function extractVideoFromBBCode(string $text): string
-    {
-        if (!$this->videoProcessor) {
-            $this->videoProcessor = new VideoProcessor();
-        }
-        return $this->videoProcessor->extractVideoFromBBCode($text);
-    }
+
    
-   /**
- * Определяет платформу по URL
- */
-private function detectVideoPlatform(string $url): ?string
-{
-    if (!$this->videoProcessor) {
-        $this->videoProcessor = new VideoProcessor();
-    }
-    // Этот метод теперь в VideoProcessor, но оставляем обертку для совместимости
-    // Реальная логика теперь в VideoProcessor
-    return null;
-}
- 
-   private function processVideoLinks(string $text): string
-{
-    if (!$this->videoProcessor) {
-        $this->videoProcessor = new VideoProcessor();
-    }
-    
-    return $this->videoProcessor->processVideoLinks($text);
-}
-
-/**
- * Исправляет URL для видео
- */
-private function fixVideoUrl(string $platform, string $url): string
-{
-    // Этот метод теперь в VideoProcessor, но оставляем заглушку для совместимости
-    return $url;
-}
-
-/**
- * Текст для отображения
- */
-private function getDisplayText(string $platform, string $url): string
-{
-    // Этот метод теперь в VideoProcessor, но оставляем заглушку для совместимости
-    return $platform . ': ' . $url;
-}
-    
    private function convertBBCodeToHtml($text)
 {
     try {
@@ -1229,10 +1183,10 @@ private function getDisplayText(string $platform, string $url): string
         $text = preg_replace('/([»"\.])\s*>/u', '$1', $text);
 
         // Сначала обрабатываем BBCode тег [video]
-        $text = $this->extractVideoFromBBCode($text);
+        $text = $this->videoProcessor->extractVideoFromBBCode($text);
         
         // Обрабатываем ВСЕ видео-ссылки (включая BBCode)
-        $text = $this->processVideoLinks($text);
+        $text = $this->videoProcessor->processVideoLinks($text);
 
         // Защищаем URL внутри [img] тегов
         $imgProtect = [];
