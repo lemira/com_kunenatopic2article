@@ -1142,7 +1142,7 @@ public function sendLinksToAdministrator(array $articleLinks): array
     return $result;
 }
 
-    // ПАРСЕР - МИНИМАЛЬНЫЕ ИЗМЕНЕНИЯ
+    // ПАРСЕР
     private function getAttachmentPath($attachmentId)
     {
         try {
@@ -1170,9 +1170,7 @@ public function sendLinksToAdministrator(array $articleLinks): array
         }
     }
 
-
-   
-   private function convertBBCodeToHtml($text)
+private function convertBBCodeToHtml($text)
 {
     try {
         class_exists(Tag::class, true);
@@ -1231,18 +1229,9 @@ public function sendLinksToAdministrator(array $articleLinks): array
         // Нормализуем br теги
         $html = preg_replace('/\s*<br\s*\/?>\s*/i', "\n", $html);
         
-        // Восстанавливаем iframe
+        // ЕДИНСТВЕННОЕ МЕСТО восстановления защищенного контента
         $html = preg_replace_callback(
-            '/___IFRAME_[a-f0-9]+___\|\|(.*?)\|\|/i',
-            function($matches) {
-                return base64_decode($matches[1]);
-            },
-            $html
-        );
-        
-        // Восстанавливаем обработанные видео-ссылки
-        $html = preg_replace_callback(
-            '/___PROCESSED_VIDEO_LINK___(.*?)___END___/',
+            '/___PROTECTED___(.*?)___END___/',
             function($matches) {
                 return base64_decode($matches[1]);
             },
@@ -1301,26 +1290,6 @@ public function sendLinksToAdministrator(array $articleLinks): array
             $html
         );
         
-        // Обертка iframe в контейнер
-        if (strpos($html, '<iframe') !== false) {
-            $html = preg_replace_callback(
-                '/(<iframe[^>]*>.*?<\/iframe>)/is',
-                function($matches) {
-                    return '<div class="kun_p2a_video_container">' . $matches[1] . '</div>';
-                },
-                $html
-            );
-        }
-        
-         // Восстанавливаем обработанные видео-ссылки
-        $html = preg_replace_callback(
-            '/___PROCESSED_VIDEO_LINK___(.*?)___END___/',
-            function($matches) {
-                return base64_decode($matches[1]);
-            },
-            $html
-        );
-        
         //  Декодирование HTML-сущностей 
         $html = str_replace('&lt;', '<', $html);
         $html = str_replace('&gt;', '>', $html);
@@ -1338,7 +1307,7 @@ public function sendLinksToAdministrator(array $articleLinks): array
         return $this->simpleBBCodeToHtml($text);
     }
 }
-    
+   
     private function simpleBBCodeToHtml($text)
     {
         return 'NO PARSER';
