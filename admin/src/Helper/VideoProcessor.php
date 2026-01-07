@@ -22,56 +22,30 @@ use Joomla\CMS\Language\Text;
  */
 class VideoProcessor
 {
-    /**
-     * Database instance
-     * @var    \Joomla\Database\DatabaseInterface
-     */
     private $db;
-    
-    /**
-     * Application instance
-     * @var    \Joomla\CMS\Application\CMSApplication
-     */
     private $app;
     
-    /**
-     * Constructor
-     */
     public function __construct()
     {
         $this->app = Factory::getApplication();
         $this->db = Factory::getDbo();
-        
-        // Загружаем языковые файлы компонента
         $this->loadComponentLanguage();
     }
     
-    /**
-     * Load component language files
-     */
     private function loadComponentLanguage(): void
     {
         static $loaded = false;
         
         if (!$loaded) {
             $lang = $this->app->getLanguage();
-            
-            // Пробуем загрузить из админки
             $lang->load('com_kunenatopic2article', JPATH_ADMINISTRATOR);
-            
-            // Также пробуем загрузить из сайта
             $lang->load('com_kunenatopic2article', JPATH_SITE);
-            
             $loaded = true;
         }
     }
     
     /**
      * Main method: Process video links in text
-     *
-     * @param   string  $text  The text to process
-     * 
-     * @return  string  Processed text
      */
     public function processVideoLinks(string $text): string
     {
@@ -86,7 +60,7 @@ class VideoProcessor
             $text
         );
         
-        // Затем обычная обработка видео-ссылок (не BBCode)
+        // Затем обработка обычных URL (не в BBCode)
         $patterns = $this->getVideoPatterns();
         
         foreach ($patterns as $platform => $config) {
@@ -102,11 +76,6 @@ class VideoProcessor
         return $text;
     }
     
-    /**
-     * Check if AllVideos plugin is enabled
-     *
-     * @return  boolean
-     */
     private function isAllVideosEnabled(): bool
     {
         try {
@@ -126,68 +95,69 @@ class VideoProcessor
         }
     }
     
-    /**
-     * Get video patterns configuration
-     *
-     * @return  array
-     */
     private function getVideoPatterns(): array
     {
         return [
             'youtube' => [
-                'pattern' => '#((?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([\w-]+)(?:[&\?]t=(\d+)s?)?[^\s]*)#i',
+                'pattern' => '#(?<!___PROTECTED___)(?<![{\[])(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([\w-]+)(?:[&\?]t=(\d+)s?)?(?![}\]])#i',
                 'tag' => 'youtube',
-                'iframe' => '<iframe width="560" height="315" src="https://www.youtube.com/embed/{VIDEO_ID}?start={TIME_PARAM}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+                'iframe' => '<div class="kun_p2a_video_container"><iframe width="560" height="315" src="https://www.youtube.com/embed/{VIDEO_ID}?start={TIME_PARAM}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>'
             ],
             'vimeo' => [
-                'pattern' => '#((?:https?://)?(?:www\.)?vimeo\.com/(\d+)[^\s]*)#i',
+                'pattern' => '#(?<!___PROTECTED___)(?<![{\[])(?:https?://)?(?:www\.)?vimeo\.com/(\d+)(?![}\]])#i',
                 'tag' => 'vimeo',
-                'iframe' => '<iframe src="https://player.vimeo.com/video/{VIDEO_ID}" width="640" height="360" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>'
+                'iframe' => '<div class="kun_p2a_video_container"><iframe src="https://player.vimeo.com/video/{VIDEO_ID}" width="640" height="360" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>'
             ],
             'dailymotion' => [
-                'pattern' => '#((?:https?://)?(?:www\.)?dailymotion\.com/video/([\w-]+)[^\s]*)#i',
+                'pattern' => '#(?<!___PROTECTED___)(?<![{\[])(?:https?://)?(?:www\.)?dailymotion\.com/video/([\w-]+)(?![}\]])#i',
                 'tag' => 'dailymotion',
                 'iframe' => null 
             ],
             'facebook' => [
-                'pattern' => '#((?:https?://)?(?:www\.)?facebook\.com/(?:watch/?\?v=|.*?/videos/)(\d+)[^\s]*)#i',
+                'pattern' => '#(?<!___PROTECTED___)(?<![{\[])(?:https?://)?(?:www\.)?facebook\.com/(?:watch/?\?v=|.*?/videos/)(\d+)(?![}\]])#i',
                 'tag' => 'facebook',
                 'iframe' => null
             ],
             'soundcloud' => [
-                'pattern' => '#((?:https?://)?(?:www\.)?soundcloud\.com/([\w-]+/[\w-]+(?:/[\w-]+)*)[^\s]*)#i',
+                'pattern' => '#(?<!___PROTECTED___)(?<![{\[])(?:https?://)?(?:www\.)?soundcloud\.com/([\w-]+/[\w-]+(?:/[\w-]+)*)(?![}\]])#i',
                 'tag' => 'soundcloud',
                 'iframe' => null
             ]
         ];
     }
     
-    /**
-     * Process URL match from BBCode
-     *
-     * @param   array   $matches            Regex matches
-     * @param   bool    $allVideosEnabled   Whether AllVideos is enabled
-     * 
-     * @return  string  Processed result
-     */
     private function processUrlMatch(array $matches, bool $allVideosEnabled): string
     {
         $url = trim($matches[1]);
         $linkText = trim($matches[2]);
         
-        // Проверяем, является ли это видео-ссылкой
         $platform = $this->detectVideoPlatform($url);
         
         if ($platform) {
-            // Это видео-ссылка
             $fixedUrl = $this->fixVideoUrl($platform, $url);
+            
+            if ($allVideosEnabled) {
+                // Для AllVideos: возвращаем ТОЛЬКО тег, БЕЗ текста ссылки
+                $config = $this->getVideoPatterns()[$platform];
+                
+                if (preg_match($config['pattern'], $fixedUrl, $urlMatches)) {
+                    $videoId = $urlMatches[1] ?? '';
+                    
+                    if ($platform === 'facebook' || $platform === 'soundcloud') {
+                        $tag = '{' . $config['tag'] . '}' . $fixedUrl . '{/' . $config['tag'] . '}';
+                    } else {
+                        $tag = '{' . $config['tag'] . '}' . $videoId . '{/' . $config['tag'] . '}';
+                    }
+                    
+                    return '___PROTECTED___' . base64_encode($tag) . '___END___';
+                }
+            }
+            
+            // Без AllVideos: текст + кнопка
             $tooltip = Text::_('COM_KUNENATOPIC2ARTICLE_VIDEO_INSTALL_ALLVIDEOS');
             $displayText = $this->getDisplayText($platform, $fixedUrl);
-            
-            // Иконка только для Facebook
             $icon = ($platform === 'facebook') ? '<span class="facebook-icon">f</span>' : '';
             
-            // Текст ссылки + стилизованная кнопка
             $result = htmlspecialchars($linkText, ENT_QUOTES, 'UTF-8') . ' ' .
                      '<a href="' . htmlspecialchars($fixedUrl, ENT_QUOTES, 'UTF-8') . '" ' .
                      'target="_blank" rel="noopener noreferrer" ' .
@@ -196,8 +166,7 @@ class VideoProcessor
                      $icon . htmlspecialchars($displayText, ENT_QUOTES, 'UTF-8') .
                      '</a>';
             
-            // Защищаем от повторной обработки
-            return '___PROCESSED_VIDEO_LINK___' . base64_encode($result) . '___END___';
+            return '___PROTECTED___' . base64_encode($result) . '___END___';
         }
         
         // Обычная ссылка
@@ -205,37 +174,26 @@ class VideoProcessor
                htmlspecialchars($linkText, ENT_QUOTES, 'UTF-8') . '</a>';
     }
     
-    /**
-     * Process video match from URL
-     *
-     * @param   array   $matches            Regex matches
-     * @param   string  $platform           Video platform
-     * @param   array   $config             Platform configuration
-     * @param   bool    $allVideosEnabled   Whether AllVideos is enabled
-     * 
-     * @return  string  Processed result
-     */
     private function processVideoMatch(array $matches, string $platform, array $config, bool $allVideosEnabled): string
     {
-        $fullMatch = $matches[1];
-        
-        // Пропускаем уже обработанные ссылки
-        if (strpos($fullMatch, '___PROCESSED_VIDEO_LINK___') !== false) {
-            return $fullMatch;
-        }
-        
-        $videoId = $matches[2];
+        $fullMatch = $matches[0];
+        $videoId = $matches[1];
         
         $timeParam = '';
-        if ($platform === 'youtube' && isset($matches[3]) && !empty($matches[3])) {
-            $timeParam = $matches[3];
+        if ($platform === 'youtube' && isset($matches[2]) && !empty($matches[2])) {
+            $timeParam = $matches[2];
         }
         
         if ($allVideosEnabled) {
             if ($platform === 'facebook' || $platform === 'soundcloud') {
-                return '{' . $config['tag'] . '}' . $fullMatch . '{/' . $config['tag'] . '}';
+                $fixedUrl = $this->fixVideoUrl($platform, $fullMatch);
+                $tag = '{' . $config['tag'] . '}' . $fixedUrl . '{/' . $config['tag'] . '}';
+            } else {
+                $tag = '{' . $config['tag'] . '}' . $videoId . '{/' . $config['tag'] . '}';
             }
-            return '{' . $config['tag'] . '}' . $videoId . '{/' . $config['tag'] . '}';
+            
+            return '___PROTECTED___' . base64_encode($tag) . '___END___';
+            
         } else {
             if ($config['iframe'] !== null) {
                 $iframe = str_replace('{VIDEO_ID}', $videoId, $config['iframe']);
@@ -246,14 +204,12 @@ class VideoProcessor
                     $iframe = str_replace('?start={TIME_PARAM}', '', $iframe);
                 }
                 
-                $marker = '___IFRAME_' . md5($iframe) . '___';
-                return $marker . '||' . base64_encode($iframe) . '||';
+                return '___PROTECTED___' . base64_encode($iframe) . '___END___';
+                
             } else {
-                // Стилизованная ссылка
                 $fixedUrl = $this->fixVideoUrl($platform, $fullMatch);
                 $tooltip = Text::_('COM_KUNENATOPIC2ARTICLE_VIDEO_INSTALL_ALLVIDEOS');
                 $displayText = $this->getDisplayText($platform, $fixedUrl);
-                
                 $icon = ($platform === 'facebook') ? '<span class="facebook-icon">f</span>' : '';
                 
                 $result = '<a href="' . htmlspecialchars($fixedUrl, ENT_QUOTES, 'UTF-8') . '" ' .
@@ -263,18 +219,11 @@ class VideoProcessor
                          $icon . htmlspecialchars($displayText, ENT_QUOTES, 'UTF-8') .
                          '</a>';
                 
-                return '___PROCESSED_VIDEO_LINK___' . base64_encode($result) . '___END___';
+                return '___PROTECTED___' . base64_encode($result) . '___END___';
             }
         }
     }
     
-    /**
-     * Detect video platform from URL
-     *
-     * @param   string  $url  The URL to check
-     * 
-     * @return  string|null  Platform name or null
-     */
     private function detectVideoPlatform(string $url): ?string
     {
         $patterns = [
@@ -294,51 +243,29 @@ class VideoProcessor
         return null;
     }
     
-    /**
-     * Fix video URL for proper display
-     *
-     * @param   string  $platform  Video platform
-     * @param   string  $url       Original URL
-     * 
-     * @return  string  Fixed URL
-     */
     private function fixVideoUrl(string $platform, string $url): string
     {
         $url = trim($url);
-        
-        // Очистка
         $url = str_replace(["\xC2\xA0", "&nbsp;", "\n", "\r", "\t"], '', $url);
         $url = preg_replace('/a href=/i', '', $url);
         $url = preg_replace('/<\/?a[^>]*>/i', '', $url);
         $url = preg_replace('/^https?:\/\/s\/\//i', 'https://', $url);
         
-        // Протокол
         if (!preg_match('/^https?:\/\//i', $url)) {
             $url = 'https://' . $url;
         }
         
-        // Для Facebook гарантируем www.
         if ($platform === 'facebook' && strpos($url, 'www.facebook.com') === false) {
             $url = str_replace('facebook.com', 'www.facebook.com', $url);
         }
         
-        // HTTPS
         $url = str_replace('http://', 'https://', $url);
         
         return $url;
     }
     
-    /**
-     * Get display text for video link
-     *
-     * @param   string  $platform  Video platform
-     * @param   string  $url       Video URL
-     * 
-     * @return  string  Display text
-     */
     private function getDisplayText(string $platform, string $url): string
     {
-        // Базовые названия платформ
         $platformNames = [
             'facebook' => 'Facebook',
             'youtube' => 'YouTube', 
@@ -348,27 +275,16 @@ class VideoProcessor
         ];
         
         $platformName = $platformNames[$platform] ?? 'Video';
-        
-        // Получаем часть URL для отображения
         $urlPart = preg_replace('/^https?:\/\//i', '', $url);
         $urlPart = preg_replace('/^www\./i', '', $urlPart);
         
-        // Обрезаем если слишком длинный
         if (mb_strlen($urlPart) > 30) {
             $urlPart = mb_substr($urlPart, 0, 27) . '…';
         }
         
-        // Формируем текст: "Платформа: сокращенный-URL"
         return $platformName . ': ' . $urlPart;
     }
     
-    /**
-     * Extract video from BBCode [video] tags
-     *
-     * @param   string  $text  Text containing BBCode
-     * 
-     * @return  string  Text with extracted video URLs
-     */
     public function extractVideoFromBBCode(string $text): string
     {
         return preg_replace('/\[video\](https?:\/\/[^\[]+?)\[\/video\]/i', '$1', $text);
