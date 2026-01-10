@@ -488,6 +488,9 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
 
     mb_internal_encoding('UTF-8');
     
+     // Удаляем ВСЕ теги AllVideos (любые теги вида {tag}...{/tag})
+    $htmlContent = $this->videoProcessor->removeAllVideosTags($htmlContent);
+  
     $reminderLines = '';
     $link_symbol = '🔗';
     $image_symbol = '🖼️';
