@@ -26,6 +26,9 @@ The complete post info block displays:
 - With non-empty alt text: 🖼️alt_text🖼️
 - Without alt text: 🖼️filename.extension🖼️, for example, 🖼️Image1.png🖼️
 
+**Video:**
+- 📹video📹
+
 > If a link or image exceeds the limit, information about them is still displayed in full.
 
 ## 5. Parsing
@@ -33,8 +36,8 @@ The complete post info block displays:
 Kunena BBCode is converted to Joomla HTML using the [chriskonnertz/bbcode](https://github.com/chriskonnertz/bbcode) parser. Huge thanks to the developer.
 
 **Additional processing:**
+- Processing of links, images and videos
 - Shortening "bare" URLs
-- Processing links and images in reminder lines
 - Fixing problematic character sequences (e.g., `[br /`)
 
 ## 6. Language Files
