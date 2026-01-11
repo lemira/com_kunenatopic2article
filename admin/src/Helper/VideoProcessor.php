@@ -86,7 +86,38 @@ class VideoProcessor
                 $iterations++;
             }
         }
-        
+             // если в тексте есть защищённые блоки ___PROTECTED___...___END___, вставляем <br> перед каждым вторым и далее подряд
+            return $this->addBrBetweenConsecutiveVideos($text);
+    }
+    
+    /**
+ * Вставляем <br> между идущими подряд видео-блоками
+ * (работает только на защищённых фрагментах ___PROTECTED___...___END___)
+ */
+private function addBrBetweenConsecutiveVideos(string $text): string
+{
+    // 1. собираем ВСЕ защищённые блоки в массив
+    preg_match_all('/___PROTECTED___\w+___END___/', $text, $matches, PREG_OFFSET_CAPTURE);
+    $blocks = $matches[0];
+
+    if (count($blocks) < 2) {
+        return $text; // одно видео или их нет – ничего не делаем
+    }
+
+    $offsetShift = 0; // на сколько символов уже «сдвинули» строку после вставок
+    for ($i = 1; $i < count($blocks); $i++) {
+        $prevEnd = $blocks[$i - 1][1] + strlen($blocks[$i - 1][0]);
+        $currStart = $blocks[$i][1];
+
+        // между блоками только пробельные символы (или ничего)?
+        $gap = substr($text, $prevEnd + $offsetShift, $currStart - $prevEnd);
+        if (preg_match('/^\s*$/', $gap)) {
+            // вставляем один перенос перед текущим блоком
+            $br = '<br>';
+            $text = substr_replace($text, $br, $currStart + $offsetShift, 0);
+            $offsetShift += strlen($br);
+        }
+    } 
         return $text;
     }
     
