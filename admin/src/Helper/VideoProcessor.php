@@ -357,11 +357,14 @@ private function addBrBetweenConsecutiveVideos(string $text): string
         }
         
         if ($platform === 'facebook' && strpos($url, 'fb.watch') !== false) {
-            // fb.watch остается как есть - Facebook сам редиректит
-            // Но нужно убедиться что есть протокол
+            // fb.watch Facebook сам редиректит, но мы ниже нормализуем, чтобы не зависеть от того, есть ли протокол
             if (!preg_match('/^https?:\/\//i', $url)) {
                 $url = 'https://' . $url;
             }
+        }
+                 // Нормализация для Facebook: /watch/?v= -> /video.php?v=
+        if ($platform === 'facebook' && strpos($url, 'facebook.com/watch/?v=') !== false) {
+            $url = preg_replace('#facebook\.com/watch/\?v=(\w+)#i', 'facebook.com/video.php?v=$1', $url);
         }
         
         if ($platform === 'vimeo' && strpos($url, 'player.vimeo.com') !== false) {
