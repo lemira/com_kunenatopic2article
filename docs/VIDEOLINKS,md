@@ -1,5 +1,8 @@
 # Video Link Processing in the Component
 
+[⬅️ Component purpose, parameters, installation, operation](../README.md) | [📖 Post relations in Kunena, info block, parsing, languages](FUNCTIONALITY.md)
+| [ℹ️ Emails about article creation, database encoding, plugin](ADDITIONAL.md)
+
 ## Overview
 
 The component automatically recognizes and processes video links from various platforms when transferring Kunena posts to Joomla articles. Video links in articles also work with responsive design on mobile devices.
@@ -226,3 +229,6 @@ https://youtu.be/
 ```
 Visit youtube.com to watch
 ```
+
+[⬅️ Component purpose, parameters, installation, operation](../README.md) | [📖 Post relations in Kunena, info block, parsing, languages](FUNCTIONALITY.md)
+| [ℹ️ Emails about article creation, database encoding, plugin](ADDITIONAL.md)
