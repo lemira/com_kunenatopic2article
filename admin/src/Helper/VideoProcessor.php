@@ -113,7 +113,7 @@ private function addBrBetweenConsecutiveVideos(string $text): string
         $gap = substr($text, $prevEnd + $offsetShift, $currStart - $prevEnd);
         if (preg_match('/^\s*$/', $gap)) {
             // вставляем один перенос перед текущим блоком
-            $br = '<br>';
+            $br = '<br>'; // если <br> будет вычищаться, м вставить $br = "\n\n"; или $br = '<p>&nbsp;</p>';
             $text = substr_replace($text, $br, $currStart + $offsetShift, 0);
             $offsetShift += strlen($br);
         }
