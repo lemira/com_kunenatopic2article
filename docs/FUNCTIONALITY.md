@@ -1,6 +1,6 @@
 # Component Functionality
 
-[⬅️ Component purpose, parameters, installation, operation](../README.md) | [ℹ️ Emails about article creation, database encoding, plugin](ADDITIONAL.md) | [ℹ️ Письма о создании статей, кодировка БД, плагин](ADDITIONAL.ru.md)
+[⬅️ Component purpose, parameters, installation, operation](../README.md) | [ℹ️ Emails about article creation, database encoding, plugin](ADDITIONAL.md) | [ℹ️ Video Link Processing in the Component](VIDEOLINKS.md)(ADDITIONAL.ru.md)
 
 ## 4. Post Info Block
 
@@ -79,4 +79,4 @@ The component supports two schemes for transferring posts to articles (determine
 
 7.3.4. If post index links are enabled in the parameters, the index of a temporarily hidden post is displayed as regular text (not a link). The index of a completely deleted post is replaced with the index of the first post of the topic, according to section 7.3.3.
 
-*[⬅️ Component purpose, parameters, installation, operation](../README.md) | [➡️Emails about article creation, database encoding, plugin](ADDITIONAL.md) | [ℹ️ Письма о создании статей, кодировка БД, плагин](ADDITIONAL.ru.md)*
+*[⬅️ Component purpose, parameters, installation, operation](../README.md) | [➡️Emails about article creation, database encoding, plugin](ADDITIONAL.md) | [ℹ️ Письма о создании статей, кодировка БД, плагин](ADDITIONAL.ru.md) | [ℹ️ Video Link Processing in the Component](VIDEOLINKS.md)*
