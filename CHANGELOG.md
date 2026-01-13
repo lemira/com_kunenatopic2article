@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2025-01-14
+
+### Added
+- **Comprehensive video content processing**: new `VideoProcessor.php` helper for automatic recognition and processing of video links from various platforms (YouTube, Vimeo, etc.)
+- **Dual-mode video handling**:
+  - Integration with Joomla AllVideos plugin (recommended mode) — automatic conversion of links to AllVideos tags for video playback directly in articles
+  - Standalone mode — creation of responsive and secure iframes for YouTube and Vimeo, "pretty" links for other platforms
+- **Automatic detection** of AllVideos plugin availability and status
+- **Administrator notification** with recommendation to install/enable AllVideos plugin when absent
+- New language constants for video content handling
+
+### Changed
+- Updated `View/Topic/HtmlView.php` to check AllVideos plugin availability and display appropriate recommendations
+
+### Improved
+- Visual presentation of video content in migrated articles
+- Reliability of video playback from Kunena posts
+
+---
+
+[1.0.4]: https://github.com/lemira/com_kunenatopic2article/compare/v1.0.3...v1.0.4
+[1.0.3]: https://github.com/lemira/com_kunenatopic2article/compare/v1.0.2...v1.0.3
+
 ## [1.0.3] - 2025-12-10
 
 ### Fixed
