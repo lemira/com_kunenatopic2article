@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `View/Topic/HtmlView.php` to check AllVideos plugin availability and display appropriate recommendations
 
 ### Improved
-- Visual presentation of video content in migrated articles
+- Visual presentation of video content in created articles
 - Reliability of video playback from Kunena posts
 
 ---
