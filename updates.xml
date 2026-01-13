@@ -20,6 +20,7 @@
         <client>administrator</client>
     </update>
     
+
 <!-- Version 1.0.3 - Current release -->
     <update>
         <name>Kunena Topic to Article</name>

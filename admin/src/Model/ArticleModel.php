@@ -1171,12 +1171,17 @@ public function sendLinksToAdministrator(array $articleLinks): array
         } catch (\Exception $e) {
            return null;
         }
+        
+        return null;
+        
+    } catch (\Exception $e) {
+       return null;
     }
 
 private function convertBBCodeToHtml($text)
 {
     try {
-        class_exists(Tag::class, true);
+        class_exists(Tag::class, true);   // гарантируем загрузку
         $bbcode = new BBCode();
     
         // Удаляем "[br /" которые обрубают текст
@@ -1310,8 +1315,8 @@ private function convertBBCodeToHtml($text)
         return $this->simpleBBCodeToHtml($text);
     }
 }
-   
-    private function simpleBBCodeToHtml($text)
+
+  private function simpleBBCodeToHtml($text)
     {
         return 'NO PARSER';
     }
