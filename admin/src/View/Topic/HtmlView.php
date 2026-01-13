@@ -14,6 +14,7 @@ defined('_JEXEC') or die;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
+use Joomla\Component\KunenaTopic2Article\Administrator\Helper\VideoProcessor;
 
 class HtmlView extends BaseHtmlView
 {
