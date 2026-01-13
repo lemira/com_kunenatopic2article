@@ -14,19 +14,18 @@ The component automatically recognizes and processes video links from various pl
 If the AllVideos plugin is enabled, the component converts links into AllVideos tags, which are displayed in the article as video windows within the plugin's capabilities. As a result, the corresponding videos can be played directly in the article.
 
 If AllVideos is not installed or is installed but not enabled:
-- For YouTube and Vimeo, custom iframes are generated for embedding videos. Thus, videos from these platforms are also displayed directly in the article
-- For other platforms, clickable links are created in the article in a special format, with a camera icon 📹. When hovering over such a link, a helpful tooltip is displayed, for example, with a recommendation to install AllVideos.
+- Upon calling the component, the administrator receives a message: “The AllVideos plugin is not installed or enabled in Joomla. 
+It is recommended to install AllVideos by JoomlaWorks. This will allow videos in created articles to be displayed as players instead of just links”
+- For YouTube and Vimeo, custom iframes are generated for embedding videos. Thus, videos from these platforms are displayed directly in the article
+- For other platforms, clickable links are created in the article in a special format, with a camera icon 📹. When hovering over such a link, a helpful tooltip is displayed.
 
 ### Special Processing Cases:
 
 **Facebook Video:**
-Always displayed as a styled link (even with AllVideos enabled), 
-as Facebook blocks video embedding in iframes for security reasons.
+Always displayed as a styled link (even with AllVideos enabled), as Facebook blocks video embedding in iframes for security reasons.
 
 **YouTube with Timestamps:**
-If a link contains a timestamp (e.g., `?t=42s`), the component creates 
-its own iframe instead of using AllVideos to preserve the playback 
-starting point at the specified moment.
+If a link contains a timestamp (e.g., `?t=42s`), the component creates its own iframe instead of using AllVideos to preserve the playback starting point at the specified moment.
 
 ## Installing AllVideos (Recommended)
 
@@ -44,9 +43,7 @@ Benefits of using AllVideos:
 ## Platform Support
 
 **YouTube and Vimeo:**
-- With AllVideos: window via plugin
-- Without AllVideos: custom iframe
-- Note: YouTube with timestamp always uses custom iframe
+- Always displayed as a window via a native iframe or the AllVideos plugin
 
 **Dailymotion and SoundCloud:**
 - With AllVideos: window via plugin
@@ -79,8 +76,7 @@ Due to the variety of video platforms and players, video links in articles requi
 4. For YouTube: check that the video isn't blocked in your region
 
 **If YouTube timestamp doesn't work:**
-- Format must be: `?t=42s` or `?t=1m30s`
-- Don't use `#t=42s` (deprecated format)
+- Format must be: `?t=42s, ?t=1m30s, or ?t=1h2m3s
 
 ## Possible Improvements
 
@@ -116,9 +112,10 @@ https://youtu.be/VIDEO_ID?t=1m30s
 [url=https://youtu.be/VIDEO_ID]Link text[/url]
 ```
 
-⚠️ Partially supported (displays but without playlist):
+✅ Video from a Playlist::
 ```
 https://www.youtube.com/watch?v=VIDEO_ID&list=PLAYLIST_ID
+Only the specified video (VIDEO_ID) is processed; the playlist is ignored
 ```
 
 ### Vimeo
