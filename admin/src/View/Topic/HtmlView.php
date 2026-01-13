@@ -14,6 +14,7 @@ defined('_JEXEC') or die;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
+use Joomla\Component\KunenaTopic2Article\Administrator\Helper\VideoProcessor;
 
 class HtmlView extends BaseHtmlView
 {
@@ -46,6 +47,15 @@ class HtmlView extends BaseHtmlView
         if (!$this->form) {
             Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_FORM_FAILED_TO_LOAD'), 'error');
         }
+
+        // Проверяем состояние AllVideos 
+$videoHelper = new VideoProcessor();
+if (!$videoHelper->isAllVideosEnabled()) {
+    Factory::getApplication()->enqueueMessage(
+        Text::_('COM_KUNENATOPIC2ARTICLE_WARNING_ALLVIDEOS_MISSING'), 
+        'warning'
+    );
+}
         
         parent::display($tpl);
     }

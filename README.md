@@ -5,7 +5,7 @@
 A component for automatically creating Joomla articles based on Kunena forum topics.
 Developed for Joomla 5 and Kunena 6.x.
 
-[📖 Post relations in Kunena, info block, parsing, languages](docs/FUNCTIONALITY.md) | [ℹ️ Emails about article creation, database encoding, plugin](docs/ADDITIONAL.md)
+[📖 Post relations in Kunena, info block, parsing, languages](docs/FUNCTIONALITY.md) | [ℹ️ Emails about article creation, database encoding, plugin](docs/ADDITIONAL.md) | [ℹ️ Video Link Processing in the Component](docs/VIDEOLINKS.md)
 
 ## 🚀 General Information
 
@@ -122,4 +122,4 @@ If you like this project, you can make a donation via PayPal:
 ---
 
 *[➡️ Post relations in Kunena, info block, parsing, languages](docs/FUNCTIONALITY.md)  
-[➡️ Emails about article creation, database encoding, plugin](docs/ADDITIONAL.md)*
+[➡️ Emails about article creation, database encoding, plugin](docs/ADDITIONAL.md) | [ℹ️ Video Link Processing in the Component](docs/VIDEOLINKS.md)*

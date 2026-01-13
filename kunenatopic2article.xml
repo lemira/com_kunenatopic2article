@@ -3,11 +3,11 @@
     <name>COM_KUNENATOPIC2ARTICLE</name>
     <author>Leonid Ratner</author>
     <creationDate>January 2025</creationDate>
-    <copyright>(C) 2025 Leonid Ratner. All rights reserved.</copyright>
+    <copyright>(C) 2025-2026 Leonid Ratner. All rights reserved.</copyright>
     <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
     <authorEmail>lemirat@gmail.com</authorEmail>
     <authorUrl>https://geschichte-chronologie.de</authorUrl>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
     <description>COM_KUNENATOPIC2ARTICLE_DESC</description>
     
     <namespace path="src">Joomla\Component\KunenaTopic2Article</namespace>

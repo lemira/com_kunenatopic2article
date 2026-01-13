@@ -1,6 +1,6 @@
 # Additional Information
 
-[⬅️ Component purpose, parameters, installation, operation](../README.md) | [📖 Post relations in Kunena, info block, parsing, languages](FUNCTIONALITY.md)
+[⬅️ Component purpose, parameters, installation, operation](../README.md) | [ℹ️ Post relations in Kunena, info block, parsing, languages](FUNCTIONALITY.md) | [ℹ️ Video Link Processing in the Component](VIDEOLINKS.md)
 
 ## 8. Precise Positioning Plugin
 
@@ -48,4 +48,4 @@ Creating 14 articles from a topic (using a tree scheme).
 ### ❓ Is the connection between articles and the topic preserved after editing?
 ❌ Generally speaking - no, after creation the article and topic live independent lives. However, links in articles can be used to navigate to post indices in the forum, but even this connection can be broken if a post is deleted after article creation.
 
-*[⬅️ Component purpose, parameters, installation, operation](../README.md) | [📖 Post relations in Kunena, info block, parsing, languages](FUNCTIONALITY.md)*
+*[⬅️ Component purpose, parameters, installation, operation](../README.md) | [ℹ️ Post relations in Kunena, info block, parsing, languages](FUNCTIONALITY.md) | [ℹ️ Video Link Processing in the Component](VIDEOLINKS.md)*

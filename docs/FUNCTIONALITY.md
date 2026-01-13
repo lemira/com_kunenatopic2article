@@ -1,6 +1,6 @@
 # Component Functionality
 
-[⬅️ Component purpose, parameters, installation, operation](../README.md) | [ℹ️ Emails about article creation, database encoding, plugin](ADDITIONAL.md)
+[⬅️ Component purpose, parameters, installation, operation](../README.md) | [ℹ️ Emails about article creation, database encoding, plugin](ADDITIONAL.md) | [ℹ️ Video Link Processing in the Component](VIDEOLINKS.md)(ADDITIONAL.ru.md)
 
 ## 4. Post Info Block
 
@@ -26,6 +26,9 @@ The complete post info block displays:
 - With non-empty alt text: 🖼️alt_text🖼️
 - Without alt text: 🖼️filename.extension🖼️, for example, 🖼️Image1.png🖼️
 
+**Video:**
+- 📹video📹
+
 > If a link or image exceeds the limit, information about them is still displayed in full.
 
 ## 5. Parsing
@@ -33,8 +36,8 @@ The complete post info block displays:
 Kunena BBCode is converted to Joomla HTML using the [chriskonnertz/bbcode](https://github.com/chriskonnertz/bbcode) parser. Huge thanks to the developer.
 
 **Additional processing:**
+- Processing of links, images and videos
 - Shortening "bare" URLs
-- Processing links and images in reminder lines
 - Fixing problematic character sequences (e.g., `[br /`)
 
 ## 6. Language Files
@@ -76,4 +79,4 @@ The component supports two schemes for transferring posts to articles (determine
 
 7.3.4. If post index links are enabled in the parameters, the index of a temporarily hidden post is displayed as regular text (not a link). The index of a completely deleted post is replaced with the index of the first post of the topic, according to section 7.3.3.
 
-*[⬅️ Component purpose, parameters, installation, operation](../README.md) | [➡️Emails about article creation, database encoding, plugin](ADDITIONAL.md)*
+*[⬅️ Component purpose, parameters, installation, operation](../README.md) | [➡️Emails about article creation, database encoding, plugin](ADDITIONAL.md) | [ℹ️ Video Link Processing in the Component](VIDEOLINKS.md)*

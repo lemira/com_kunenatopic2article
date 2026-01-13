@@ -30,6 +30,7 @@ use Joomla\CMS\Access\Access;
 use Joomla\CMS\Filter\OutputFilter as FilterOutput;
 use Joomla\Component\KunenaTopic2Article\Administrator\Parser\BBCode;
 use Joomla\Component\KunenaTopic2Article\Administrator\Parser\Tag; // подгрузка класса при компиляции файла, BBCode сможет делать new Tag()
+use Joomla\Component\KunenaTopic2Article\Administrator\Helper\VideoProcessor;
 
 /**
  * Article Model
@@ -63,15 +64,18 @@ class ArticleModel extends BaseDatabaseModel
     public array $emailsSentTo = [];
     private $allPosts = []; // Добавляем свойство для хранения всех постов
     public bool $isPreview = false;
-      
-      public function __construct($config = [])
-{
-    parent::__construct($config);
+    private $videoProcessor = null; // Video processor instance
     
-    $this->app = Factory::getApplication();
-    $this->db = $this->getDatabase();
-    
-}
+    public function __construct($config = [])
+    {
+        parent::__construct($config);
+        
+        $this->app = Factory::getApplication();
+        $this->db = $this->getDatabase();
+        
+        // Инициализируем видео-процессор
+        $this->videoProcessor = new VideoProcessor();
+    }
 
     // -------------------------- РАБОТА СО СТАТЬЯМИ -------------------------
     
@@ -83,6 +87,11 @@ class ArticleModel extends BaseDatabaseModel
    public function createArticlesFromTopic($isPreview = false)
         {  
         $this->isPreview = $isPreview;   // для closeArticle()
+
+// Триггер загрузки языкового файла компонента
+    // Первое обращение к Text::_() для любой константы компонента загружает язык
+    Text::_('COM_KUNENATOPIC2ARTICLE_NO_TOPIC_SELECTED');
+            
          // Параметры $params получаем из таблицы kunenatopic2article_params
          $this->params = $this->getComponentParams(); 
          if (empty($this->params) || empty($this->params->topic_selection)) {
@@ -212,10 +221,9 @@ class ArticleModel extends BaseDatabaseModel
         }
 
         try {
-           // 1. Фильтрация контента
-            $filter = InputFilter::getInstance([], [], 1, 1);
-            $filteredContent = $filter->clean($this->currentArticle->fulltext, 'html');
-    
+           // 1. Контент уже очищен BBCode парсером, дополнительная фильтрация не нужна
+           $filteredContent = $this->currentArticle->fulltext;
+
             // 2. Формирование ссылки на CSS
            HTMLHelper::_('stylesheet', 'com_kunenatopic2article/css/kun_p2a.css', ['relative' => true]);
            $cssLink = '<link href="' . Uri::root(true) . '/media/com_kunenatopic2article/css/kun_p2a.css" rel="stylesheet">'; // для Сборки финального контента
@@ -480,6 +488,9 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
 
     mb_internal_encoding('UTF-8');
     
+     // Удаляем ВСЕ теги AllVideos (любые теги вида {tag}...{/tag})
+    $htmlContent = $this->videoProcessor->removeAllVideosTags($htmlContent);
+  
     $reminderLines = '';
     $link_symbol = '🔗';
     $image_symbol = '🖼️';
@@ -505,7 +516,7 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
         $byteOffset = $matches[0][1];
         $byteLength = strlen($matches[0][0]);
 
-        // 2a. Добавляем текст между последней обработанной позицией и текущим тегом
+        // 2a. Добавляем текст между последней обработанной позиции и текущим тегом
         $plainText = trim(mb_strcut($processedContent, $lastOffset, $byteOffset - $lastOffset, 'UTF-8'));
         $remainingSpaceForPlain = $reminderLinesLength - mb_strlen($reminderLines);
         $reminderLines .= mb_substr($plainText, 0, $remainingSpaceForPlain);
@@ -1135,28 +1146,30 @@ public function sendLinksToAdministrator(array $articleLinks): array
 }
 
     // ПАРСЕР
-        // ПОДГОТОВКА К ПАРСЕРУ. Получение реального пути к attachment из базы данных
     private function getAttachmentPath($attachmentId)
-{
-    try {
-        $db = $this->getDatabase();
-        $query = $db->getQuery(true)
-            ->select(['folder', 'filename', 'filename_real'])
-            ->from('#__kunena_attachments')
-            ->where('id = ' . (int)$attachmentId);
-        
-        $db->setQuery($query);
-        $attachment = $db->loadObject();
-        
-        if ($attachment) {
-            // Путь к файлу формируется из folder + filename (системное имя)
-            $imagePath = $attachment->folder . '/' . $attachment->filename;
+    {
+        try {
+            $db = $this->getDatabase();
+            $query = $db->getQuery(true)
+                ->select(['folder', 'filename', 'filename_real'])
+                ->from('#__kunena_attachments')
+                ->where('id = ' . (int)$attachmentId);
             
-            // Проверяем существование файла
-            if (file_exists(JPATH_ROOT . '/' . $imagePath)) {
-                return $imagePath;
+            $db->setQuery($query);
+            $attachment = $db->loadObject();
+            
+            if ($attachment) {
+                $imagePath = $attachment->folder . '/' . $attachment->filename;
+                
+                if (file_exists(JPATH_ROOT . '/' . $imagePath)) {
+                    return $imagePath;
+                }
             }
-     // ОТЛАДКА         error_log("Attachment $attachmentId: path='$imagePath', exists=" . (file_exists(JPATH_ROOT . '/' . $imagePath) ? 'YES' : 'NO'));
+            
+            return null;
+            
+        } catch (\Exception $e) {
+           return null;
         }
         
         return null;
@@ -1164,37 +1177,36 @@ public function sendLinksToAdministrator(array $articleLinks): array
     } catch (\Exception $e) {
        return null;
     }
-}
 
-     /**
-     * Преобразование BBCode в HTML
-     * @param   string  $text  Текст с BBCode
-     * @return  string  HTML-текст
-     */
-// BBCode парсер с использованием chriskonnertz/bbcode
 private function convertBBCodeToHtml($text)
 {
     try {
         class_exists(Tag::class, true);   // гарантируем загрузку
         $bbcode = new BBCode();
     
-    // Уд-м "[br /", которые обрубают текст поста при переносе в статью кл
-        $text = preg_replace('/<([^>]*?)\[br\s*\/\s*[>\]]/iu', '<$1>', $text);  // Удаляем [br с любыми вар-ми закрытия: [br />, [br /], [br/> и пр.
-        $text = preg_replace('/([»"\.])\s*>/u', '$1', $text);  // Удаляем одиночные > после кавычек/точек     
+        // Удаляем "[br /" которые обрубают текст
+        $text = preg_replace('/<([^>]*?)\[br\s*\/\s*[>\]]/iu', '<$1>', $text);
+        $text = preg_replace('/([»"\.])\s*>/u', '$1', $text);
 
-    // Защищаем URL внутри [img] тегов от преобразования в линки
+        // Сначала обрабатываем BBCode тег [video]
+        $text = $this->videoProcessor->extractVideoFromBBCode($text);
+        
+        // Обрабатываем ВСЕ видео-ссылки (включая BBCode)
+        $text = $this->videoProcessor->processVideoLinks($text);
+
+        // Защищаем URL внутри [img] тегов
         $imgProtect = [];
         $text = preg_replace_callback(
             '/\[img\](https?:\/\/[^\[]+?)\[\/img\]/i',
             function($m) use (&$imgProtect) {
                 $marker = '___IMGURL_' . count($imgProtect) . '___';
-                $imgProtect[$marker] = $m[0]; // Сохраняем весь тег [img]...[/img]
+                $imgProtect[$marker] = $m[0];
                 return $marker;
             },
             $text
         );  
         
-        // Делаем линками "голые" URL кл
+        // Делаем линками "голые" URL (но уже не видео-ссылки)
         $text = preg_replace_callback(
             '#(?<![\[="\'])(?<!href=)(https?://[^\s\[\]<>"\'\)]+)#i',
             function($m) {
@@ -1204,12 +1216,12 @@ private function convertBBCodeToHtml($text)
             $text
         );
 
-       // Восстанавливаем защищённые [img] теги
+        // Восстанавливаем защищённые [img] теги
         foreach ($imgProtect as $marker => $original) {
             $text = str_replace($marker, $original, $text);
         }
         
-        // Заменяем attachment на временные маркеры (чтобы BBCode парсер их не трогал)
+        // Заменяем attachment на временные маркеры
         $attachments = [];
         $text = preg_replace_callback('/\[attachment=(\d+)\](.*?)\[\/attachment\]/i', function($matches) use (&$attachments) {
             $attachmentId = $matches[1];
@@ -1219,11 +1231,20 @@ private function convertBBCodeToHtml($text)
             return $marker;
         }, $text);
         
-       // Применяем BBCode парсер
+        // Применяем BBCode парсер
         $html = $bbcode->render($text);
-        
+
         // Нормализуем br теги
         $html = preg_replace('/\s*<br\s*\/?>\s*/i', "\n", $html);
+        
+        // ЕДИНСТВЕННОЕ МЕСТО восстановления защищенного контента
+        $html = preg_replace_callback(
+            '/___PROTECTED___(.*?)___END___/',
+            function($matches) {
+                return base64_decode($matches[1]);
+            },
+            $html
+        );
         
         // Разбиваем по переносам строк
         $lines = explode("\n", $html);
@@ -1232,15 +1253,11 @@ private function convertBBCodeToHtml($text)
         $paragraphs = [];
         foreach ($lines as $line) {
             $line = trim($line);
-            
-            // Если строка пустая - добавляем пустой параграф
             if ($line === '') {
                 $paragraphs[] = '<p>&nbsp;</p>';
                 continue;
             }
-            
-            // Если строка не пустая - оборачиваем в <p>, если нужно
-            if (!preg_match('/^\s*<(p|div|h[1-6]|ul|ol|li|blockquote|pre|table|tr|td|th)\b/i', $line)) {
+            if (!preg_match('/^\s*<(p|div|h[1-6]|ul|ol|li|blockquote|pre|table|tr|td|th|iframe)\b/i', $line)) {
                 $line = '<p>' . $line . '</p>';
             }
             
@@ -1254,7 +1271,6 @@ private function convertBBCodeToHtml($text)
             $attachmentId = $data[0];
             $filename = $data[1];
             
-            // Получаем реальный путь из базы данных
             $imagePath = $this->getAttachmentPath($attachmentId);
             
             if ($imagePath && file_exists(JPATH_ROOT . '/' . $imagePath)) {
@@ -1266,27 +1282,34 @@ private function convertBBCodeToHtml($text)
             $html = str_replace($marker, $imageHtml, $html);
         }
 
-// обрезка ЛЮБЫХ длинных ссылок ки
-$html = preg_replace_callback(
-    '#<a\s+([^>]*?)href=[\'"]([^\'"]+)[\'"]([^>]*)>([^<]{50,})</a>#i',
-    function ($m) {
-        $visible = mb_substr($m[4], 0, 47) . '…';
-        return '<a ' . $m[1] . 'href="' . $m[2] . '"' . $m[3] . '>'
-               . htmlspecialchars($visible, ENT_QUOTES, 'UTF-8')
-               . '</a>';
-    },
-    $html
-);
+        // Обрезка длинных ссылок
+        $html = preg_replace_callback(
+            '#<a\s+([^>]*?)href=[\'"]([^\'"]+)[\'"]([^>]*)>([^<]{50,})</a>#i',
+            function ($m) {
+                if (preg_match('/\{(?:youtube|vimeo|facebook|soundcloud|dailymotion)\}/', $m[4])) {
+                    return $m[0];
+                }
+                
+                $visible = mb_substr($m[4], 0, 47) . '…';
+                return '<a ' . $m[1] . 'href="' . $m[2] . '"' . $m[3] . '>'
+                       . htmlspecialchars($visible, ENT_QUOTES, 'UTF-8')
+                       . '</a>';
+            },
+            $html
+        );
         
-         // ДОБАВЛЯЕМ ОБЕРТКУ КОНТЕЙНЕРА
+        //  Декодирование HTML-сущностей 
+        $html = str_replace('&lt;', '<', $html);
+        $html = str_replace('&gt;', '>', $html);
+        $html = str_replace('&quot;', '"', $html);
+        $html = str_replace('&amp;', '&', $html);
+        
         $html = '<div class="kun_p2a_content">' . $html . '</div>';
-        
         return $html;
         
-     } catch (\Throwable $e) {        // ловим всё, не только Exception
-        // Сообщение пользователю
+    } catch (\Throwable $e) {
         $this->app->enqueueMessage(
-            Text::_('COM_KUNENATOPIC2ARTICLE_BBCODE_PARSE_ERROR') . ': ' . $e->getMessage(),
+            'BBCode Parse Error: ' . $e->getMessage(),
             'warning'
         );
         return $this->simpleBBCodeToHtml($text);
@@ -1294,9 +1317,9 @@ $html = preg_replace_callback(
 }
 
   private function simpleBBCodeToHtml($text)
-{
-    return 'NO PARSER';
-}
+    {
+        return 'NO PARSER';
+    }
     
    // ------- КОНЕЦ ПАРСЕРА ---------
     
