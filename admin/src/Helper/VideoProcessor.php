@@ -96,32 +96,14 @@ class VideoProcessor
  */
 private function addBrBetweenConsecutiveVideos(string $text): string
 {
-    // 1. собираем ВСЕ защищённые блоки в массив
-    preg_match_all('/___PROTECTED___\w+___END___/', $text, $matches, PREG_OFFSET_CAPTURE);
-    $blocks = $matches[0];
-
-    if (count($blocks) < 2) {
-        return $text; // одно видео или их нет – ничего не делаем
-    }
-
-    $offsetShift = 0; // на сколько символов уже «сдвинули» строку после вставок
-    for ($i = 1; $i < count($blocks); $i++) {
-        $prevEnd = $blocks[$i - 1][1] + strlen($blocks[$i - 1][0]);
-        $currStart = $blocks[$i][1];
-
-        // между блоками только пробельные символы (или ничего)?
-        $gap = substr($text, $prevEnd + $offsetShift, $currStart - $prevEnd);
-        if (preg_match('/^\s*$/', $gap)) {
-            // вставляем один перенос перед текущим блоком
-            $br = '<br>'; // если <br> будет вычищаться, м вставить $br = "\n\n"; или $br = '<p>&nbsp;</p>';
-            $text = substr_replace($text, $br, $currStart + $offsetShift, 0);
-            $offsetShift += strlen($br);
-        }
-    } 
-        return $text;
-    }
+    // Ищем место МЕЖДУ концом одного блока и началом другого
+    // (?<=...) - проверка назад: перед нами должен быть ___END___
+    // \s* - любое количество пробелов/переносов
+    // (?=...) - проверка вперед: после нас должен быть ___PROTECTED___
+    return preg_replace('/(?<=___END___)\s*(?=___PROTECTED___)/i', '<br />', $text);
+}
     
-    private function isAllVideosEnabled(): bool
+    public function isAllVideosEnabled(): bool
     {
         try {
             $query = $this->db->getQuery(true)
@@ -143,12 +125,11 @@ private function addBrBetweenConsecutiveVideos(string $text): string
     private function getVideoPatterns(): array
     {
         return [
-            'youtube' => [
-                // Поддержка m.youtube.com и формата ?t=1m30s
-                'pattern' => '#(?<!___PROTECTED___)(?<![{\[])(?:https?://)?(?:www\.|m\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([\w-]+)(?:[&\?]t=(?:(\d+)s?|(\d+)m(\d+)s?))?(?=\s|$|[^\w&?=-])#i',
-                'tag' => 'youtube',
-                'iframe' => '<div class="kun_p2a_video_container"><iframe width="560" height="315" src="https://www.youtube.com/embed/{VIDEO_ID}?start={TIME_PARAM}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>'
-            ],
+           'youtube' => [
+    'pattern' => '#(?<!___PROTECTED___)(?<![{\[])(?:https?://)?(?:www\.|m\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([\w-]+)(?:[?&]t=(?:(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s?)|(\d+)))?(?:[^\s\n\r\t<>"]*)?(?=\s|$|[^\w&?=-])#i',
+    'tag' => 'youtube',
+    'iframe' => '<div class="kun_p2a_video_container"><iframe width="560" height="315" src="https://www.youtube.com/embed/{VIDEO_ID}?start={TIME_PARAM}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>'
+],
             'vimeo' => [
                 // Поддержка player.vimeo.com
                 'pattern' => '#(?<!___PROTECTED___)(?<![{\[])(?:https?://)?(?:(?:www\.|player\.)?vimeo\.com/(?:video/)?(\d+))(?=\s|$|[^\w/-])#i',
@@ -162,9 +143,9 @@ private function addBrBetweenConsecutiveVideos(string $text): string
                 'iframe' => null 
             ],
             'facebook' => [
-                // Поддержка m.facebook.com и fb.watch
-                'pattern' => '#(?<!___PROTECTED___)(?<![{\[])(?:https?://)?(?:(?:www\.|m\.)?facebook\.com/(?:watch/?\?v=|.*?/videos/)|fb\.watch/)(\w+)(?:/)?(?=\s|$|[^\w/-])#i',
-                'tag' => 'facebook',
+               // Поддержка m.facebook.com и fb.watch, захват ID
+                'pattern' => '#(?<!___PROTECTED___)(?<![{\[])(?:https?://)?(?:(?:www\.|m\.)?facebook\.com/(?:watch/?\?v=|video\.php\?v=|.*?/videos/)|fb\.watch/)([\w-]+)(?:/)?(?=\s|$|[^\w/-])#i',
+                 'tag' => 'facebook',
                 'iframe' => null
             ],
             'soundcloud' => [
@@ -217,71 +198,80 @@ private function addBrBetweenConsecutiveVideos(string $text): string
                htmlspecialchars($linkText, ENT_QUOTES, 'UTF-8') . '</a>';
     }
     
-    private function processVideoMatch(array $matches, string $platform, array $config, bool $allVideosEnabled): string
-    {
-        $fullMatch = $matches[0];
-        $videoId = $matches[1];
-        
-        // Обработка времени для YouTube (включая формат 1m30s)
-        $timeParam = '';
-        if ($platform === 'youtube') {
-            if (isset($matches[2]) && !empty($matches[2])) {
-                // Формат: ?t=42s или ?t=42
-                $timeParam = $matches[2];
-            } elseif (isset($matches[3]) && isset($matches[4])) {
-                // Формат: ?t=1m30s
-                $minutes = (int)$matches[3];
-                $seconds = (int)$matches[4];
-                $timeParam = ($minutes * 60) + $seconds;
-            }
-        }
-        
-        if ($allVideosEnabled) {
-            // ОСОБЫЕ СЛУЧАИ: Не используем AllVideos
-            
-            // 1. Facebook - всегда красивая ссылка
-            if ($platform === 'facebook') {
-                $fixedUrl = $this->fixVideoUrl($platform, $fullMatch);
-                return $this->createStyledVideoLink($platform, $fixedUrl);
-            }
-            
-            // 2. YouTube с временной меткой - создаем свой iframe
-            if ($platform === 'youtube' && !empty($timeParam)) {
-                $iframe = str_replace('{VIDEO_ID}', $videoId, $config['iframe']);
-                $iframe = str_replace('?start={TIME_PARAM}', '?start=' . $timeParam, $iframe);
-                
-                return '___PROTECTED___' . base64_encode($iframe) . '___END___';
-            }
-            
-            // ОБЫЧНЫЕ СЛУЧАИ: Используем AllVideos
-            if ($platform === 'soundcloud') {
-                $fixedUrl = $this->fixVideoUrl($platform, $fullMatch);
-                $tag = '{' . $config['tag'] . '}' . $fixedUrl . '{/' . $config['tag'] . '}';
-            } else {
-                $tag = '{' . $config['tag'] . '}' . $videoId . '{/' . $config['tag'] . '}';
-            }
-            
-            return '___PROTECTED___' . base64_encode($tag) . '___END___';
-            
+   private function processVideoMatch(array $matches, string $platform, array $config, bool $allVideosEnabled): string
+{
+    $fullMatch = $matches[0];
+    $videoId = $matches[1];
+    $videoUrl = $this->fixVideoUrl($platform, $fullMatch);
+
+    $timeParam = 0;
+    if ($platform === 'youtube') {
+        // Проверяем, захвачены ли группы времени
+        // $matches[2] - часы, [3] - минуты, [4] - секунды, [5] - просто число секунд (например, t=90)
+        if (!empty($matches[5])) {
+            $timeParam = (int)$matches[5];
         } else {
-            // Без AllVideos
-            if ($config['iframe'] !== null) {
-                $iframe = str_replace('{VIDEO_ID}', $videoId, $config['iframe']);
-                
-                if ($platform === 'youtube' && !empty($timeParam)) {
-                    $iframe = str_replace('?start={TIME_PARAM}', '?start=' . $timeParam, $iframe);
-                } else {
-                    $iframe = str_replace('?start={TIME_PARAM}', '', $iframe);
-                }
-                
-                return '___PROTECTED___' . base64_encode($iframe) . '___END___';
-                
-            } else {
-                $fixedUrl = $this->fixVideoUrl($platform, $fullMatch);
-                return $this->createStyledVideoLink($platform, $fixedUrl);
-            }
+            $hours   = !empty($matches[2]) ? (int)$matches[2] : 0;
+            $minutes = !empty($matches[3]) ? (int)$matches[3] : 0;
+            $seconds = !empty($matches[4]) ? (int)$matches[4] : 0;
+            
+            $timeParam = ($hours * 3600) + ($minutes * 60) + $seconds;
         }
     }
+
+    // Если время найдено (больше 0), мы ВСЕГДА используем наш iframe, 
+    // так как AllVideos плохо дружит с метками времени.
+    if ($timeParam > 0) {
+        $iframe = str_replace(['{VIDEO_ID}', '{TIME_PARAM}'], [$videoId, $timeParam], $config['iframe']);
+        return '___PROTECTED___' . base64_encode($iframe) . '___END___';
+    }
+    
+    if ($allVideosEnabled) {
+        // ОСОБЫЕ СЛУЧАИ: Не используем AllVideos
+        
+        // 1. Facebook - всегда красивая ссылка
+        if ($platform === 'facebook') {
+            $fixedUrl = $this->fixVideoUrl($platform, $fullMatch);
+            return $this->createStyledVideoLink($platform, $fixedUrl);
+        }
+        
+        // 2. YouTube с временной меткой - создаем свой iframe
+        if ($platform === 'youtube' && !empty($timeParam)) {
+            $iframe = str_replace('{VIDEO_ID}', $videoId, $config['iframe']);
+            $iframe = str_replace('?start={TIME_PARAM}', '?start=' . $timeParam, $iframe);
+            
+            return '___PROTECTED___' . base64_encode($iframe) . '___END___';
+        }
+        
+        // ОБЫЧНЫЕ СЛУЧАИ: Используем AllVideos
+        if ($platform === 'soundcloud') {
+            $fixedUrl = $this->fixVideoUrl($platform, $fullMatch);
+            $tag = '{' . $config['tag'] . '}' . $fixedUrl . '{/' . $config['tag'] . '}';
+        } else {
+            $tag = '{' . $config['tag'] . '}' . $videoId . '{/' . $config['tag'] . '}';
+        }
+        
+        return '___PROTECTED___' . base64_encode($tag) . '___END___';
+        
+    } else {
+        // Без AllVideos
+        if ($config['iframe'] !== null) {
+            $iframe = str_replace('{VIDEO_ID}', $videoId, $config['iframe']);
+            
+            if ($platform === 'youtube' && !empty($timeParam)) {
+                $iframe = str_replace('?start={TIME_PARAM}', '?start=' . $timeParam, $iframe);
+            } else {
+                $iframe = str_replace('?start={TIME_PARAM}', '', $iframe);
+            }
+            
+            return '___PROTECTED___' . base64_encode($iframe) . '___END___';
+            
+        } else {
+            $fixedUrl = $this->fixVideoUrl($platform, $fullMatch);
+            return $this->createStyledVideoLink($platform, $fixedUrl);
+        }
+    }
+}
     
     /**
      * Create styled video link with icon
@@ -357,8 +347,8 @@ private function addBrBetweenConsecutiveVideos(string $text): string
         }
         
         if ($platform === 'facebook' && strpos($url, 'fb.watch') !== false) {
-            // fb.watch остается как есть - Facebook сам редиректит, но нужно убедиться что есть протокол
-             // Нормализация для Facebook: /watch/?v= -> /video.php?v= - не работает (проверено!)
+            // fb.watch остается как есть - Facebook сам редиректит, но проверяенм, что есть протокол
+              // Нормализация для Facebook: /watch/?v= -> /video.php?v= - не работает (проверено!)
             if (!preg_match('/^https?:\/\//i', $url)) {
                 $url = 'https://' . $url;
             }
