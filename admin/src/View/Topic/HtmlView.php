@@ -47,6 +47,15 @@ class HtmlView extends BaseHtmlView
             Factory::getApplication()->enqueueMessage(Text::_('COM_KUNENATOPIC2ARTICLE_FORM_FAILED_TO_LOAD'), 'error');
         }
 
+        // Проверяем состояние AllVideos 
+$videoHelper = new VideoProcessor();
+if (!$videoHelper->isAllVideosEnabled()) {
+    Factory::getApplication()->enqueueMessage(
+        Text::_('COM_KUNENATOPIC2ARTICLE_WARNING_ALLVIDEOS_MISSING'), 
+        'warning'
+    );
+}
+        
         parent::display($tpl);
     }
 }
