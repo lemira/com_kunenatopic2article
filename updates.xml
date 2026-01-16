@@ -1,5 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <updates>
+   <!-- Version 1.0.5 - Current release -->
+    <update>
+        <name>Kunena Topic to Article</name>
+        <description>Creates Joomla articles based on Kunena forum topics</description>
+        <element>com_kunenatopic2article</element>
+        <type>component</type>
+        <version>1.0.5</version>
+        <infourl title="Kunena Topic to Article">https://github.com/lemira/com_kunenatopic2article</infourl>
+        <downloads>
+            <downloadurl type="full" format="zip">https://github.com/lemira/com_kunenatopic2article/releases/download/v1.0.5/com_kunenatopic2article-1.0.5.zip</downloadurl>
+        </downloads>
+        <tags>
+            <tag>stable</tag>
+        </tags>
+        <maintainer>Leonid Ratner</maintainer>
+        <maintainerurl>https://geschichte-chronologie.de</maintainerurl>
+        <targetplatform name="joomla" version="5\.[0-9]"/>
+        <client>administrator</client>
+    </update>
+    
+     
      <!-- Version 1.0.4 - Current release -->
     <update>
         <name>Kunena Topic to Article</name>
@@ -9,7 +30,7 @@
         <version>1.0.4</version>
         <infourl title="Kunena Topic to Article">https://github.com/lemira/com_kunenatopic2article</infourl>
         <downloads>
-            <downloadurl type="full" format="zip">https://github.com/lemira/com_kunenatopic2article/releases/download/v1.0.4/com_kunenatopic2article-1.0.4.zip</downloadurl>
+            <downloadurl type="full" format="zip">https://github.com/lemira/com_kunenatopic2article/releases/download/v1.0.4/com_kunenatopic2article.zip</downloadurl>
         </downloads>
         <tags>
             <tag>stable</tag>
