@@ -52,7 +52,7 @@
     
     <updateservers>
         <server type="extension" priority="1" name="Kunena Topic to Article Updates">
-            https://raw.githubusercontent.com/lemira/comkunenatopic2article/master/updates.xml
+            https://raw.githubusercontent.com/lemira/com_kunenatopic2article/master/updates.xml
         </server>
     </updateservers>
     
