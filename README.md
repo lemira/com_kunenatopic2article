@@ -5,6 +5,17 @@
 A component for automatically creating Joomla articles based on Kunena forum topics.
 Developed for Joomla 5 and Kunena 6.x.
 
+## ⚠️ Important Update Notice
+
+**For users of versions 1.0.4 and earlier:**
+
+If you experience automatic update errors, please manually download and install version 1.0.5 or later. This is a one-time manual update - all future updates will work automatically via Joomla's update system.
+
+**How to update manually:**
+1. Download the latest version from [Releases](https://github.com/lemira/com_kunenatopic2article/releases/latest)
+2. In Joomla: System → Install → Extensions
+3. Upload and install the ZIP file (it will update your existing installation)
+
 [📖 Post relations in Kunena, info block, parsing, languages](docs/FUNCTIONALITY.md) | [ℹ️ Emails about article creation, database encoding, plugin](docs/ADDITIONAL.md) | [ℹ️ Video Link Processing in the Component](docs/VIDEOLINKS.md)
 
 ## 🚀 General Information
