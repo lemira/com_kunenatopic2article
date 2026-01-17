@@ -1171,11 +1171,6 @@ public function sendLinksToAdministrator(array $articleLinks): array
         } catch (\Exception $e) {
            return null;
         }
-        
-        return null;
-        
-    } catch (\Exception $e) {
-       return null;
     }
 
 private function convertBBCodeToHtml($text)
