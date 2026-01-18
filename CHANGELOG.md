@@ -10,6 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Fixed update server URL in component manifest
 
+## ⚠️ Important Update Notice
+
+**For users of versions 1.0.4 and earlier:**
+
+If you experience automatic update errors, please manually download and install version 1.0.5 or later. This is a one-time manual update - all future updates will work automatically via Joomla's update system.
+
+**How to update manually:**
+1. Download the latest version from [Releases](https://github.com/lemira/com_kunenatopic2article/releases/latest)
+2. In Joomla: System → Install → Extensions
+3. Upload and install the ZIP file (it will update your existing installation)
+
 ## [1.0.4] - 2025-01-14
 
 ### Added
