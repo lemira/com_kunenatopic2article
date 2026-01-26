@@ -224,15 +224,13 @@ class ArticleModel extends BaseDatabaseModel
            // 1. Контент уже очищен BBCode парсером, дополнительная фильтрация не нужна
            $filteredContent = $this->currentArticle->fulltext;
 
-            // 2. Формирование ссылки на CSS
-           HTMLHelper::_('stylesheet', 'com_kunenatopic2article/css/kun_p2a.css', ['relative' => true]);
-           $cssLink = '<link href="' . Uri::root(true) . '/media/com_kunenatopic2article/css/kun_p2a.css" rel="stylesheet">'; // для Сборки финального контента
-     //       Factory::getApplication()->enqueueMessage('closeArticle Добавление CSS:' . $cssLink, 'info'); // ОТЛАДКА 
-            // 3. Сборка финального контента
-            $this->currentArticle->fulltext = $cssLink . $filteredContent;
-    // Factory::getApplication()->enqueueMessage('closeArticle fulltext до createArt' . HTMLHelper::_('string.truncate', $this->currentArticle->fulltext, 100, true, false), 'info'); //ОТЛАДКА true-сохр целые слова, false-не доб многоточие          
-          
-            // 4. Создаем статью через Table
+            // 2. Добавление файла CSS
+            $cssPath = JPATH_SITE . '/media/com_kunenatopic2article/css/kun_p2a.css';
+            $cssContent = file_get_contents($cssPath);
+            $cssStyle = '<style>' . PHP_EOL . $cssContent . PHP_EOL . '</style>' . PHP_EOL;
+            $this->currentArticle->fulltext = $cssStyle . $filteredContent;
+            
+            // 3. Создаем статью через Table
             $this->articleId = $this->createArticleViaTable();
   // Factory::getApplication()->enqueueMessage('closeArticle fulltext после createArt' . HTMLHelper::_('string.truncate', $this->currentArticle->fulltext, 100, true, false),'info'); 
                          
