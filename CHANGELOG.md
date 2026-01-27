@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-01-27
+
+### Changed (Breaking Changes)
+- **CSS embedding in articles**: CSS is now embedded directly into the HTML of each created article instead of an external link to the component file
+- Each article receives an independent copy of CSS from the component's `media/` folder at creation time
+- V1.x.x format articles continue to work but require the component to be installed
+
+### Added
+- Conversion script `p2a_convert_to_V2.php` for updating existing articles
+
+---
+
+### Migration from version 1.x.x to 2.0.0
+
+**What has changed:**
+- In V1.x.x CSS was linked as an external file — all articles had uniform styling
+- In V2.0.0 CSS is embedded in the article — each article is independent and can be customized individually
+
+**Automatic update of existing articles:**
+
+1. Make sure the component's CSS is configured as needed (conversion applies the current version of the component's CSS to version 1 articles)
+2. Download `p2a_convert_to_V2.php` from the release, place it in the site root
+3. Open in browser: `http://your-site.com/p2a_convert_to_V2.php`
+4. The script will update all V1.x.x articles and create a log `p2a_converted.log` with a list of modified articles (ID, title, alias)
+5. Delete the script and log files
+
+**Alternatives:**
+- If there are few articles and topics haven't changed — delete old articles and recreate them
+- You can skip the update, but then the component must remain installed and the article appearance will depend on the component's current CSS
+
 ## [1.0.5] - 2025-01-16
 
 ### Fixed
@@ -135,6 +165,7 @@ If you experience automatic update errors, please manually download and install 
 
 ---
 
+[2.0.0]: https://github.com/lemira/com_kunenatopic2article/compare/V1.0.5...V2.0.0
 [1.0.5]: https://github.com/lemira/com_kunenatopic2article/compare/V1.0.4...V1.0.5
 [1.0.4]: https://github.com/lemira/com_kunenatopic2article/compare/V1.0.3...V1.0.4
 [1.0.3]: https://github.com/lemira/com_kunenatopic2article/compare/V1.0.2...V1.0.3
