@@ -35,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - If there are few articles and topics haven't changed — delete old articles and recreate them
 - You can skip the update, but then the component must remain installed and the article appearance will depend on the component's current CSS
 
-## [1.0.5] - 2025-01-16
+## [1.0.5] - 2026-01-16
 
 ### Fixed
 - Fixed update server URL in component manifest
@@ -51,7 +51,7 @@ If you experience automatic update errors, please manually download and install 
 2. In Joomla: System → Install → Extensions
 3. Upload and install the ZIP file (it will update your existing installation)
 
-## [1.0.4] - 2025-01-14
+## [1.0.4] - 2026-01-14
 
 ### Added
 - **Comprehensive video content processing**: new `VideoProcessor.php` helper for automatic recognition and processing of video links from various platforms (YouTube, Vimeo, etc.)
