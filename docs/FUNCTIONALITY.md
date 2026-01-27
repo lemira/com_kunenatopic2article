@@ -31,6 +31,20 @@ The complete post info block displays:
 
 > If a link or image exceeds the limit, information about them is still displayed in full.
 
+### 4.3. Editing CSS embedded in articles
+Styles are located inside the `<style>` tag in the article's HTML. The easiest way to view the article's CSS: open the article on the site, press "View page source" in the browser, and find the `kun_p2a` class.
+
+**Editing CSS in an article:**
+1. Open the article for editing in Joomla editor
+2. Switch to "HTML" or "Source" mode
+3. Find the `<style>...</style>` block and make changes
+
+**⚠️ Important:** JCE and some other WYSIWYG editors may hide/remove `<style>` tags. Workarounds: 1) temporarily disable tag filtering in editor settings, 2) use the basic "None" editor, or 3) edit via phpMyAdmin (table `#__content`).
+
+**Managing CSS size in articles**
+
+The supplied CSS is ~10 KB and provides "beautiful" article formatting. For most sites, 10 KB per article is insignificant. However, if there are memory issues, the file size can be reduced to ~1 KB by removing decorative styles and unused elements, such as video player styles (approximately ~5 KB).
+
 ## 5. Parsing
 
 Kunena BBCode is converted to Joomla HTML using the [chriskonnertz/bbcode](https://github.com/chriskonnertz/bbcode) parser. Huge thanks to the developer.
