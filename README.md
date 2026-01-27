@@ -48,9 +48,12 @@ The Kunena Topic to Article component (`kunenatopic2article`) automatically gene
 _¹ ID is displayed in the upper right corner of the post after the # sign when the "Show real post ID" option is enabled in Kunena  
 ² Currently, Kunena defines post title as "Topic Title" or RE:"Topic Title"_
 
-#### 🎨 CSS Styles
-Styles define the appearance of articles (default - almost standard) and the formatting of the info block.
-The stylesheet `/media/com_kunenatopic2article/css/kun_p2a.css` can be edited in `com_kunenatopic2article.zip` or directly on the server without reinstalling the component.
+## 🎨 CSS Styles
+Styles define the appearance of articles (default is almost standard) and the formatting of the information block. The stylesheet `/media/com_kunenatopic2article/css/kun_p2a.css` can be edited in `com_kunenatopic2article.zip` or directly on the server without reinstalling the component.
+
+The current CSS file is embedded in the HTML of each created article. This provides individual style customization for separate articles or groups of articles, prevents component CSS changes from affecting previously created articles, and ensures independence from the installed component.
+
+Editing CSS embedded in articles is described in the docs/FUNCTIONALITY.md documentation file in section 4.3. If you have already used component version 1, it is recommended to check the section for release 2.0.0 in the CHANGELOG.md file.
 
 ![Component parameters form and control buttons](docs/images/Main_Component_Form.png "Component parameters form and control buttons")
 
