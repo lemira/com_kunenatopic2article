@@ -327,6 +327,7 @@ class ArticleModel extends BaseDatabaseModel
                 'catid' => (int) $this->params->article_category,
                 'state' => 1, // Published 
                 'created' => (new Date())->toSql(),
+                'created_by' => $this->topicAuthorId,
                 'publish_up' => (new Date())->toSql(),
                 'language' => '*',
                 'access' => 1,
