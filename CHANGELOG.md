@@ -28,7 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upload and install the package.
 - IMPORTANT: If you are installing this plugin for the first time, don't forget to Enable it. Go to System -> Plugins, find "System - Kunenatopic2articleimgfix", and click the status icon to make it active.
 
-
 ## [2.0.0] - 2026-01-27
 
 ### Changed (Breaking Changes)
