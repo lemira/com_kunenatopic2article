@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-02-07
+
+### 1. The topic author is assigned as the article author
+- Fixed a coincidental error; now the author of the article is again assigned as the topic starter, not the administrator.
+
+### 2. Plugin plg_system_kunenatopic2articleimgfix - Release v1.1.0 
+- Improved Anchor Scrolling for Chromium/Gecko
+
+#### 🚀 What's New
+- This update addresses the common issue where browsers (especially Google Chrome and Microsoft Edge) fail to scroll to the specific post anchor (e.g., #2993) upon page load.
+
+#### 🛠 Fixes & Improvements
+- Disabled Native Scroll Restoration: Switched to history.scrollRestoration = 'manual' to prevent Chromium from interfering with the script-driven positioning.
+- Inline JavaScript Implementation: The fix is now injected directly into the page header, eliminating the need for external JS files and avoiding cache-related issues.
+- Post-Load Re-positioning: Added a retry mechanism that monitors page layout shifts for 1.2 seconds after the window.load event. This ensures that even if heavy images or ads load slowly, the browser will snap back to the correct post.
+- Vanilla JS: Removed jQuery dependency for this specific task to ensure the fastest possible execution.
+
+#### 📦 Installation
+- Download the plg_system_kunenatopic2articleimgfix.zip file.
+- Go to your Joomla Admin Panel: System -> Install -> Extensions.
+- Upload and install the package.
+- IMPORTANT: If you are installing this plugin for the first time, don't forget to Enable it. Go to System -> Plugins, find "System - Kunenatopic2articleimgfix", and click the status icon to make it active.
+
 ## [2.0.0] - 2026-01-27
 
 ### Changed (Breaking Changes)
@@ -165,6 +188,7 @@ If you experience automatic update errors, please manually download and install 
 
 ---
 
+[2.0.1]: https://github.com/lemira/com_kunenatopic2article/compare/V2.0.0...V2.0.1
 [2.0.0]: https://github.com/lemira/com_kunenatopic2article/compare/V1.0.5...V2.0.0
 [1.0.5]: https://github.com/lemira/com_kunenatopic2article/compare/V1.0.4...V1.0.5
 [1.0.4]: https://github.com/lemira/com_kunenatopic2article/compare/V1.0.3...V1.0.4
