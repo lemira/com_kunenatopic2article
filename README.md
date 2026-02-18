@@ -74,7 +74,7 @@ When calling the component, four buttons are available:
 | 👁️ **Preview** | Shows the first two posts with the info block |
 | 🚀 **Create Articles** | Generates one or more articles based on the topic |
 
-> The "Preview" and "Create Articles" buttons are activated after successful parameter saving.
+> The "Preview" and "Create Articles" buttons are activated after successful parameter saving. To use the "Preview" function, the user must be authenticated on the website's frontend.
 
 ### 2.2. Article Creation
 - The topic author is assigned as the article author
