@@ -2,67 +2,57 @@
 /**
  * @package     Joomla.Administrator
  * @subpackage  com_kunenatopic2article
- *
  * @copyright   (C) 2025 Leonid Ratner. All rights reserved.
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
 defined('_JEXEC') or die;
 
-// Необходимые классы
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
+use Joomla\CMS\Uri\Uri;
 
 HTMLHelper::_('behavior.formvalidator');
 HTMLHelper::_('bootstrap.framework');
 
-$app = Factory::getApplication();
-$form = $this->form;
+// Передаем абсолютно всё через опции скрипта
+Factory::getApplication()->getDocument()->addScriptOptions('kunena_preview_data', [
+    // Добавлен false в конце Route::_
+    'previewUrl' => Route::_('index.php?option=com_kunenatopic2article&task=article.preview&format=json', false),
+    'deleteUrl'  => Route::_('index.php?option=com_kunenatopic2article&task=article.deletePreview&format=json', false),
+    'token'      => Session::getFormToken(),
+    'msgAuth'    => Text::_('COM_KUNENATOPIC2ARTICLE_PREVIEW_AUTH_REQUIRED')
+]);
 
-// Декодируем HTML-сущности в URL для правильной работы AJAX
-$previewTaskUrl = html_entity_decode(
-    Route::_('index.php?option=com_kunenatopic2article&task=article.preview&format=json'),
-    ENT_QUOTES,
-    'UTF-8'
-);
-$deleteTaskBaseUrl = html_entity_decode(
-    Route::_('index.php?option=com_kunenatopic2article&task=article.deletePreview&format=json'),
-    ENT_QUOTES,
-    'UTF-8'
-);
+$form = $this->form;
 ?>
 
 <form action="<?= Route::_('index.php?option=com_kunenatopic2article'); ?>" method="post" name="adminForm" id="adminForm" class="form-validate">
     <div class="container-fluid">
         <h1><?= Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_TITLE'); ?></h1>
         <div class="btn-toolbar mb-3">
-        <!-- Remember и Reset Parameters всегда активны -->
-        <button type="button" class="btn btn-primary me-2" onclick="Joomla.submitbutton('save')">
+            <button type="button" class="btn btn-primary me-2" onclick="Joomla.submitbutton('save')">
                 <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_REMEMBER'); ?>
             </button>
             <button type="button" class="btn btn-secondary me-2" onclick="Joomla.submitbutton('reset')">
                 <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_RESET'); ?>
             </button>
-            <!-- Create Articles и Preview синхронизированы через can_create -->
-             <button type="button" id="previewButton" class="btn btn-info me-2" <?= $this->canCreate ? '' : 'disabled'; ?>>
+            
+            <button type="button" id="previewButton" class="btn btn-info me-2" <?= $this->canCreate ? '' : 'disabled'; ?>>
                 <span class="icon-eye" aria-hidden="true"></span>
                 <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_PREVIEW'); ?>
             </button>
-            <button type="button" id="btn_create" class="btn btn-success me-2"  onclick="Joomla.submitbutton('article.create')" <?= $this->canCreate ? '' : 'disabled'; ?>>
+            
+            <button type="button" id="btn_create" class="btn btn-success me-2" onclick="Joomla.submitbutton('article.create')" <?= $this->canCreate ? '' : 'disabled'; ?>>
                 <?= Text::_('COM_KUNENATOPIC2ARTICLE_BUTTON_CREATE'); ?>
             </button>
-    </div>
+        </div>
 
-        <h3><?= Text::_('COM_KUNENATOPIC2ARTICLE_ARTICLE_PARAMS'); ?></h3>
         <?php if ($form): ?>
             <?= $form->renderFieldset('article_params'); ?>
-        <?php endif; ?>
-
-        <h3><?= Text::_('COM_KUNENATOPIC2ARTICLE_POST_INFO'); ?></h3>
-        <?php if ($form): ?>
             <?= $form->renderFieldset('post_info'); ?>
         <?php endif; ?>
 
@@ -73,51 +63,48 @@ $deleteTaskBaseUrl = html_entity_decode(
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    const jOptions = Joomla.getOptions('kunena_preview_data');
     const previewButton = document.getElementById('previewButton');
 
-    if (previewButton) {
+    if (previewButton && jOptions) {
         previewButton.addEventListener('click', async (event) => {
             event.preventDefault();
 
             try {
-                // 1. Создаем preview-статью в БД (контроллер возвращает ID и URL)
-                const response = await fetch('<?= $previewTaskUrl; ?>', {
+                // 1. Создание превью
+                const response = await fetch(jOptions.previewUrl, {
                     method: 'POST',
-                    headers: {
-                        'X-CSRF-Token': '<?= Session::getFormToken(); ?>'
-                    }
+                    headers: { 'X-CSRF-Token': jOptions.token }
                 });
 
                 const result = await response.json();
 
                 if (result.success && result.data.url) {
-                    // 2. Пытаемся загрузить HTML статьи
+                    // 2. Загрузка HTML
                     const articleResponse = await fetch(result.data.url);
 
-                    // ПРОВЕРКА НА 404 (Если юзер не авторизован на фронтенде)
                     if (articleResponse.status === 404) {
                         Joomla.removeMessages();
                         Joomla.renderMessages({
-                            'warning': ['<?= Text::_('COM_KUNENATOPIC2ARTICLE_PREVIEW_AUTH_REQUIRED'); ?>']
+                            'warning': [jOptions.msgAuth]
                         });
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                         return;
                     }
 
-                    let articleHtml = await articleResponse.text();
+                    const articleHtml = await articleResponse.text();
 
-                    // 3. СРАЗУ удаляем статью из БД (чистим за собой)
-                    const deleteUrl = '<?= $deleteTaskBaseUrl; ?>' + '&id=' + result.data.id;
-                    fetch(deleteUrl, {
+                    // 3. Удаление временной статьи
+                    fetch(jOptions.deleteUrl + '&id=' + result.data.id, {
                         method: 'POST',
-                        headers: { 'X-CSRF-Token': '<?= Session::getFormToken(); ?>' }
-                    }).catch(err => console.error('Delete error:', err));
+                        headers: { 'X-CSRF-Token': jOptions.token }
+                    });
 
-                    // 4. Показываем модальное окно с контентом
-                    const modal = document.createElement('div');
-                    modal.className = 'modal fade';
-                    modal.innerHTML = `
-                        <div class="modal-dialog" style="max-width: 70%; margin: 2% auto;">
+                    // 4. Модальное окно
+                    const modalDiv = document.createElement('div');
+                    modalDiv.className = 'modal fade';
+                    modalDiv.innerHTML = `
+                        <div class="modal-dialog modal-lg" style="max-width: 80%;">
                             <div class="modal-content">
                                 <div class="modal-header">
                                     <h5 class="modal-title">Preview</h5>
@@ -127,28 +114,22 @@ document.addEventListener('DOMContentLoaded', () => {
                                     ${articleHtml}
                                 </div>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                     
-                    document.body.appendChild(modal);
-                    const bootstrapModal = new bootstrap.Modal(modal);
+                    document.body.appendChild(modalDiv);
+                    const bootstrapModal = new bootstrap.Modal(modalDiv);
                     bootstrapModal.show();
 
-                    modal.addEventListener('hidden.bs.modal', () => {
-                        document.body.removeChild(modal);
+                    modalDiv.addEventListener('hidden.bs.modal', () => {
+                        document.body.removeChild(modalDiv);
                     });
-
-                } else {
-                    alert('Error: ' + (result.message || 'Unknown error'));
                 }
-
             } catch (error) {
-                console.error('Preview failed:', error);
+                console.error('Preview error:', error);
             }
         });
     }
 
-    // Обработка стандартных кнопок Joomla (Save/Reset)
     Joomla.submitbutton = function(task) {
         Joomla.submitform(task, document.getElementById('adminForm'));
     }
