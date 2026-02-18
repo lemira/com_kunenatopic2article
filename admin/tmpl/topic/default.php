@@ -75,16 +75,12 @@ $deleteTaskBaseUrl = html_entity_decode(
 document.addEventListener('DOMContentLoaded', () => {
     const previewButton = document.getElementById('previewButton');
 
-        if (previewButton && !previewButton.disabled) {
-            previewButton.addEventListener('click', async (event) => {
+    if (previewButton) {
+        previewButton.addEventListener('click', async (event) => {
             event.preventDefault();
 
-            // Проверяем, что кнопка активна
-            if (previewButton.disabled) {
-                return;
-            }
             try {
-                // 1. Создаем preview-статью
+                // 1. Создаем preview-статью в БД (контроллер возвращает ID и URL)
                 const response = await fetch('<?= $previewTaskUrl; ?>', {
                     method: 'POST',
                     headers: {
@@ -92,31 +88,39 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
                 const result = await response.json();
 
                 if (result.success && result.data.url) {
-                    // 2. Загружаем HTML статьи
+                    // 2. Пытаемся загрузить HTML статьи
                     const articleResponse = await fetch(result.data.url);
+
+                    // ПРОВЕРКА НА 404 (Если юзер не авторизован на фронтенде)
+                    if (articleResponse.status === 404) {
+                        Joomla.removeMessages();
+                        Joomla.renderMessages({
+                            'warning': ['<?= Text::_('COM_KUNENATOPIC2ARTICLE_PREVIEW_AUTH_REQUIRED'); ?>']
+                        });
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        return;
+                    }
+
                     let articleHtml = await articleResponse.text();
 
-                    // 3. СРАЗУ удаляем статью из БД
+                    // 3. СРАЗУ удаляем статью из БД (чистим за собой)
                     const deleteUrl = '<?= $deleteTaskBaseUrl; ?>' + '&id=' + result.data.id;
                     fetch(deleteUrl, {
                         method: 'POST',
                         headers: { 'X-CSRF-Token': '<?= Session::getFormToken(); ?>' }
                     }).catch(err => console.error('Delete error:', err));
 
-                    // 4. Создаем модальное окно с HTML-копией
+                    // 4. Показываем модальное окно с контентом
                     const modal = document.createElement('div');
                     modal.className = 'modal fade';
                     modal.innerHTML = `
                         <div class="modal-dialog" style="max-width: 70%; margin: 2% auto;">
                             <div class="modal-content">
                                 <div class="modal-header">
+                                    <h5 class="modal-title">Preview</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
                                 <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
@@ -130,51 +134,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     const bootstrapModal = new bootstrap.Modal(modal);
                     bootstrapModal.show();
 
-                    // 5. УБИРАЕМ СТРЕЛКИ ЧЕРЕЗ CSS (после загрузки контента)
-                    setTimeout(() => {
-                        const style = document.createElement('style');
-                        style.textContent = `
-                            .icon-external-link::before,
-                            .icon-external-link::after,
-                            [class*="external"]::before,
-                            [class*="external"]::after,
-                            a[target="_blank"]::before,
-                            a[target="_blank"]::after {
-                                display: none !important;
-                                content: none !important;
-                            }
-                            /* Убираем все псевдоэлементы у ссылок */
-                            a::before,
-                            a::after {
-                                display: none !important;
-                                content: none !important;
-                            }
-                            /* Убираем все псевдоэлементы у span и i */
-                            span::before, span::after,
-                            i::before, i::after {
-                                display: none !important;
-                                content: none !important;
-                            }
-                        `;
-                        modal.querySelector('.modal-body').appendChild(style);
-                    }, 100);
-
-                  // 6. При закрытии удаляем модальное окно
                     modal.addEventListener('hidden.bs.modal', () => {
                         document.body.removeChild(modal);
-                    });   // can_create остается true после Preview!
-                    
+                    });
+
                 } else {
-                    alert('Error creating preview: ' + (result.message || 'Unknown error'));
+                    alert('Error: ' + (result.message || 'Unknown error'));
                 }
 
             } catch (error) {
                 console.error('Preview failed:', error);
-                alert('Preview request failed: ' + error.message);
             }
         });
     }
-    
+
+    // Обработка стандартных кнопок Joomla (Save/Reset)
     Joomla.submitbutton = function(task) {
         Joomla.submitform(task, document.getElementById('adminForm'));
     }
