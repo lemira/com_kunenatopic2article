@@ -312,6 +312,7 @@ class ArticleModel extends BaseDatabaseModel
      * Создание статьи через Table API
      * @return  boolean|int  False в случае неудачи, ID статьи в случае успеха
          */
+
    protected function createArticleViaTable()
 {
    try {
