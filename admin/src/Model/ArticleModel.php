@@ -312,73 +312,85 @@ class ArticleModel extends BaseDatabaseModel
      * Создание статьи через Table API
      * @return  boolean|int  False в случае неудачи, ID статьи в случае успеха
          */
-    protected function createArticleViaTable()
-    {
-        try {
-            // Получаем table для контента
-            $tableArticle = Table::getInstance('Content');
-            
-            // Подготавливаем данные 
-                $data = [
-                'title' => $this->currentArticle->title,
-                'alias' => $this->currentArticle->alias,
-                'introtext' => '',
-                'fulltext' => $this->currentArticle->fulltext, // Используем отфильтрованный контент с добавленным впереди css
-                'catid' => (int) $this->params->article_category,
-                'state' => 1, // Published 
-                'created' => (new Date())->toSql(),
-                'created_by' => $this->topicAuthorId,
-                'publish_up' => (new Date())->toSql(),
-                'language' => '*',
-                'access' => 1,
-                'attribs' => '{"show_title":"","link_titles":"","show_tags":""}',
-                'metakey' => '',
-                'metadesc' => '',
-                'metadata' => '{"robots":"","author":"","rights":""}' // Стандартные метаданные
-            ];
 
-           if (!$tableArticle->save($data)) {    // Получаем ID созданной статьи в $tableArticle->id
+   protected function createArticleViaTable()
+{
+   try {
+        // Получаем table для контента
+        $tableArticle = Table::getInstance('Content'); // заодно получаем следующий ID в $tableArticle->id
+        
+        // Подготавливаем базовые данные
+        $data = [
+            'title' => $this->currentArticle->title,
+            'alias' => $this->currentArticle->alias,
+            'introtext' => '',
+            'fulltext' => $this->currentArticle->fulltext,
+            'catid' => (int) $this->params->article_category,
+            'state' => 1, // Published 
+            'created' => (new Date())->toSql(),
+            'created_by' => $this->topicAuthorId,
+            'publish_up' => (new Date())->toSql(),
+            'language' => '*',
+            'access' => 1,
+            'attribs' => '{"show_title":"","link_titles":"","show_tags":""}',
+            'metakey' => '',
+            'metadesc' => '',
+            'metadata' => '{"robots":"","author":"","rights":""}'
+        ];
+
+        
+        if ($this->isPreview) {      // Если это режим превью - модифицируем данные
+          $data['state'] = 0; // превью не опубликовано
+        }
+
+        // Сохраняем статью
+        if (!$tableArticle->save($data)) {
             throw new \Exception($tableArticle->getError());
         }
-             
-        // --- Запись в #__workflow_associations
-         try {
-            // Проверяем, есть ли уже запись
-           $query = $this->db->getQuery(true)
-                ->select('COUNT(*)')
-                ->from($this->db->quoteName('#__workflow_associations'))
-                ->where($this->db->quoteName('item_id') . ' = ' . $this->db->quote($tableArticle->id))
-                ->where($this->db->quoteName('extension') . ' = ' . $this->db->quote('com_content.article'));
-            $exists = (bool) $this->db->setQuery($query)->loadResult();
-
-            if (!$exists) {
+        
+        // Получаем ID созданной статьи
+        $savedId = $tableArticle->id;
+        
+        // --- Запись в #__workflow_associations 
+         if (!$this->isPreview) {   // только для обычных статей, для превью не нужно
+            try {
+                // Проверяем, есть ли уже запись
                 $query = $this->db->getQuery(true)
-                    ->insert($this->db->quoteName('#__workflow_associations'))
-                    ->columns([
-                        $this->db->quoteName('item_id'),
-                        $this->db->quoteName('stage_id'),
-                        $this->db->quoteName('extension')
-                    ])
-                    ->values(implode(',', [
-                        $this->db->quote($tableArticle->id),
-                        $this->db->quote(1), // stage_id=1 (опубликовано)
-                        $this->db->quote('com_content.article')
-                    ]));
-                $this->db->setQuery($query)->execute();
-            }
-        } catch (\Exception $e) {
-            // Логируем ошибку, но не прерываем работу
-            $this->app->enqueueMessage('Ошибка добавления записи в workflow_associations: ' . $e->getMessage(), 'warning');
-        }
-       // --- Конец записи в #__workflow_associations
-            
-            return $tableArticle->id;
-            
-        } catch (\Exception $e) {
-            $this->app->enqueueMessage('Ошибка создания статьи через Table: ' . $e->getMessage(), 'error');
-            return false;
-        }
+                    ->select('COUNT(*)')
+                    ->from($this->db->quoteName('#__workflow_associations'))
+                    ->where($this->db->quoteName('item_id') . ' = ' . $this->db->quote($savedId))
+                    ->where($this->db->quoteName('extension') . ' = ' . $this->db->quote('com_content.article'));
+                $exists = (bool) $this->db->setQuery($query)->loadResult();
+
+                if (!$exists) {
+                    $query = $this->db->getQuery(true)
+                        ->insert($this->db->quoteName('#__workflow_associations'))
+                        ->columns([
+                            $this->db->quoteName('item_id'),
+                            $this->db->quoteName('stage_id'),
+                            $this->db->quoteName('extension')
+                        ])
+                        ->values(implode(',', [
+                            $this->db->quote($savedId),
+                            $this->db->quote(1), // stage_id=1 (опубликовано)
+                            $this->db->quote('com_content.article')
+                        ]));
+                    $this->db->setQuery($query)->execute();
+                }
+            } catch (\Exception $e) {
+                // Логируем ошибку, но не прерываем работу
+                $this->app->enqueueMessage('Ошибка добавления записи в workflow_associations: ' . $e->getMessage(), 'warning');
+       }
     }
+        // --- Конец записи в #__workflow_associations
+        
+        return $savedId;
+        
+    } catch (\Exception $e) {
+        $this->app->enqueueMessage('Ошибка создания статьи через Table: ' . $e->getMessage(), 'error');
+        return false;
+    }
+}
 
     // --------------------------- РАБОТА С ПОСТАМИ -------------------
     /**

@@ -73,101 +73,45 @@ class ArticleController extends BaseController
      * Создает временную статью для предпросмотра, возвращает URL в формате JSON
      * @return void
      */
-    public function preview(): void
-    {
-        // Устанавливаем заголовки для JSON сразу
-        header('Content-Type: application/json');
+   public function preview(): void
+{
+    // 1. Убираем всё, что могло попасть в вывод до этого момента
+    if (ob_get_length()) ob_clean();
+    
+    header('Content-Type: application/json');
+    
+    try {
+        $this->checkToken('POST');
         
-        try {
-           // Проверка токена безопасности
-            try {
-                $this->checkToken('POST');
-            //    error_log('Token check passed');
-            } catch (\Exception $e) {
-                $token = $this->input->get(Session::getFormToken(), '', 'alnum');
-                if (empty($token)) {
-                    throw new \Exception('Invalid token: ' . $e->getMessage());
-                }
-              }
-            
-          /** @var \Joomla\Component\KunenaTopic2Article\Administrator\Model\ArticleModel $model */
-            $model = $this->getModel('Article', 'Administrator');
-            
-            if (!$model) {
-                throw new \Exception('Could not get Article model');
-            }
-            
-        //    error_log('Creating preview article...');
-            // Создаем временную статью для preview
-            $articleData = $model->createArticlesFromTopic(true); // $isPreview = true
-            
-            if (!$articleData || !isset($articleData['id'])) {
-                throw new \Exception(Text::_('COM_KUNENATOPIC2ARTICLE_ERROR_PREVIEW_ARTICLE_CREATION_FAILED'));
-            }
-            
-            // Формируем URL для фронтенда
-           $previewUrl = Uri::root() . 'index.php?option=com_content&view=article&id=' // кл,дс
-          . $articleData['id'] 
-         . '&preview=1';  // '&tmpl=component' - выдает в окно т статью, НО ПОЛУЧАЕТСЯ НЕКРАСИВО (дс)
-            
-            // Декодируем HTML-сущности
-            $previewUrl = html_entity_decode($previewUrl, ENT_QUOTES, 'UTF-8');
-            
-            // Формируем успешный ответ
-            $response = [
-                'success' => true,
-                'data'    => [
-                    'url' => $previewUrl,
-                    'id'  => $articleData['id']
-                ]
-            ];
-            
-           echo json_encode($response);
-            
-        } catch (\Exception $e) {
-          $errorResponse = [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-            
-            http_response_code(500);
-            echo json_encode($errorResponse);
+        $model = $this->getModel('Article', 'Administrator');
+        // $isPreview = true (создает статью со state=0)
+        $articleData = $model->createArticlesFromTopic(true); 
+        
+        if (!$articleData || !isset($articleData['id'])) {
+            throw new \Exception('Failed to create preview article');
         }
         
-        Factory::getApplication()->close();
-    }
-
-    /**
- * Отображает статью для предпросмотра (frontend)
- * @return void
- */
-public function displayPreview(): void
-{
-    $app = Factory::getApplication();
-    $id = $app->input->getInt('id');
-    
-    if (!$id) {
-        throw new \Exception('Article ID not specified');
-    }
-    
-    // Получаем статью напрямую из БД, игнорируя состояние
-    $db = Factory::getDbo();
-    $query = $db->getQuery(true)
-        ->select('*')
-        ->from('#__content')
-        ->where('id = ' . (int)$id);
-    
-    $db->setQuery($query);
-    $article = $db->loadObject();
-    
-    if (!$article) {
-        throw new \Exception('Article not found');
+        // Формируем чистую ссылку на фронтенд
+        $previewUrl = \Joomla\CMS\Uri\Uri::root() . 'index.php?option=com_content&view=article&id=' . $articleData['id'];
+        
+        echo json_encode([
+            'success' => true,
+            'data'    => [
+                'url' => $previewUrl,
+                'id'  => $articleData['id']
+            ]
+        ]);
+        
+    } catch (\Exception $e) {
+        // Если ошибка — тоже отдаем JSON, а не HTML страницу
+        echo json_encode([
+            'success' => false,
+            'message' => $e->getMessage()
+        ]);
     }
     
-    // Просто рендерим статью
-    header('Content-Type: text/html; charset=utf-8');
-    echo $article->introtext . $article->fulltext;
-    $app->close();
+    // ВАЖНО: Немедленно прерываем выполнение, чтобы Joomla не дописывала HTML
+    \Joomla\CMS\Factory::getApplication()->close();
 }
     
     public function deletePreview(): void
