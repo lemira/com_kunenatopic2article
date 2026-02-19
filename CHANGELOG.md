@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] - 2026-02-19
+
+### 1. Resolved a conflict between the component and the "Latest Articles" module
+- Fixed a conflict between the component and the "Latest Articles" module that could occur during article previews. As a result, users must now be logged into the site's frontend (in addition to the administrator panel) to view previews. If not logged in, the Preview button will trigger a helpful tooltip instead of opening the preview.
+- Relevant information has been added to the documentation.
+
 ## [2.0.1] - 2026-02-07
 
 ### 1. The topic author is assigned as the article author
@@ -188,6 +194,7 @@ If you experience automatic update errors, please manually download and install 
 
 ---
 
+[2.0.2]: https://github.com/lemira/com_kunenatopic2article/compare/V2.0.1...V2.0.2
 [2.0.1]: https://github.com/lemira/com_kunenatopic2article/compare/V2.0.0...V2.0.1
 [2.0.0]: https://github.com/lemira/com_kunenatopic2article/compare/V1.0.5...V2.0.0
 [1.0.5]: https://github.com/lemira/com_kunenatopic2article/compare/V1.0.4...V1.0.5
