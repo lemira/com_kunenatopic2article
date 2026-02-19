@@ -20,7 +20,6 @@ HTMLHelper::_('bootstrap.framework');
 
 // Передаем абсолютно всё через опции скрипта
 Factory::getApplication()->getDocument()->addScriptOptions('kunena_preview_data', [
-    // Добавлен false в конце Route::_
     'previewUrl' => Route::_('index.php?option=com_kunenatopic2article&task=article.preview&format=json', false),
     'deleteUrl'  => Route::_('index.php?option=com_kunenatopic2article&task=article.deletePreview&format=json', false),
     'token'      => Session::getFormToken(),
@@ -80,27 +79,58 @@ document.addEventListener('DOMContentLoaded', () => {
                 const result = await response.json();
 
                 if (result.success && result.data.url) {
-                    // 2. Загрузка HTML
+                    // Сразу формируем URL удаления, он нам понадобится в любом случае
+                    const deleteUrl = jOptions.deleteUrl + '&id=' + result.data.id;
+
+                    // 2. Пытаемся получить контент статьи
                     const articleResponse = await fetch(result.data.url);
 
-                    if (articleResponse.status === 404) {
-                        Joomla.removeMessages();
-                        Joomla.renderMessages({
-                            'warning': [jOptions.msgAuth]
-                        });
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                        return;
-                    }
+                 if (articleResponse.status === 404) {
+    // Чистим базу (сравнить с 3.?)
+    fetch(deleteUrl, { method: 'POST', headers: { 'X-CSRF-Token': jOptions.token } });
+
+    // Показываем расширенное модальное окно
+    const errorModal = document.createElement('div');
+    errorModal.className = 'modal fade';
+    errorModal.innerHTML = `
+        <div class="modal-dialog modal-lg"> 
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title text-white">
+                        <span class="icon-info" aria-hidden="true"></span> Preview Info
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="padding: 2.5rem; font-size: 1.15rem; line-height: 1.6;">
+                    <p class="mb-0">${jOptions.msgAuth}</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">ОК</button>
+                </div>
+            </div>
+        </div>`;
+    
+    document.body.appendChild(errorModal);
+    const bsErrorModal = new bootstrap.Modal(errorModal);
+    bsErrorModal.show();
+
+    // Удаляем из DOM после закрытия, чтобы не плодить элементы
+    errorModal.addEventListener('hidden.bs.modal', () => {
+        document.body.removeChild(errorModal);
+    });
+
+    return;
+}
 
                     const articleHtml = await articleResponse.text();
 
-                    // 3. Удаление временной статьи
-                    fetch(jOptions.deleteUrl + '&id=' + result.data.id, {
+                    // 3. Если всё ок (юзер залогинен), удаляем статью после получения текста
+                    fetch(deleteUrl, {
                         method: 'POST',
                         headers: { 'X-CSRF-Token': jOptions.token }
                     });
 
-                    // 4. Модальное окно
+                    // 4. Показываем модальное окно превью
                     const modalDiv = document.createElement('div');
                     modalDiv.className = 'modal fade';
                     modalDiv.innerHTML = `
@@ -135,3 +165,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 </script>
+
