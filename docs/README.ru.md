@@ -3,18 +3,7 @@
 *Документация на английском:* [🇬🇧 English](../README.md)
 
 Компонент для автоматического создания статей Joomla на основе тем форума Kunena. 
-Разработан для Joomla 5 и Kunena 6.x.
-
-## ⚠️ Important Update Notice
-
-**For users of versions 1.0.4 and earlier:**
-
-If you experience automatic update errors, please manually download and install version 1.0.5 or later. This is a one-time manual update - all future updates will work automatically via Joomla's update system.
-
-**How to update manually:**
-1. Download the latest version from [Releases](https://github.com/lemira/com_kunenatopic2article/releases/latest)
-2. In Joomla: System → Install → Extensions
-3. Upload and install the ZIP file (it will update your existing installation)
+Разработан для Joomla 5 и Kunena 6.x. Работает на Joomla 6 и Kunena 7.
 
 [📖 Связи постов в Кунена, блок информационных строк, парсинг, языки](FUNCTIONALITY.ru.md) | [ℹ️ Письма о создании статей, кодировка БД, плагин](ADDITIONAL.ru.md) | [ℹ️ Обработка ссылок на видео](VIDEOLINKS.ru.md)
 
