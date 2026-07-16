@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Post info block appearance can be customized from the component form.
 - Updated compatibility work for Joomla 5/6 and Kunena 6/7 schema checks.
 
+### Optional plugin
+- Updated the optional post-anchor positioning plugin to version 3.0.0.
+- The plugin is not required for normal component operation, but it may partially improve Kunena's post-anchor positioning problem in long topics with many images.
+
 ### Fixed
 - Improved handling of malformed BBCode fragments such as unfinished square-bracket tags.
 - Fixed external BBCode URL conversion cases.
