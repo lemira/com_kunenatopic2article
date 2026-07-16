@@ -64,6 +64,79 @@ $form = $this->form;
 document.addEventListener('DOMContentLoaded', () => {
     const jOptions = Joomla.getOptions('kunena_preview_data');
     const previewButton = document.getElementById('previewButton');
+    const postInfoStyleFields = [
+        'post_info_layout',
+        'post_info_background',
+        'post_info_text_color',
+        'post_info_font_size',
+        'post_info_ids_font_size',
+        'post_info_align',
+        'post_info_width',
+        'post_info_accent_color'
+    ];
+
+    const findFieldRow = (fieldName) => {
+        const field = document.querySelector(`[name="jform[${fieldName}]"]`);
+
+        return field
+            ? field.closest('.control-group, .form-group, .mb-3, .control')
+            : null;
+    };
+
+    const togglePostInfoStyleFields = () => {
+        const enabled = document.querySelector('input[name="jform[post_info_style_enabled]"]:checked')?.value === '1';
+
+        postInfoStyleFields.forEach((fieldName) => {
+            const row = findFieldRow(fieldName);
+
+            if (row) {
+                row.style.display = enabled ? '' : 'none';
+            }
+        });
+    };
+
+    document
+        .querySelectorAll('input[name="jform[post_info_style_enabled]"]')
+        .forEach((input) => input.addEventListener('change', togglePostInfoStyleFields));
+
+    togglePostInfoStyleFields();
+
+    const showPreviewError = (message) => {
+        if (Joomla.renderMessages) {
+            Joomla.renderMessages({ error: [message] });
+        } else {
+            alert(message);
+        }
+    };
+
+    const postWithToken = async (url) => {
+        const body = new URLSearchParams();
+        body.append(jOptions.token, '1');
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'X-CSRF-Token': jOptions.token
+            },
+            body
+        });
+
+        const rawText = await response.text();
+        let result;
+
+        try {
+            result = JSON.parse(rawText);
+        } catch (error) {
+            throw new Error(rawText || response.statusText || 'Invalid preview response');
+        }
+
+        if (!response.ok || result.success === false) {
+            throw new Error(result.message || response.statusText || 'Preview request failed');
+        }
+
+        return result.data || result;
+    };
 
     if (previewButton && jOptions) {
         previewButton.addEventListener('click', async (event) => {
@@ -71,23 +144,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 // 1. Создание превью
-                const response = await fetch(jOptions.previewUrl, {
-                    method: 'POST',
-                    headers: { 'X-CSRF-Token': jOptions.token }
-                });
+                const previewData = await postWithToken(jOptions.previewUrl);
 
-                const result = await response.json();
-
-                if (result.success && result.data.url) {
+                if (previewData.url) {
                     // Сразу формируем URL удаления, он нам понадобится в любом случае
-                    const deleteUrl = jOptions.deleteUrl + '&id=' + result.data.id;
+                    const deleteUrl = jOptions.deleteUrl + '&id=' + previewData.id;
 
                     // 2. Пытаемся получить контент статьи
-                    const articleResponse = await fetch(result.data.url);
+                    const articleResponse = await fetch(previewData.url);
 
                  if (articleResponse.status === 404) {
     // Чистим базу (сравнить с 3.?)
-    fetch(deleteUrl, { method: 'POST', headers: { 'X-CSRF-Token': jOptions.token } });
+    postWithToken(deleteUrl);
 
     // Показываем расширенное модальное окно
     const errorModal = document.createElement('div');
@@ -122,15 +190,9 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
 }
 
-                    const articleHtml = await articleResponse.text();
+                    const previewComponentUrl = previewData.url + (previewData.url.includes('?') ? '&' : '?') + 'tmpl=component';
 
-                    // 3. Если всё ок (юзер залогинен), удаляем статью после получения текста
-                    fetch(deleteUrl, {
-                        method: 'POST',
-                        headers: { 'X-CSRF-Token': jOptions.token }
-                    });
-
-                    // 4. Показываем модальное окно превью
+                    // 3. Показываем компонентную область превью в iframe, чтобы layout сайта не ломал модальное окно
                     const modalDiv = document.createElement('div');
                     modalDiv.className = 'modal fade';
                     modalDiv.innerHTML = `
@@ -140,8 +202,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <h5 class="modal-title">Preview</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
-                                <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
-                                    ${articleHtml}
+                                <div class="modal-body" style="height: 80vh; overflow: hidden; padding: 0;">
+                                    <iframe src="${previewComponentUrl}" style="width: 100%; height: 100%; border: 0; display: block;"></iframe>
                                 </div>
                             </div>
                         </div>`;
@@ -151,11 +213,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     bootstrapModal.show();
 
                     modalDiv.addEventListener('hidden.bs.modal', () => {
+                        postWithToken(deleteUrl);
                         document.body.removeChild(modalDiv);
                     });
                 }
             } catch (error) {
                 console.error('Preview error:', error);
+                showPreviewError(error.message || 'Preview error');
             }
         });
     }
@@ -165,4 +229,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 </script>
-

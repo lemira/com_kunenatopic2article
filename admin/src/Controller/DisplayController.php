@@ -75,14 +75,10 @@ class DisplayController extends BaseController
             $type = 'success';
            // Активируем кнопки Create и Preview после успешного сохранения
            Factory::getApplication()->setUserState('com_kunenatopic2article.can_create', true);
-
-    //    error_log('Save successful, can_create set to TRUE'); // ОТЛАДКА 
             
         } else {
             $message = Text::_('COM_KUNENATOPIC2ARTICLE_SAVE_FAILED');
             $type = 'error';
-                
-   //     error_log('Save failed, can_create remains FALSE'); // ОТЛАДКА 
         }
 
         $this->setRedirect(
@@ -94,6 +90,8 @@ class DisplayController extends BaseController
 
     public function reset()
     {
+        $this->checkToken();
+
         $model = $this->getModel('Topic');
         if ($model->reset()) {
             $message = Text::_('COM_KUNENATOPIC2ARTICLE_PARAMS_RESET');

@@ -1,6 +1,6 @@
 # Component Functionality
 
-[⬅️ Component purpose, parameters, installation, operation](../README.md) | [ℹ️ Emails about article creation, database encoding, plugin](ADDITIONAL.md) | [ℹ️ Video Link Processing in the Component](VIDEOLINKS.md)(ADDITIONAL.ru.md)
+[⬅️ Component purpose, parameters, installation, operation](../README.md) | [ℹ️ Emails about article creation, database encoding, plugin](ADDITIONAL.md) | [ℹ️ Video Link Processing in the Component](VIDEOLINKS.md)
 
 ## 4. Post Info Block
 
@@ -38,6 +38,7 @@ Styles are located inside the `<style>` tag in the article's HTML. The easiest w
 1. Open the article for editing in Joomla editor
 2. Switch to "HTML" or "Source" mode
 3. Find the `<style>...</style>` block and make changes
+4. See also the note about inline styles in section 1.3 of README.md
 
 **⚠️ Important:** JCE and some other WYSIWYG editors may hide/remove `<style>` tags. Workarounds: 1) temporarily disable tag filtering in editor settings, 2) use the basic "None" editor, or 3) edit via phpMyAdmin (table `#__content`).
 
@@ -93,4 +94,4 @@ The component supports two schemes for transferring posts to articles (determine
 
 7.3.4. If post index links are enabled in the parameters, the index of a temporarily hidden post is displayed as regular text (not a link). The index of a completely deleted post is replaced with the index of the first post of the topic, according to section 7.3.3.
 
-*[⬅️ Component purpose, parameters, installation, operation](../README.md) | [➡️Emails about article creation, database encoding, plugin](ADDITIONAL.md) | [ℹ️ Video Link Processing in the Component](VIDEOLINKS.md)*
+*[⬅️ Component purpose, parameters, installation, operation](../README.md) | [ℹ️ Emails about article creation, database encoding, plugin](ADDITIONAL.md) | [ℹ️ Video Link Processing in the Component](VIDEOLINKS.md)*

@@ -117,5 +117,93 @@
             rows="5"
             cols="40"
         />
+
+        <field
+            name="post_info_style_separator"
+            type="spacer"
+            label="COM_KUNENATOPIC2ARTICLE_POST_INFO_STYLE_SEPARATOR"
+            hr="true"
+        />
+
+        <field
+            name="post_info_style_enabled"
+            type="radio"
+            label="COM_KUNENATOPIC2ARTICLE_POST_INFO_STYLE_ENABLED"
+            description="COM_KUNENATOPIC2ARTICLE_POST_INFO_STYLE_ENABLED_DESC"
+            class="btn-group"
+            default="0">
+            <option value="0">COM_KUNENATOPIC2ARTICLE_NOT_INCLUDE</option>
+            <option value="1">COM_KUNENATOPIC2ARTICLE_INCLUDE</option>
+        </field>
+
+        <field
+            name="post_info_layout"
+            type="radio"
+            label="COM_KUNENATOPIC2ARTICLE_POST_INFO_LAYOUT"
+            description="COM_KUNENATOPIC2ARTICLE_POST_INFO_LAYOUT_DESC"
+            class="btn-group"
+            default="two_lines">
+            <option value="two_lines">COM_KUNENATOPIC2ARTICLE_POST_INFO_LAYOUT_TWO_LINES</option>
+            <option value="one_line">COM_KUNENATOPIC2ARTICLE_POST_INFO_LAYOUT_ONE_LINE</option>
+        </field>
+
+        <field
+            name="post_info_background"
+            type="color"
+            label="COM_KUNENATOPIC2ARTICLE_POST_INFO_BACKGROUND"
+            description="COM_KUNENATOPIC2ARTICLE_POST_INFO_BACKGROUND_DESC"
+            default="#FFFDE7"
+        />
+
+        <field
+            name="post_info_text_color"
+            type="color"
+            label="COM_KUNENATOPIC2ARTICLE_POST_INFO_TEXT_COLOR"
+            description="COM_KUNENATOPIC2ARTICLE_POST_INFO_TEXT_COLOR_DESC"
+            default="#8B8000"
+        />
+
+        <field
+            name="post_info_font_size"
+            type="text"
+            label="COM_KUNENATOPIC2ARTICLE_POST_INFO_FONT_SIZE"
+            description="COM_KUNENATOPIC2ARTICLE_POST_INFO_FONT_SIZE_DESC"
+            default="85%"
+        />
+
+        <field
+            name="post_info_ids_font_size"
+            type="text"
+            label="COM_KUNENATOPIC2ARTICLE_POST_INFO_IDS_FONT_SIZE"
+            description="COM_KUNENATOPIC2ARTICLE_POST_INFO_IDS_FONT_SIZE_DESC"
+            default="70%"
+        />
+
+        <field
+            name="post_info_align"
+            type="radio"
+            label="COM_KUNENATOPIC2ARTICLE_POST_INFO_ALIGN"
+            description="COM_KUNENATOPIC2ARTICLE_POST_INFO_ALIGN_DESC"
+            class="btn-group"
+            default="center">
+            <option value="center">COM_KUNENATOPIC2ARTICLE_ALIGN_CENTER</option>
+            <option value="left">COM_KUNENATOPIC2ARTICLE_ALIGN_LEFT</option>
+        </field>
+
+        <field
+            name="post_info_width"
+            type="text"
+            label="COM_KUNENATOPIC2ARTICLE_POST_INFO_WIDTH"
+            description="COM_KUNENATOPIC2ARTICLE_POST_INFO_WIDTH_DESC"
+            default="80%"
+        />
+
+        <field
+            name="post_info_accent_color"
+            type="color"
+            label="COM_KUNENATOPIC2ARTICLE_POST_INFO_ACCENT_COLOR"
+            description="COM_KUNENATOPIC2ARTICLE_POST_INFO_ACCENT_COLOR_DESC"
+            default="#FFD700"
+        />
     </fieldset>
 </form>

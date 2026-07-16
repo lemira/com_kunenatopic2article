@@ -17,6 +17,7 @@ use Joomla\CMS\Form\Form;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\AdminModel;
 use Joomla\Component\KunenaTopic2Article\Administrator\Table\ParamsTable;
+use Joomla\Component\KunenaTopic2Article\Administrator\Repository\KunenaRepository;
 use Joomla\Database\DatabaseInterface;
 use Joomla\CMS\Table\Table;
 
@@ -25,12 +26,14 @@ class TopicModel extends AdminModel
     protected CMSApplication $app;
     protected DatabaseInterface $db;
     protected string $subject = ''; // Переменная модели для хранения subject
+    private KunenaRepository $kunenaRepository;
 
     public function __construct($config = [])
     {
         parent::__construct($config);
         $this->app = Factory::getApplication();
         $this->db = Factory::getDbo();
+        $this->kunenaRepository = new KunenaRepository($this->db);
     }
 
     /**
@@ -107,15 +110,7 @@ class TopicModel extends AdminModel
 
     
         try {
-            $query = $this->db->getQuery(true)
-                ->select(['subject'])
-                ->from($this->db->quoteName('#__kunena_topics'))
-                ->where($this->db->quoteName('first_post_id') . ' = ' . (int) $topicId)
-                ->where($this->db->quoteName('hold') . ' = 0');
-
-            $this->db->setQuery($query);
-
-            $topic = $this->db->loadAssoc();
+            $topic = $this->kunenaRepository->getTopicByFirstPostId((int) $topicId);
            
             if (!$topic) {
         //         throw new \Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_ERROR_INVALID_TOPIC_ID', $topicId));
@@ -149,6 +144,7 @@ class TopicModel extends AdminModel
         
         // Возвращаем ID в данные для сохранения в базу
         $data['topic_selection'] = $originalTopicId;
+        $data['post_info_style_enabled'] = (int) ($data['post_info_style_enabled'] ?? 0) === 1 ? 1 : 0;
 
         $table = new ParamsTable($this->db);
 
@@ -188,6 +184,15 @@ class TopicModel extends AdminModel
             'post_title' => '0',
             'kunena_post_link' => '0',
             'reminder_lines' => '0',
+            'post_info_style_enabled' => '0',
+            'post_info_layout' => 'two_lines',
+            'post_info_background' => '#FFFDE7',
+            'post_info_text_color' => '#8B8000',
+            'post_info_font_size' => '85%',
+            'post_info_ids_font_size' => '70%',
+            'post_info_align' => 'center',
+            'post_info_width' => '80%',
+            'post_info_accent_color' => '#FFD700',
             'ignored_authors' => ''
         ];
 

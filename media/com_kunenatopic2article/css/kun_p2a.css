@@ -2,6 +2,16 @@
 .kun_p2a_content {
     font-family: inherit;
     line-height: 1.6;
+    max-width: 100%;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-wrap: break-word;
+}
+
+.kun_p2a_content *,
+.kun_p2a_content *::before,
+.kun_p2a_content *::after {
+    box-sizing: border-box;
 }
 
 .kun_p2a_content p {
@@ -15,6 +25,15 @@
 .kun_p2a_content img {
     max-width: 100%;
     height: auto;          /* сохраняем пропорции ки */
+}
+
+.kun_p2a_content iframe {
+    display: block !important;
+    width: min(100%, 560px) !important;
+    max-width: 100% !important;
+    aspect-ratio: 16 / 9;
+    height: auto !important;
+    margin: 1em auto !important;
 }
 
 /* Дополнительные стили для форматирования 
@@ -37,20 +56,35 @@
 */
 
 .kun_p2a_content img { 
-    max-width: 100%;  max-width: 100% и height: auto - стандартные свойства для адаптивности
+    max-width: 100%;
     height: auto;
     display: block;
-    margin: 1em auto; * Центрируем изображения и добавляем отступы *
+    margin: 1em auto;
 }
 
 .kun_p2a_content a {
     color: #0066cc;
     text-decoration: underline;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .kun_p2a_content a:hover {
     color: #004499;
-} */
+}
+
+.kun_p2a_content table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.kun_p2a_content pre,
+.kun_p2a_content code {
+    max-width: 100%;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
 
 /* Стили для блока информационных строк поста */
 
@@ -86,6 +120,11 @@
     color: #666;
     opacity: 0.8;
     margin-bottom: 3px;
+}
+
+.kun_p2a_info_one_line .kun_p2a_ids_inline {
+    font-size: 0.85em;
+    opacity: 0.8;
 }
 
 /* Стили для блока напоминания */
@@ -275,7 +314,7 @@ hr.kun_p2a-hr-gray {
     background: #1a1a1a;
 }
 
-.kun_p2a_content iframe {
+.kun_p2a_video_container iframe {
     max-width: 100% !important;
     margin: 0 !important;
     display: block !important;

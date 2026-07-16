@@ -12,25 +12,24 @@ namespace Joomla\Component\KunenaTopic2Article\Administrator\Model;
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Language\Text;
-use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Table\Table;
-use Joomla\Registry\Registry;
 use Joomla\CMS\Date\Date;
 use Joomla\CMS\Router\Route;
-use Joomla\CMS\Uri\Uri;
-use Joomla\Database\DatabaseInterface;
-use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 // use Kunena\Bbcode\KunenaBbcode; 
-use Joomla\CMS\HTML\HTMLHelper;
-use Joomla\CMS\Filter\InputFilter;
-use Joomla\Component\Content\Site\Helper\RouteHelper;
-use Joomla\CMS\Access\Access;
 use Joomla\CMS\Filter\OutputFilter as FilterOutput;
-use Joomla\Component\KunenaTopic2Article\Administrator\Parser\BBCode;
-use Joomla\Component\KunenaTopic2Article\Administrator\Parser\Tag; // подгрузка класса при компиляции файла, BBCode сможет делать new Tag()
+use Joomla\Component\KunenaTopic2Article\Administrator\Parser\PostContentParser;
 use Joomla\Component\KunenaTopic2Article\Administrator\Helper\VideoProcessor;
+use Joomla\Component\KunenaTopic2Article\Administrator\Repository\ContentRepository;
+use Joomla\Component\KunenaTopic2Article\Administrator\Repository\KunenaRepository;
+use Joomla\Component\KunenaTopic2Article\Administrator\Repository\ParamsRepository;
+use Joomla\Component\KunenaTopic2Article\Administrator\Renderer\ArticleContentRenderer;
+use Joomla\Component\KunenaTopic2Article\Administrator\Renderer\PostRenderer;
+use Joomla\Component\KunenaTopic2Article\Administrator\Renderer\ReminderLineRenderer;
+use Joomla\Component\KunenaTopic2Article\Administrator\Service\ArticleNotificationService;
+use Joomla\Component\KunenaTopic2Article\Administrator\Service\TreeBuilder;
 
 /**
  * Article Model
@@ -54,17 +53,24 @@ class ArticleModel extends BaseDatabaseModel
     private string $subject = ''; // Переменная модели для хранения subject
     private $params = null; // Хранение параметров для доступа в других методах
     private int $firstPostId; //  ID первого поста темы
+    private int $topicAuthorId = 0; // ID автора исходной темы
     private int $currentIndex = 0; // первый переход с первого элемента $threadId = $firstPostId (0) на 2-й (1)
-    private string $infoString = '';  // строка сборки информационной строки поста в createPostInfoString()
     private string $postInfoString = '';  // Информационная строка поста
     private string $reminderLines = '';  // строки напоминания поста
     private string $title = '';   // Заголовок статьи
     private string $htmlContent = '';   // Текст поста после BBCode
-    public bool $emailsSent = false;
-    public array $emailsSentTo = [];
-    private $allPosts = []; // Добавляем свойство для хранения всех постов
+    private array $postIds_time = []; // Хронологический список постов для проверки URL
     public bool $isPreview = false;
     private $videoProcessor = null; // Video processor instance
+    private ContentRepository $contentRepository;
+    private KunenaRepository $kunenaRepository;
+    private ParamsRepository $paramsRepository;
+    private ArticleContentRenderer $articleContentRenderer;
+    private PostRenderer $postRenderer;
+    private ReminderLineRenderer $reminderLineRenderer;
+    private ArticleNotificationService $articleNotificationService;
+    private TreeBuilder $treeBuilder;
+    private PostContentParser $postContentParser;
     
     public function __construct($config = [])
     {
@@ -72,9 +78,18 @@ class ArticleModel extends BaseDatabaseModel
         
         $this->app = Factory::getApplication();
         $this->db = $this->getDatabase();
+        $this->contentRepository = new ContentRepository($this->db);
+        $this->kunenaRepository = new KunenaRepository($this->db);
+        $this->paramsRepository = new ParamsRepository($this->db);
+        $this->articleContentRenderer = new ArticleContentRenderer();
+        $this->postRenderer = new PostRenderer();
+        $this->articleNotificationService = new ArticleNotificationService();
+        $this->treeBuilder = new TreeBuilder();
         
         // Инициализируем видео-процессор
         $this->videoProcessor = new VideoProcessor();
+        $this->reminderLineRenderer = new ReminderLineRenderer($this->videoProcessor);
+        $this->postContentParser = new PostContentParser($this->kunenaRepository, $this->videoProcessor);
     }
 
     // -------------------------- РАБОТА СО СТАТЬЯМИ -------------------------
@@ -104,18 +119,18 @@ class ArticleModel extends BaseDatabaseModel
             // Получаем ID первого поста
             $firstPostId = $this->params->topic_selection; 
             $this->firstPostId = $firstPostId;
-                //    Factory::getApplication()->enqueueMessage('ArticleModel $firstPostId: ' . $firstPostId, 'info'); // ОТЛАДКА          
             
             $majorParams = $this->getMajorParams($firstPostId);
             $this->threadId = $majorParams['thread'];
             $this->subject = $majorParams['subject'];
             $this->topicAuthorId = $majorParams['userid'];
 
-             // Формируем список ID постов в зависимости от схемы обхода; должно быть получены главные Major параметры первого поста!
+            // Формируем список ID постов в зависимости от схемы обхода; должно быть получены главные Major параметры первого поста!
             $this->postIdList = $this->buildFlatPostIdList($firstPostId); // Создаем всегда хронологический список (flat нужен для URL постов)
-            $this->postIds_time = $this->postIdList; // Исп-ся для URL постов в обоих схемах
+            $this->postIds_time = $this->treeBuilder->buildFlatPostIdList(
+                $this->kunenaRepository->getVisibleThreadPostIds((int) $this->threadId)
+            ); // Полный хронологический список Kunena для вычисления start в URL
             if ($this->params->post_transfer_scheme === 1) { // если flat
-               // $this->currentIndex = 0; // для infoString 
                 $baum = $this->buildTreePostIdList($firstPostId);
                 $this->postIdList = $baum['postIds']; // для Tree меняем $this->postIdList
                 $this->postLevelList = $baum['levels'];
@@ -123,7 +138,6 @@ class ArticleModel extends BaseDatabaseModel
             
               $this->postId = $firstPostId; // текущий id
               $this->openPost($this->postId); // Открываем первый пост темы для доступа к его параметрам
-//   Factory::getApplication()->enqueueMessage('createArticlesFromTopic $subject: ' . $this->subject, 'info'); // ОТЛАДКА 
               $this->reminderLines = ""; // у первого поста нет строк напоминания
       
                // для preview - ограничиваем 2 постами 
@@ -160,8 +174,6 @@ class ArticleModel extends BaseDatabaseModel
                         $previewData = $result;
                     }
             }
-            // ОТЛАДКА   Factory::getApplication()->enqueueMessage('createArticlesFromTopic: последняя статья' . $this->subject, 'info');  
-           
             if ($this->isPreview) {
                 return $previewData ?: []; // возвращаем данные или пустой массив
             }
@@ -183,31 +195,87 @@ class ArticleModel extends BaseDatabaseModel
            $this->articleId = 0; // Сбрасываем при открытии новой статьи    
            $this->articleSize = 0;   // Сбрасываем текущий размер статьи
            $this->currentArticle->fulltext = ''; // для возможного изменения строк предупреждения
-           
-           $this->currentArticle->fulltext .=  Text::_('COM_KUNENATOPIC2ARTICLE_INFORMATION_SIGN') . '<br />'    // ?? не учтена длина!
-                 . Text::_('COM_KUNENATOPIC2ARTICLE_WARNING_SIGN') 
-                 . '<div class="kun_p2a_divider-shadow"></div>'; //  Линия с тенью (эффект углубления)
+           $this->currentArticle->fulltext .= $this->articleContentRenderer->renderOpeningContent(
+                $this->getContentLanguageString('COM_KUNENATOPIC2ARTICLE_INFORMATION_SIGN'),
+                $this->getContentLanguageString('COM_KUNENATOPIC2ARTICLE_WARNING_SIGN')
+           );
            
             // Формируем базовый заголовок статьи
             $this->title = $this->subject;
             // Если это не первая статья, добавляем номер части
             if (!empty($this->articleLinks)) {
                 $partNum = count($this->articleLinks) + 1;
-                $this->title .= ' - ' . Text::sprintf('COM_KUNENATOPIC2ARTICLE_PART_NUMBER', $partNum);
+                $this->title .= ' - ' . $this->getPartNumberText($partNum);
             }
             $this->currentArticle->title = $this->title;
            
             // Формируем уникальный алиас
-            $baseAlias = FilterOutput::stringURLSafe($this->title); // дж
+            $baseAlias = FilterOutput::stringURLSafe($this->title);
             $uniqueAlias = $this->getUniqueAlias($baseAlias);
             $this->currentArticle->alias = $uniqueAlias;
-          // Отладка  $this->app->enqueueMessage('openArticle Статья открыта: ' . $this->title . ', категория: ' . $this->params->article_category . ', alias: ' . $uniqueAlias, 'notice');
 
             return true;
          } catch (\Exception $e) {
             $this->app->enqueueMessage('Ошибка при открытии статьи: ' . $e->getMessage(), 'error');
             return false;
         }
+    }
+
+    private function getPartNumberText(int $partNum): string
+    {
+        $template = $this->getContentLanguageString('COM_KUNENATOPIC2ARTICLE_PART_NUMBER');
+
+        return sprintf($template, $partNum);
+    }
+
+    private function getContentLanguageString(string $key): string
+    {
+        $strings = $this->loadContentLanguageStrings($this->getContentLanguageTag());
+
+        if (isset($strings[$key])) {
+            return $strings[$key];
+        }
+
+        return Text::_($key);
+    }
+
+    private function getContentLanguageTag(): string
+    {
+        $language = $this->app->getLanguage();
+        $siteLanguage = (string) ComponentHelper::getParams('com_languages')->get('site', '');
+
+        if ($siteLanguage !== '') {
+            return $siteLanguage;
+        }
+
+        if (preg_match('/\p{Cyrillic}/u', $this->subject)) {
+            return 'ru-RU';
+        }
+
+        return $language->getTag();
+    }
+
+    private function loadContentLanguageStrings(string $languageTag): array
+    {
+        $paths = [
+            JPATH_ADMINISTRATOR . '/components/com_kunenatopic2article/language/' . $languageTag . '/com_kunenatopic2article.ini',
+            JPATH_ADMINISTRATOR . '/language/' . $languageTag . '/com_kunenatopic2article.ini',
+            JPATH_SITE . '/language/' . $languageTag . '/com_kunenatopic2article.ini',
+        ];
+
+        foreach ($paths as $path) {
+            if (!is_file($path)) {
+                continue;
+            }
+
+            $strings = parse_ini_file($path);
+
+            if (is_array($strings)) {
+                return $strings;
+            }
+        }
+
+        return [];
     }
      
          /**
@@ -222,18 +290,10 @@ class ArticleModel extends BaseDatabaseModel
 
         try {
            // 1. Контент уже очищен BBCode парсером, дополнительная фильтрация не нужна
-           $filteredContent = $this->currentArticle->fulltext;
-
-            // 2. Добавление файла CSS
-            $cssPath = JPATH_SITE . '/media/com_kunenatopic2article/css/kun_p2a.css';
-            $cssContent = file_get_contents($cssPath);
-            $cssStyle = '<style>' . PHP_EOL . $cssContent . PHP_EOL . '</style>' . PHP_EOL;
-            $this->currentArticle->fulltext = $cssStyle . $filteredContent;
+            $this->currentArticle->fulltext = $this->articleContentRenderer->embedCss($this->currentArticle->fulltext);
             
-            // 3. Создаем статью через Table
+            // 2. Создаем статью через Table
             $this->articleId = $this->createArticleViaTable();
-  // Factory::getApplication()->enqueueMessage('closeArticle fulltext после createArt' . HTMLHelper::_('string.truncate', $this->currentArticle->fulltext, 100, true, false),'info'); 
-                         
             if (!$this->articleId) {
                 throw new \Exception('Ошибка сохранения статьи.');
             }
@@ -249,7 +309,7 @@ class ArticleModel extends BaseDatabaseModel
             
             // Формируем URL для статьи
             $link = 'index.php?option=com_content&view=article&id=' . $this->articleId . '&catid=' . $this->params->article_category;   // Формируем базовый маршрут
-            $url = Route::link('site', $link); //фронтэнд, SEF включён: /article-slug, Для фронтенда, & остаётся, В Kunena SEF-правила, Фавикон
+            $url = Route::link('site', $link);
 
             // Добавляем ссылку и заголовок в массив для последующего вывода
             $this->articleLinks[] = [
@@ -257,8 +317,6 @@ class ArticleModel extends BaseDatabaseModel
                 'url' => $url,
                 'id' => $this->articleId  // Сохраняем ID в массиве ссылок
                 ];
-           // ОТЛАДКА           $this->app->enqueueMessage('Статья успешно сохранена с ID: ' . $this->articleId, 'notice');
-
             // Сбрасываем текущую статью
             $this->currentArticle = null;
 
@@ -296,13 +354,7 @@ class ArticleModel extends BaseDatabaseModel
     private function aliasExists($alias)
     {
     try {
-        $query = $this->db->getQuery(true)
-            ->select('1')
-            ->from($this->db->quoteName('#__content'))
-            ->where($this->db->quoteName('alias') . ' = ' . $this->db->quote($alias))
-            ->setLimit(1);
-
-        return (bool) $this->db->setQuery($query)->loadResult();
+        return $this->contentRepository->aliasExists((string) $alias);
     } catch (\Exception $e) {
         return false;
     }
@@ -317,7 +369,7 @@ class ArticleModel extends BaseDatabaseModel
 {
    try {
         // Получаем table для контента
-        $tableArticle = Table::getInstance('Content'); // заодно получаем следующий ID в $tableArticle->id
+        $tableArticle = Table::getInstance('Content');
         
         // Подготавливаем базовые данные
         $data = [
@@ -354,28 +406,10 @@ class ArticleModel extends BaseDatabaseModel
         // --- Запись в #__workflow_associations 
          if (!$this->isPreview) {   // только для обычных статей, для превью не нужно
             try {
-                // Проверяем, есть ли уже запись
-                $query = $this->db->getQuery(true)
-                    ->select('COUNT(*)')
-                    ->from($this->db->quoteName('#__workflow_associations'))
-                    ->where($this->db->quoteName('item_id') . ' = ' . $this->db->quote($savedId))
-                    ->where($this->db->quoteName('extension') . ' = ' . $this->db->quote('com_content.article'));
-                $exists = (bool) $this->db->setQuery($query)->loadResult();
+                $exists = $this->contentRepository->workflowAssociationExists((int) $savedId);
 
                 if (!$exists) {
-                    $query = $this->db->getQuery(true)
-                        ->insert($this->db->quoteName('#__workflow_associations'))
-                        ->columns([
-                            $this->db->quoteName('item_id'),
-                            $this->db->quoteName('stage_id'),
-                            $this->db->quoteName('extension')
-                        ])
-                        ->values(implode(',', [
-                            $this->db->quote($savedId),
-                            $this->db->quote(1), // stage_id=1 (опубликовано)
-                            $this->db->quote('com_content.article')
-                        ]));
-                    $this->db->setQuery($query)->execute();
+                    $this->contentRepository->addWorkflowAssociation((int) $savedId, 1);
                 }
             } catch (\Exception $e) {
                 // Логируем ошибку, но не прерываем работу
@@ -406,41 +440,30 @@ class ArticleModel extends BaseDatabaseModel
                  return false;
                     }
             // Получаем данные поста из базы данных Kunena, фильтрация промодерированных постов сделана раньше
-            $query = $this->db->getQuery(true)
-               ->select($this->db->quoteName([ 'id', 'subject', 'thread', 'userid', 'parent', 'name', 'time', 'catid' ])) // только используемые поля
-                ->from($this->db->quoteName('#__kunena_messages'))
-                ->where($this->db->quoteName('id') . ' = ' . (int)$postId);
-
-            $this->currentPost = $this->db->setQuery($query)->loadObject();
+            $this->currentPost = $this->kunenaRepository->getMessage((int) $postId);
             // Проверка if (!$this->currentPost) не нужна, все посты проверены; сбой БД ловится в catch 
         
-            // Создаём запрос текста поста
-            $query = $this->db->getQuery(true)
-                ->select($this->db->quoteName('message'))
-                ->from($this->db->quoteName('#__kunena_messages_text'))
-                ->where($this->db->quoteName('mesid') . ' = ' . (int)$postId);
-
             // Получаем текст поста
-            $this->postText = $this->db->setQuery($query)->loadResult();
+            $postText = $this->kunenaRepository->getMessageText((int) $postId);
 
-            // Проверяем, найден ли текст   // НЕ НУЖНО?
-            if ($this->postText === null) {
+            // Проверяем, найден ли текст
+            if ($postText === null) {
                 throw new \Exception(Text::sprintf('COM_KUNENATOPIC2ARTICLE_POST_TEXT_NOT_FOUND', $postId));
             }
+
+            $this->postText = $postText;
  
             $this->postInfoString = $this->createPostInfoString(); // Вычиcляем информационную строку (всегда есть хотя бы разделители) поста
            
-            // Вычисляем размер поста (в символах)  ?? Может быть, надо вычислять размер после перекодировки?
+            // Вычисляем размер поста в символах до HTML-преобразования.
            // Расчёт длины с обработкой ошибок
            try {
               $this->postSize = mb_strlen($this->postText, 'UTF-8')
               + mb_strlen($this->postInfoString, 'UTF-8')
               + mb_strlen($this->reminderLines, 'UTF-8');
-        // ОТЛАДКА        Factory::getApplication()->enqueueMessage('openPost Размер поста: ' . $this->postSize, 'info'); // ОТЛАДКА 
           } catch (\Throwable $e) {
                throw new \RuntimeException('Ошибка расчёта размера поста: ' . $e->getMessage());
           }
-            //    Factory::getApplication()->enqueueMessage('openPost Размер поста с и.с.: ' . $this->postSize, 'info'); // ОТЛАДКА          
           return true;
         } catch (\Exception $e) {
             $this->app->enqueueMessage($e->getMessage(), 'error');
@@ -469,13 +492,11 @@ class ArticleModel extends BaseDatabaseModel
           $reminderLinesLength = (int)$this->params->reminder_lines;
          
         $this->reminderLines = $this->processReminderLines($this->htmlContent, $reminderLinesLength); // обработка ссылок и рис-в и обрезание 
- // Factory::getApplication()->enqueueMessage('transferPost reminderLines: ' . $this->reminderLines, 'info'); // ОТЛАДКА   
            } 
-           $this->currentArticle->fulltext .= '<div class="kun_p2a_divider-gray"></div>'; // добавляем линию разделения постов, ?? не учтена в длине статьи!
+           $this->currentArticle->fulltext .= '<div class="kun_p2a_divider-gray"></div>';
                         
             // Обновляем размер статьи. $this-postSize включает длину инф строки и строки напоминания, вычислен в openPost
             $this->articleSize += $this->postSize;
-// Factory::getApplication()->enqueueMessage('transferPost Размер статьи: ' . $this->articleSize, 'info'); // ОТЛАДКА   
             return true;
         } catch (\Exception $e) {
             $this->app->enqueueMessage($e->getMessage(), 'error');
@@ -493,141 +514,7 @@ class ArticleModel extends BaseDatabaseModel
  */
 private function processReminderLines(string $htmlContent, int $reminderLinesLength): string
 {
-    if ($reminderLinesLength <= 0) {
-        return '';
-    }
-
-    mb_internal_encoding('UTF-8');
-    
-     // Удаляем ВСЕ теги AllVideos (любые теги вида {tag}...{/tag})
-    $htmlContent = $this->videoProcessor->removeAllVideosTags($htmlContent);
-  
-    $reminderLines = '';
-    $link_symbol = '🔗';
-    $image_symbol = '🖼️';
-
-    // 1. Предварительная очистка
-    $processedContent = preg_replace(
-        '/(<p[^>]*>|<\/p>|<div[^>]*>|<\/div>|<span[^>]*>|<\/span>|<strong[^>]*>|<\/strong>|<em[^>]*>|<\/em>|<br\s*\/?>|&nbsp;|\s*[\r\n]+\s*)/iu',
-        ' ',
-        $htmlContent
-    );
-    $processedContent = html_entity_decode($processedContent, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-    $processedContent = trim($processedContent);
-
-    // Регулярные выражения
-    $combinedRegex = '~(<a\s+(?:[^>]*?\s+)?href=["\'](.*?)(?:["\'].*?)?>(.*?)<\/a>)|(<img\s+src=["\'](.*?)["\']\s+alt=["\'](.*?)["\']\s*\/?>)~iu';
-
-    // 2. Итеративная обработка
-    $lastOffset = 0;
-    while (
-        mb_strlen($reminderLines) < $reminderLinesLength
-        && preg_match($combinedRegex, $processedContent, $matches, PREG_OFFSET_CAPTURE, $lastOffset)
-    ) {
-        $byteOffset = $matches[0][1];
-        $byteLength = strlen($matches[0][0]);
-
-        // 2a. Добавляем текст между последней обработанной позиции и текущим тегом
-        $plainText = trim(mb_strcut($processedContent, $lastOffset, $byteOffset - $lastOffset, 'UTF-8'));
-        $remainingSpaceForPlain = $reminderLinesLength - mb_strlen($reminderLines);
-        $reminderLines .= mb_substr($plainText, 0, $remainingSpaceForPlain);
-        
-        if (mb_strlen($reminderLines) >= $reminderLinesLength) {
-            $lastOffset = $byteOffset + $byteLength;
-            break; 
-        }
-
-        if (mb_strlen($plainText) > 0 && mb_strlen($reminderLines) < $reminderLinesLength && mb_substr($reminderLines, -1) !== ' ') {
-            $reminderLines .= ' ';
-        }
-        
-        $replacement = '';
-        
-        $linkMatched = isset($matches[1]) && $matches[1][1] !== -1;
-        $imageMatched = isset($matches[4]) && $matches[4][1] !== -1;
-        
-        // 2b. Формируем замену
-        if ($linkMatched) {
-            $href = $matches[2][0];
-            $linkText = isset($matches[3]) && $matches[3][1] !== -1 ? $matches[3][0] : '';
-            
-            $linkTextCleaned = trim(strip_tags($linkText));
-            
-            if (!empty($linkTextCleaned) && strpos($linkTextCleaned, '://') === false && strpos($linkTextCleaned, 'www.') === false) {
-                $replacement = $link_symbol . $linkTextCleaned . $link_symbol;
-            } else {
-                $sourceUrl = !empty($linkTextCleaned) ? $linkTextCleaned : $href;
-                $urlPart = preg_replace('#^https?://#i', '', $sourceUrl);
-                $urlPart = mb_strimwidth($urlPart, 0, 40, "...", 'UTF-8');
-                $replacement = $link_symbol . $urlPart . $link_symbol;
-            }
-        } elseif ($imageMatched) {
-            $src = $matches[5][0];
-            $alt = isset($matches[6]) && $matches[6][1] !== -1 ? $matches[6][0] : '';
-            
-            $replacementText = '';
-            $altCleaned = trim(strip_tags($alt));
-            
-            if (!empty($altCleaned)) {
-                if (mb_substr($altCleaned, 0, 1) === '-') {
-                    $replacementText = mb_substr($altCleaned, 1);
-                } else {
-                    $replacementText = $altCleaned;
-                }
-            }
-            
-            if (empty($replacementText)) {
-                $filename = basename($src);
-                $replacementText = urldecode($filename);
-            }
-            
-            if (empty($replacementText)) {
-                $replacementText = 'рисунок'; 
-            }
-            
-            $replacement = $image_symbol . $replacementText . $image_symbol;
-        }
-
-        // 2c. Вставляем элемент
-        $remainingSpace = $reminderLinesLength - mb_strlen($reminderLines);
-        
-        if (mb_strlen($replacement) <= $remainingSpace) {
-            $reminderLines .= $replacement;
-            
-            if (mb_strlen($reminderLines) < $reminderLinesLength && mb_substr($reminderLines, -1) !== ' ') {
-                $reminderLines .= ' ';
-            }
-        } else {
-            $reminderLines .= $replacement;
-            $lastOffset = $byteOffset + $byteLength;
-            break; 
-        }
-        
-        $lastOffset = $byteOffset + $byteLength;
-    }
-
-    // 3. Добавляем оставшийся текст
-    $remainingText = trim(mb_strcut($processedContent, $lastOffset, null, 'UTF-8'));
-    
-    $max_append_length = $reminderLinesLength - mb_strlen($reminderLines);
-    
-    if (mb_strlen($remainingText) > 0 && $max_append_length > 0) {
-        if (mb_strlen($reminderLines) > 0 && mb_substr($reminderLines, -1) !== ' ') {
-            $reminderLines .= ' ';
-            $max_append_length--; 
-        }
-        
-        if ($max_append_length > 0) {
-            $reminderLines .= mb_substr($remainingText, 0, $max_append_length);
-        }
-    }
-
-    // 4. ФИНАЛЬНАЯ ОЧИСТКА
-    $reminderLines = preg_replace('/\s{2,}/u', ' ', $reminderLines);
-    $reminderLines = strip_tags($reminderLines);
-    $reminderLines = trim($reminderLines);
-
-    return $reminderLines;
+    return $this->reminderLineRenderer->render($htmlContent, $reminderLinesLength);
 }
     
     /**
@@ -638,7 +525,6 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
 {
     $this->currentIndex += 1;
     $this->postId = $this->postIdList[$this->currentIndex];
-  // ОТЛАДКА    Factory::getApplication()->enqueueMessage('nextPost Id: ' . $this->postId, 'info'); // ОТЛАДКА       
     return $this->postId; // Автоматически получим 0 в конце
 }
 
@@ -650,36 +536,20 @@ private function processReminderLines(string $htmlContent, int $reminderLinesLen
      */
      private function buildFlatPostIdList($firstPostId)
     {
-      $this->postIds = $this->getAllThreadPosts($this->threadId); // Получаем массив постов темы   
-      sort($this->postIds); // Сортируем массив постов по возрастанию id (= по времени создания)
-      array_push($this->postIds, 0);    // добавляем элемент 0 в конец массива
-      return $this->postIds; 
+      $postIds = $this->getAllThreadPosts($this->threadId); // Получаем массив постов темы
+      return $this->treeBuilder->buildFlatPostIdList($postIds);
     }
 
    private function getAllThreadPosts($threadId)           
      {
-     // Получаем все посты темы
-    $query = $this->db->getQuery(true)
-    ->select($this->db->quoteName('id'))
-    ->from($this->db->quoteName('#__kunena_messages'))
-    ->where($this->db->quoteName('thread') . ' = ' . $this->threadId) 
-    ->where($this->db->quoteName('hold') . ' = 0');
-
-   // --- НАЧАЛО БЛОКА ДЛЯ ИСКЛЮЧЕНИЯ АВТОРОВ дж --- 
+   // --- НАЧАЛО БЛОКА ДЛЯ ИСКЛЮЧЕНИЯ АВТОРОВ --- 
         $ignoredAuthors = trim($this->params->ignored_authors); // Получаем и обрабатываем список игнорируемых авторов
+        $ignoredAuthorsArray = [];
      if (!empty($ignoredAuthors)) { // Проверяем, что список не пустой
          $ignoredAuthorsArray = array_filter(array_map('trim', explode(',', $ignoredAuthors)));  // Разбиваем строку на массив, очищаем от пробелов и удаляем пустые значения
-     if (!empty($ignoredAuthorsArray)) {     // Если после очистки в массиве остались имена, добавляем условие в запрос
-       $quotedAuthors = array_map(array($this->db, 'quote'), $ignoredAuthorsArray);  // Безопасно квотируем каждое имя для использования в SQL-запросе
-        // Добавляем условие NOT IN к запросу
-        $query->where($this->db->quoteName('name') . ' NOT IN (' . implode(',', $quotedAuthors) . ')');
-      }
     }
     // --- КОНЕЦ БЛОКА ИСКЛЮЧЕНИЯ АВТОРОВ ---
-         $query->order($this->db->quoteName('id') . ' ASC');
-         $postIds = $this->db->setQuery($query)->loadColumn();
-   // ОТЛАДКА  Factory::getApplication()->enqueueMessage('Массив ID постов: ' . print_r($postIds, true), 'info'); 
-   
+         $postIds = $this->kunenaRepository->getVisibleThreadPostIds((int) $threadId, $ignoredAuthorsArray);
             return $postIds;
   }
     
@@ -692,85 +562,12 @@ private function buildTreePostIdList($firstPostId)
 {
     try {
         // 1. Получаем ВСЕ посты темы (включая hold>0) ТОЛЬКО ДЛЯ ПОСТРОЕНИЯ СВЯЗЕЙ
-        $query = $this->db->getQuery(true)
-            ->select($this->db->quoteName(['id', 'parent', 'hold']))
-            ->from($this->db->quoteName('#__kunena_messages'))
-            ->where($this->db->quoteName('thread') . ' = ' . $this->threadId);
-        
-        $allPosts = $this->db->setQuery($query)->loadObjectList();
+        $allPosts = $this->kunenaRepository->getThreadTreePosts((int) $this->threadId);
         
         // 2. ОТДЕЛЬНО получаем посты для финального списка (только hold=0)
         $finalPostIds = $this->getAllThreadPosts($this->threadId); 
-        
-        // 3. Строим полную карту связей из ВСЕХ постов
-        $fullChildrenMap = [];
-        foreach ($allPosts as $post) {
-            if ($post->parent > 0) {
-                $fullChildrenMap[$post->parent][] = $post->id;
-            }
-        }
-        
-        // 4. Восстанавливаем связи для потомков удаленных постов
-        $recoveredChildren = [];
-        
-        foreach ($allPosts as $post) {
-            // Если пост в финальном списке И его родитель удален
-            if (in_array($post->id, $finalPostIds) && 
-                $post->parent > 0 && 
-                !in_array($post->parent, $finalPostIds)) {
-                
-                // Находим нового родителя: поднимаемся по цепочке пока не найдем существующего
-                $newParent = $this->findClosestExistingParent($post->parent, $finalPostIds, $allPosts);
-                
-                if ($newParent > 0) {
-                    $recoveredChildren[$newParent][] = $post->id;
-                } else {
-                    // Если не нашли существующего родителя в цепочке - прикрепляем к корню
-                    $recoveredChildren[$firstPostId][] = $post->id;
-                }
-            }
-        }
-        
-        // 5. Объединяем восстановленные связи с обычными
-        $children = [];
-        foreach ($finalPostIds as $postId) {
-            if ($postId == 0) continue;
-            
-            $children[$postId] = [];
-            
-            // Обычные дети
-            if (isset($fullChildrenMap[$postId])) {
-                foreach ($fullChildrenMap[$postId] as $childId) {
-                    if (in_array($childId, $finalPostIds)) {
-                        $children[$postId][] = $childId;
-                    }
-                }
-            }
-            
-            // Восстановленные дети
-            if (isset($recoveredChildren[$postId])) {
-                $children[$postId] = array_merge($children[$postId], $recoveredChildren[$postId]);
-            }
-            
-            // Сортируем и убираем дубликаты
-            if (!empty($children[$postId])) {
-                $children[$postId] = array_unique($children[$postId]);
-                sort($children[$postId]);
-            } else {
-                $children[$postId] = [0];
-            }
-        }
-        
-        // 6. Выполняем обход дерева
-        $postIdList = [];
-        $postLevelList = [];
-        
-        $this->traverseTree($firstPostId, 0, $children, $postIdList, $postLevelList);
-        
-        return [
-           'postIds' => array_merge($postIdList, [0]),
-            'levels' => $postLevelList
-        ];
+
+        return $this->treeBuilder->buildTreePostIdList((int) $firstPostId, $finalPostIds, $allPosts);
         
     } catch (\Exception $e) {
         $this->app->enqueueMessage('Ошибка построения древовидного обхода: ' . $e->getMessage(), 'error');
@@ -778,61 +575,6 @@ private function buildTreePostIdList($firstPostId)
             'postIds' => [$firstPostId, 0],
             'levels' => [0, 0]
         ];
-    }
-}
-
-/**
- * Находим ближайшего существующего родителя в цепочке
- */
-private function findClosestExistingParent($deletedParentId, $finalPostIds, $allPosts)
-{
-    $postMap = [];
-    foreach ($allPosts as $post) {
-        $postMap[$post->id] = $post;
-    }
-    
-    $currentId = $deletedParentId;
-    
-    // Поднимаемся по цепочке родителей
-    while (isset($postMap[$currentId])) {
-        $currentPost = $postMap[$currentId];
-        
-        // Если нашли существующего родителя - возвращаем его
-        if (in_array($currentPost->id, $finalPostIds)) {
-            return $currentPost->id;
-        }
-        
-        // Переходим к следующему родителю
-        if ($currentPost->parent > 0) {
-            $currentId = $currentPost->parent;
-        } else {
-            break; // Достигли корня
-        }
-    }
-    
-    return 0; // Не нашли существующего родителя
-}
-    
-/**
- * Рекурсивный обход дерева в глубину
- * @param   int    $postId         Текущий пост
- * @param   int    $level          Текущий уровень
- * @param   array  $children       Массив связей родитель-дети
- * @param   array  &$postIdList    Результирующий список ID (по ссылке)
- * @param   array  &$postLevelList Результирующий список уровней (по ссылке)
- */
-private function traverseTree($postId, $level, $children, &$postIdList, &$postLevelList)
-{
-    // Добавляем текущий пост
-    $postIdList[] = $postId;
-    $postLevelList[] = $level;
-    
-    // Если у поста есть дети
-    if (isset($children[$postId]) && $children[$postId][0] !== 0) {
-        foreach ($children[$postId] as $childId) {
-            // Рекурсивно обходим каждого ребенка
-            $this->traverseTree($childId, $level + 1, $children, $postIdList, $postLevelList);
-        }
     }
 }
 
@@ -847,208 +589,64 @@ private function traverseTree($postId, $level, $children, &$postIdList, &$postLe
         return '';
     }
 
-    $infoString = HTMLHelper::_('content.prepare', '<div class="kun_p2a_ids kun_p2a_index_line text-center">');
-    
-    // IDs постов
-    if ($this->params->post_ids) {
-        $idsString = '';
-        
-        if ($this->params->kunena_post_link) {
-            $postUrl = $this->getKunenaPostUrl($this->currentPost->id);
-            // ЕСЛИ URL ПУСТОЙ, НЕ ДЕЛАЕМ ССЫЛКУ
-            if (!empty($postUrl)) {
-                $idsString .= ' <a href="' . htmlspecialchars($postUrl, ENT_QUOTES, 'UTF-8') 
-                           . '" target="_blank" rel="noopener noreferrer">#' 
-                           . $this->currentPost->id . '</a>';
-            } else {
-                $idsString .= '#' . $this->currentPost->id;
-            }
-        } else {
-            $idsString .= '#' . $this->currentPost->id;
-        }
-        
-        if (!empty($this->currentPost->parent)) {
-            if ($this->params->kunena_post_link) {
-                $parentUrl = $this->getKunenaPostUrl($this->currentPost->parent);
-                // ЕСЛИ URL ПУСТОЙ, НЕ ДЕЛАЕМ ССЫЛКУ
-                if (!empty($parentUrl)) {
-                    $idsString .= ' ⟸ <a href="' . htmlspecialchars($parentUrl, ENT_QUOTES, 'UTF-8') 
-                               . '" target="_blank" rel="noopener noreferrer">#' 
-                               . $this->currentPost->parent . '</a>';
-                } else {
-                    $idsString .= ' ⟸ #' . $this->currentPost->parent;
-                }
-            } else {
-                $idsString .= ' ⟸ #' . $this->currentPost->parent;
-            }
-        }
-        $infoString .= $idsString;
-    }
-    
-    $infoString .= '</div>'; // Закрываем блок IDs
-    
-    // Основная информационная строка
-    $infoString .= '<div class="kun_p2a_info_main text-center">';
-    
-    if ($this->params->post_author) {
-        $infoString .= htmlspecialchars($this->currentPost->name, ENT_QUOTES, 'UTF-8');
-    }
-    
-    if ($this->params->post_title) {
-        $infoString .= ' / <span class="kun_p2a_post_subject">' . htmlspecialchars($this->currentPost->subject, ENT_QUOTES, 'UTF-8') . '</span>';
-        
-        if ($this->params->post_transfer_scheme == 1) {
-            if ($this->postId != $this->firstPostId) {
-                $infoString .= ' / ' . htmlspecialchars("\u{1F332}", ENT_QUOTES, 'UTF-8') . $this->postLevelList[$this->currentIndex];
-            }                                          
-        }    
-    }
-    
-    if ($this->params->post_creation_date) {
-        $date = date('d.m.Y', $this->currentPost->time);
-        $infoString .= ' / ' . $date;
-        
-        if ($this->params->post_creation_time) {
-            $time = date('H:i', $this->currentPost->time);
-            $infoString .= ' ' . $time;
-        }
-    }
-
-    $infoString .= '</div>'; // Закрываем основную инфо строку
-    
-    return $infoString;
+    return $this->postRenderer->renderInfoString(
+        $this->currentPost,
+        $this->params,
+        fn (int $postId): string => $this->getKunenaPostUrl($postId),
+        $this->postId,
+        $this->firstPostId,
+        $this->postLevelList[$this->currentIndex] ?? null
+    );
 }
 
 private function printHeadOfPost()
 {
-    // Добавляем в статью инф строку
-    $this->currentArticle->fulltext .= $this->postInfoString;
-
-    if ($this->params->reminder_lines && $this->currentPost->parent) {
-        $reminderText = '<div class="kun_p2a_reminder_content" data-tooltip="' 
-            . Text::_('COM_KUNENATOPIC2ARTICLE_START_OF_REMINDER_LINES') . '">'
-            . '<span class="tooltip-icon">ⓘ</span> '
-            . $this->reminderLines 
-            . '</div>';
-            
-        $this->currentArticle->fulltext .= $reminderText;
-    }
-    
-    $this->currentArticle->fulltext .= '<div class="kun_p2a_divider-gray"></div>';
+    $this->currentArticle->fulltext .= $this->postRenderer->renderHeadOfPost(
+        $this->currentPost,
+        $this->params,
+        $this->postInfoString,
+        $this->reminderLines
+    );
 }
     
 /**
- * Генерируем полный URL для конкретного поста в Kunena, используя SEF-совместимые slug-и.
+ * Генерируем URL для конкретного поста через штатный Kunena mesid-маршрут.
  *
  * @param int $postId ID поста в Kunena
- * @return string Полный URL поста
+ * @return string URL поста или пустая строка, если пост не входит в обработанный список
  */
 public function getKunenaPostUrl(int $postId): string
 {
     // ПРОВЕРКА: если пост не существует в обработанном списке, возвращаем пустую строку
-    if (!in_array($postId, $this->postIds_time)) {
+    $postIndex = array_search($postId, $this->postIds_time, true);
+
+    if ($postIndex === false) {
         return '';
     }
-    
-    $postsPerPage = $this->getKunenaPostsPerPage();
-    
-    // --- Данные поста ---
-    $query = $this->db->getQuery(true)
-        ->select('m.catid, m.thread')
-        ->from('#__kunena_messages AS m')
-        ->where('m.id = ' . (int) $postId);
 
-    $this->db->setQuery($query);
-    $post = $this->db->loadObject();
-    
-    // ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: если пост не найден, возвращаем пустую строку
-    if (!$post) {
-        return '';
-    }
-    
-    $catid  = (int) $post->catid;
-    $thread = (int) $post->thread;
-    
-    // --- Slug'и ---
-    $catAlias = $this->db->setQuery(
-        $this->db->getQuery(true)->select('alias')->from('#__kunena_categories')->where('id = ' . $catid)
-    )->loadResult() ?: 'category';
-    
-    $topicSubject = $this->db->setQuery(
-        $this->db->getQuery(true)->select('subject')->from('#__kunena_topics')->where('id = ' . $thread)
-    )->loadResult();
-    $topicAlias = FilterOutput::stringURLSafe($topicSubject) ?: 'topic';
-    $topicSlug = "{$thread}-{$topicAlias}";
-    
-    // --- Находим позицию в хронологическом списке ---
-    $position = array_search($postId, $this->postIds_time);
-    
-    // Вычисляем start
-    $start = floor($position / $postsPerPage) * $postsPerPage;
-    
-    // --- Формируем URL ---
-    $fullUrl = Uri::root() . "forum/{$catAlias}/{$topicSlug}" . "?start={$start}" . "#{$postId}";
-    return $fullUrl;
-}
-    
-    /**
- * Получаем количество сообщений, отображаемых на одной странице темы Kunena,
- * с обработкой ошибок и выводом сообщения в админке.
- *
- * @return int Количество сообщений на странице.
- */
-protected function getKunenaPostsPerPage(): int
-{
-    // Безопасное значение по умолчанию (Fallback)
-    $defaultPostsPerPage = 20; 
-    
-    try {
-        // Получаем необходимые объекты через Factory
-        $db = Factory::getDbo();
-        $app = Factory::getApplication();
-        $tableName = '#__kunena_configuration'; 
-        
-        $query = $db->getQuery(true)
-            ->select($db->qn('params'))
-            ->from($db->qn($tableName));
-            
-        $db->setQuery($query, 0, 1);
-        $jsonParams = $db->loadResult();
+    $post = $this->kunenaRepository->getMessage((int) $postId);
 
-        if (empty($jsonParams)) {
-            // Сообщение, если строка конфигурации не найдена
-            $app->enqueueMessage(
-                'Ошибка: Не удалось найти параметры Kunena в таблице ' . $tableName, 
-                'warning'
-            );
-            return $defaultPostsPerPage;
-        }
+    if ($post !== null) {
+        $topicSubject = $this->kunenaRepository->getTopicSubject((int) $post->thread) ?: (string) $post->subject;
+        $messagesPerPage = $this->kunenaRepository->getKunenaMessagesPerPage();
+        $postStart = intdiv((int) $postIndex, $messagesPerPage) * $messagesPerPage;
 
-        $params = new Registry($jsonParams);
-        $postsPerPage = $params->get('messagesPerPage');
-        
-        // Проверка корректности полученного значения
-        if (is_numeric($postsPerPage) && (int) $postsPerPage > 0) {
-            return (int) $postsPerPage;
-        } else {
-             // Сообщение, если значение некорректно
-            $app->enqueueMessage(
-                'Ошибка: Некорректное значение "messagesPerPage" ("' . $postsPerPage . '") в конфигурации Kunena.', 
-                'warning'
-            );
-            return $defaultPostsPerPage;
-        }
-
-    } catch (\Exception $e) {
-        // Ловим любые исключения (ошибка БД, парсинга и т.д.) и выводим фидбэк
-        Factory::getApplication()->enqueueMessage(
-            'Критическая ошибка при получении настройки Kunena: ' . $e->getMessage(), 
-            'error'
+        return $this->kunenaRepository->buildTopicPostUrl(
+            (int) $post->catid,
+            (int) $post->thread,
+            $topicSubject,
+            $postStart,
+            (int) $post->id
         );
-        
-        // Возвращаем безопасное значение для предотвращения ошибки деления на ноль
-        return $defaultPostsPerPage; 
     }
+
+    $kunenaUrl = $this->kunenaRepository->getMessageUrl((int) $postId);
+
+    if (!empty($kunenaUrl)) {
+        return $kunenaUrl;
+    }
+
+    return '';
 }
      
     /**
@@ -1059,260 +657,20 @@ protected function getKunenaPostsPerPage(): int
  */
 public function sendLinksToAdministrator(array $articleLinks): array
 {
-    $app = Factory::getApplication();
-    $result = [
-        'success'    => false,
-        'recipients' => [],
-        'error'      => null,
-    ];
+    $result = $this->articleNotificationService->sendArticleLinks(
+        $articleLinks,
+        $this->subject,
+        (int) $this->params->topic_selection,
+        $this->topicAuthorId
+    );
 
-    try {
-        $config = Factory::getConfig();
-        $mailer = Factory::getMailer();
-
-        // 1. Получаем email-адреса
-        $adminEmail = $config->get('mailfrom'); // $adminEmail здесь - адрес сайта (отправитель)
-        $author = Factory::getUser($this->topicAuthorId);
-        $authorEmail = $author->email;
-
-        // 2. Фильтруем адреса, оставляя только валидные и непустые
-        $rawRecipients = [$adminEmail, $authorEmail];
-        $recipients = array_unique(array_filter($rawRecipients, function ($email) {
-            return filter_var($email, FILTER_VALIDATE_EMAIL);
-        }));
-
-        // Если после фильтрации не осталось ни одного получателя, прекращаем работу.
-        if (empty($recipients)) {
-            $result['error'] = 'Не найдены корректные email-адреса для отправки.';
-            // success остается false, так как отправка не производилась.
-            return $result;
-        }
-
-        // 3. Формируем тело и тему письма
-        $subject = Text::sprintf('COM_KUNENATOPIC2ARTICLE_MAIL_SUBJECT', $config->get('sitename'));
-        $body = Text::sprintf(
-            'COM_KUNENATOPIC2ARTICLE_MAIL_BODY',
-            $config->get('sitename'),
-            $this->subject,
-            Uri::root() . 'index.php?option=com_kunena&view=topic&postid=' . (int)$this->params->topic_selection,
-            $author->name,
-            implode("\n", array_map(
-                fn($link) => "- {$link['title']}: {$link['url']}",
-                $articleLinks
-            ))
-        );
-
-        // 4. Настраиваем объект Mailer
-        $mailer->setSender([$adminEmail, $config->get('sitename')]);
-        $mailer->setSubject($subject);
-        $mailer->setBody($body);
-        $mailer->isHtml(false);
-
-        foreach ($recipients as $email) {
-            $mailer->addRecipient($email);
-        }
-
-        // 5. ПРОВЕРКА ОКРУЖЕНИЯ: Локальный сервер или реальный
-        $isLocalServer = in_array($_SERVER['SERVER_NAME'] ?? '', ['localhost', '127.0.0.1']);
-
-        if ($isLocalServer) {
-            // Мы на WAMP (или другом локальном сервере)
-            // Имитируем успешную отправку для отладки, но не отправляем письмо.
-            $app->enqueueMessage('Режим отладки: отправка почты пропущена (локальный сервер).', 'notice');
-            $result['success'] = true;
-        } else {
-            // Мы на реальном сервере. Пытаемся отправить письмо.
-            // Если здесь произойдет ошибка, выполнение перейдет в блок catch.
-            $mailer->Send();
-            $result['success'] = true; // Успех, если Send() не выбросил исключение
-        }
-
-        // Код ниже выполнится в случае успеха (реального или имитированного)
-        $result['recipients'] = $recipients;
-        $this->emailsSent = true;
-        $this->emailsSentTo = $recipients;
-
-    } catch (\Exception $e) {
-        // Этот блок кода выполнится ТОЛЬКО в случае ошибки на РЕАЛЬНОМ сервере
-
-        // Формируем сообщение об ошибке для администратора
-        $errorMessage = Text::sprintf('COM_KUNENATOPIC2ARTICLE_MAIL_SEND_ERROR', $e->getMessage());
-        $app->enqueueMessage($errorMessage, 'error');
-
-        // Заполняем результат информацией о провале
-        $result['success'] = false;
-        $result['error'] = $e->getMessage(); // Сохраняем техническую информацию об ошибке
-        $result['recipients'] = $recipients; // Сохраняем, кому мы пытались отправить письмо
-
-        // Логируем ошибку для будущего анализа (рекомендуется)
-        // Factory::log($e->getTraceAsString(), 'error', 'com_kunenatopic2article');
-
-        // Обновляем состояние модели
-        $this->emailsSent = false;
-        $this->emailsSentTo = []; // или $recipients
-    }
-
-    // Возвращаем итоговый массив с результатом операции
     return $result;
 }
-
-    // ПАРСЕР
-    private function getAttachmentPath($attachmentId)
-    {
-        try {
-            $db = $this->getDatabase();
-            $query = $db->getQuery(true)
-                ->select(['folder', 'filename', 'filename_real'])
-                ->from('#__kunena_attachments')
-                ->where('id = ' . (int)$attachmentId);
-            
-            $db->setQuery($query);
-            $attachment = $db->loadObject();
-            
-            if ($attachment) {
-                $imagePath = $attachment->folder . '/' . $attachment->filename;
-                
-                if (file_exists(JPATH_ROOT . '/' . $imagePath)) {
-                    return $imagePath;
-                }
-            }
-            
-            return null;
-            
-        } catch (\Exception $e) {
-           return null;
-        }
-    }
 
 private function convertBBCodeToHtml($text)
 {
     try {
-        class_exists(Tag::class, true);   // гарантируем загрузку
-        $bbcode = new BBCode();
-    
-        // Удаляем "[br /" которые обрубают текст
-        $text = preg_replace('/<([^>]*?)\[br\s*\/\s*[>\]]/iu', '<$1>', $text);
-        $text = preg_replace('/([»"\.])\s*>/u', '$1', $text);
-
-        // Сначала обрабатываем BBCode тег [video]
-        $text = $this->videoProcessor->extractVideoFromBBCode($text);
-        
-        // Обрабатываем ВСЕ видео-ссылки (включая BBCode)
-        $text = $this->videoProcessor->processVideoLinks($text);
-
-        // Защищаем URL внутри [img] тегов
-        $imgProtect = [];
-        $text = preg_replace_callback(
-            '/\[img\](https?:\/\/[^\[]+?)\[\/img\]/i',
-            function($m) use (&$imgProtect) {
-                $marker = '___IMGURL_' . count($imgProtect) . '___';
-                $imgProtect[$marker] = $m[0];
-                return $marker;
-            },
-            $text
-        );  
-        
-        // Делаем линками "голые" URL (но уже не видео-ссылки)
-        $text = preg_replace_callback(
-            '#(?<![\[="\'])(?<!href=)(https?://[^\s\[\]<>"\'\)]+)#i',
-            function($m) {
-                $url = rtrim($m[1], '.,;:!?');
-                return '[url]' . $url . '[/url]';
-            },
-            $text
-        );
-
-        // Восстанавливаем защищённые [img] теги
-        foreach ($imgProtect as $marker => $original) {
-            $text = str_replace($marker, $original, $text);
-        }
-        
-        // Заменяем attachment на временные маркеры
-        $attachments = [];
-        $text = preg_replace_callback('/\[attachment=(\d+)\](.*?)\[\/attachment\]/i', function($matches) use (&$attachments) {
-            $attachmentId = $matches[1];
-            $filename = $matches[2];
-            $marker = '###ATTACHMENT_' . count($attachments) . '###';
-            $attachments[$marker] = [$attachmentId, $filename];
-            return $marker;
-        }, $text);
-        
-        // Применяем BBCode парсер
-        $html = $bbcode->render($text);
-
-        // Нормализуем br теги
-        $html = preg_replace('/\s*<br\s*\/?>\s*/i', "\n", $html);
-        
-        // ЕДИНСТВЕННОЕ МЕСТО восстановления защищенного контента
-        $html = preg_replace_callback(
-            '/___PROTECTED___(.*?)___END___/',
-            function($matches) {
-                return base64_decode($matches[1]);
-            },
-            $html
-        );
-        
-        // Разбиваем по переносам строк
-        $lines = explode("\n", $html);
-        
-        // Обрабатываем каждую строку
-        $paragraphs = [];
-        foreach ($lines as $line) {
-            $line = trim($line);
-            if ($line === '') {
-                $paragraphs[] = '<p>&nbsp;</p>';
-                continue;
-            }
-            if (!preg_match('/^\s*<(p|div|h[1-6]|ul|ol|li|blockquote|pre|table|tr|td|th|iframe)\b/i', $line)) {
-                $line = '<p>' . $line . '</p>';
-            }
-            
-            $paragraphs[] = $line;
-        }
-        
-        $html = implode("\n", $paragraphs);
-
-        // Восстанавливаем изображения
-        foreach ($attachments as $marker => $data) {
-            $attachmentId = $data[0];
-            $filename = $data[1];
-            
-            $imagePath = $this->getAttachmentPath($attachmentId);
-            
-            if ($imagePath && file_exists(JPATH_ROOT . '/' . $imagePath)) {
-                $imageHtml = '<img src="' . $imagePath . '" alt="' . htmlspecialchars($filename) . '" />';
-            } else {
-                $imageHtml = $filename;
-            }
-            
-            $html = str_replace($marker, $imageHtml, $html);
-        }
-
-        // Обрезка длинных ссылок
-        $html = preg_replace_callback(
-            '#<a\s+([^>]*?)href=[\'"]([^\'"]+)[\'"]([^>]*)>([^<]{50,})</a>#i',
-            function ($m) {
-                if (preg_match('/\{(?:youtube|vimeo|facebook|soundcloud|dailymotion)\}/', $m[4])) {
-                    return $m[0];
-                }
-                
-                $visible = mb_substr($m[4], 0, 47) . '…';
-                return '<a ' . $m[1] . 'href="' . $m[2] . '"' . $m[3] . '>'
-                       . htmlspecialchars($visible, ENT_QUOTES, 'UTF-8')
-                       . '</a>';
-            },
-            $html
-        );
-        
-        //  Декодирование HTML-сущностей 
-        $html = str_replace('&lt;', '<', $html);
-        $html = str_replace('&gt;', '>', $html);
-        $html = str_replace('&quot;', '"', $html);
-        $html = str_replace('&amp;', '&', $html);
-        
-        $html = '<div class="kun_p2a_content">' . $html . '</div>';
-        return $html;
-        
+        return $this->postContentParser->render((string) $text);
     } catch (\Throwable $e) {
         $this->app->enqueueMessage(
             'BBCode Parse Error: ' . $e->getMessage(),
@@ -1322,19 +680,11 @@ private function convertBBCodeToHtml($text)
     }
 }
 
-  private function simpleBBCodeToHtml($text)
-    {
-        return 'NO PARSER';
-    }
-    
-   // ------- КОНЕЦ ПАРСЕРА ---------
-    
-/**
- * Удаляет статью предпросмотра по ID
- * 
- * @param int $id ID статьи для удаления
- * @return bool True при успешном удалении, false при ошибке
- */
+private function simpleBBCodeToHtml($text)
+{
+    return 'NO PARSER';
+}
+
 /**
  * Удаляет статью предпросмотра по ID
  * 
@@ -1344,36 +694,21 @@ private function convertBBCodeToHtml($text)
 public function deletePreviewArticleById($id)
 {
     try {
-        $db = $this->getDatabase();
-        
         // ПРОСТО УДАЛЯЕМ СТАТЬЮ БЕЗ ПРОВЕРКИ АЛИАСА
         // (в preview мы всегда передаем правильный ID)
-        $query = $db->getQuery(true)
-            ->delete('#__content')
-            ->where('id = ' . (int) $id);
-        
-        $db->setQuery($query);
-        $result = $db->execute();
+        $result = $this->contentRepository->deleteArticleById((int) $id);
         
         if ($result) {
             // Также удаляем запись из workflow_associations, если она есть
             try {
-                $query = $db->getQuery(true)
-                    ->delete('#__workflow_associations')
-                    ->where('item_id = ' . (int) $id)
-                    ->where('extension = ' . $db->quote('com_content.article'));
-                
-                $db->setQuery($query);
-                $db->execute();
+                $this->contentRepository->deleteWorkflowAssociation((int) $id);
             } catch (\Exception $e) {
                 // Игнорируем ошибки при удалении из workflow_associations
                 // (возможно, таблицы нет или запись уже удалена)
             }
             
-      //      error_log('Successfully deleted preview article with ID: ' . $id);
             return true;
         } else {
-      //      error_log('Failed to delete article with ID: ' . $id);
             return false;
         }
         
@@ -1389,23 +724,7 @@ public function deletePreviewArticleById($id)
     private function getComponentParams()
 {
     try {
-        $db = Factory::getContainer()->get('DatabaseDriver');
-        
-        // Сначала проверяем, существует ли таблица
-        $tables = $db->getTableList();
-        $tableName = $db->getPrefix() . 'kunenatopic2article_params';
-        
-        if (!in_array($tableName, $tables)) {
-            // Таблица не существует - создаем её
-            $this->createParamsTable();
-        }
-        
-        $query = $db->getQuery(true)
-            ->select('*')
-            ->from($db->quoteName('#__kunenatopic2article_params'))
-            ->where($db->quoteName('id') . ' = 1');
-        
-        $params = $db->setQuery($query)->loadObject();
+        $params = $this->paramsRepository->getParams();
         
         if (!$params) {
             Factory::getApplication()->enqueueMessage(
@@ -1422,62 +741,9 @@ public function deletePreviewArticleById($id)
     }
 }
 
-/**
- * Создание таблицы параметров
- */
-private function createParamsTable()
-{
-    try {
-        $db = Factory::getContainer()->get('DatabaseDriver');
-        
-       $createQuery = "CREATE TABLE IF NOT EXISTS `#__kunenatopic2article_params` (
-            `id` int NOT NULL AUTO_INCREMENT,
-            `topic_selection` int NOT NULL DEFAULT 0,
-            `article_category` int NOT NULL DEFAULT 0,
-            `post_transfer_scheme` int NOT NULL DEFAULT 1,
-            `max_article_size` int NOT NULL DEFAULT 40000,
-            `post_author` int NOT NULL DEFAULT 1,
-            `post_creation_date` int NOT NULL DEFAULT 0,
-            `post_creation_time` int NOT NULL DEFAULT 0,
-            `post_ids` int NOT NULL DEFAULT 0,
-            `post_title` int NOT NULL DEFAULT 0,
-            `kunena_post_link` int NOT NULL DEFAULT 0,
-            `reminder_lines` int NOT NULL DEFAULT 0,
-            `ignored_authors` text,
-            PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-        
-        $db->setQuery($createQuery);
-        $db->execute();
-        
-        // Добавляем начальные данные
-        $insertQuery = "INSERT IGNORE INTO `#__kunenatopic2article_params` 
-                        (`id`, `topic_selection`, `article_category`, `post_transfer_scheme`, `max_article_size`, `post_author`, `post_creation_date`, `post_creation_time`, `post_ids`, `post_title`, `kunena_post_link`, `reminder_lines`, `ignored_authors`)
-                        VALUES (1, 0, 0, 1, 40000, 1, 0, 0, 0, 0, 0, 0, '')";
-        
-        $db->setQuery($insertQuery);
-        $db->execute();
-        
-        Factory::getApplication()->enqueueMessage('Таблица параметров создана успешно', 'success');
-        
-    } catch (\Exception $e) {
-        throw new \Exception('Ошибка создания таблицы параметров: ' . $e->getMessage());
-    }
-}
-
 public function getMajorParams($postId)
 {
-    $query = $this->db->getQuery(true)
-        ->select([
-            $this->db->quoteName('thread'),
-            $this->db->quoteName('subject'), 
-            $this->db->quoteName('userid')
-        ])
-        ->from($this->db->quoteName('#__kunena_messages'))
-        ->where($this->db->quoteName('id') . ' = ' . (int)$postId);
-    
-    $this->db->setQuery($query);
-    $result = $this->db->loadObject();
+    $result = $this->kunenaRepository->getMajorParams((int) $postId);
     
     return [
         'thread' => $result->thread,

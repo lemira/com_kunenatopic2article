@@ -9,13 +9,16 @@ The component automatically recognizes and processes video links from various pl
 
 ## How It Works
 
-### The component can process video links in two ways - using the Joomla AllVideos plugin (recommended) or without it. The component automatically detects whether the AllVideos plugin is enabled.
+### The component can process video links in two ways - using the Joomla AllVideos plugin or without it. The component automatically detects whether the AllVideos plugin is enabled.
+
+For Joomla 5, AllVideos is still recommended: it can improve video display in created articles and provides a unified player style for many platforms.
+
+For Joomla 6, AllVideos integration is disabled automatically until JoomlaWorks officially announces Joomla 6 compatibility. In this mode the component does not generate AllVideos tags and uses its own iframes or styled links.
 
 If the AllVideos plugin is enabled, the component converts links into AllVideos tags, which are displayed in the article as video windows within the plugin's capabilities. As a result, the corresponding videos can be played directly in the article.
 
 If AllVideos is not installed or is installed but not enabled:
-- Upon calling the component, the administrator receives a message: “The AllVideos plugin is not installed or enabled in Joomla. 
-It is recommended to install AllVideos by JoomlaWorks. This will allow videos in created articles to be displayed as players instead of just links”
+- Upon calling the component, the administrator receives a message that AllVideos is not installed or enabled in Joomla.
 - For YouTube and Vimeo, custom iframes are generated for embedding videos. Thus, videos from these platforms are displayed directly in the article
 - For other platforms, clickable links are created in the article in a special format, with a camera icon 📹. When hovering over such a link, a helpful tooltip is displayed.
 
@@ -27,12 +30,12 @@ Always displayed as a styled link (even with AllVideos enabled), as Facebook blo
 **YouTube with Timestamps:**
 If a link contains a timestamp (e.g., `?t=42s`), the component creates its own iframe instead of using AllVideos to preserve the playback starting point at the specified moment.
 
-## Installing AllVideos (Recommended)
+## Installing AllVideos (recommended for Joomla 5)
 
 1. Download the AllVideos plugin from JED (https://extensions.joomla.org/)
 2. Install via System → Install → Extensions
 3. Activate the plugin in System → Plugins → Content - AllVideos
-4. The component will automatically detect the plugin's presence and use it
+4. On Joomla 5, the component will automatically detect the plugin's presence and use it
 
 Benefits of using AllVideos:
 - Support for multiple video platforms
@@ -76,12 +79,12 @@ Due to the variety of video platforms and players, video links in articles requi
 4. For YouTube: check that the video isn't blocked in your region
 
 **If YouTube timestamp doesn't work:**
-- Format must be: `?t=42s, ?t=1m30s, or ?t=1h2m3s
+- Format must be: `?t=42s`, `?t=1m30s`, or `?t=1h2m3s`
 
 ## Possible Improvements
 
 - Adding support for other popular platforms (TikTok, Instagram, etc.)
-- Configuring iframe sizes in component parameters (instead of css)
+- Configuring iframe sizes in component parameters (instead of CSS)
 - Ability to choose behavior for each platform separately
 
 ## Structured List of Supported Formats
@@ -112,7 +115,7 @@ https://youtu.be/VIDEO_ID?t=1m30s
 [url=https://youtu.be/VIDEO_ID]Link text[/url]
 ```
 
-✅ Video from a Playlist::
+✅ Video from a Playlist:
 ```
 https://www.youtube.com/watch?v=VIDEO_ID&list=PLAYLIST_ID
 Only the specified video (VIDEO_ID) is processed; the playlist is ignored

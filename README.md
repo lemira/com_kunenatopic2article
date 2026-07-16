@@ -3,18 +3,7 @@
 *Documentation in Russian:* [🇷🇺 Русский](docs/README.ru.md)
 
 A component for automatically creating Joomla articles based on Kunena forum topics.
-Developed for Joomla 5 and Kunena 6.x.
-
-## ⚠️ Important Update Notice
-
-**For users of versions 1.0.4 and earlier:**
-
-If you experience automatic update errors, please manually download and install version 1.0.5 or later. This is a one-time manual update - all future updates will work automatically via Joomla's update system.
-
-**How to update manually:**
-1. Download the latest version from [Releases](https://github.com/lemira/com_kunenatopic2article/releases/latest)
-2. In Joomla: System → Install → Extensions
-3. Upload and install the ZIP file (it will update your existing installation)
+Works with Joomla 5/6 and Kunena 6/7.
 
 [📖 Post relations in Kunena, info block, parsing, languages](docs/FUNCTIONALITY.md) | [ℹ️ Emails about article creation, database encoding, plugin](docs/ADDITIONAL.md) | [ℹ️ Video Link Processing in the Component](docs/VIDEOLINKS.md)
 
@@ -22,9 +11,9 @@ If you experience automatic update errors, please manually download and install 
 
 ### 1.1. Purpose
 The Kunena Topic to Article component (`kunenatopic2article`) automatically generates Joomla articles based on Kunena forum topics.
-- ✅ Requires Joomla 5 and Kunena 6.x
+- ✅ Requires Joomla 5/6 and Kunena 6/7
 - ✅ Works in the Joomla administrator area
-- ✅ Tested on Joomla 5.4 / Kunena 6.3.10
+- ✅ The Kunena table schema used by the component has been checked for Kunena 6.3.10, 7.0, and 7.0.7
 
 ### 1.2. Component Parameters
 
@@ -36,7 +25,7 @@ The Kunena Topic to Article component (`kunenatopic2article`) automatically gene
 
 #### ℹ️ Post Info Block Parameters
 (have "Hide" / "Show" values except for the last two)
-- **Post Author** - determined by the topic
+- **Post Author** - taken from the post
 - **Post Creation Date** - taken from the post
 - **Post Creation Time** - taken from the post
 - **Post Title** - taken from the post²
@@ -48,16 +37,37 @@ The Kunena Topic to Article component (`kunenatopic2article`) automatically gene
 _¹ ID is displayed in the upper right corner of the post after the # sign when the "Show real post ID" option is enabled in Kunena  
 ² Currently, Kunena defines post title as "Topic Title" or RE:"Topic Title"_
 
-## 🎨 CSS Styles
+### 1.3. 🎨 CSS Styles
 Styles define the appearance of articles (default is almost standard) and the formatting of the information block. The stylesheet `/media/com_kunenatopic2article/css/kun_p2a.css` can be edited in `com_kunenatopic2article.zip` or directly on the server without reinstalling the component.
 
 The current CSS file is embedded in the HTML of each created article. This provides individual style customization for separate articles or groups of articles, prevents component CSS changes from affecting previously created articles, and ensures independence from the installed component.
 
-Editing CSS embedded in articles is described in the docs/FUNCTIONALITY.md documentation file in section 4.3. If you have already used component version 1, it is recommended to check the section for release 2.0.0 in the CHANGELOG.md file.
+Editing CSS embedded in articles is described in `docs/FUNCTIONALITY.md`, section 4.3.
 
-![Component parameters form and control buttons](docs/images/Main_Component_Form.png "Component parameters form and control buttons")
+Starting with version 3.0, the component can control the post info line style from the component form.
 
-### 1.3. Installation
+At the bottom of the form there is a post info block appearance section controlled by the "Customize Post Info Block Appearance: Hide / Show" switch.
+
+When set to Show, the following parameters are available:
+
+- two lines / one line;
+- background color;
+- text color;
+- main font size;
+- index line font size;
+- center / left alignment;
+- block width;
+- left accent border color.
+
+When set to Hide, these fields are hidden.
+
+**Important!**
+
+When set to Hide, the component uses the CSS file styles.
+
+When set to Show, these post info block settings are applied during article generation as inline styles.
+
+### 1.4. Installation
 1. Install the component from the `com_kunenatopic2article.zip` file through the Joomla extensions manager
 2. The component will automatically create the `kunenatopic2article_params` table (one row) in the database
 3. Additionally, a [precise positioning plugin](docs/ADDITIONAL.md#8-precise-positioning-plugin) is available, see section 8
@@ -75,6 +85,8 @@ When calling the component, four buttons are available:
 | 🚀 **Create Articles** | Generates one or more articles based on the topic |
 
 > The "Preview" and "Create Articles" buttons are activated after successful parameter saving. To use the "Preview" function, the user must be authenticated on the website's frontend.
+
+![Component parameters form and control buttons](docs/images/Main_Component_Form.png "Component parameters form and control buttons")
 
 ### 2.2. Article Creation
 - The topic author is assigned as the article author

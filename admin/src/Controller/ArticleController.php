@@ -14,13 +14,15 @@ defined('_JEXEC') or die;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
-use RuntimeException;
 use Joomla\CMS\Router\Route;
-use Joomla\CMS\Uri\Uri;
-use Joomla\CMS\Response\Json\JsonResponse;
+use Joomla\CMS\Response\JsonResponse;
+use Joomla\Component\KunenaTopic2Article\Administrator\Repository\ParamsRepository;
+use Joomla\Component\KunenaTopic2Article\Administrator\Service\ArticleResultService;
 
 class ArticleController extends BaseController
 {
+    private ?ArticleResultService $articleResultService = null;
+
     /**
      * Создание статей из темы форума Kunena
      * @return  void
@@ -47,13 +49,10 @@ class ArticleController extends BaseController
             $app->setUserState('com_kunenatopic2article.can_create', false);
             
             // Сохраняем данные для отображения
-            $app->setUserState('com_kunenatopic2article.result_data', [
-                'articles' => $articleLinks,
-                'emails' => [
-                    'sent' => $emailResult['success'],
-                    'recipients' => $emailResult['recipients']
-                ]
-            ]);
+            $app->setUserState(
+                'com_kunenatopic2article.result_data',
+                $this->getArticleResultService()->buildResultData($articleLinks, $emailResult)
+            );
             
             // Отображаем представление результата
             $view = $this->getView('result', 'html');
@@ -75,11 +74,6 @@ class ArticleController extends BaseController
      */
    public function preview(): void
 {
-    // 1. Убираем всё, что могло попасть в вывод до этого момента
-    if (ob_get_length()) ob_clean();
-    
-    header('Content-Type: application/json');
-    
     try {
         $this->checkToken('POST');
         
@@ -87,53 +81,20 @@ class ArticleController extends BaseController
         // $isPreview = true (создает статью со state=0)
         $articleData = $model->createArticlesFromTopic(true); 
         
-        if (!$articleData || !isset($articleData['id'])) {
-            throw new \Exception('Failed to create preview article');
-        }
-        
-        // Формируем чистую ссылку на фронтенд
-        $previewUrl = \Joomla\CMS\Uri\Uri::root() . 'index.php?option=com_content&view=article&id=' . $articleData['id'];
-        
-        echo json_encode([
-            'success' => true,
-            'data'    => [
-                'url' => $previewUrl,
-                'id'  => $articleData['id']
-            ]
-        ]);
+        $this->sendJsonResponse($this->getArticleResultService()->buildPreviewResponse($articleData));
         
     } catch (\Exception $e) {
-        // Если ошибка — тоже отдаем JSON, а не HTML страницу
-        echo json_encode([
-            'success' => false,
-            'message' => $e->getMessage()
-        ]);
+        $this->sendJsonResponse(null, $e->getMessage(), true, 500);
     }
-    
-    // ВАЖНО: Немедленно прерываем выполнение, чтобы Joomla не дописывала HTML
-    \Joomla\CMS\Factory::getApplication()->close();
 }
     
     public function deletePreview(): void
     {
-        // Устанавливаем заголовки для JSON сразу
-        header('Content-Type: application/json');
-        
         try {
-       //     error_log('DeletePreview method started');
-            
             // Проверка токена
-            try {
-                $this->checkToken('POST');
-            } catch (\Exception $e) {
-               $token = $this->input->get(Session::getFormToken(), '', 'alnum');
-                if (empty($token)) {
-                    throw new \Exception('Invalid delete token: ' . $e->getMessage());
-                }
-           }
+            $this->checkToken('POST');
             
             $id = $this->input->getInt('id');
-          // error_log('Delete ID received: ' . $id);
             
             if (!$id) {
                 throw new \Exception(Text::_('COM_KUNENATOPIC2ARTICLE_ERROR_PREVIEW_NO_ID_PROVIDED'));
@@ -152,31 +113,42 @@ class ArticleController extends BaseController
                 throw new \Exception(Text::_('COM_KUNENATOPIC2ARTICLE_ERROR_PREVIEW_DELETE_FAILED'));
             }
             
-            $response = ['success' => true, 'message' => 'Preview deleted.'];
-            
-            echo json_encode($response);
+            $this->sendJsonResponse(null, 'Preview deleted.');
             
         } catch (\Exception $e) {
-         
-            $errorResponse = ['success' => false, 'message' => $e->getMessage()];
-            http_response_code(500);
-            echo json_encode($errorResponse);
+            $this->sendJsonResponse(null, $e->getMessage(), true, 500);
         }
-        
+    }
+
+    private function sendJsonResponse($data = null, ?string $message = null, bool $error = false, int $statusCode = 200): void
+    {
+        if (ob_get_length()) {
+            ob_clean();
+        }
+
+        if ($statusCode >= 400) {
+            http_response_code($statusCode);
+        }
+
+        echo new JsonResponse($data, $message, $error);
         Factory::getApplication()->close();
+    }
+
+    private function getArticleResultService(): ArticleResultService
+    {
+        if ($this->articleResultService === null) {
+            $this->articleResultService = new ArticleResultService();
+        }
+
+        return $this->articleResultService;
     }
     
     private function resetTopicSelection()
     {
         try {
             $db = Factory::getContainer()->get('DatabaseDriver');
-            $query = $db->getQuery(true)
-                ->update('#__kunenatopic2article_params')
-                ->set($db->quoteName('topic_selection') . ' = ' . $db->quote('0'))
-                ->where($db->quoteName('id') . ' = 1');
-            
-            $db->setQuery($query);
-            $db->execute();
+            $paramsRepository = new ParamsRepository($db);
+            $paramsRepository->resetTopicSelection();
             
         } catch (\Exception $e) {
             Factory::getApplication()->enqueueMessage(

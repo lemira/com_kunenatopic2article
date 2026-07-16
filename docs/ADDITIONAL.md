@@ -7,13 +7,15 @@
 ### 🎯 Problem Being Solved
 When following internal links (to topic/post title or post index), Kunena usually positions the required post at the top of the screen. However, on large topics, especially with many images, precise positioning doesn't always work - Kunena stops "somewhere nearby".
 
-### 💡 Solution
-The `plg_system_kunenatopic2articleimgfix` plugin ensures precise positioning of the required post on the forum at the top of the screen.
+### 💡 Optional Helper
+The `plg_system_kunenatopic2articleimgfix` plugin is an optional helper. On large Kunena topics with many images it may improve scrolling to a post anchor after the page layout finishes changing.
+
+The plugin cannot guarantee exact positioning in every case. The final result depends on Kunena output, browser behavior, image loading, the template, and other page scripts.
 
 ### 🚀 Application
-- Install and enable the plugin
-- Works independently of the main component
-- Can be useful for gallery and museum sites, product catalogs, etc.
+- Install and enable the plugin only if your site has visible problems with post-anchor positioning.
+- The plugin works independently of the main component.
+- It can be useful for gallery and museum sites, product catalogs, and other image-heavy forums.
 
 ## 9. Database Encoding
 
@@ -30,6 +32,8 @@ The `plg_system_kunenatopic2articleimgfix` plugin ensures precise positioning of
 ### Mechanism
 Sending occurs according to Joomla configuration settings via
 SMTP, Sendmail, or PHP Mail. Joomla automatically uses the selected method.
+
+When testing the component on a local server, for example Wampserver64, emails are not sent; the component displays a corresponding message.
 
 ## 11. Advice on PNG Images (not related to the component)
 

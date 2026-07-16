@@ -13,6 +13,7 @@ defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Version;
 
 /**
  * Video Processor Helper
@@ -56,6 +57,23 @@ class VideoProcessor
             '/\[url=([^\]]+)\](.*?)\[\/url\]/i',
             function($matches) use ($allVideosEnabled) {
                 return $this->processUrlMatch($matches, $allVideosEnabled);
+            },
+            $text
+        );
+
+        // Затем обрабатываем BBCode ссылки вида [url]https://video...[/url].
+        // Если оставить такой тег, следующий видео-проход вставит iframe внутрь href.
+        $text = preg_replace_callback(
+            '/\[url\](.*?)\[\/url\]/is',
+            function($matches) {
+                $url = trim($matches[1]);
+                $url = trim($url, "\"'");
+
+                if ($this->detectVideoPlatform($url)) {
+                    return $url;
+                }
+
+                return $matches[0];
             },
             $text
         );
@@ -105,6 +123,22 @@ private function addBrBetweenConsecutiveVideos(string $text): string
     
     public function isAllVideosEnabled(): bool
     {
+        if (!$this->isAllVideosSupportedByJoomlaVersion()) {
+            return false;
+        }
+
+        return $this->isAllVideosPluginEnabled();
+    }
+
+    public function isAllVideosSupportedByJoomlaVersion(): bool
+    {
+        $version = new Version();
+
+        return version_compare($version->getShortVersion(), '6.0', '<');
+    }
+
+    public function isAllVideosPluginEnabled(): bool
+    {
         try {
             $query = $this->db->getQuery(true)
                 ->select('enabled')
@@ -112,10 +146,10 @@ private function addBrBetweenConsecutiveVideos(string $text): string
                 ->where('type = ' . $this->db->quote('plugin'))
                 ->where('folder = ' . $this->db->quote('content'))
                 ->where('element = ' . $this->db->quote('jw_allvideos'));
-            
+
             $this->db->setQuery($query);
             $result = $this->db->loadResult();
-            
+
             return (bool) $result;
         } catch (\Exception $e) {
             return false;
@@ -160,6 +194,7 @@ private function addBrBetweenConsecutiveVideos(string $text): string
     private function processUrlMatch(array $matches, bool $allVideosEnabled): string
     {
         $url = trim($matches[1]);
+        $url = trim($url, "\"'");
         $linkText = trim($matches[2]);
         
         $platform = $this->detectVideoPlatform($url);
@@ -193,9 +228,8 @@ private function addBrBetweenConsecutiveVideos(string $text): string
             return $this->createStyledVideoLink($platform, $fixedUrl, $linkText);
         }
         
-        // Обычная ссылка
-        return '<a href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '">' .
-               htmlspecialchars($linkText, ENT_QUOTES, 'UTF-8') . '</a>';
+        // Обычные ссылки оставляем штатному BBCode-парсеру.
+        return '[url="' . $url . '"]' . $linkText . '[/url]';
     }
     
    private function processVideoMatch(array $matches, string $platform, array $config, bool $allVideosEnabled): string

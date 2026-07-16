@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-07-16
+
+### Changed
+- Major internal refactoring of the Joomla administrator component while preserving the article-generation workflow.
+- Extracted Kunena reads, article rendering, traversal, notifications, and result handling into dedicated classes.
+- Kunena post links now use Joomla site routing instead of hard-coded SEF paths.
+- Preview rendering now uses a frontend iframe instead of injecting fetched article HTML into the administrator page.
+- Post info block appearance can be customized from the component form.
+- Updated compatibility work for Joomla 5/6 and Kunena 6/7 schema checks.
+
+### Fixed
+- Improved handling of malformed BBCode fragments such as unfinished square-bracket tags.
+- Fixed external BBCode URL conversion cases.
+- Fixed layout breakage caused by malformed video links in generated article content.
+- Fixed `Link to Kunena Post` output when post relation display is disabled.
+
 ## [2.0.2] - 2026-02-19
 
 ### 1. Resolved a conflict between the component and the "Latest Articles" module

@@ -2,12 +2,12 @@
 <extension type="component" version="5.0" method="upgrade">
     <name>COM_KUNENATOPIC2ARTICLE</name>
     <author>Leonid Ratner</author>
-    <creationDate>January 2025</creationDate>
+    <creationDate>2026-07-15</creationDate>
     <copyright>(C) 2025-2026 Leonid Ratner. All rights reserved.</copyright>
     <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
     <authorEmail>lemirat@gmail.com</authorEmail>
     <authorUrl>https://geschichte-chronologie.de</authorUrl>
-    <version>2.0.2</version>
+    <version>3.0.0</version>
     <description>COM_KUNENATOPIC2ARTICLE_DESC</description>
     
     <namespace path="src">Joomla\Component\KunenaTopic2Article</namespace>
