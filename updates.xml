@@ -11,6 +11,7 @@
         <downloads>
         <downloadurl type="full" format="zip">https://github.com/lemira/com_kunenatopic2article/releases/download/V3.0.0/com_kunenatopic2article.zip</downloadurl>
         </downloads>
+        <sha256>2FFF6A1CC6DEC690BE758AC4C9F244B804FA258F8F7CB3B3C7A0A74C3FAB9FF8</sha256>
         <tags>
             <tag>stable</tag>
         </tags>
